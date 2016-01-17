@@ -25,10 +25,9 @@
 package models.database
 
 import models.Contribution
-import play.api.db.slick.Config.driver.simple._
 import slick.driver.JdbcProfile
 
-private[models] trait ContributionTable {
+private[models] trait ContributionTable extends ProductTable {
 
   protected val driver: JdbcProfile
   import driver.api._

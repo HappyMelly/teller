@@ -24,6 +24,7 @@
 
 package models.database.event
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.BrandTable
 import models.event.EventCancellation
 import org.joda.time.LocalDate
@@ -49,9 +50,9 @@ private[models] trait EventCancellationTable extends BrandTable {
     def start = column[LocalDate]("START_DATE")
     def end = column[LocalDate]("END_DATE")
     def free = column[Boolean]("FREE")
-    def reason = column[Option[String]]("REASON", O.DBType("TEXT"))
+    def reason = column[Option[String]]("REASON")
     def participantsNumber = column[Option[Int]]("PARTICIPANTS_NUMBER")
-    def participantsInfo = column[Option[String]]("PARTICIPANTS_INFO", O.DBType("TEXT"))
+    def participantsInfo = column[Option[String]]("PARTICIPANTS_INFO")
 
     def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 

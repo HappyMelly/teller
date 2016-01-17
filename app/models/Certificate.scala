@@ -324,7 +324,7 @@ case class Certificate @javax.inject.Inject() (issued: Option[LocalDate],
    * @return
    */
   private def template(brandId: Long, event: Event, twoFacilitators: Boolean): com.itextpdf.text.Image = {
-    val templates = CertificateTemplateService.get.findByBrand(brandId)
+    val templates = Await.result(CertificateTemplateService.get.findByBrand(brandId), 3.seconds)
     val data = templates.find(_.language == event.language.spoken) map { tpl ⇒
       if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
     } getOrElse {

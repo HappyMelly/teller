@@ -1,5 +1,6 @@
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import org.joda.time.DateTime
 import securesocial.core.providers.MailToken
 import slick.driver.JdbcProfile
@@ -14,8 +15,8 @@ private[models] trait PasswordTokenTable {
     */
   class PasswordTokens(tag: Tag) extends Table[MailToken](tag, "PASSWORD_TOKEN") {
 
-    def userId = column[String]("USER_ID", O.DBType("VARCHAR(254)"))
-    def email = column[String]("EMAIL", O.DBType("VARCHAR(254)"))
+    def userId = column[String]("USER_ID", O.Length(254, varying = true))
+    def email = column[String]("EMAIL", O.Length(254, varying = true))
     def created = column[DateTime]("CREATED")
     def expire = column[DateTime]("EXPIRE")
     def signUp = column[Boolean]("SIGN_UP")

@@ -24,6 +24,7 @@
 
 package models.database.event
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.DateStamp
 import models.database.EventTable
 import models.event.Attendee

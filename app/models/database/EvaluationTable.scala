@@ -24,10 +24,9 @@
 
 package models.database
 
-import models.database.PortableJodaSupport._
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.{DateStamp, Evaluation, EvaluationStatus}
-import org.joda.time.{ DateTime, LocalDate }
-import play.api.db.slick.Config.driver.simple._
+import org.joda.time.{DateTime, LocalDate}
 import slick.driver.JdbcProfile
 
 private[models] trait EvaluationTable {
@@ -40,8 +39,7 @@ private[models] trait EvaluationTable {
     */
   private[models] class Evaluations(tag: Tag) extends Table[Evaluation](tag, "EVALUATION") {
 
-    implicit val evaluationStatusTypeMapper = MappedColumnType.base[EvaluationStatus.Value, Int](
-      { status ⇒ status.id }, { id ⇒ EvaluationStatus(id) })
+    import Evaluations.evaluationStatusTypeMapper
 
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def eventId = column[Long]("EVENT_ID")
@@ -58,7 +56,7 @@ private[models] trait EvaluationTable {
     def hostImpression = column[Option[Int]]("HOST_IMPRESSION")
     def status = column[EvaluationStatus.Value]("STATUS")
     def handled = column[Option[LocalDate]]("HANDLED")
-    def confirmationId = column[Option[String]]("CONFIRMATION_ID", O.DBType("CHAR(64)"))
+    def confirmationId = column[Option[String]]("CONFIRMATION_ID", O.Length(64))
     def created = column[DateTime]("CREATED")
     def createdBy = column[String]("CREATED_BY")
     def updated = column[DateTime]("UPDATED")

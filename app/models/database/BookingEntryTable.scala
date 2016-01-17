@@ -24,6 +24,8 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
+
 import models.BookingEntry
 import models.JodaMoney._
 import models.database.admin.TransactionTypeTable
@@ -49,15 +51,15 @@ private[models] trait BookingEntryTable
     def bookingDate = column[LocalDate]("BOOKING_DATE")
     def bookingNumber = column[Int]("BOOKING_NUMBER")
     def summary = column[String]("SUMMARY")
-    def sourceCurrency = column[String]("SOURCE_CURRENCY", O.DBType("CHAR(3)"))
-    def sourceAmount = column[BigDecimal]("SOURCE_AMOUNT", O.DBType("DECIMAL(13,3)"))
+    def sourceCurrency = column[String]("SOURCE_CURRENCY", O.Length(3))
+    def sourceAmount = column[BigDecimal]("SOURCE_AMOUNT")
     def sourcePercentage = column[Int]("SOURCE_PERCENTAGE")
     def fromId = column[Long]("FROM_ID")
-    def fromCurrency = column[String]("FROM_CURRENCY", O.DBType("CHAR(3)"))
-    def fromAmount = column[BigDecimal]("FROM_AMOUNT", O.DBType("DECIMAL(13,3)"))
+    def fromCurrency = column[String]("FROM_CURRENCY", O.Length(3))
+    def fromAmount = column[BigDecimal]("FROM_AMOUNT")
     def toId = column[Long]("TO_ID")
-    def toCurrency = column[String]("TO_CURRENCY", O.DBType("CHAR(3)"))
-    def toAmount = column[BigDecimal]("TO_AMOUNT", O.DBType("DECIMAL(13,3)"))
+    def toCurrency = column[String]("TO_CURRENCY", O.Length(3))
+    def toAmount = column[BigDecimal]("TO_AMOUNT")
     def brandId = column[Option[Long]]("BRAND_ID")
     def reference = column[Option[String]]("REFERENCE")
     def referenceDate = column[LocalDate]("REFERENCE_DATE")

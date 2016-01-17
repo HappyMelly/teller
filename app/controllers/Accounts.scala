@@ -36,9 +36,10 @@ import play.api.i18n.{I18nSupport, Messages}
 import play.api.mvc.Controller
 import services.CurrencyConverter.NoExchangeRateException
 import services.TellerRuntimeEnvironment
+import scala.concurrent.Future
 
 class Accounts @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Controller
+    extends AsyncController
     with Security
     with Activities
     with I18nSupport {
@@ -50,33 +51,32 @@ class Accounts @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * exchange rate fluctuations. This creates booking entries, and redirect to the accounts page. The user-interface
    * should not execute this action (the button is disabled) if accounts do not require balancing.
    */
-  def balanceAccounts = AsyncSecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val currentUser = user.account
-        Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
-          val activity = new Activity(None,
-            user.person.id.get,
-            user.person.fullName,
-            Activity.Predicate.BalancedAccounts,
-            "",
-            0L,
-            Some(bookingEntries.size.toString))
-          activity.insert
-          Redirect(routes.Accounts.index()).flashing(
-            "success" -> activity.toString)
-        }
+  def balanceAccounts = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val currentUser = user.account
+    Account.balanceAccounts(currentUser.personId).map { bookingEntries ⇒
+      val activity = new Activity(None,
+        user.person.id.get,
+        user.person.fullName,
+        Activity.Predicate.BalancedAccounts,
+        "",
+        0L,
+        Some(bookingEntries.size.toString))
+      activity.insert
+      Redirect(routes.Accounts.index()).flashing(
+        "success" -> activity.toString)
+    }
   }
 
   /**
    * An overview of bookings for the given account.
    */
-  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val entries = BookingEntry.findByAccountId(id, from, to)
-        val account = Account.find(id)
-        var balance = Money.zero(account.get.balance.getCurrencyUnit)
+  def bookings(id: Long, from: Option[LocalDate], to: Option[LocalDate]) = AsyncSecuredRestrictedAction(Admin) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      (for {
+        e <- bookingEntryService.find(id, from, to)
+        a <- accountService.get(id)
+      } yield (e, a)) flatMap { case (entries, account) =>
+        var balance = Money.zero(account.balance.getCurrencyUnit)
         val entriesWithBalance = entries.reverse.map { e ⇒
           if (e.fromId == id) {
             balance = balance.plus(e.fromAmount)
@@ -87,72 +87,71 @@ class Accounts @Inject() (override implicit val env: TellerRuntimeEnvironment)
           } else {
             (e, None)
           }
-        }.toList.reverse
-        Ok(views.html.booking.index(user, account, entriesWithBalance, from, to))
+        }.reverse
+        ok(views.html.booking.index(user, Some(account), entriesWithBalance, from, to))
+      }
   }
 
-  def details(id: Long) = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Account.find(id).map { account ⇒
-          Ok(views.html.account.details(user, account, currencyForm))
-        }.getOrElse(NotFound)
+  def details(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    accountService.find(id) flatMap {
+      case None => notFound("Account not found")
+      case Some(account) =>
+        ok(views.html.account.details(user, account, currencyForm))
+    }
   }
 
-  def activate(id: Long) = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Account.find(id).map { account ⇒
-          if (account.editableBy(user.account)) {
-            currencyForm.bindFromRequest().fold(
-              form ⇒ BadRequest(views.html.account.details(user, account, form)),
-              currency ⇒ {
-                account.activate(currency)
-                val log = activity(account, user.person).activated.insert()
-                account.accountHolder.updated(user.name)
-                Redirect(routes.Accounts.details(id)).flashing(
-                  "success" -> log.toString)
-              })
-          } else {
-            Unauthorized("You are not allowed to activate this account")
-          }
-        }.getOrElse(NotFound)
-
-  }
-
-  def deactivate(id: Long) = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Account.find(id).map(account ⇒
-          if (account.editableBy(user.account)) {
-            account.deactivate()
-            account.accountHolder.updated(user.name)
-            val log = activity(account, user.person).deactivated.insert()
-            Redirect(routes.Accounts.details(id)).flashing(
-              "success" -> log.toString)
-          } else {
-            Unauthorized("You are not allowed to deactivate this account")
-          }).getOrElse(NotFound)
-  }
-
-  def index = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Ok(views.html.account.index(user, Account.findAllActiveWithBalance))
-  }
-
-  def previewBalance = AsyncSecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val levy = Account.find(Levy)
-        Account.findAllForAdjustment(levy.currency).map { accounts ⇒
-          val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
-          val canBalanceAccounts = accounts.exists(!_.adjustment.isZero)
-          Ok(views.html.account.balance(user, totalBalance, accounts, canBalanceAccounts))
-        }.recover {
-          case e: NoExchangeRateException ⇒ {
-            Redirect(routes.Accounts.index()).flashing("error" -> Messages("error.retry", e.getMessage))
-          }
+  def activate(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    accountService.find(id) flatMap {
+      case None => notFound("Account not found")
+      case Some(account) =>
+        if (account.editableBy(user.account)) {
+          currencyForm.bindFromRequest().fold(
+            form ⇒ badRequest(views.html.account.details(user, account, form)),
+            currency ⇒ {
+              account.activate(currency)
+              val log = activity(account, user.person).activated.insert()
+              account.accountHolder.updated(user.name)
+              redirect(routes.Accounts.details(id), "success" -> log.toString)
+            })
+        } else {
+          Future.successful(Unauthorized("You are not allowed to activate this account"))
         }
+    }
+  }
+
+  def deactivate(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    accountService.find(id) flatMap {
+      case None => notFound("Account not found")
+      case Some(account) =>
+        if (account.editableBy(user.account)) {
+          account.deactivate()
+          account.accountHolder.updated(user.name)
+          val log = activity(account, user.person).deactivated.insert()
+          redirect(routes.Accounts.details(id), "success" -> log.toString)
+        } else {
+          Future.successful(Unauthorized("You are not allowed to deactivate this account"))
+        }
+    }
+  }
+
+  def index = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    accountService.findAllActiveWithBalance flatMap { accounts =>
+      ok(views.html.account.index(user, accounts))
+    }
+  }
+
+  def previewBalance = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      levy <- accountService.get(Levy)
+      accounts <- accountService.findAllForAdjustment(levy.currency)
+    } yield (levy, accounts)) flatMap { case (levy, accounts) =>
+      val totalBalance = Account.calculateTotalBalance(levy.currency, accounts)
+      val canBalanceAccounts = accounts.exists(!_.adjustment.isZero)
+      ok(views.html.account.balance(user, totalBalance, accounts, canBalanceAccounts))
+    } recover {
+      case e: NoExchangeRateException ⇒ {
+        Redirect(routes.Accounts.index()).flashing("error" -> Messages("error.retry", e.getMessage))
+      }
+    }
   }
 }

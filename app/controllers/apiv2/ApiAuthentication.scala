@@ -24,17 +24,20 @@
 
 package controllers.apiv2
 
+import controllers.AsyncController
 import models.admin.ApiToken
 import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
-import controllers.JsonController
 import play.api.mvc._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Provides token-based authentication for API actions.
  */
-trait ApiAuthentication extends JsonController with Services {
+trait ApiAuthentication extends AsyncController with Services {
 
   val ApiTokenParam = "api_token"
 
@@ -43,15 +46,16 @@ trait ApiAuthentication extends JsonController with Services {
    * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
    * @param f Function to run
    */
-  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiToken ⇒ Result) = Action {
+  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiToken ⇒ Future[Result]) = Action.async {
     implicit request ⇒
       request.getQueryString(ApiTokenParam) map { value ⇒
         Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
           authorize(readWrite, token)(f)
         } getOrElse {
-          apiTokenService.find(value) map { token ⇒
-            authorize(readWrite, token)(f)
-          } getOrElse jsonUnauthorized
+          apiTokenService.find(value) flatMap {
+            case None => jsonUnauthorized
+            case Some(token) => authorize(readWrite, token)(f)
+          }
         }
       } getOrElse jsonUnauthorized
   }
@@ -65,8 +69,8 @@ trait ApiAuthentication extends JsonController with Services {
    * @param request Request object
    * @return Returns the result of function execution or Unauthorized
    */
-  protected def authorize(readWrite: Boolean,
-    token: ApiToken)(f: Request[AnyContent] ⇒ ApiToken ⇒ Result)(implicit request: Request[AnyContent]): Result = {
+  protected def authorize(readWrite: Boolean, token: ApiToken)(
+    f: Request[AnyContent] ⇒ ApiToken ⇒ Future[Result])(implicit request: Request[AnyContent]): Future[Result] = {
     if (token.authorized(readWrite))
       f(request)(token)
     else

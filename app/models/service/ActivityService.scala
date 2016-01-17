@@ -31,6 +31,7 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -80,7 +81,7 @@ class ActivityService extends HasDatabaseConfig[JdbcProfile]
   def link(entry: BookingEntry, activity: Activity): Unit =  {
     val entries = TableQuery[BookingEntryActivities]
     for (entryId ← entry.id; activityId ← activity.id) {
-      entries.insert(entryId, activityId)
+      db.run(entries += (entryId, activityId))
     }
   }
 }

@@ -24,6 +24,7 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.JodaMoney._
 import models.License
 import org.joda.time.LocalDate
@@ -48,9 +49,9 @@ private[models] trait LicenseTable extends BrandTable {
     def end = column[LocalDate]("END")
     def confirmed = column[Boolean]("CONFIRMED")
     def feeCurrency = column[String]("FEE_CURRENCY")
-    def feeAmount = column[BigDecimal]("FEE_AMOUNT", O.DBType("DECIMAL(13,3)"))
+    def feeAmount = column[BigDecimal]("FEE_AMOUNT")
     def feePaidCurrency = column[Option[String]]("FEE_PAID_CURRENCY")
-    def feePaidAmount = column[Option[BigDecimal]]("FEE_PAID_AMOUNT", O.DBType("DECIMAL(13,3)"))
+    def feePaidAmount = column[Option[BigDecimal]]("FEE_PAID_AMOUNT")
     def licensee = foreignKey("LICENSEE_FK", licenseeId, TableQuery[People])(_.id)
     def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
@@ -65,8 +66,6 @@ private[models] trait LicenseTable extends BrandTable {
           l.end, l.confirmed, l.fee.getCurrencyUnit.getCode,
           BigDecimal(l.fee.getAmount), l.feePaid.map(_.getCurrencyUnit.getCode),
           l.feePaid.map(x ⇒ BigDecimal(x.getAmount)))))
-
-    def forJoin = (id.?, licenseeId.?, brandId.?, start.?, end.?)
 
   }
 

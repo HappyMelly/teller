@@ -9,6 +9,8 @@ import play.api.data.Forms._
 import play.api.libs.json._
 import views.Countries
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 /**
  * API for adding event requests
  */
@@ -37,25 +39,27 @@ trait EventRequestsApi extends ApiAuthentication with Services {
 
   /**
    * Create an event request through API call
-   * @param brandCode Brand string identifier
+    *
+    * @param brandCode Brand string identifier
    */
-  def create(brandCode: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒
-    implicit token ⇒
-      val name = token.appName
+  def create(brandCode: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
+    val name = token.appName
 
-      brandService.find(brandCode) map { brand =>
+    brandService.find(brandCode) flatMap {
+      case None => jsonNotFound(s"Brand $brandCode not found")
+      case Some(brand) =>
         val requestData = form(brand.identifier, name).bindFromRequest()
         requestData.fold(
           erroneousData => {
             val json = Json.toJson(APIError.formValidationError(erroneousData.errors))
-            BadRequest(Json.prettyPrint(json))
+            badRequest(Json.prettyPrint(json))
           },
-          eventRequest => {
-            val requestId = eventRequestService.insert(eventRequest).id
-            jsonOk(Json.obj("request_id" -> requestId))
-          }
+          eventRequest =>
+            eventRequestService.insert(eventRequest) flatMap { value =>
+              jsonOk(Json.obj("request_id" -> value.id))
+            }
         )
-      } getOrElse jsonNotFound(s"Brand $brandCode not found")
+    }
   }
 }
 

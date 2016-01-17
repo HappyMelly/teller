@@ -24,6 +24,7 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.{Product, ProductCategory}
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
@@ -38,8 +39,7 @@ private[models] trait ProductTable {
     */
   class Products(tag: Tag) extends Table[Product](tag, "PRODUCT") {
 
-    implicit val productCategoryTypeMapper = MappedColumnType.base[ProductCategory.Value, String](
-      { category ⇒ category.toString }, { category ⇒ ProductCategory.withName(category) })
+    import Products.productCategoryTypeMapper
 
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def title = column[String]("TITLE")
@@ -65,4 +65,10 @@ private[models] trait ProductTable {
       callToActionText, picture, category, parentId, updated, updatedBy)
   }
 
+  object Products {
+
+    implicit val productCategoryTypeMapper = MappedColumnType.base[ProductCategory.Value, String](
+      { category ⇒ category.toString }, { category ⇒ ProductCategory.withName(category) })
+
+  }
 }

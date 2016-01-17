@@ -26,19 +26,18 @@ package controllers.apiv2
 
 import java.net.URLDecoder
 
-import controllers.{Organisations, Experiments, Utilities}
-import ContributionsApi.contributionWrites
 import controllers.apiv2.PeopleApi._
+import controllers.{Experiments, Organisations, Utilities}
 import models._
 import models.service.Services
 import play.api.libs.json._
-import play.mvc.Controller
 import views.Countries
 
-trait MembersApi extends Controller
-  with ApiAuthentication
-  with Services
-  with Utilities {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+
+trait MembersApi extends ApiAuthentication with Services with Utilities {
 
   case class MemberView(member: Member, country: String)
   case class MemberPersonView(member: Member, experiments: List[Experiment])
@@ -72,6 +71,33 @@ trait MembersApi extends Controller
   }
 
 
+  import ContributionsApi.contributionWrites
+  import OrganisationsApi.organisationWrites
+
+  val personDetailsWrites = new Writes[Person] {
+    def writes(person: Person) = {
+      Json.obj(
+        "id" -> person.id.get,
+        "unique_name" -> person.uniqueName,
+        "first_name" -> person.firstName,
+        "last_name" -> person.lastName,
+        "email_address" -> person.email,
+        "image" -> person.photo.url,
+        "address" -> person.address,
+        "bio" -> person.bio,
+        "interests" -> person.interests,
+        "twitter_handle" -> person.socialProfile.twitterHandle,
+        "facebook_url" -> person.socialProfile.facebookUrl,
+        "linkedin_url" -> person.socialProfile.linkedInUrl,
+        "google_plus_url" -> person.socialProfile.googlePlusUrl,
+        "website" -> person.webSite,
+        "blog" -> person.blog,
+        "active" -> person.active,
+        "organizations" -> person.organisations,
+        "contributions" -> person.contributions)
+    }
+  }
+  
   val personMemberWrites = new Writes[MemberPersonView] {
     def writes(view: MemberPersonView): JsValue = {
       Json.obj(
@@ -83,6 +109,7 @@ trait MembersApi extends Controller
         "person" -> Json.toJson(view.member.memberObj._1.get)(personDetailsWrites))
     }
   }
+
 
   val organisationDetailsWrites = new Writes[OrgView] {
     def writes(view: OrgView): JsValue = {
@@ -124,33 +151,36 @@ trait MembersApi extends Controller
    *
    * @param funder If true, returns funders; false - supporters; none - all
    */
-  def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        val members = memberService.findAll.filter(_.active)
-        val filteredMembers = funder map { x ⇒ members.filter(_.funder == x)
-        } getOrElse members
+  def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) { implicit request ⇒
+    implicit token ⇒
+      memberService.findAll flatMap { members =>
+        val activeMembers = members.filter(_.active)
+        val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse members
         val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
         jsonOk(Json.toJson(views.sortBy(_.member.name)))
+      }
   }
 
   /**
    * Returns list of members for the given query
    * @param query List of member names separated by commas
    */
-  def membersByNames(query: String) = TokenSecuredAction(readWrite = false) {
-    implicit request => implicit token =>
-      val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
-      val people = personService.findByNames(names.toList)
-      PeopleCollection.addresses(people)
-      val members = memberService.findByObjects(people.map(_.identifier)).filter(_.person)
-      val views = members.map { member =>
+  def membersByNames(query: String) = TokenSecuredAction(readWrite = false) { implicit request => implicit token =>
+    val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
+    (for {
+      p <- personService.findByNames(names.toList)
+      m <- memberService.findByObjects(p.map(_.identifier))
+    } yield (p, m)) flatMap { case (people, members) =>
+      personService.collection.addresses(people)
+      val filteredMembers = members.filter(_.person)
+      val views = filteredMembers.map { member =>
         people.find(_.identifier == member.objectId) map { person =>
           member.memberObj_=(person)
           MemberView(member, Countries.name(person.address.countryCode))
         } getOrElse MemberView(member, "")
       }
       jsonOk(Json.toJson(views.sortBy(_.member.name)))
+    }
   }
 
   /**
@@ -158,19 +188,23 @@ trait MembersApi extends Controller
    * @param identifier Member identifier
    * @param person Member is a person if true, otherwise - organisation
    */
-  def member(identifier: String, person: Boolean = true) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        findMemberByIdentifier(identifier, person) map { member =>
-          val experiments = experimentService.findByMember(member.identifier)
-          if (member.person) {
-            jsonOk(Json.toJson(MemberPersonView(member, experiments))(personMemberWrites))
-          } else {
-            orgService.findWithProfile(member.objectId) map { x ⇒
-              jsonOk(Json.toJson(MemberOrgView(member, experiments, x))(orgMemberWrites))
-            } getOrElse jsonNotFound("Organisation does not exist")
+  def member(identifier: String, person: Boolean = true) = TokenSecuredAction(readWrite = false) { implicit request ⇒
+    implicit token ⇒
+      findMemberByIdentifier(identifier, person) flatMap {
+        case None => jsonNotFound("Member not found")
+        case Some(member) =>
+          experimentService.findByMember(member.identifier) flatMap { experiments =>
+            if (member.person) {
+              jsonOk(Json.toJson(MemberPersonView(member, experiments))(personMemberWrites))
+            } else {
+              orgService.findWithProfile(member.objectId) flatMap {
+                case None => jsonNotFound("Organisation not found")
+                case Some(x) =>  jsonOk(Json.toJson(MemberOrgView(member, experiments, x))(orgMemberWrites))
+              }
+            }
+
           }
-        } getOrElse jsonNotFound("Member does not exist")
+      }
   }
 
   /**
@@ -179,26 +213,34 @@ trait MembersApi extends Controller
    * @param person Member is a person if true, otherwise - organisation
    * @return
    */
-  protected def findMemberByIdentifier(identifier: String, person: Boolean): Option[Member] = {
+  protected def findMemberByIdentifier(identifier: String, person: Boolean): Future[Option[Member]] = {
     try {
       val id = identifier.toLong
       memberService.find(id)
     } catch {
       case e: NumberFormatException ⇒ {
         if (person)
-          personService.find(URLDecoder.decode(identifier, "ASCII")) map { person =>
-            memberService.findByObject(person.identifier, person = true) map { member =>
-              member.memberObj_=(person)
-              Some(member)
-            } getOrElse None
-          } getOrElse None
+          personService.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
+            case None => Future.successful(None)
+            case Some(value) =>
+              memberService.findByObject(value.identifier, person = true) flatMap {
+                case None => Future.successful(None)
+                case Some(member) =>
+                  member.memberObj_=(value)
+                  Future.successful(Some(member))
+              }
+          }
         else
-          orgService.find(URLDecoder.decode(identifier, "ASCII")) map { org =>
-            memberService.findByObject(org.identifier, person = false) map { member =>
-              member.memberObj_=(org)
-              Some(member)
-            } getOrElse None
-          } getOrElse None
+          orgService.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
+            case None => Future.successful(None)
+            case Some(org) =>
+              memberService.findByObject(org.identifier, person = false) flatMap {
+                case None => Future.successful(None)
+                case Some(member) =>
+                  member.memberObj_=(org)
+                  Future.successful(Some(member))
+              }
+          }
       }
     }    
   }

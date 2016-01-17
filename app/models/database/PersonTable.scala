@@ -24,6 +24,7 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
 import org.joda.time.{DateTime, LocalDate}
 import slick.driver.JdbcProfile
@@ -46,8 +47,8 @@ private[models] trait PersonTable extends AddressTable {
     def photo = column[Option[String]]("PHOTO")
     def signature = column[Boolean]("SIGNATURE")
     def addressId = column[Long]("ADDRESS_ID")
-    def bio = column[Option[String]]("BIO", O.DBType("TEXT"))
-    def interests = column[Option[String]]("INTERESTS", O.DBType("TEXT"))
+    def bio = column[Option[String]]("BIO")
+    def interests = column[Option[String]]("INTERESTS")
     def webSite = column[Option[String]]("WEB_SITE")
     def blog = column[Option[String]]("BLOG")
     def customerId = column[Option[String]]("CUSTOMER_ID")

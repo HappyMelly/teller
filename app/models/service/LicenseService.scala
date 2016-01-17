@@ -26,18 +26,19 @@ package models.service
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
-import models.database.PortableJodaSupport._
-import models.database.{LicenseTable, BrandTable, Licenses, People}
+import models.database._
 import org.joda.time.LocalDate
 import play.api.Play
 import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.{HasDatabaseConfig, DatabaseConfigProvider, DB}
+import play.api.db.slick.{HasDatabaseConfig, DatabaseConfigProvider}
 import slick.driver.JdbcProfile
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class LicenseService extends HasDatabaseConfig[JdbcProfile]
   with BrandTable
+  with FacilitatorTable
   with LicenseTable
   with PersonTable {
 
@@ -50,13 +51,21 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
    * @param license License
    * @return Returns the updated license with a valid id
    */
-  def add(license: License) = DB.withTransaction { implicit session ⇒
-    val id = (licenses returning licenses.map(_.id)) += license
-    if (facilitatorService.find(license.brandId, license.licenseeId).isEmpty) {
-      val facilitator = Facilitator(None, license.licenseeId, license.brandId)
-      facilitatorService.insert(facilitator)
-    }
-    license.copy(id = Some(id))
+  def add(license: License): Future[License] = {
+    val insertAction = licenses returning licenses.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val profileQuery = TableQuery[Facilitators].filter(_.brandId === license.brandId).
+      filter(_.personId === license.licenseeId).exists
+    val actions = (for {
+      result <- insertAction += license
+      status <- profileQuery.result
+      _ <- if (status) {
+        val facilitator = Facilitator(None, license.licenseeId, license.brandId)
+        TableQuery[Facilitators] += facilitator
+      } else {
+        DBIO.successful(true)
+      }
+    } yield result).transactionally
+    db.run(actions)
   }
 
   /**
@@ -90,6 +99,17 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
   }
 
   /**
+    * Returns a list of all people who have ever been licensed for the given brand
+    */
+  def allLicensees(brandId: Long): Future[List[Person]] = {
+    val query = for {
+      license ← licenses if license.brandId === brandId
+      licensee ← license.licensee if licensee.active === true
+    } yield licensee
+    db.run(query.sortBy(_.lastName.toLowerCase).result).map(_.toList)
+  }
+
+  /**
     * Deletes the given license from database
     * @param id License identifier
     */
@@ -112,6 +132,12 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
       LicenseLicenseeView(v._1, v._2)
     }.sortBy(_.licensee.fullName))
   }
+
+  /**
+    * Returns the requested license if exists
+    * @param id License id
+    */
+  def find(id: Long): Future[Option[License]] = db.run(licenses.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns list of all licenses
@@ -164,7 +190,7 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
       brand ← license.brand
     } yield (license, brand)
     db.run(query.sortBy(_._2.name.toLowerCase).result).map(_.toList.map { result =>
-      LicenseView(result._1, result._2)
+      LicenseView(result._2, result._1)
     })
   }
 
@@ -188,15 +214,7 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
    *
    * @param license License object
    */
-  def update(license: License): Unit = DB.withTransaction { implicit session ⇒
-    license.id.map { id ⇒
-      licenses.filter(_.id === id).update(license)
-    }
-    if (facilitatorService.find(license.brandId, license.licenseeId).isEmpty) {
-      val facilitator = Facilitator(None, license.licenseeId, license.brandId)
-      facilitatorService.insert(facilitator)
-    }
-  }
+  def update(license: License): Future[Int] = db.run(licenses.filter(_.id === license.id).update(license))
 
 }
 

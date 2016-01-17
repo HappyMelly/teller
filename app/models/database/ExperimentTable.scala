@@ -23,6 +23,7 @@
  */
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.{DateStamp, Experiment}
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
@@ -51,8 +52,7 @@ private[models] trait ExperimentTable {
     type ExperimentFields = (Option[Long], Long, String, Boolean, String,
       Option[String], DateTime, String, DateTime, String)
 
-    def * = (id.?, memberId, name, picture, description, url, created,
-      createdBy, updated, updatedBy) <>(
+    def * = (id.?, memberId, name, picture, description, url, created, createdBy, updated, updatedBy) <>(
       (e: ExperimentFields) => Experiment(e._1, e._2, e._3, e._5, e._4, e._6,
         DateStamp(e._7, e._8, e._9, e._10)),
       (e: Experiment) => Some(e.id, e.memberId, e.name, e.picture, e.description,

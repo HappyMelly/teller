@@ -30,6 +30,7 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class BadgeService extends HasDatabaseConfig[JdbcProfile]
@@ -44,7 +45,7 @@ class BadgeService extends HasDatabaseConfig[JdbcProfile]
     * @param brandId Brand identifier
     * @param id Badge identifier
     */
-  def delete(brandId: Long, id: Long): Unit =
+  def delete(brandId: Long, id: Long): Future[Int] =
     db.run(badges.filter(_.id === id).filter(_.brandId === brandId).delete)
 
   /**
@@ -65,7 +66,7 @@ class BadgeService extends HasDatabaseConfig[JdbcProfile]
    * @param badge Fee
    */
   def insert(badge: Badge): Future[Badge] = {
-    val query = badges returning badges.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val query = badges returning badges.map(_.id) into ((value, id) => value.copy(id = id))
     db.run(query += badge)
   }
 

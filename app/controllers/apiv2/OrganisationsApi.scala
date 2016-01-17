@@ -24,7 +24,7 @@
 
 package controllers.apiv2
 
-import models.{ Address, Organisation, OrgView }
+import models.Organisation
 import play.api.libs.json._
 import play.api.mvc.Controller
 

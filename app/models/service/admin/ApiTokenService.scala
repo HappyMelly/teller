@@ -25,12 +25,12 @@
 package models.service.admin
 
 import models.admin.ApiToken
-import models.database.admin.{ApiTokenTable, ApiTokens}
+import models.database.admin.ApiTokenTable
 import play.api.Play
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig, DB}
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ApiTokenService extends HasDatabaseConfig[JdbcProfile]

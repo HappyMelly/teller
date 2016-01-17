@@ -30,6 +30,8 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 /**
  * Evaluations API
  */
@@ -106,41 +108,47 @@ trait EvaluationsApi extends ApiAuthentication {
       formWithErrors ⇒ {
         val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
         Logger.info(formWithErrors.errors.toString())
-        BadRequest(Json.prettyPrint(json))
+        badRequest(Json.prettyPrint(json))
       },
       evaluation ⇒ {
-        if (evaluationService.findByAttendee(evaluation.attendeeId).isDefined) {
-          val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
-          Logger.info(s"Evaluation for event ${evaluation.eventId} and person ${evaluation.attendeeId} already exists")
-          BadRequest(Json.prettyPrint(json))
-        } else {
-          attendeeService.find(evaluation.attendeeId, evaluation.eventId) map { attendee =>
-            val url = request.host + controllers.routes.Evaluations.confirm("").url
-            val createdEvaluation = evaluation.add(url, withConfirmation = true)
-            val message = "new evaluation for " + attendee.fullName
-            Activity.insert(name, Activity.Predicate.Created, message)
-            jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
-          } getOrElse {
+        (for {
+          mayBeEvaluation <- evaluationService.findByAttendee(evaluation.attendeeId)
+          attendee <- attendeeService.find(evaluation.attendeeId, evaluation.eventId)
+        } yield (mayBeEvaluation, attendee)) flatMap {
+          case (Some(existingEvaluation), _) =>
+            val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
+            Logger.info(s"Evaluation for event ${evaluation.eventId} and person ${evaluation.attendeeId} already exists")
+            badRequest(Json.prettyPrint(json))
+          case (_, None) =>
             val json = Json.toJson(new APIError(ErrorCode.ObjectNotExistError, "error.participant.notExist"))
             Logger.info(s"Attendee for event ${evaluation.eventId} does not exist")
-            BadRequest(Json.prettyPrint(json))
-          }
+            badRequest(Json.prettyPrint(json))
+          case (_, Some(attendee)) =>
+            val url = request.host + controllers.routes.Evaluations.confirm("").url
+            evaluation.add(url, withConfirmation = true) flatMap { createdEvaluation =>
+              val message = "new evaluation for " + attendee.fullName
+              Activity.insert(name, Activity.Predicate.Created, message)
+              jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
+            }
         }
       })
   }
 
   /**
    * Confirms the given evaluation if exists
-   * @param confirmationId Confirmation unique id
+    *
+    * @param confirmationId Confirmation unique id
    */
   def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
-    evaluationService.findByConfirmationId(confirmationId) map { x ⇒
-      x.confirm()
-      val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
-      Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
+    evaluationService.findByConfirmationId(confirmationId) flatMap {
+      case None => jsonNotFound("Unknown evaluation")
+      case Some(x) =>
+        x.confirm()
+        val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
+        Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
 
-      jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
-    } getOrElse jsonNotFound("Unknown evaluation")
+        jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
+    }
   }
 }
 

@@ -46,7 +46,7 @@ import scala.concurrent.{Await, Future}
  * User administration controller.
  */
 class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Controller
+    extends AsyncController
     with Security
     with Services
     with Utilities
@@ -63,7 +63,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     mapping(
       "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(Future.successful(identityService.checkEmail(suppliedEmail)), 10.seconds)
+        Await.result(identityService.checkEmail(suppliedEmail), 10.seconds)
       }),
       "password" -> nonEmptyText
     )((email, password) => (email, password))((data: (String, String)) => Some(data._1, "")))
@@ -101,17 +101,17 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     * Renders form for creating or changing the password
     */
   def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
-    implicit handler => implicit user => Future.successful {
+    implicit handler => implicit user =>
       if (user.account.byEmail) {
-        Ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
+        ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
       } else {
-        Ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
+        ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       }
-    }
   }
 
   /**
     * checks if the supplied password matches the stored one
+    *
     * @param suppliedPassword the password entered in the form
     * @param user the current user
     * @return a future boolean
@@ -128,32 +128,31 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
 
   /**
     * Updates the email for the given token
+    *
     * @param tokenId Token
     */
   def handleEmailChange(tokenId: String) = Action.async { implicit request =>
-    Future.successful {
-      emailToken.find(tokenId) map { token =>
+    emailToken.find(tokenId) flatMap {
+      case None => redirect(routes.Dashboard.index(), "error" -> "Requested token is not found")
+      case Some(token) =>
         if (token.isExpired) {
-          Redirect(routes.Dashboard.index()).flashing("error" -> "The confirmation link has expired")
+          redirect(routes.Dashboard.index(), "error" -> "The confirmation link has expired")
         } else {
-          identityService.findByUserId(token.userId) map { identity =>
-            personService.find(token.userId) map { person =>
+          (for {
+            i <- identityService.findByUserId(token.userId)
+            p <- personService.find(token.userId)
+          } yield (i, p)) flatMap {
+            case (None, _) => redirect(routes.Dashboard.index(), "error" -> "Internal error. Please contact support")
+            case (_, None) => redirect(routes.Dashboard.index(), "error" -> "Internal error. Please contact support")
+            case (Some(identity), Some(person)) =>
               identityService.delete(identity.email)
               identityService.insert(identity.copy(email = token.email))
               emailToken.delete(tokenId)
               personService.update(person.copy(email = token.email))
               val msg = "Your email was successfully updated. Please log in with your new email"
-              Redirect(routes.LoginPage.logout(success = Some(msg)))
-            } getOrElse {
-              Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
-            }
-          } getOrElse {
-            Redirect(routes.Dashboard.index()).flashing("error" -> "Internal error. Please contact support")
+              redirect(routes.LoginPage.logout(success = Some(msg)))
           }
         }
-      } getOrElse {
-        Redirect(routes.Dashboard.index()).flashing("error" -> "Requested token is not found")
-      }
     }
   }
 
@@ -163,21 +162,23 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def handleNewPassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       newPasswordForm.bindFromRequest().fold(
-        errors => Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))),
+        errors => badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
         password => {
-          if (identityService.checkEmail(user.person.email)) {
-            val account = createPasswordInfo(user, env.currentHasher.hash(password))
-            env.mailer.sendEmail("New password", user.person.email,
-              (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
-            env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
-              _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.person.member))
-            }).flatMap { _ =>
-              Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
-            }
-          } else {
-            val msg = "Your email address is used by another account. Please contact a support team if it's a mistake"
-            val errors = newPasswordForm.withGlobalError(msg)
-            Future.successful(BadRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)))
+          identityService.checkEmail(user.person.email) flatMap {
+            case true =>
+              createPasswordInfo(user, env.currentHasher.hash(password)) flatMap { account =>
+                env.mailer.sendEmail("New password", user.person.email,
+                  (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
+                env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
+                  _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.person.member))
+                }).flatMap { _ =>
+                  redirect(routes.UserAccounts.account(), "success" -> Messages(OkMessage))
+                }
+              }
+            case false =>
+              val msg = "Your email address is used by another account. Please contact a support team if it's a mistake"
+              val errors = newPasswordForm.withGlobalError(msg)
+              badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))
           }
         }
       )
@@ -190,12 +191,11 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     implicit handler => implicit user =>
       val form = changeEmailForm.bindFromRequest()
       form.fold(
-        errors => Future.successful(
-          BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
-        ),
+        errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm)),
         info => {
-          val response = for (
-              identity <- identityService.findByEmail(user.person.email);
+          identityService.findByEmail(user.person.email) flatMap { maybeIdentity =>
+            val response = for (
+              identity <- maybeIdentity;
               pinfo <- identity.profile.passwordInfo;
               hasher <- env.passwordHashers.get(identity.hasher) if hasher.matches(pinfo, info._2)
             ) yield {
@@ -209,13 +209,14 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
                   user.person.email)))
               )
               val msg = "Confirmation email was sent to your new email address"
-              Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> msg))
+              redirect(routes.UserAccounts.account(), "success" -> msg)
             }
-          response getOrElse {
-            val errors = form.withError("password", "Wrong password")
-            Future.successful(
-              BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
-            )
+            response getOrElse {
+              val errors = form.withError("password", "Wrong password")
+              Future.successful(
+                BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
+              )
+            }
           }
         }
       )
@@ -227,11 +228,10 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def changePassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
-        errors => Future.successful(
-          BadRequest(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, errors))),
+        errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, errors)),
         info => {
           env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
-          Future.successful(Redirect(routes.UserAccounts.account()).flashing("success" -> Messages(OkMessage)))
+          redirect(routes.UserAccounts.account(), "success" -> Messages(OkMessage))
         }
       )
   }
@@ -255,15 +255,15 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     * @param user a user instance
     * @param info the password info
     */
-  protected def createPasswordInfo(user: ActiveUser, info: PasswordInfo): UserAccount = {
+  protected def createPasswordInfo(user: ActiveUser, info: PasswordInfo): Future[UserAccount] = {
     val email = user.person.email
     val identity = PasswordIdentity(user.person.id, email, info.password, Some(user.person.firstName),
       Some(user.person.lastName), info.hasher)
-    identityService.findByEmail(email) map { existingIdentity =>
-      registeringUserService.delete(email, UsernamePasswordProvider.UsernamePassword)
-      identityService.update(identity)
-    } getOrElse {
-      identityService.insert(identity)
+    identityService.findByEmail(email) flatMap {
+      case None => identityService.insert(identity)
+      case Some(existingIdentity) =>
+        registeringUserService.delete(email, UsernamePasswordProvider.UsernamePassword)
+        identityService.update(identity)
     }
     userAccountService.update(user.account.copy(byEmail = true))
   }

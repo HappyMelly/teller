@@ -26,7 +26,9 @@ package models.database
 
 import slick.driver.JdbcProfile
 
-private[models] trait OrganisationMembershipTable {
+private[models] trait OrganisationMembershipTable
+  extends PersonTable
+  with OrganisationTable {
 
   protected val driver: JdbcProfile
   import driver.api._

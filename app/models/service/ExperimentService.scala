@@ -24,12 +24,14 @@
  */
 package models.service
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.Experiment
 import models.database.ExperimentTable
 import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ExperimentService extends HasDatabaseConfig[JdbcProfile]
@@ -49,7 +51,7 @@ class ExperimentService extends HasDatabaseConfig[JdbcProfile]
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long): Unit =
+  def delete(memberId: Long, id: Long): Future[Int] =
     db.run(experiments.filter(_.id === id).filter(_.memberId === memberId).delete)
 
   /**
@@ -79,8 +81,8 @@ class ExperimentService extends HasDatabaseConfig[JdbcProfile]
    * @param experiment Experiment
    */
   def insert(experiment: Experiment): Future[Experiment] = {
-      val query = experiments returning experiments.map(_.id) into ((value, id) => value.copy(id = Some(id))
-      db.run(query += experiment)
+    val query = experiments returning experiments.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += experiment)
   }
 
   /**

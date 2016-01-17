@@ -1,7 +1,7 @@
 
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -25,13 +25,13 @@
 
 package models
 
-import models.database._
 import models.service._
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -93,10 +93,9 @@ case class Person(
   }
 
   def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
-    DB.withSession { implicit session: Session ⇒
-      socialProfile_=(socialProfileService.find(id.getOrElse(0), ProfileType.Person))
-      _socialProfile.get
-    }
+    val profile = Await.result(socialProfileService.find(id.getOrElse(0), ProfileType.Person), 3.seconds)
+    socialProfile_=(profile)
+    _socialProfile.get
   } else {
     _socialProfile.get
   }
@@ -106,7 +105,8 @@ case class Person(
   }
 
   def address: Address = if (_address.isEmpty) {
-    address_=(Address.find(addressId))
+    import scala.concurrent.duration._
+    address_=(Await.result(addressService.get(addressId), 3.seconds))
     _address.get
   } else {
     _address.get
@@ -120,7 +120,8 @@ case class Person(
    * A list of languages a facilitator speaks
    */
   def languages: List[FacilitatorLanguage] = if (_languages.isEmpty) {
-    languages_=(facilitatorService.languages(id.get))
+    val langs = Await.result(facilitatorService.languages(identifier), 3.seconds)
+    languages_=(langs)
     _languages.get
   } else {
     _languages.get
@@ -134,7 +135,8 @@ case class Person(
    * A list of countries a facilitator speaks
    */
   def countries: List[FacilitatorCountry] = if (_countries.isEmpty) {
-    countries_=(FacilitatorCountry.findByFacilitator(id.get))
+    val result = Await.result(facilitatorService.countries(identifier), 3.seconds)
+    countries_=(result)
     _countries.get
   } else {
     _countries.get
@@ -148,7 +150,8 @@ case class Person(
    * Returns a list of organisations this person is a member of
    */
   def organisations: List[Organisation] = if (_organisations.isEmpty) {
-    organisations_=(PersonService.get.memberships(id.get))
+    val orgs = Await.result(personService.memberships(identifier), 3.seconds)
+    organisations_=(orgs)
     _organisations.get
   } else {
     _organisations.get
@@ -175,7 +178,8 @@ case class Person(
   /** Returns member data if person is a member, false None */
   def member: Option[Member] = _member map { Some(_) } getOrElse {
     id map { i ⇒
-      _member = personService.member(i)
+      val result = Await.result(personService.member(i), 3.seconds)
+      _member = result
       _member
     } getOrElse None
   }
@@ -213,22 +217,14 @@ case class Person(
   /**
    * Returns a list of this person’s content licenses.
    */
-  lazy val licenses: List[LicenseView] = DB.withSession { implicit session ⇒
-    val query = for {
-      license ← TableQuery[Licenses] if license.licenseeId === this.id
-      brand ← license.brand
-    } yield (license, brand)
-
-    query.sortBy(_._2.name.toLowerCase).list.map {
-      case (license, brand) ⇒ LicenseView(brand, license)
-    }
-  }
+  lazy val licenses: List[LicenseView] =
+    Await.result(licenseService.licensesWithBrands(identifier), 3.seconds)
 
   /**
    * Returns a list of this person's contributions.
    */
   lazy val contributions: List[ContributionView] =
-    contributionService.contributions(this.id.get, isPerson = true)
+    Await.result(contributionService.contributions(this.id.get, isPerson = true), 3.seconds)
 
   /**
    * Returns identifier of the object
@@ -251,32 +247,12 @@ case class Person(
    * Inserts this person into the database and returns the saved Person,
    * with the ID added
    */
-  def insert: Person = personService.insert(this)
+  def insert: Future[Person] = personService.insert(this)
 
   /**
    * Updates related info about this person in database
    */
-  def update: Person = personService.update(this)
-
-  /**
-   * Finds the active `Account`s that this `Person` has access rights to.
-   *
-   * Currently, ‘having access rights to an account’ means that:
-   * - This person is the account‘s holder
-   * - This person is a member of the organisation that is the account’s holder
-   *
-   * @return The list of accounts that this person has access to
-   */
-  def findAccessibleAccounts: List[AccountSummary] = DB.withSession { implicit session ⇒
-    val query = for {
-      account ← TableQuery[Accounts] if account.active
-      organisation ← TableQuery[Organisations] if account.organisationId === organisation.id.?
-      membership ← TableQuery[OrganisationMemberships] if membership.organisationId === organisation.id
-      if membership.personId.? === this.id
-    } yield (account.id, organisation.name, account.currency, account.active)
-
-    account.summary :: query.list.map(AccountSummary.tupled)
-  }
+  def update: Future[Person] = personService.update(this)
 
   def summary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 
@@ -286,9 +262,9 @@ case class Person(
    * @param fee Amount of membership fee this person paid
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money): Member = {
+  def becomeMember(funder: Boolean, fee: Money): Future[Member] = {
     val m = memberService.insert(membership(funder, fee))
-    profileStrengthService.find(id.get, false) map { x ⇒
+    profileStrengthService.find(id.get, false) map { case Some(x) ⇒
       profileStrengthService.update(ProfileStrength.forMember(x))
     }
     m
@@ -331,126 +307,4 @@ object Person {
 
   def photo(id: Long): File =
     File.image(s"photos/$id", s"photos.$id")
-
-  /**
-   * Activates the person, if the parameter is true, or deactivates it.
-   * During activization, a person also becomes a real person
-   *
-   * @param id Person identifier
-   * @param active True if we activate a person, False if otherwise
-   */
-  def activate(id: Long, active: Boolean): Unit = DB.withSession { implicit session: Session ⇒
-    TableQuery[People].filter(_.id === id)
-      .map(p ⇒ (p.active, p.virtual))
-      .update((active, false))
-  }
-
-  /**
-   * Finds people, filtered by first/last name query
-   *
-   * @param active Only active members will be returned
-   * @param query Only members with suitable name will be returned
-   * @return
-   */
-  def findByParameters(active: Option[Boolean],
-    query: Option[String]): List[Person] = DB.withSession {
-
-    implicit session: Session ⇒
-      val people = TableQuery[People]
-      val baseQuery = query.map { q ⇒
-        people.filter(p ⇒ p.firstName ++ " " ++ p.lastName.toLowerCase like "%" + q + "%")
-      } getOrElse people
-      val activeQuery = active.map { value ⇒
-        baseQuery.filter(_.active === value)
-      }.getOrElse(baseQuery)
-      activeQuery.sortBy(_.firstName.toLowerCase).list
-  }
-
-  /**
-   * Finds active people who have a user account with administrator role.
-   */
-  def findActiveAdmins: Set[Person] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      account ← TableQuery[UserAccounts] if account.admin === true
-      person ← TableQuery[People] if person.id === account.personId
-    } yield person
-    query.list.toSet
-  }
-
-  /**
-   * Retrieves a list of all people from the database
-   */
-  def findAll: List[PersonSummary] = DB.withSession { implicit session: Session ⇒
-    (for {
-      person ← TableQuery[People]
-      address ← TableQuery[Addresses] if person.addressId === address.id
-    } yield (person.id, person.firstName, person.lastName, person.active, address.countryCode))
-      .sortBy(_._2.toLowerCase)
-      .mapResult(PersonSummary.tupled).list
-  }
-
-}
-
-object PeopleCollection {
-
-  /**
-   * Fill person objects with addresses (using only one query to database)
-   * @param people List of people
-   * @return
-   */
-  def addresses(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.addressId).distinct
-    val query = for {
-      address ← TableQuery[Addresses] if address.id inSet ids
-    } yield address
-    val addresses = query.list
-    people.foreach(p ⇒ p.address_=(addresses.find(_.id.get == p.addressId).get))
-  }
-
-  /**
-   * Fill person objects with languages (using only one query to database)
-   * @param people List of people
-   * @return
-   */
-  def languages(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.id.get).distinct
-    val query = for {
-      language ← TableQuery[FacilitatorLanguages] if language.personId inSet ids
-    } yield language
-    val lanuages = query.list.groupBy(_.personId)
-    people.foreach(p ⇒ p.languages_=(lanuages.getOrElse(p.id.get, List())))
-  }
-
-  /**
-   * Fill person objects with countries (using only one query to database)
-   * @param people List of people
-   * @return
-   */
-  def countries(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.id.get).distinct
-    val query = for {
-      country ← TableQuery[FacilitatorCountries] if country.personId inSet ids
-    } yield country
-    val countries = query.list.groupBy(_.personId)
-    people.foreach(p ⇒ {
-      val countryOfResidence = FacilitatorCountry(p.id.get, p.address.countryCode)
-      val c = countries.getOrElse(p.id.get, List()) ::: List(countryOfResidence)
-      p.countries_=(c)
-    })
-  }
-
-  /**
-   * Fill person objects with organisations data (using only one query to database)
-   * @param people List of people
-   * @return
-   */
-  def organisations(people: List[Person]): Unit = DB.withSession { implicit session: Session ⇒
-    val ids = people.map(_.id.get).distinct
-    val query = for {
-      membership ← TableQuery[OrganisationMemberships] if membership.personId inSet ids
-      organisation ← membership.organisation
-    } yield (membership.personId, organisation)
-    val organisations = query.list.groupBy(_._1).map(o ⇒ (o._1, o._2.map(_._2)))
-    people.foreach(p ⇒ p.organisations_=(organisations.getOrElse(p.id.get, List())))
-  }
 }

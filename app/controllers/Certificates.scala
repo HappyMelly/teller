@@ -36,7 +36,7 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
     with Security
     with Services
     with Files {
@@ -53,14 +53,20 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
       if (event.free) {
         Future.successful(NotFound)
       } else {
-        attendeeService.find(attendeeId, eventId) map { attendee ⇒
-          val brand = brandService.findWithCoordinators(event.brandId).get
-          val issued = attendee.issued getOrElse LocalDate.now()
-          val certificate = new Certificate(Some(issued), event, attendee, renew = true)
-          certificate.generateAndSend(brand, user.person)
-          attendeeService.updateCertificate(attendee.copy(certificate = Some(certificate.id), issued = Some(issued)))
-          Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
-        } getOrElse Future.successful(NotFound)
+        (for {
+          attendee <- attendeeService.find(attendeeId, eventId)
+          brand <- brandService.findWithCoordinators(event.brandId)
+        } yield (attendee, brand)) flatMap {
+          case (None, _) => Future.successful(NotFound)
+          case (Some(attendee), Some(brand)) =>
+            val issued = attendee.issued getOrElse LocalDate.now()
+            val certificate = new Certificate(Some(issued), event, attendee, renew = true)
+            certificate.generateAndSend(brand, user.person)
+            val withCertificate = attendee.copy(certificate = Some(certificate.id), issued = Some(issued))
+            attendeeService.updateCertificate(withCertificate) flatMap { _ =>
+              jsonOk(Json.obj("certificate" -> certificate.id))
+            }
+        }
       }
   }
 

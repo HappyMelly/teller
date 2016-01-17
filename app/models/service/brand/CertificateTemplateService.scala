@@ -30,6 +30,7 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -40,6 +41,22 @@ class CertificateTemplateService extends HasDatabaseConfig[JdbcProfile]
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import driver.api._
+  private val templates = TableQuery[CertificateTemplates]
+
+  /**
+    * Deletes the given certificate template from database
+    * @param id Template identifier
+    */
+  def delete(id: Long): Future[Int] = db.run(templates.filter(_.id === id).delete)
+
+  /**
+    * Find a certificate file
+    *
+    * @param id Unique identifier
+    * @return
+    */
+  def find(id: Long): Future[Option[CertificateTemplate]] =
+    db.run(templates.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns list of certificate templates for the given brand
@@ -47,7 +64,17 @@ class CertificateTemplateService extends HasDatabaseConfig[JdbcProfile]
    * @param brandId Unique brand identifier
    */
   def findByBrand(brandId: Long): Future[List[CertificateTemplate]] =
-    db.run(TableQuery[CertificateTemplates].filter(_.brandId === brandId).sortBy(_.language).result).map(_.toList)
+    db.run(templates.filter(_.brandId === brandId).sortBy(_.language).result).map(_.toList)
+
+  /**
+    * Adds the given template to the database
+    * @param template Template
+    */
+  def insert(template: CertificateTemplate): Future[CertificateTemplate] = {
+    val query = templates returning templates.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += template)
+  }
+
 }
 
 object CertificateTemplateService {

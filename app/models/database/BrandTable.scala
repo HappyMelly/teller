@@ -24,11 +24,12 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.{Brand, DateStamp}
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
 
-private[models] trait BrandTable {
+private[models] trait BrandTable extends PersonTable {
 
   protected val driver: JdbcProfile
   import driver.api._

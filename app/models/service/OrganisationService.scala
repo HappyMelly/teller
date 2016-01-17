@@ -24,19 +24,23 @@
  */
 package models.service
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database._
 import models.{Account, Member, OrgView, Organisation, Person, ProfileType}
 import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class OrganisationService extends HasDatabaseConfig[JdbcProfile]
+  with AccountTable
   with MemberTable
   with OrganisationTable
   with OrganisationMembershipTable
-  with SocialProfileTable {
+  with SocialProfileTable
+  with Services {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import driver.api._
@@ -57,13 +61,11 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
    *
    * @param id Organisation identifier
    */
-  def delete(id: Long): Unit = DB.withTransaction { implicit session ⇒
-    find(id) foreach { org ⇒
-      org.account.delete()
-      memberService.delete(id, person = false)
-      socialProfileService.delete(id, ProfileType.Organisation)
-    }
-    orgs.filter(_.id === id).delete
+  def delete(id: Long): Future[Int] = {
+    db.run(TableQuery[Accounts].filter(_.organisationId === id).delete)
+    memberService.delete(id, person = false)
+    socialProfileService.delete(id, ProfileType.Organisation)
+    db.run(orgs.filter(_.id === id).delete)
   }
 
   /**
@@ -98,8 +100,7 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
    * Returns organisation if exists, otherwise None
    * @param id Organisation id
    */
-  def find(id: Long): Future[Option[Organisation]] =
-    db.run(orgs.filter(_.id === id).result).map(_.headOption)
+  def find(id: Long): Future[Option[Organisation]] = db.run(orgs.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns organisation if it exists, otherwise - None
@@ -131,16 +132,24 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
   }
 
   /**
+    * Returns the requested organisation
+    * @param id Organisation id
+    */
+  def get(id: Long): Future[Organisation] = db.run(orgs.filter(_.id === id).result).map(_.head)
+
+  /**
    * Inserts the given organisation into the database, with an inactive account
    *
    * @param view Organisation with its social profile
    * @return The Organisation as it is saved (with the id added) and social profile
    */
   def insert(view: OrgView): Future[OrgView] = {
-    val organisationId = (orgs returning orgs.map(_.id)) += view.org
-    TableQuery[Accounts] += Account(organisationId = Some(organisationId))
-    socialProfileService.insert(view.profile.copy(objectId = organisationId))
-    OrgView(view.org.copy(id = Some(organisationId)), view.profile)
+    val query = orgs returning orgs.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += view.org).map { org =>
+      db.run(TableQuery[Accounts] += Account(organisationId = org.id))
+      socialProfileService.insert(view.profile.copy(objectId = org.identifier))
+      OrgView(org, view.profile)
+    }
   }
 
   /**
@@ -156,11 +165,12 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
    * @param view Organisation with social profile
    * @return the given organisation with social profile
    */
-  def update(view: OrgView): OrgView = DB.withTransaction { implicit session ⇒
+  def update(view: OrgView): Future[OrgView] = {
     assert(view.org.id.isDefined, "Can only update Organisations that have an id")
     socialProfileService.update(view.profile, view.profile.objectType)
-
-    OrgView(update(view.org), view.profile)
+    update(view.org).map { value =>
+      OrgView(value, view.profile)
+    }
   }
 
   /**

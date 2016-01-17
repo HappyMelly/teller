@@ -32,7 +32,7 @@ import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 
 class BrandLinks(override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
     with Services
     with Security {
 
@@ -51,19 +51,20 @@ class BrandLinks(override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(brandId) map { brand ⇒
-          val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
-          form.bindFromRequest.fold(
-            error ⇒ jsonBadRequest("Link cannot be empty"),
-            linkData ⇒ {
-              val link = BrandLink(None, brandId, linkData._1, linkData._2)
-              val insertedLink = brandService.insertLink(BrandLink.updateType(link))
+  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) {  implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(brandId) flatMap {
+      case None => jsonNotFound(Messages("error.brand.notFound"))
+      case Some(brand) =>
+        val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
+        form.bindFromRequest.fold(
+          error ⇒ jsonBadRequest("Link cannot be empty"),
+          linkData ⇒ {
+            val link = BrandLink(None, brandId, linkData._1, linkData._2)
+            brandService.insertLink(BrandLink.updateType(link)) flatMap { insertedLink =>
               jsonOk(Json.toJson(insertedLink))
-            })
-        } getOrElse jsonNotFound(Messages("error.brand.notFound"))
+            }
+          })
+    }
   }
 
   /**
@@ -75,11 +76,11 @@ class BrandLinks(override implicit val env: TellerRuntimeEnvironment)
    * @param brandId Brand identifier
    * @param id Link identifier
    */
-  def remove(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.deleteLink(brandId, id)
+  def remove(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      brandService.deleteLink(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
+      }
   }
 
 }

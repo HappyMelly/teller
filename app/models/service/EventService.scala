@@ -34,6 +34,7 @@ import services.integrations.Integrations
 import slick.driver.JdbcProfile
 
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class EventService extends Integrations with Services
@@ -53,7 +54,7 @@ class EventService extends Integrations with Services
    *
    * @param id Event identifier
    */
-  def confirm(id: Long): Unit = db.run(events.filter(_.id === id).map(_.confirmed).update(true))
+  def confirm(id: Long): Future[Int] = db.run(events.filter(_.id === id).map(_.confirmed).update(true))
 
   /**
    * Deletes the given event and all related data from database
@@ -68,8 +69,19 @@ class EventService extends Integrations with Services
     db.run(actions)
   }
 
+  def facilitatorIds(eventId: Long): Future[List[Long]] =
+    db.run(TableQuery[EventFacilitators].filter(_.eventId === eventId).result).map(_.toList.map(_._2))
+
+  def facilitators(eventId: Long): Future[List[Person]] = {
+    val query = for {
+      facilitation ← TableQuery[EventFacilitators] if facilitation.eventId === eventId
+      person ← facilitation.facilitator
+    } yield person
+    db.run(query.sortBy(_.lastName.toLowerCase).result).map(_.toList)
+  }
+
   /**
-   * Returns event if it exists, otherwise - None
+    * Returns event if it exists, otherwise - None
    *
    * @param id Event identifier
    */
@@ -90,7 +102,8 @@ class EventService extends Integrations with Services
 
   /**
    * Return event if it exists related to the given evaluation
-   * @param evaluationId Evaluation id
+    *
+    * @param evaluationId Evaluation id
    */
   def findByEvaluation(evaluationId: Long): Future[Option[Event]] = {
     val query = for {
@@ -185,6 +198,13 @@ class EventService extends Integrations with Services
   def findAll: Future[List[Event]] = findByParameters(brandId = None)
 
   /**
+    * Returns the requested event
+    *
+    * @param id Event identifier
+    */
+  def get(id: Long): Future[Event] = db.run(events.filter(_.id === id).result).map(_.head)
+
+  /**
    * Adds event and related objects to database
    *
    * @param view Event object
@@ -201,20 +221,21 @@ class EventService extends Integrations with Services
       view.event.schedule.end, view.event.schedule.hoursPerDay,
       view.event.schedule.totalHours, view.event.notPublic,
       view.event.archived, view.event.confirmed, view.event.free, view.event.followUp)
-    val query = events.map(_.forInsert) returning events.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val query = events.map(_.forInsert) returning events.map(_.id) into ((value, id) => id)
     val actions = (for {
-      event <- query += insertTuple
-      _ <- view.event.facilitatorIds.distinct.foreach { facilitatorId ⇒
-        TableQuery[EventFacilitators] += (event.id, facilitatorId) }
-      _ <- TableQuery[EventInvoices] += view.invoice.copy(eventId = event.id)
-    } yield event).transactionally
-    db.run(actions)
+      eventId <- query += insertTuple
+      _ <- DBIO.sequence(view.event.facilitatorIds.distinct.map { facilitatorId ⇒
+        TableQuery[EventFacilitators] += (eventId, facilitatorId) })
+      _ <- TableQuery[EventInvoices] += view.invoice.copy(eventId = Some(eventId))
+    } yield eventId).transactionally
+    db.run(actions).map(id => EventView(view.event.copy(id = Some(id)), view.invoice))
   }
 
   /**
    * Fill events with facilitators (using only one query to database)
    * TODO: Cover with tests
-   * @param events List of events
+    *
+    * @param events List of events
    * @return
    */
   def applyFacilitators(events: List[Event]): Unit = {
@@ -223,17 +244,20 @@ class EventService extends Integrations with Services
       facilitation ← TableQuery[EventFacilitators] if facilitation.eventId inSet ids
       person ← facilitation.facilitator
     } yield (facilitation.eventId, person)
-    val facilitationData = db.run(query.result).list
-    val facilitators = facilitationData.map(_._2).distinct
-    PeopleCollection.addresses(facilitators)
-    facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
-    val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-    events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
+    val futureData = db.run(query.result).map(_.toList)
+    futureData map { facilitationData =>
+      val facilitators = facilitationData.map(_._2).distinct
+      personService.collection.addresses(facilitators)
+      facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
+      val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+      events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
+    }
   }
 
   /**
    * Fill events with invoices (using only one query to database)
-   * @todo test
+    *
+    * @todo test
    * @todo comment
    * @param events List of events
    */
@@ -274,14 +298,15 @@ class EventService extends Integrations with Services
     facilitators.filter(_.eventId === view.event.id).delete
     view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
       facilitators += (view.event.id.get, facilitatorId))
-    EventInvoice._update(view.invoice)
+    eventInvoiceService.update(view.invoice)
 
     view
   }
 
   /**
    * Updates rating for the given event
-   * @param eventId Event id
+    *
+    * @param eventId Event id
    * @param rating New rating
    */
   def updateRating(eventId: Long, rating: Float): Unit =

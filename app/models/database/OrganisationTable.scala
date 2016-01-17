@@ -24,6 +24,7 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.{DateStamp, Organisation}
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
@@ -52,7 +53,7 @@ private[models] trait OrganisationTable {
     def blog = column[Option[String]]("BLOG")
     def contactEmail = column[Option[String]]("CONTACT_EMAIL")
     def customerId = column[Option[String]]("CUSTOMER_ID")
-    def about = column[Option[String]]("ABOUT", O.DBType("TEXT"))
+    def about = column[Option[String]]("ABOUT")
     def logo = column[Boolean]("LOGO")
     def active = column[Boolean]("ACTIVE")
     def created = column[DateTime]("CREATED")

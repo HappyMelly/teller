@@ -12,6 +12,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
+import play.twirl.api.Html
 import services.TellerRuntimeEnvironment
 import views.Countries
 
@@ -21,7 +22,7 @@ import scala.concurrent.Future
   * Created by sery0ga on 04/01/16.
   */
 class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-  extends JsonController
+  extends AsyncController
   with Security
   with Services
   with Activities
@@ -63,7 +64,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   def add(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      Future.successful(Ok(views.html.v2.attendee.form(user, None, eventId, form(eventId, user.person.fullName))))
+      ok(views.html.v2.attendee.form(user, None, eventId, form(eventId, user.person.fullName)))
   }
 
   /**
@@ -77,76 +78,83 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
         data => {
           attendeeService.insert(data)
-          Future.successful(
-            Redirect(controllers.routes.Events.details(eventId)).flashing("success" -> "Attendee was successfully added"))
+          redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was added")
         }
       )
   }
 
   /**
     * Deletes the given attendee
+    *
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
   def delete(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      attendeeService.find(attendeeId, eventId) map { attendee =>
-        attendeeService.delete(attendeeId, eventId)
-        Future.successful(jsonSuccess("Attendee was successfully deleted"))
-      } getOrElse Future.successful(jsonNotFound("Unknown attendee"))
-
+      attendeeService.find(attendeeId, eventId) flatMap {
+        case None => jsonNotFound("Unknown attendee")
+        case Some(attendee) =>
+          attendeeService.delete(attendeeId, eventId) flatMap { _ =>
+            jsonSuccess("Attendee was deleted")
+          }
+      }
   }
 
   /**
     * Returns the details of the given participant
+    *
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
   def details(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
-      attendeeService.find(attendeeId, eventId) map { attendee =>
-        val evaluation = attendee.evaluationId map { evaluationId =>
-          evaluationService.findWithEvent(evaluationId).flatMap(x => Some(x.eval))
-        } getOrElse None
-        val identical = evaluation.map { x =>
-          if (x.status == EvaluationStatus.Unconfirmed || x.status == EvaluationStatus.Pending) {
-            x.identical()
-          } else
-            None
-        } getOrElse None
-        Future.successful(Ok(views.html.v2.attendee.details(attendee, evaluation, user.account.isCoordinatorNow,
-          identical)))
-      } getOrElse Future.successful(BadRequest("Attendee does not exist"))
+      attendeeService.find(attendeeId, eventId) flatMap {
+        case None => badRequest(Html("Attendee not found"))
+        case Some(attendee) =>
+          findEvaluation(attendee.evaluationId) flatMap {
+            case None => Future.successful((None, None))
+            case Some(evaluation) => identicalEvaluation(evaluation) map { identical =>
+              (Some(evaluation), identical) }
+          } flatMap { pair =>
+            ok(views.html.v2.attendee.details(attendee, pair._1, user.account.isCoordinatorNow, pair._2))
+          }
+      }
   }
 
   /**
     * Renders edit form for attendee
+    *
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
   def edit(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      attendeeService.find(attendeeId, eventId).map { attendee =>
-        if (attendee.personId.isEmpty) {
+      attendeeService.find(attendeeId, eventId) flatMap {
+        case None => notFound(Html("Attendee not found"))
+        case Some(attendee) =>
+          if (attendee.personId.isEmpty) {
             val filledForm = form(eventId, user.name).fill(attendee)
-            Future.successful(Ok(views.html.v2.attendee.form(user, Some(attendeeId), eventId, filledForm)))
-        } else {
-          Future.successful(Forbidden("You are not allowed to edit this attendee"))
-        }
-      } getOrElse Future.successful(NotFound("Unknown attendee"))
+            ok(views.html.v2.attendee.form(user, Some(attendeeId), eventId, filledForm))
+          } else {
+            forbidden(Html("You are not allowed to edit this attendee"))
+          }
+      }
   }
 
   /**
     * Renders list of attendees
+    *
     * @param brandId Brand identifier
     */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
-        Ok(views.html.v2.attendee.forBrandCoordinators(user, view.brand, brands))
+        ok(views.html.v2.attendee.forBrandCoordinators(user, view.brand, brands))
       } { (view, brands) =>
-        Ok(views.html.v2.attendee.forFacilitators(user, view.get.brand, brands))
-      } { Redirect(controllers.routes.Dashboard.index()) }
+        ok(views.html.v2.attendee.forFacilitators(user, view.get.brand, brands))
+      } {
+        redirect(controllers.routes.Dashboard.index())
+      }
   }
 
   /**
@@ -155,51 +163,58 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param brandId Brand identifier
     */
-  def list(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    brandService.findWithCoordinators(brandId) map { view ⇒
-      val withSettings = brandService.findWithSettings(brandId).get
-      val account = user.account
-      val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))
-      implicit val participantViewWrites = new Writes[AttendeeView] {
-        def writes(data: AttendeeView): JsValue = {
-          val url: String = data.attendee.personId map { personId =>
-            controllers.routes.People.details(personId).url
-          } getOrElse {
-            controllers.routes.Licenses.addForAttendee(data.attendee.identifier, data.attendee.eventId).url
+  def list(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      withCoordinators <- brandService.findWithCoordinators(brandId)
+      withSettings <- brandService.findWithSettings(brandId)
+    } yield (withCoordinators, withSettings)) flatMap {
+      case (None, _) => ok(Json.toJson(List[String]()))
+      case (Some(view), Some(withSettings)) =>
+        val account = user.account
+        val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))
+        implicit val participantViewWrites = new Writes[AttendeeView] {
+          def writes(data: AttendeeView): JsValue = {
+            val url: String = data.attendee.personId map { personId =>
+              controllers.routes.People.details(personId).url
+            } getOrElse {
+              controllers.routes.Licenses.addForAttendee(data.attendee.identifier, data.attendee.eventId).url
+            }
+            Json.obj(
+              "person" -> Json.obj(
+                "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
+                "name" -> data.attendee.fullName),
+              "event" -> Json.obj(
+                "id" -> data.event.id,
+                "url" -> controllers.routes.Events.details(data.event.id.get).url,
+                "title" -> data.event.title,
+                "longTitle" -> data.event.longTitle),
+              "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
+              "schedule" -> data.event.schedule.formatted,
+              "evaluation" -> evaluation(data.evaluation),
+              "attendee" -> Json.obj(
+                "person" -> data.attendee.identifier,
+                "event" -> data.event.identifier,
+                "license" -> url,
+                "certificate" -> Json.obj(
+                  "show" -> showCertificate(withSettings.settings, data.event, data.evaluation.map(_.status)),
+                  "number" -> data.attendee.certificate)))
           }
-          Json.obj(
-            "person" -> Json.obj(
-              "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
-              "name" -> data.attendee.fullName),
-            "event" -> Json.obj(
-              "id" -> data.event.id,
-              "url" -> controllers.routes.Events.details(data.event.id.get).url,
-              "title" -> data.event.title,
-              "longTitle" -> data.event.longTitle),
-            "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
-            "schedule" -> data.event.schedule.formatted,
-            "evaluation" -> evaluation(data),
-            "attendee" -> Json.obj(
-              "person" -> data.attendee.identifier,
-              "event" -> data.event.identifier,
-              "license" -> url,
-              "certificate" -> Json.obj(
-                "show" -> showCertificate(withSettings.settings, data.event, data.status),
-                "number" -> data.attendee.certificate)))
         }
-      }
-      val personId = account.personId
-      val attendees =
-        if (coordinator & user.account.isCoordinatorNow) {
+        val personId = account.personId
+        val result = if (coordinator & user.account.isCoordinatorNow)
           attendeeService.findByBrand(withSettings.brand.id)
-        } else if (License.licensedSince(personId, brandId).nonEmpty) {
-          val events = eventService.findByFacilitator(personId, withSettings.brand.id).map(_.id.get)
-          evaluationService.findEvaluationsByEvents(events)
-        } else {
-          List[AttendeeView]()
+        else
+          licenseService.activeLicense(brandId, personId) flatMap {
+            case None => Future.successful(List[AttendeeView]())
+            case Some(_) =>
+              eventService.findByFacilitator(personId, withSettings.brand.id) flatMap { events =>
+                evaluationService.findEvaluationsByEvents(events.map(_.identifier))
+              }
+          }
+        result flatMap { attendees =>
+          ok(Json.toJson(attendees))
         }
-      Ok(Json.toJson(attendees)).withSession("brandId" -> brandId.toString)
-    } getOrElse Ok(Json.toJson(List[String]()))
+    }
   }
 
   /**
@@ -207,57 +222,84 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   def listByEvent(eventId: Long) = AsyncSecuredEventAction(List(Role.Coordinator, Role.Facilitator), eventId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
-      val view = brandService.findWithSettings(event.brandId).get
-      implicit val participantViewWrites = new Writes[AttendeeView] {
-        def writes(data: AttendeeView): JsValue = {
-          Json.obj(
-            "person" -> Json.obj(
-              "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
-              "name" -> data.attendee.fullName,
-              "id" -> data.attendee.identifier),
-            "evaluation" -> evaluation(data),
-            "participant" -> Json.obj(
-              "person" -> data.attendee.identifier,
-              "event" -> data.event.identifier,
-              "certificate" -> Json.obj(
-                "show" -> showCertificate(view.settings, data.event, data.status),
-                "number" -> data.attendee.certificate)))
-        }
+      (for {
+        view <- brandService.findWithSettings(event.brandId)
+        participants <- evaluationService.findEvaluationsByEvents(List(eventId))
+      } yield (view, participants)) flatMap {
+        case (None, participants) => ok(Json.toJson(List[String]()))
+        case (Some(view), participants) =>
+          implicit val participantViewWrites = new Writes[AttendeeView] {
+            def writes(data: AttendeeView): JsValue = {
+              Json.obj(
+                "person" -> Json.obj(
+                  "url" -> attendeeDetailsUrl(data.attendee, data.event.identifier),
+                  "name" -> data.attendee.fullName,
+                  "id" -> data.attendee.identifier),
+                "evaluation" -> evaluation(data.evaluation),
+                "participant" -> Json.obj(
+                  "person" -> data.attendee.identifier,
+                  "event" -> data.event.identifier,
+                  "certificate" -> Json.obj(
+                    "show" -> showCertificate(view.settings, data.event, data.evaluation.map(_.status)),
+                    "number" -> data.attendee.certificate)))
+            }
+          }
+          ok(Json.toJson(participants))
       }
-      val participants = evaluationService.findEvaluationsByEvents(List(eventId))
-      Future.successful(Ok(Json.toJson(participants)))
   }
 
   /**
     * Updates the given attendee
+    *
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
   def update(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
-      attendeeService.find(attendeeId, eventId).map { attendee =>
-        if (attendee.personId.isEmpty) {
-          form(eventId, user.name).bindFromRequest.fold(
-            errors => Future.successful(
-              BadRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors))),
-            data => {
-              attendeeService.update(data.copy(id = attendee.id, personId = attendee.personId))
-              Future.successful(
-                Redirect(controllers.routes.Events.details(eventId)).flashing("success" -> "Attendee was successfully updated"))
-            }
-          )
-        } else {
-          Future.successful(
-            Redirect(controllers.routes.Events.details(eventId)).flashing("error" -> "You are not allowed to update this attendee"))
-        }
-      } getOrElse Future.successful(
-        Redirect(controllers.routes.Events.details(eventId)).flashing("error" -> "Unknown person"))
+      form(eventId, user.name).bindFromRequest.fold(
+        errors => badRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors)),
+        data =>
+          attendeeService.find(attendeeId, eventId) flatMap {
+            case None => redirect(controllers.routes.Events.details(eventId), "error" -> "Unknown person")
+            case Some(attendee) =>
+              if (attendee.personId.nonEmpty)
+                redirect(controllers.routes.Events.details(eventId), "error" -> "You are not allowed to update this attendee")
+              else
+                attendeeService.update(data.copy(id = attendee.id, personId = attendee.personId)) flatMap { _ =>
+                  redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was successfully updated")
+                }
 
+          }
+      )
   }
+
+  /**
+    * Returns an evaluation if exists
+    *
+    * @param evaluationId Evaluation identifier
+    */
+  protected def findEvaluation(evaluationId: Option[Long]): Future[Option[Evaluation]] = evaluationId map { id =>
+      evaluationService.findWithEvent(id).map {
+        case None => None
+        case Some(view) => Some(view.eval)
+      }
+    } getOrElse Future.successful(None)
 
 
   /**
+    * Returns identical evaluation for the given evaluation
+    *
+    * @param evaluation Evaluation
+    */
+  protected def identicalEvaluation(evaluation: Evaluation): Future[Option[Evaluation]] =
+    if (evaluation.status == EvaluationStatus.Unconfirmed || evaluation.status == EvaluationStatus.Pending) {
+      evaluation.identical()
+    } else
+      Future.successful(None)
+
+  /**
     * Returns true if a link to certificate should be shown
+    *
     * @param settings Brand settings
     * @param event Event
     * @param status Evaluation status
@@ -269,6 +311,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
 
   /**
     * Returns url to a profile of the person who is the participant
+    *
     * @param attendee Person
     * @param eventId Event identifier
     */
@@ -278,18 +321,19 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
 
   /**
     * Get JSON with evaluation data
+    *
     * @param data Data to convert to JSON
     * @return
     */
-  private def evaluation(data: AttendeeView): JsValue = {
+  private def evaluation(data: Option[Evaluation]): JsValue = {
     Json.obj(
-      "id" -> data.evaluationId,
-      "impression" -> data.impression,
-      "status" -> data.status.map(status ⇒
+      "id" -> data.map(_.identifier),
+      "impression" -> data.map(_.impression),
+      "status" -> data.map(_.status).map(status ⇒
         Json.obj(
           "label" -> Messages("models.EvaluationStatus." + status),
           "value" -> status.id)),
-      "creation" -> data.date.map(_.toString("yyyy-MM-dd")),
-      "handled" -> data.handled.map(_.toString))
+      "creation" -> data.map(_.recordInfo.created).map(_.toString("yyyy-MM-dd")),
+      "handled" -> data.map(_.handled).map(_.toString))
   }
 }

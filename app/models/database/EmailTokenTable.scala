@@ -1,5 +1,6 @@
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.EmailToken
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
@@ -14,8 +15,8 @@ private[models] trait EmailTokenTable {
     */
   private[models] class EmailTokens(tag: Tag) extends Table[EmailToken](tag, "EMAIL_TOKEN") {
 
-    def token = column[String]("TOKEN", O.DBType("VARCHAR(254)"))
-    def email = column[String]("EMAIL", O.DBType("VARCHAR(254)"))
+    def token = column[String]("TOKEN", O.Length(254, varying = true))
+    def email = column[String]("EMAIL", O.Length(254, varying = true))
     def userId = column[Long]("USER_ID")
     def created = column[DateTime]("CREATED")
     def expire = column[DateTime]("EXPIRE")

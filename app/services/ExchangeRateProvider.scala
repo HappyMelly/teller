@@ -25,6 +25,7 @@
 package services
 
 import models.ExchangeRate
+import models.service.Services
 import math.BigDecimal.int2bigDecimal
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
@@ -44,7 +45,7 @@ trait ExchangeRateProvider {
 /**
  * An ExchangeRateProvider that queries Yahoo’s finace API (using YQL).
  */
-object YahooExchangeRateProvider extends ExchangeRateProvider {
+object YahooExchangeRateProvider extends ExchangeRateProvider{
   implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
   private val serviceUrl = "http://query.yahooapis.com/v1/public/yql"
@@ -81,24 +82,29 @@ object YahooExchangeRateProvider extends ExchangeRateProvider {
 /**
  * An ExchangeRateProvider that queries the database for today’s rate.
  */
-object DatabaseExchangeRateProvider extends ExchangeRateProvider {
+object DatabaseExchangeRateProvider extends ExchangeRateProvider with Services {
   override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] =
-    Future.successful(ExchangeRate.fromDatabase(base, counter)) // This blocks, but we always block on DB access.
+    exchangeService.fromDatabase(base, counter)
 }
 
 /**
  * A wrapper for another `ExchangeRateProvider` that stores the results in the database.
- * @param wrappedProvider The provider for which to store the results.
+  *
+  * @param wrappedProvider The provider for which to store the results.
  */
-case class PersistingExchangeRateProvider(private val wrappedProvider: ExchangeRateProvider) extends ExchangeRateProvider {
+case class PersistingExchangeRateProvider(private val wrappedProvider: ExchangeRateProvider)
+  extends ExchangeRateProvider
+  with Services {
   import scala.concurrent.ExecutionContext.Implicits.global
-  import play.api.db.slick.Config.driver.simple._
-  import play.api.db.slick.DB
-  import play.api.Play.current
 
-  override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] = DB.withSession { implicit session: Session ⇒
+  override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] = {
     val futureMaybeRate: Future[Option[ExchangeRate]] = wrappedProvider(base, counter)
-    for (Some(rate) ← futureMaybeRate if rate.id.isEmpty) yield Some(rate.insert)
+    futureMaybeRate flatMap { case Some(rate) =>
+      if (rate.id.isEmpty)
+        exchangeService.insert(rate).map(x => Some(x))
+      else
+        Future.successful(None)
+    }
   }
 }
 

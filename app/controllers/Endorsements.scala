@@ -30,7 +30,7 @@ import models.service.Services
 import models.{Brand, Endorsement}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json.{JsArray, JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 
@@ -42,7 +42,8 @@ case class EndorsementFormData(content: String,
   company: Option[String])
 
 class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
+    with I18nSupport
     with Services
     with Security {
 
@@ -68,12 +69,15 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * Renders endorsement add form
    * @param personId Person identifier
    */
-  def add(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
-          Ok(views.html.v2.endorsement.addForm(user, personId, brands(personId), form))
-        } getOrElse NotFound(Messages("error.person.notFound"))
+  def add(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      (for {
+        person <- personService.find(personId)
+        brands <- brands(personId)
+      } yield (person, brands)) flatMap {
+        case (None, _) => notFound(Messages("error.person.notFound"))
+        case (Some(person), brands) => ok(views.html.v2.endorsement.addForm(user, personId, brands, form))
+      }
   }
 
   /**
@@ -82,26 +86,31 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person id
    */
-  def renderSelectForm(personId: Long) = SecuredProfileAction(personId) {
-    implicit request =>
-      implicit handler => implicit user =>
-        val brands = brandService.findAll
-        val events = eventService.findByFacilitator(personId).map { x =>
+  def renderSelectForm(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request =>
+    implicit handler => implicit user =>
+      (for {
+        brands <- brandService.findAll
+        events <- eventService.findByFacilitator(personId)
+        endorsements <- personService.endorsements(personId)
+      } yield (brands, events, endorsements)) flatMap { case (brands, events, endorsements) =>
+        val filteredEvents = events.map { x =>
           (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
         }
-        val evaluationIds = personService.endorsements(personId).
-          filter(_.evaluationId != 0).map(_.evaluationId)
-        val evaluations = evaluationService.
-          findByEvents(events.map(_._1.id.get)).
-          filterNot(x => evaluationIds.contains(x.id.get))
+        val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
+        evaluationService.findByEvents(filteredEvents.map(_._1.id.get)) map { evaluations =>
+          evaluations.filterNot(x => evaluationIds.contains(x.id.get))
+        } flatMap { evaluations =>
+          personService.find(evaluations.map(_.attendeeId).distinct) flatMap { people =>
+            val content = evaluations.sortBy(_.impression).reverse.map { x =>
+              (x,
+                people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse(""),
+                filteredEvents.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
+            }
+            ok(views.html.v2.endorsement.selectForm(user, personId, content))
 
-        val people = personService.find(evaluations.map(_.attendeeId).distinct)
-        val content = evaluations.sortBy(_.impression).reverse.map { x =>
-          (x,
-            people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse(""),
-            events.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
+          }
         }
-        Ok(views.html.v2.endorsement.selectForm(user, personId, content))
+      }
   }
 
   /**
@@ -109,16 +118,20 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def edit(personId: Long, id: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
-          personService.findEndorsement(id) map { endorsement ⇒
-            val formData = EndorsementFormData(endorsement.content,
-              endorsement.name, endorsement.brandId, endorsement.company)
-            Ok(views.html.v2.endorsement.editForm(user, personId, brands(personId), form.fill(formData), id))
-          } getOrElse NotFound("Endorsement is not found")
-        } getOrElse NotFound(Messages("error.person.notFound"))
+  def edit(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      (for {
+        person <- personService.find(personId)
+        endorsement <- personService.findEndorsement(id)
+        brands <- brands(personId)
+      } yield (person, endorsement, brands)) flatMap {
+        case (None, _, _) => notFound(Messages("error.person.notFound"))
+        case (_, None, _) => notFound("Endorsement not found")
+        case (Some(person), Some(endorsement), brands) =>
+          val formData = EndorsementFormData(endorsement.content,
+            endorsement.name, endorsement.brandId, endorsement.company)
+          ok(views.html.v2.endorsement.editForm(user, personId, brands, form.fill(formData), id))
+      }
   }
 
   /**
@@ -126,15 +139,18 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
-          form.bindFromRequest.fold(
-            error ⇒
-              BadRequest(views.html.v2.endorsement.addForm(user, personId, brands(personId), error)),
-            endorsementData ⇒ {
-              val endorsements = personService.endorsements(personId)
+  def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      form.bindFromRequest.fold(
+        error ⇒ brands(personId) flatMap { brands =>
+          badRequest(views.html.v2.endorsement.addForm(user, personId, brands, error))},
+        endorsementData ⇒
+          (for {
+            person <- personService.find(personId)
+            endorsements <- personService.endorsements(personId)
+          } yield (person, endorsements)) flatMap {
+            case (None, _) => notFound(Messages("error.person.notFound"))
+            case (Some(person), endorsements) =>
               val maxPosition = if (endorsements.nonEmpty)
                 endorsements.last.position
               else
@@ -142,11 +158,10 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
               val endorsement = Endorsement(None, personId, endorsementData.brandId,
                 endorsementData.content, endorsementData.name,
                 endorsementData.company, maxPosition + 1)
-              personService.insertEndorsement(endorsement)
-              val url = routes.People.details(personId).url + "#experience"
-              Redirect(url)
-            })
-        } getOrElse NotFound(Messages("error.person.notFound"))
+              personService.insertEndorsement(endorsement) flatMap { _ =>
+                redirect(routes.People.details(personId).url + "#experience")
+              }
+          })
   }
 
   /**
@@ -154,30 +169,32 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person identifier
    */
-  def createFromSelected(personId: Long) = SecuredProfileAction(personId) {
+  def createFromSelected(personId: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       val form = Form(single("evaluations" -> nonEmptyText))
       form.bindFromRequest.fold(
         error => jsonBadRequest("'evaluations' param is empty"),
         formData => {
-          val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
-          val events = eventService.findByFacilitator(personId)
-          val endorsements = personService.endorsements(personId)
-          val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
-          val evaluations = evaluationService.
-            findByEventsWithAttendees(events.map(_.identifier)).
-            filter(x => receivedIds.contains(x._3.identifier)).
-            filterNot(x => evaluationIds.contains(x._3.identifier))
-          val maxPosition = maxEndorsementPosition(endorsements)
-          val newEndorsements = evaluations.map { view =>
-            val name = view._2.fullName
-            val brandId = view._1.brandId
-            Endorsement(None, personId, brandId, view._3.facilitatorReview, name,
-              evaluationId = view._3.identifier, rating = Some(view._3.impression))
-          }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
-          newEndorsements.foreach { x => personService.insertEndorsement(x) }
-          val url = routes.People.details(personId).url + "#experience"
-          jsonOk(Json.obj("url" -> url))
+          (for {
+            events <- eventService.findByFacilitator(personId)
+            endorsements <- personService.endorsements(personId)
+            evaluations <- evaluationService.findByEventsWithAttendees(events.map(_.identifier))
+          } yield (events, endorsements, evaluations)) flatMap { case (events, endorsements, evaluations) =>
+            val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
+            val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
+            val filteredEvaluations = evaluations.filter(x => receivedIds.contains(x._3.identifier)).
+              filterNot(x => evaluationIds.contains(x._3.identifier))
+            val maxPosition = maxEndorsementPosition(endorsements)
+            val newEndorsements = filteredEvaluations.map { view =>
+              val name = view._2.fullName
+              val brandId = view._1.brandId
+              Endorsement(None, personId, brandId, view._3.facilitatorReview, name,
+                evaluationId = view._3.identifier, rating = Some(view._3.impression))
+            }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
+            newEndorsements.foreach { x => personService.insertEndorsement(x) }
+            val url = routes.People.details(personId).url + "#experience"
+            jsonOk(Json.obj("url" -> url))
+          }
         }
       )
   }
@@ -192,18 +209,23 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
         if (event.facilitatorIds.contains(personId)) {
-          evaluationService.findWithAttendee(evaluationId) map { view =>
-            val endorsements = personService.endorsements(personId)
-            val maxPosition = maxEndorsementPosition(endorsements)
-            val endorsement = Endorsement(None, personId,
-              event.brandId, view.evaluation.facilitatorReview, view.attendee.fullName,
-              position = maxPosition + 1, evaluationId = view.evaluation.id.get,
-              rating = Some(view.evaluation.impression))
-            val id = personService.insertEndorsement(endorsement).id.get
-            Future.successful(jsonOk(Json.obj("endorsementId" -> id)))
-          } getOrElse Future.successful(jsonNotFound("Evaluation doesn't exist"))
+          (for {
+            view <- evaluationService.findWithAttendee(evaluationId)
+            endorsements <- personService.endorsements(personId)
+          } yield (view, endorsements)) flatMap {
+            case (None, _) => jsonNotFound("Evaluation doesn't exist")
+            case (Some(view), endorsements) =>
+              val maxPosition = maxEndorsementPosition(endorsements)
+              val endorsement = Endorsement(None, personId,
+                event.brandId, view.evaluation.facilitatorReview, view.attendee.fullName,
+                position = maxPosition + 1, evaluationId = view.evaluation.id.get,
+                rating = Some(view.evaluation.impression))
+              personService.insertEndorsement(endorsement) flatMap { endorsement =>
+                jsonOk(Json.obj("endorsementId" -> endorsement.id.get))
+              }
+          }
         } else {
-          Future.successful(jsonBadRequest("Internal error. You shouldn't be able to make this request"))
+          jsonBadRequest("Internal error. You shouldn't be able to make this request")
         }
   }
 
@@ -212,7 +234,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person identifier
    */
-  def updatePositions(personId: Long) = SecuredProfileAction(personId) {
+  def updatePositions(personId: Long) = AsyncSecuredProfileAction(personId) {
     implicit request => implicit handler => implicit user =>
       val form = Form(single("positions" -> nonEmptyText))
       form.bindFromRequest.fold(
@@ -238,11 +260,11 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param personId Person identifier
    * @param id endorsement identifier
    */
-  def remove(personId: Long, id: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.deleteEndorsement(personId, id)
+  def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      personService.deleteEndorsement(personId, id) flatMap { _ =>
         jsonSuccess("ok")
+      }
   }
 
   /**
@@ -251,27 +273,28 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def update(personId: Long, id: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.v2.endorsement.editForm(user, personId, brands(personId), error, id)),
-          endorsementData ⇒ {
-            val endorsement = Endorsement(Some(id), personId, endorsementData.brandId,
-              endorsementData.content, endorsementData.name,
-              endorsementData.company)
-            personService.updateEndorsement(endorsement)
-            val url = routes.People.details(personId).url + "#experience"
-            Redirect(url)
-          })
+  def update(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      form.bindFromRequest.fold(
+        error ⇒ brands(personId) flatMap { brands =>
+          badRequest(views.html.v2.endorsement.editForm(user, personId, brands, error, id))},
+        endorsementData ⇒ {
+          val endorsement = Endorsement(Some(id), personId, endorsementData.brandId,
+            endorsementData.content, endorsementData.name,
+            endorsementData.company)
+          personService.updateEndorsement(endorsement) flatMap { _ =>
+            val url: String = routes.People.details(personId).url + "#experience"
+            redirect(url)
+          }
+        })
   }
 
   /**
    * Returns list of brands for which the given person has licenses
    * @param personId Person identifier
    */
-  protected def brands(personId: Long): List[Brand] =
-    brandService.findByLicense(personId).map(_.brand)
+  protected def brands(personId: Long): Future[List[Brand]] =
+    brandService.findByLicense(personId).map(_.map(_.brand))
 
   /**
    * Returns maximum position of endorsements from the given list

@@ -32,8 +32,11 @@ import org.joda.money.Money
 import play.api.Play.current
 import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
+import play.api.mvc._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
+
+import scala.concurrent.Future
 
 class Membership @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
     extends Enrollment
@@ -45,10 +48,10 @@ class Membership @javax.inject.Inject() (override implicit val env: TellerRuntim
    * Renders welcome screen for existing users with two options:
    * Become a funder and Become a supporter
    */
-  def welcome = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val orgs = personService.memberships(user.person.id.get).filter(_.member.isEmpty)
-      Ok(views.html.membership.welcome(user, orgs))
+  def welcome = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    personService.memberships(user.person.identifier) flatMap { orgs =>
+      ok(views.html.membership.welcome(user, orgs.filter(_.member.isEmpty)))
+    }
   }
 
   /**
@@ -57,10 +60,9 @@ class Membership @javax.inject.Inject() (override implicit val env: TellerRuntim
    *
    * @param orgId Organisation identifier
    */
-  def congratulations(orgId: Option[Long]) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Ok(views.html.membership.congratulations(user, orgId))
+  def congratulations(orgId: Option[Long]) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      ok(views.html.membership.congratulations(user, orgId))
   }
 
   /**
@@ -69,90 +71,129 @@ class Membership @javax.inject.Inject() (override implicit val env: TellerRuntim
    *
    * @param orgId Organisation identifier
    */
-  def payment(orgId: Option[Long]) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val publicKey = Play.configuration.getString("stripe.public_key").get
-        orgId map { id ⇒
-          orgService.find(id) map { org ⇒
-            if (personService.memberships(user.person.id.get).exists(_.id == org.id)) {
-              val fee = Payment.countryBasedFees(org.countryCode)
-              Ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
-            } else {
-              Redirect(routes.Membership.welcome()).
-                flashing("error" -> Messages("error.person.notOrgMember"))
+  def payment(orgId: Option[Long]) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val welcomeCall: Call = routes.Membership.welcome()
+      val publicKey = Play.configuration.getString("stripe.public_key").get
+      orgId map { id ⇒
+        orgService.find(id) flatMap {
+          case None => redirect(welcomeCall, "error" -> Messages("error.organisation.notExist"))
+          case Some(org) ⇒
+            personService.memberships(user.person.identifier) flatMap { orgs =>
+              if (orgs.exists(_.id == org.id)) {
+                val fee = Payment.countryBasedFees(org.countryCode)
+                ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
+              } else {
+                redirect(welcomeCall, "error" -> Messages("error.person.notOrgMember"))
+              }
             }
-          } getOrElse {
-            Redirect(routes.Membership.welcome()).
-              flashing("error" -> Messages("error.organisation.notExist"))
-          }
-        } getOrElse {
-          val code = user.person.address.countryCode
-          val fee = Payment.countryBasedFees(code)
-          Ok(views.html.membership.payment(user, paymentForm, publicKey, fee))
         }
+      } getOrElse {
+        val code = user.person.address.countryCode
+        val fee = Payment.countryBasedFees(code)
+        ok(views.html.membership.payment(user, paymentForm, publicKey, fee))
+      }
   }
 
   /**
    * Charges card
    */
-  def charge = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      paymentForm.bindFromRequest.fold(
-        hasError ⇒
-          BadRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
-        data ⇒ {
-          try {
-            val org = data.orgId map { orgId ⇒ orgService.find(orgId) } getOrElse None
-            validatePaymentData(data, user.person, org)
-
-            val customerId = subscribe(user.person, org, data)
-            val fee = Money.of(EUR, data.fee)
-            val member = org map { o ⇒
-              orgService.update(o.copy(customerId = Some(customerId)))
-              o.becomeMember(funder = false, fee, user.person.id.get)
-            } getOrElse {
-              user.person.copy(customerId = Some(customerId)).update
-              user.person.becomeMember(funder = false, fee)
-            }
-            val url = org map { o ⇒
-              routes.Organisations.details(o.id.get).url
-            } getOrElse {
-              routes.People.details(user.person.id.get).url
-            }
-            if (org.isEmpty) {
-              env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
-                _.updateUser(ActiveUser(user.id, user.providerId, user.account, user.person, Some(member)))
-              })
-            }
-            notify(user.person, org, member)
-            subscribe(user.person, member)
-
-            activity(member, user.person).becameSupporter.insert()
-
-            Ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
-          } catch {
-            case e: PaymentException ⇒
-              val error = e.code match {
-                case "card_declined" ⇒ "error.payment.card_declined"
-                case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
-                case "expired_card" ⇒ "error.payment.expired_card"
-                case "processing_error" ⇒ "error.payment.processing_error"
-                case _ ⇒ "error.payment.unexpected_error"
+  def charge = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    paymentForm.bindFromRequest.fold(
+      hasError ⇒ badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
+      data ⇒ {
+        try {
+          data.orgId map { orgId =>
+            orgService.find(orgId) flatMap {
+              case None => badRequest(Json.obj("message" -> "Organisation not found"))
+              case Some(org) => processOrganisationMember(data, user, org) flatMap { _ =>
+                ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
               }
-              BadRequest(Json.obj("message" -> Messages(error)))
-            case e: RequestException ⇒
-              e.log.foreach(Logger.error(_))
-              BadRequest(Json.obj("message" -> Messages(e.getMessage)))
-            case e: Membership.ValidationException ⇒
-              BadRequest(Json.obj("message" -> Messages(e.getMessage)))
+            }
+          } getOrElse {
+            processPersonMember(data, user) flatMap { _ =>
+              ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
+            }
           }
-        })
+
+        } catch {
+          case e: RuntimeException => handleErrors(e)
+        }
+      })
+  }
+
+  /**
+    * Adds new member organisation to the system
+    * @param data Payment data
+    * @param user Person data
+    * @param org Organisation
+    */
+  protected def processOrganisationMember(data: PaymentData, user: ActiveUser, org: Organisation): Future[Boolean] = {
+    validatePaymentData(data, user.person, Some(org))
+
+    val customerId = subscribe(user.person, Some(org), data)
+    val fee = Money.of(EUR, data.fee)
+    (for {
+      _ <- orgService.update(org.copy(customerId = Some(customerId)))
+      m <- org.becomeMember(funder = false, fee, user.person.identifier)
+    } yield m) map { member =>
+      notify(user.person, Some(org), member)
+      subscribe(user.person, member)
+
+      activity(member, user.person).becameSupporter.insert()
+      true
+    }
+  }
+
+  /**
+    * Adds new member person to the system
+    *
+    * @param data Payment data
+    * @param user Person data
+    */
+  protected def processPersonMember(data: PaymentData, user: ActiveUser)(
+      implicit request: Request[AnyContent]): Future[Boolean] = {
+    val person = user.person
+    validatePaymentData(data, person, None)
+
+    val customerId = subscribe(person, None, data)
+    val fee = Money.of(EUR, data.fee)
+    (for {
+      _ <- person.copy(customerId = Some(customerId)).update
+      m <- person.becomeMember(funder = false, fee)
+    } yield m) map { member =>
+      env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
+        _.updateUser(ActiveUser(user.id, user.providerId, user.account, user.person, Some(member)))
+      })
+      notify(person, None, member)
+      subscribe(person, member)
+
+      activity(member, user.person).becameSupporter.insert()
+      true
+    }
+  }
+
+  protected def handleErrors(e: RuntimeException) = e match {
+    case e: PaymentException ⇒
+      val error = e.code match {
+        case "card_declined" ⇒ "error.payment.card_declined"
+        case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+        case "expired_card" ⇒ "error.payment.expired_card"
+        case "processing_error" ⇒ "error.payment.processing_error"
+        case _ ⇒ "error.payment.unexpected_error"
+      }
+      badRequest(Json.obj("message" -> Messages(error)))
+    case e: RequestException ⇒
+      e.log.foreach(Logger.error(_))
+      badRequest(Json.obj("message" -> Messages(e.getMessage)))
+    case e: Membership.ValidationException ⇒
+      badRequest(Json.obj("message" -> Messages(e.getMessage)))
   }
 
   /**
    * Validates payments data
-   * @param data Data from payment form
+    *
+    * @param data Data from payment form
    * @param person Current user
    * @param organisation Organisation which wants to become a member
    */

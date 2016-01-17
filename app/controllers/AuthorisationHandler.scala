@@ -47,7 +47,7 @@ class AuthorisationHandler @javax.inject.Inject() (user: ActiveUser)
    *
    * @return an option possible containing a Result.
    */
-  def beforeAuthCheck[A](request: Request[A]) = None
+  def beforeAuthCheck[A](request: Request[A]): Future[Option[Result]] = Future.successful(None)
 
   /**
    * Gets the current subject e.g. the current user.

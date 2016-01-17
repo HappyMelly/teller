@@ -30,7 +30,7 @@ import services.TellerRuntimeEnvironment
 import views.Countries
 
 class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Controller
+    extends AsyncController
     with Services
     with Security {
 
@@ -39,14 +39,16 @@ class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntime
    *
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(brandId) map { brand ⇒
-        val fees = feeService.findByBrand(brandId)
-        val printableFees = fees.
-          map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-          sortBy(_._1)
-        Ok(views.html.fee.index(brand.name, printableFees))
-      } getOrElse NotFound("Brand not found")
+      (for {
+        brand <- brandService.find(brandId)
+        fees <- feeService.findByBrand(brandId)
+      } yield (brand, fees)) flatMap {
+        case (None, _) => notFound("Brand not found")
+        case (Some(brand), fees) =>
+          val printableFees = fees.map(x ⇒ (Countries.name(x.country), x.fee.toString)).sortBy(_._1)
+          ok(views.html.fee.index(brand.name, printableFees))
+      }
   }
 }

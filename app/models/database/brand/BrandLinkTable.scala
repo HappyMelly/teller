@@ -39,8 +39,8 @@ private[models] trait BrandLinkTable {
 
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def brandId = column[Long]("BRAND_ID")
-    def linkType = column[String]("LINK_TYPE", O.DBType("VARCHAR(10)"))
-    def link = column[String]("LINK", O.DBType("VARCHAR(254)"))
+    def linkType = column[String]("LINK_TYPE", O.Length(10))
+    def link = column[String]("LINK", O.Length(254, varying = true))
 
     def * = (id.?, brandId, linkType, link) <>(
       (BrandLink.apply _).tupled, BrandLink.unapply)

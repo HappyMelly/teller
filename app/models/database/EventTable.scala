@@ -24,10 +24,11 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
 import org.joda.time.LocalDate
 import slick.collection.heterogeneous._
-import slick.collection.heterogeneous.syntax.HNil
+import slick.collection.heterogeneous.syntax._
 import slick.driver.JdbcProfile
 
 private[models] trait EventTable extends BrandTable {
@@ -49,8 +50,8 @@ private[models] trait EventTable extends BrandTable {
     def materialsLanguage = column[Option[String]]("MATERIALS_LANGUAGE")
     def city = column[String]("CITY")
     def countryCode = column[String]("COUNTRY_CODE")
-    def description = column[Option[String]]("DESCRIPTION", O.DBType("TEXT"))
-    def specialAttention = column[Option[String]]("SPECIAL_ATTENTION", O.DBType("TEXT"))
+    def description = column[Option[String]]("DESCRIPTION")
+    def specialAttention = column[Option[String]]("SPECIAL_ATTENTION")
     def organizerId = column[Long]("ORGANIZER_ID")
     def webSite = column[Option[String]]("WEB_SITE")
     def registrationPage = column[Option[String]]("REGISTRATION_PAGE")
@@ -63,15 +64,8 @@ private[models] trait EventTable extends BrandTable {
     def confirmed = column[Boolean]("CONFIRMED")
     def free = column[Boolean]("FREE")
     def followUp = column[Boolean]("FOLLOW_UP")
-    def rating = column[Float]("RATING", O.DBType("FLOAT(6,2)"))
+    def rating = column[Float]("RATING")
     def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
-
-    def * = (id.? :: eventTypeId :: brandId :: title :: spokenLanguage ::
-      secondSpokenLanguage :: materialsLanguage :: city :: countryCode ::
-      description :: specialAttention :: organizerId :: webSite ::
-      registrationPage :: start :: end :: hoursPerDay ::
-      totalHours :: notPublic :: archived :: confirmed :: free :: followUp ::
-      rating :: HNil) <>(createEvent, extractEvent)
 
     type EventHList = Option[Long] :: Long :: Long :: String :: String ::
       Option[String] :: Option[String] :: String :: String :: Option[String] ::
@@ -123,6 +117,13 @@ private[models] trait EventTable extends BrandTable {
         e.schedule.start :: e.schedule.end :: e.schedule.hoursPerDay ::
         e.schedule.totalHours :: e.notPublic :: e.archived :: e.confirmed :: e.free ::
         e.followUp :: e.rating :: HNil)
+
+    def * = (id.? :: eventTypeId :: brandId :: title :: spokenLanguage ::
+      secondSpokenLanguage :: materialsLanguage :: city :: countryCode ::
+      description :: specialAttention :: organizerId :: webSite ::
+      registrationPage :: start :: end :: hoursPerDay ::
+      totalHours :: notPublic :: archived :: confirmed :: free :: followUp ::
+      rating :: HNil) <> (createEvent, extractEvent)
 
     def forInsert = (eventTypeId, brandId, title, spokenLanguage,
       secondSpokenLanguage, materialsLanguage, city, countryCode, description,

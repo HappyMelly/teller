@@ -24,11 +24,13 @@
 
 package models
 
-import models.service.ProductService
+import models.service.{ContributionService, ProductService}
 import org.joda.time.DateTime
 import play.api.libs.Crypto
 
+import scala.concurrent.Await
 import scala.util.Random
+import scala.concurrent.duration._
 
 /**
  * Category classifications that a product has zero or one of.
@@ -63,7 +65,7 @@ case class Product(
     updated: DateTime,
     updatedBy: String) {
 
-  def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
+  def contributors: List[ContributorView] = Await.result(ContributionService.get.contributors(this.id.get), 3.seconds)
 
   /**
    * Assign this product to a brand
@@ -75,9 +77,6 @@ case class Product(
    */
   def deleteBrand(brandId: Long) = ProductService.get.deleteBrand(this.id.get, brandId)
 
-  def insert: Product = ProductService.get.insert(this)
-
-  def update: Product = ProductService.get.update(this)
 }
 
 object Product {

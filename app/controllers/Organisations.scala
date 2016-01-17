@@ -35,7 +35,7 @@ import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
@@ -43,52 +43,51 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
-    with Security
-    with Services
+    extends AsyncController
+    with Activities
     with Files
-    with Activities {
+    with I18nSupport
+    with Security
+    with Services {
 
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def activation(id: Long) = AsyncSecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      orgService.find(id).map { organisation ⇒
+      val index: String = routes.Organisations.index().url
+      orgService.find(id) flatMap {
+        case None => redirect(index, "error" -> "Organisation not found")
+        case Some(organisation) ⇒
         Form("active" -> boolean).bindFromRequest.fold(
-          form ⇒ {
-            BadRequest("invalid form data")
-          },
+          error ⇒ badRequest("invalid form data"),
           active ⇒ {
             orgService.activate(id, active)
             val activity = Activity.insert(user.name,
               if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
-            Redirect(routes.Organisations.details(id)).flashing("success" -> activity.toString)
+            redirect(routes.Organisations.details(id),"success" -> activity.toString)
           })
-      } getOrElse {
-        Redirect(routes.Organisations.index).flashing("error" -> Messages("error.notFound", Messages("models.Organisation")))
       }
   }
 
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      Ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
+  def add = AsyncSecuredRestrictedAction(Role.Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
   }
 
   /**
    * Cancels a subscription for yearly-renewing membership
-   * @param id Organisation id
+    *
+    * @param id Organisation id
    */
-  def cancel(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val url = routes.Organisations.details(id).url + "#membership"
-        orgService.find(id) map { org ⇒
+  def cancel(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val url: String = routes.Organisations.details(id).url + "#membership"
+      orgService.find(id) flatMap {
+        case None => notFound("Organisation not found")
+        case Some(org) =>
           org.member map { m ⇒
             if (m.renewal) {
               val key = Play.configuration.getString("stripe.secret_key").get
@@ -98,38 +97,33 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
                 m.copy(renewal = false).update
               } catch {
                 case e: PaymentException ⇒
-                  Future.successful(Redirect(url).flashing("error" -> Messages(e.msg)))
+                  redirect(url,"error" -> Messages(e.msg))
                 case e: RequestException ⇒
                   e.log.foreach(Logger.error(_))
-                  Future.successful(Redirect(url).flashing("error" -> Messages(e.getMessage)))
+                  redirect(url, "error" -> Messages(e.getMessage))
               }
-              Future.successful(
-                Redirect(url).flashing("success" -> "Subscription was successfully canceled"))
+              redirect(url, "success" -> "Subscription was successfully canceled")
             } else {
-              Future.successful(
-                Redirect(url).flashing("error" -> Messages("error.membership.noSubscription")))
+              redirect(url, "error" -> Messages("error.membership.noSubscription"))
             }
           } getOrElse {
-            Future.successful(
-              Redirect(url).flashing("error" -> Messages("error.membership.noSubscription")))
+            redirect(url, "error" -> Messages("error.membership.noSubscription"))
           }
-        } getOrElse Future.successful(NotFound)
+      }
   }
 
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      Organisations.organisationForm.bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
-        view ⇒ {
-          val org = orgService.insert(view)
-          val activity = Activity.insert(user.name, Activity.Predicate.Created, view.org.name)
-          Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
-        })
+  def create = AsyncSecuredRestrictedAction(Role.Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    Organisations.organisationForm.bindFromRequest.fold(
+      formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
+      view ⇒ {
+        orgService.insert(view) flatMap { orgView =>
+          val activity = Activity.insert(user.name, Activity.Predicate.Created, orgView.org.name)
+          redirect(routes.Organisations.index(), "success" -> activity.toString)
+        }
+      })
   }
 
   /**
@@ -138,26 +132,29 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   def createOrganizer = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisations.organisationForm.bindFromRequest.fold(
-        formWithErrors ⇒ Future.successful(BadRequest(formWithErrors.errorsAsJson)),
+        formWithErrors ⇒ badRequest(formWithErrors.errorsAsJson),
         view ⇒ {
-          val org = orgService.insert(view).org
-          activity(org, user.person).created.insert()
-          Future.successful(jsonOk(Json.obj("id" -> org.id, "name" -> org.name)))
+          orgService.insert(view) flatMap { orgView =>
+            activity(orgView.org, user.person).created.insert()
+            jsonOk(Json.obj("id" -> orgView.org.id, "name" -> orgView.org.name))
+          }
         })
   }
 
   /**
    * Delete an organisation
-   * @param id Organisation ID
+    *
+    * @param id Organisation ID
    */
-  def delete(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def delete(id: Long) = AsyncSecuredRestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      orgService.find(id).map { organisation ⇒
-        orgService.delete(id)
-        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)
-        Redirect(routes.Organisations.index()).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+      orgService.find(id) flatMap {
+        case None => notFound("Organisation not found")
+        case Some(organisation) ⇒
+          orgService.delete(id)
+          val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)
+          redirect(routes.Organisations.index(), "success" -> activity.toString)
+      }
   }
 
   /**
@@ -166,56 +163,60 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param id Organisation identifier
    */
   def deleteLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        Organisation.logo(id).remove()
-        orgService.updateLogo(id, false)
-        val route = routes.Organisations.details(id).url
-        Future.successful(
-          jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url)))
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      Organisation.logo(id).remove()
+      orgService.updateLogo(id, false)
+      val route = routes.Organisations.details(id).url
+      jsonOk(Json.obj("link" -> routes.Assets.at("images/happymelly-face-white.png").url))
   }
 
   /**
    * Renders Details page
-   * @param id Organisation ID
+    *
+    * @param id Organisation ID
    */
-  def details(id: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def details(id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      orgService.findWithProfile(id).map { view ⇒
-        val members = view.org.people
-        val otherPeople = personService.findActive.filterNot(person ⇒ members.contains(person))
-        val contributions = contributionService.contributions(id, isPerson = false)
-        val products = productService.findAll
-        val payments = view.org.member map { v ⇒
-          paymentRecordService.findByOrganisation(id)
-        } getOrElse List()
-        Ok(views.html.v2.organisation.details(user, view, members, otherPeople,
-          contributions, products, payments))
-      }.getOrElse(NotFound)
+      (for {
+        o <- orgService.findWithProfile(id)
+        m <- orgService.people(id)
+        p <- personService.findActive
+        c <- contributionService.contributions(id, isPerson = false)
+        pr <- productService.findAll
+      } yield (o, m, p, c, pr)) flatMap {
+        case (None, _, _, _, _) => notFound("Organisation not found")
+        case (Some(view), members, people, contributions, products) =>
+          val result = view.org.member map { v ⇒
+            paymentRecordService.findByOrganisation(id)
+          } getOrElse Future.successful(List())
+          result flatMap { payments =>
+            ok(views.html.v2.organisation.details(user, view, members, people, contributions, products, payments))
+          }
+      }
   }
 
   /**
    * Render an Edit page
-   * @param id Organisation ID
+    *
+    * @param id Organisation ID
    */
   def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      orgService.findWithProfile(id).map { view ⇒
-        Future.successful(
-          Ok(views.html.v2.organisation.form(user, Some(id),
-            Organisations.organisationForm.fill(OrgView(view.org, view.profile)))))
-      } getOrElse Future.successful(NotFound)
+      orgService.findWithProfile(id) flatMap {
+        case None => notFound("Organisation not found")
+        case Some(view) =>
+          ok(views.html.v2.organisation.form(user, Some(id),
+            Organisations.organisationForm.fill(OrgView(view.org, view.profile))))
+      }
   }
 
   /**
    * List page.
    */
-  def index = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val organisations = orgService.findAll
-      Ok(views.html.v2.organisation.index(user, organisations))
+  def index = AsyncSecuredRestrictedAction(Role.Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    orgService.findAll flatMap { organisations =>
+      ok(views.html.v2.organisation.index(user, organisations))
+    }
   }
 
   /**
@@ -227,15 +228,18 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
 
   /**
    * Returns name of the given organisation
-   * @param id Organisation id
+    *
+    * @param id Organisation id
    */
   def name(id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
     implicit request => implicit handler => implicit user =>
-      val name = if (id != 0)
-        orgService.find(id) map { _.name } getOrElse ""
-       else
-        ""
-      Future.successful(jsonOk(Json.obj("name" -> name)))
+      val name = orgService.find(id) map {
+        case None => ""
+        case Some(org) => org.name
+      }
+      name flatMap { name =>
+        jsonOk(Json.obj("name" -> name))
+      }
   }
 
   /**
@@ -244,48 +248,47 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param query Search query
    */
   def search(query: Option[String]) = AsyncSecuredRestrictedAction(Role.Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        implicit val orgWrites = new Writes[Organisation] {
-          def writes(data: Organisation): JsValue = {
-            Json.obj(
-              "id" -> data.id,
-              "name" -> data.name,
-              "countryCode" -> data.countryCode)
-          }
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      implicit val orgWrites = new Writes[Organisation] {
+        def writes(data: Organisation): JsValue = {
+          Json.obj(
+            "id" -> data.id,
+            "name" -> data.name,
+            "countryCode" -> data.countryCode)
         }
-        val orgs: List[Organisation] = query map { q ⇒
-          if (q.length < 3)
-            List()
-          else
-            orgService.search(q)
-        } getOrElse List()
-        Future.successful(jsonOk(Json.toJson(orgs)))
+      }
+      val orgs = query map { q ⇒
+        if (q.length < 3)
+          Future.successful(List())
+        else
+          orgService.search(q)
+      } getOrElse Future.successful(List())
+      orgs flatMap { organisations =>
+        jsonOk(Json.toJson(organisations))
+      }
   }
 
   /**
    * Updates an organisation
-   * @param id Organisation ID
+    *
+    * @param id Organisation ID
    */
   def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        orgService.findWithProfile(id).map { view ⇒
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      orgService.findWithProfile(id) flatMap {
+        case None => notFound("Organisation not found")
+        case Some(view) ⇒
           Organisations.organisationForm.bindFromRequest.fold(
-            formWithErrors ⇒
-              Future.successful(
-                BadRequest(views.html.v2.organisation.form(user, Some(id), formWithErrors))),
+            formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, Some(id), formWithErrors)),
             view ⇒ {
-              val updatedOrg = view.org.
-                copy(id = Some(id), active = view.org.active).
-                copy(customerId = view.org.customerId)
+              val updatedOrg = view.org.copy(id = Some(id), active = view.org.active, customerId = view.org.customerId)
               val updatedProfile = view.profile.forOrg.copy(objectId = id)
-              orgService.update(OrgView(updatedOrg, updatedProfile))
-              val log = activity(updatedOrg, user.person).updated.insert()
-              Future.successful(
-                Redirect(routes.Organisations.details(id)).flashing("success" -> log.toString))
+              orgService.update(OrgView(updatedOrg, updatedProfile)) flatMap { _ =>
+                val log = activity(updatedOrg, user.person).updated.insert()
+                redirect(routes.Organisations.details(id), "success" -> log.toString)
+              }
             })
-        } getOrElse Future.successful(NotFound)
+      }
   }
 
   /**
@@ -294,15 +297,14 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param id Organisation identifier
    */
   def uploadLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        uploadFile(Organisation.logo(id), "logo") map { _ ⇒
-          orgService.updateLogo(id, true)
-          val route = routes.Organisations.details(id).url
-          jsonOk(Json.obj("link" -> Organisations.logoUrl(id)))
-        } recover {
-          case e: RuntimeException ⇒ jsonBadRequest(e.getMessage)
-        }
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      uploadFile(Organisation.logo(id), "logo") flatMap { _ ⇒
+        orgService.updateLogo(id, true)
+        val route = routes.Organisations.details(id).url
+        jsonOk(Json.obj("link" -> Organisations.logoUrl(id)))
+      } recover {
+        case e: RuntimeException ⇒ BadRequest(Json.obj("message" -> e.getMessage))
+      }
   }
 }
 
@@ -350,6 +352,7 @@ object Organisations extends Utilities {
 
   /**
     * Returns url to an organisation's logo
+    *
     * @param orgId Organisation identifier
     */
   def logoUrl(orgId: Long): Option[String] = {

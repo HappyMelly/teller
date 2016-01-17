@@ -27,6 +27,7 @@ package models.payment
 import models.service.Services
 import org.joda.money.Money
 import org.joda.time.DateTime
+import scala.concurrent.Future
 
 /**
  * Contains data of a successful payment
@@ -43,7 +44,7 @@ case class Record(id: Option[Long],
   /**
    * Adds this payment record to database
    */
-  def insert: Record = paymentRecordService.insert(this)
+  def insert: Future[Record] = paymentRecordService.insert(this)
 }
 
 object Record {

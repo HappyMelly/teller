@@ -39,8 +39,7 @@ class EventInvoiceService extends HasDatabaseConfig[JdbcProfile]
   def update(invoice: EventInvoice): Unit = db.run(updateAction(invoice))
 
   def updateAction(invoice: EventInvoice) =
-    TableQuery[EventInvoices].filter(_.id === invoice.id)
-      .map(_.forUpdate)
+    TableQuery[EventInvoices].filter(_.id === invoice.id).map(_.forUpdate)
       .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
 }
 

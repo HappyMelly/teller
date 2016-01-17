@@ -43,10 +43,7 @@ case class Payment(key: String) {
    * @param amount Fee amount
    * @return Returns remote customer identifier
    */
-  def subscribe(person: Person,
-    org: Option[Organisation],
-    token: String,
-    amount: Int): String = {
+  def subscribe(person: Person, org: Option[Organisation], token: String, amount: Int): String = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }

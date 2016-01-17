@@ -24,46 +24,9 @@
 
 package models
 
-import models.database.FacilitatorCountries
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
-
 /**
  * This class represents a country where a facilitator is ready to give courses
  * @param personId Facilitator identifier
  * @param country Two-letter country identifier
  */
-case class FacilitatorCountry(personId: Long, country: String) {
-
-  /**
-   * Insert a new country to DB
-   * @return
-   */
-  def insert: FacilitatorCountry = DB.withSession { implicit session ⇒
-    TableQuery[FacilitatorCountries] += this
-    this
-  }
-
-  /**
-   * Delete a country-facilitator connection
-   */
-  def delete(): Unit = DB.withSession { implicit session ⇒
-    TableQuery[FacilitatorCountries].
-      filter(_.personId === personId).
-      filter(_.country === country).delete
-  }
-
-}
-
-object FacilitatorCountry {
-
-  /**
-   * Finds all countries for a particular facilitator
-   */
-  def findByFacilitator(personId: Long): List[FacilitatorCountry] = DB.withSession {
-    implicit session ⇒
-      TableQuery[FacilitatorCountries].filter(_.personId === personId).list
-  }
-
-}
+case class FacilitatorCountry(personId: Long, country: String)

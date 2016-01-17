@@ -28,8 +28,10 @@ import models._
 import models.database._
 import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.dbio.SuccessAction
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /** Provides operations with database related to members */
@@ -85,19 +87,24 @@ class MemberService extends HasDatabaseConfig[JdbcProfile]
    * @param id Member identifier
    */
   def find(id: Long): Future[Option[Member]] = {
-    db.run(members.filter(_.id === id).result).map(_.headOption.map { member =>
-      if (member.person) {
-        db.run(TableQuery[People].filter(_.id === member.objectId).result).map(_.head.map { person =>
-          member.memberObj_=(person)
-          Some(member)
-        })
-      } else {
-        db.run(TableQuery[Organisations].filter(_.id === member.objectId).result).map(_.head.map { org =>
-          member.memberObj_=(org)
-          Some(member)
-        })
-      }
-    })
+    val futureMember = db.run(members.filter(_.id === id).result).map(_.headOption)
+    futureMember.flatMap {
+      case None => Future.successful(None)
+      case Some(member) =>
+        if (member.person) {
+          val futurePerson = db.run(TableQuery[People].filter(_.id === member.objectId).result).map(_.head)
+          futurePerson.map { value =>
+            member.memberObj_=(value)
+            Some(member)
+          }
+        } else {
+          val futureOrg = db.run(TableQuery[Organisations].filter(_.id === member.objectId).result).map(_.head)
+          futureOrg.map { value =>
+            member.memberObj_=(value)
+            Some(member)
+          }
+        }
+    }
   }
 
   /**
@@ -122,7 +129,8 @@ class MemberService extends HasDatabaseConfig[JdbcProfile]
 
   /**
    * Returns member by related object, otherwise - None
-   * @param objectId Object identifier
+    *
+    * @param objectId Object identifier
    * @param person Person if true, otherwise - organisation
    * @return
    */
@@ -142,7 +150,8 @@ class MemberService extends HasDatabaseConfig[JdbcProfile]
 
   /**
    * Updates the given member in database
-   * @param m Member to update
+    *
+    * @param m Member to update
    * @return Updated member
    */
   def update(m: Member): Future[Member] =
@@ -150,10 +159,11 @@ class MemberService extends HasDatabaseConfig[JdbcProfile]
 
   /**
    * Deletes a record from database
-   * @param objectId Object id
+    *
+    * @param objectId Object id
    * @param person If true, object is a person, otherwise - org
    */
-  def delete(objectId: Long, person: Boolean): Unit =
+  def delete(objectId: Long, person: Boolean): Future[Int] =
     db.run(members.filter(_.objectId === objectId).filter(_.person === person).delete)
 }
 

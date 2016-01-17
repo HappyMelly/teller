@@ -25,7 +25,6 @@
 package models.database
 
 import models.PasswordIdentity
-import play.api.db.slick.Config.driver.simple._
 import slick.driver.JdbcProfile
 
 private[models] trait PasswordIdentityTable {

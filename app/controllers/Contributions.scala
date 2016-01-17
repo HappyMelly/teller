@@ -31,11 +31,12 @@ import models.service.Services
 import models.{ActivityRecorder, Contribution}
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc._
 import services.TellerRuntimeEnvironment
 
+import scala.concurrent.Future
+
 class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Controller
+    extends AsyncController
     with Security
     with Services
     with Activities {
@@ -53,7 +54,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param page Label of a page where the action happened
    * @return
    */
-  def create(page: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def create(page: String) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
@@ -66,18 +67,18 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
         routes.Products.details(boundForm.data("productId").toLong).url
       }
       boundForm.bindFromRequest.fold(
-        formWithErrors ⇒ Redirect(route).flashing("error" -> "A role for a contributor cannot be empty"),
+        formWithErrors ⇒ redirect(route, "error" -> "A role for a contributor cannot be empty"),
         success ⇒ {
-          val contributor: Option[ActivityRecorder] = if (success.isPerson)
+          val contributor: Future[Option[ActivityRecorder]] = if (success.isPerson)
             personService.find(success.contributorId)
           else
             orgService.find(success.contributorId)
-          contributor map { c ⇒
-            val contribution = success.insert
-            val log = activity(contribution, user.person).connected.insert()
-            Redirect(route).flashing("success" -> log.toString)
-          } getOrElse {
-            Redirect(route).flashing("error" -> "Contributor does not exist")
+          contributor flatMap {
+            case None => redirect(route, "error" -> "Contributor not found")
+            case Some(c) =>
+              contributionService.insert(success) flatMap { _ =>
+                redirect(route, "success" -> "Contributor was added")
+              }
           }
         })
   }
@@ -89,26 +90,22 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param page Label of a page where the action happened
    * @return
    */
-  def delete(id: Long, page: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(id: Long, page: String) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      Contribution.find(id).map { contribution ⇒
-        val contributor: ActivityRecorder = if (contribution.isPerson)
-          personService.find(contribution.contributorId).get
-        else
-          orgService.find(contribution.contributorId).get
-        Contribution.delete(id)
-
-        val log = activity(contribution, user.person).disconnected.insert()
-        val route: String = if (page == "organisation") {
-          routes.Organisations.details(contribution.contributorId).url
-        } else if (page == "product") {
-          routes.Products.details(contribution.productId).url
-        } else {
-          routes.People.details(contribution.contributorId).url + "#contributions"
-        }
-        Redirect(route).flashing("success" -> log.toString)
-      }.getOrElse(NotFound)
+      contributionService.find(id) flatMap {
+        case None => notFound("Contribution not found")
+        case Some(contribution) =>
+          contributionService.delete(id) flatMap { _ =>
+            val route: String = if (page == "organisation") {
+              routes.Organisations.details(contribution.contributorId).url
+            } else if (page == "product") {
+              routes.Products.details(contribution.productId).url
+            } else {
+              routes.People.details(contribution.contributorId).url + "#contributions"
+            }
+            redirect(route, "success" -> "Contribution was deleted")
+          }
+      }
   }
 
 }

@@ -1,5 +1,6 @@
 package models.service.event
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.event.AttendeeTable
 import models.database.{EvaluationTable, EventTable}
 import models.event.{Attendee, AttendeeView}
@@ -7,6 +8,7 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -26,7 +28,7 @@ class AttendeeService extends HasDatabaseConfig[JdbcProfile]
     * @param attendeeId Attendee identifier
     * @param eventId Event identifier
     */
-  def delete(attendeeId: Long, eventId: Long): Unit = {
+  def delete(attendeeId: Long, eventId: Long): Future[Int] = {
     val action = attendees.filter(_.id === attendeeId).filter(_.eventId === eventId).delete
     db.run(action)
   }
@@ -86,7 +88,7 @@ class AttendeeService extends HasDatabaseConfig[JdbcProfile]
     * Updates the given attendee in database
     * @param attendee Attendee
     */
-  def update(attendee: Attendee) = {
+  def update(attendee: Attendee): Future[Int] = {
     val forUpdate = (attendee.personId, attendee.firstName, attendee.lastName, attendee.email, attendee.dateOfBirth,
       attendee.countryCode, attendee.city, attendee.street_1, attendee.street_2, attendee.province, attendee.postcode,
       attendee.role, attendee.recordInfo.updated, attendee.recordInfo.updatedBy)

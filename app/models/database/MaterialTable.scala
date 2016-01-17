@@ -40,8 +40,8 @@ private[models] trait MaterialTable {
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def personId = column[Long]("PERSON_ID")
     def brandId = column[Long]("BRAND_ID")
-    def linkType = column[String]("LINK_TYPE", O.DBType("VARCHAR(10)"))
-    def link = column[String]("LINK", O.DBType("VARCHAR(254)"))
+    def linkType = column[String]("LINK_TYPE", O.Length(10, varying = true))
+    def link = column[String]("LINK", O.Length(254, varying = true))
 
     def * = (id.?, personId, brandId, linkType, link) <>(
       (Material.apply _).tupled, Material.unapply)

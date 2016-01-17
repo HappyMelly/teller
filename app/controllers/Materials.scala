@@ -30,13 +30,14 @@ import models.Material
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json.{ JsValue, Writes, Json }
 import securesocial.core.RuntimeEnvironment
 import services.TellerRuntimeEnvironment
 
 class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
+    with I18nSupport
     with Services
     with Security {
 
@@ -56,24 +57,21 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
+  def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      personService.find(personId) flatMap {
+        case None => jsonNotFound(Messages("error.person.notFound"))
+        case Some(person) =>
           val form = Form(tuple("brandId" -> longNumber, "type" -> nonEmptyText, "url" -> nonEmptyText))
           form.bindFromRequest.fold(
             error ⇒ jsonBadRequest("Link cannot be empty"),
             materialData ⇒ {
-              val material = Material(None,
-                personId,
-                materialData._1,
-                materialData._2,
-                materialData._3)
-              val insertedLink = personService.insertMaterial(
-                Material.updateType(material))
-              jsonOk(Json.toJson(insertedLink))
+              val material = Material(None, personId, materialData._1, materialData._2, materialData._3)
+              personService.insertMaterial(Material.updateType(material)) flatMap { link =>
+                jsonOk(Json.toJson(link))
+              }
             })
-        } getOrElse jsonNotFound(Messages("error.person.notFound"))
+      }
   }
 
   /**
@@ -85,10 +83,11 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * @param personId Person identifier
    * @param id Material identifier
    */
-  def remove(personId: Long, id: Long) = SecuredProfileAction(personId) {
+  def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      personService.deleteMaterial(personId, id)
-      jsonSuccess("ok")
+      personService.deleteMaterial(personId, id) flatMap { _ =>
+        jsonSuccess("ok")
+      }
   }
 
 }

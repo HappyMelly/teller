@@ -24,18 +24,22 @@
  */
 package models.service
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
-import models.database.EvaluationTable
 import models.database.event.AttendeeTable
+import models.database.{EvaluationTable, OldEvaluationTable}
 import models.event.AttendeeView
 import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class EvaluationService extends HasDatabaseConfig[JdbcProfile]
   with AttendeeTable
   with EvaluationTable
+  with OldEvaluationTable
   with Services {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
@@ -60,7 +64,7 @@ class EvaluationService extends HasDatabaseConfig[JdbcProfile]
     * Deletes the given evaluation from database
     * @param evaluation Evaluation
     */
-  def delete(evaluation: Evaluation): Unit = {
+  def delete(evaluation: Evaluation): Future[Unit] = {
     val actions = (for {
       _ <- attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, None)
       _ <- evaluations.filter(_.id === evaluation.id).delete
@@ -180,11 +184,21 @@ class EvaluationService extends HasDatabaseConfig[JdbcProfile]
   }
 
   /**
+    * Returns evaluation for the given facilitator
+    * @param facilitatorId Facilitator id
+    * @return
+    */
+  def findOldEvaluations(facilitatorId: Long): Future[List[OldEvaluation]] =
+    db.run(TableQuery[OldEvaluations].filter(_.facilitatorId === facilitatorId).result).map(_.toList)
+
+  /**
    * Returns list of unhandled (Pending, Unconfirmed) evaluations for the given
    *  events
    * @param events List of events
    */
   def findUnhandled(events: List[Event]) = {
+    import Evaluations.evaluationStatusTypeMapper
+
     if (events.nonEmpty) {
       val query = for {
         e ← TableQuery[Events] if e.id inSet events.map(_.identifier)
@@ -203,12 +217,14 @@ class EvaluationService extends HasDatabaseConfig[JdbcProfile]
    * @return Returns the given evaluation
    */
   def update(eval: Evaluation): Future[Evaluation] = {
+    import Evaluations.evaluationStatusTypeMapper
+
     val updateTuple = (eval.eventId, eval.attendeeId, eval.reasonToRegister,
       eval.actionItems, eval.changesToContent, eval.facilitatorReview, eval.changesToHost,
       eval.facilitatorImpression, eval.recommendationScore, eval.changesToEvent,
       eval.contentImpression, eval.hostImpression, eval.status,
       eval.handled, eval.recordInfo.updated, eval.recordInfo.updatedBy)
-    db.run(evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple))
+    db.run(evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)).map(_ => eval)
   }
 
 }

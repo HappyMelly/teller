@@ -27,6 +27,8 @@ package models.brand
 import models.service.Services
 import org.joda.money.Money
 
+import scala.concurrent.Future
+
 /**
  * Represents fee for 16-hours event per country
  * @param id Fee identifier
@@ -42,5 +44,5 @@ case class BrandFee(id: Option[Long],
   /**
    * Inserts current fee into database and returns the updated fee with ID
    */
-  def insert(): BrandFee = feeService.insert(this)
+  def insert(): Future[BrandFee] = feeService.insert(this)
 }

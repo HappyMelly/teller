@@ -29,6 +29,7 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ProfileStrengthService extends HasDatabaseConfig[JdbcProfile]
@@ -62,10 +63,12 @@ class ProfileStrengthService extends HasDatabaseConfig[JdbcProfile]
   }
 
   def update(strength: ProfileStrength): Future[ProfileStrength] = {
+    import ProfileStrengths.jsArrayMapper
+
     val query = profiles.
       filter(_.objectId === strength.objectId).
       filter(_.org === strength.org).
-      map(_.forUpdate).
+      map(_.steps).
       update(strength.stepsInJson)
     db.run(query).map(_ => strength)
   }

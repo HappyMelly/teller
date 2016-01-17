@@ -24,45 +24,8 @@
 
 package models.admin
 
-import models.database.BookingEntries
-import models.database.admin.TransactionTypes
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-
 /**
  * A category for a `BookingEntry`.
  */
 case class TransactionType(id: Option[Long], name: String)
 
-object TransactionType {
-
-  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
-    TableQuery[BookingEntries].filter(_.transactionTypeId === id).map(_.transactionTypeId).update(None)
-    TableQuery[TransactionTypes].filter(_.id === id).delete
-  }
-
-  /**
-   * Returns true if a transaction type with the given value already exists.
-   */
-  def exists(value: String): Boolean = DB.withSession { implicit session ⇒
-    TableQuery[TransactionTypes].filter(_.name === value).exists.run
-  }
-
-  def find(id: Long): Option[TransactionType] = DB.withSession { implicit session ⇒
-    TableQuery[TransactionTypes].filter(_.id === id).firstOption
-  }
-
-  def findAll: List[TransactionType] = DB.withSession { implicit session ⇒
-    TableQuery[TransactionTypes].sortBy(_.name.toLowerCase).list
-  }
-
-  /**
-   * Inserts a new transaction type with the given value.
-   */
-  def insert(value: String): Unit = DB.withSession { implicit session ⇒
-    val transactionType = TransactionType(None, value)
-    TableQuery[TransactionTypes] += transactionType
-  }
-
-}

@@ -28,13 +28,11 @@ import javax.inject.Inject
 import models.UserRole.Role._
 import models.service.Services
 import models.{Person, ProfileStrength}
-import play.api.mvc._
+import scala.concurrent.Future
 import services.TellerRuntimeEnvironment
 
-import scala.concurrent.Future
-
 class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Controller
+    extends AsyncController
     with Security
     with Services {
 
@@ -45,19 +43,20 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
    * @param steps If true completion steps are shown
    */
   def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        profileStrengthService.find(id) map { x ⇒
-          Future.successful(Ok(views.html.v2.profile.widget(id, x, steps)))
-        } getOrElse {
-          if (id == user.person.id.get) {
-            val profileStrength = initializeProfileStrength(user.person)
-            profileStrengthService.insert(profileStrength)
-            Future.successful(Ok(views.html.v2.profile.widget(id, profileStrength, steps)))
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      profileStrengthService.find(id) flatMap {
+        case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))
+        case None =>
+          if (id == user.person.identifier) {
+            initializeProfileStrength(user.person) flatMap { profileStrength =>
+              profileStrengthService.insert(profileStrength)
+            } flatMap { profileStrength =>
+              ok(views.html.v2.profile.widget(id, profileStrength, steps))
+            }
           } else {
-            Future.successful(BadRequest)
+            badRequest("Widget was requested by a wrong person")
           }
-        }
+      }
   }
 
   /**
@@ -65,22 +64,30 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
    *
    * @param person Person
    */
-  protected def initializeProfileStrength(person: Person): ProfileStrength = {
-    val id = person.id.get
+  protected def initializeProfileStrength(person: Person): Future[ProfileStrength] = {
+    val id = person.identifier
     val strength = ProfileStrength.empty(id, org = false)
     val strengthWithMember = if (person.isMember)
       ProfileStrength.forMember(strength)
     else
       strength
-    val strengthWithFacilitator = if (licenseService.activeLicenses(id).nonEmpty) {
-      val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
-      if (facilitatorService.languages(person.id.get).nonEmpty)
-        strengthWithLanguages.markComplete("language")
-      else
-        strengthWithLanguages
-    } else {
-      strengthWithMember
+    val query = for {
+      licenses <- licenseService.activeLicenses(id)
+      languages <- facilitatorService.languages(person.identifier)
+    } yield (licenses, languages)
+    val strengthWithFacilitator = query map { case (licenses, languages) =>
+      if (licenses.nonEmpty) {
+        val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
+        if (languages.nonEmpty)
+          strengthWithLanguages.markComplete("language")
+        else
+          strengthWithLanguages
+      } else {
+        strengthWithMember
+      }
     }
-    ProfileStrength.forPerson(strengthWithFacilitator, person)
+    strengthWithFacilitator map { value =>
+      ProfileStrength.forPerson(value, person)
+    }
   }
 }

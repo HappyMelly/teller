@@ -38,27 +38,30 @@ import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
+import play.twirl.api.Html
 import services._
 
 import scala.concurrent.Future
 import scala.io.Source
 
 class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
-  extends JsonController
+  extends AsyncController
   with Security
   with Services
   with Activities {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
+  val indexCall: Call = routes.Brands.index()
 
   /** Shows all brands **/
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    val brands = models.Brand.findAllWithCoordinator
-    Ok(views.html.v2.brand.index(user, brands))
+  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.findAllWithCoordinator flatMap { brands =>
+      ok(views.html.v2.brand.index(user, brands))
+    }
   }
 
   /**
@@ -66,10 +69,9 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @param id Product id
     */
-  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      brandService.find(id).map { brand ⇒
+  def activation(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(id) flatMap { maybeBrand =>
+      maybeBrand map { brand ⇒
         Form("active" -> boolean).bindFromRequest.fold(
           error ⇒ jsonBadRequest("active parameter is not found"),
           active ⇒ {
@@ -77,13 +79,16 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
               brandService.activate(id)
             } else {
               brandService.deactivate(id)
-              for (product ← productService.findByBrand(id)) {
-                productService.deactivate(product.id.get)
+              productService.findByBrand(id) map { products =>
+                for (product <- products) {
+                  productService.deactivate(product.id.get)
+                }
               }
             }
             jsonSuccess("ok")
           })
       } getOrElse jsonNotFound("Brand is not found")
+    }
   }
 
   /**
@@ -91,51 +96,55 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @return
     */
-  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val people = personService.findActive
-      Ok(views.html.v2.brand.form(user, None, people, brandsForm(user.name)))
+  def add = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    personService.findActive.flatMap { people =>
+      ok(views.html.v2.brand.form(user, None, people, brandsForm(user.name)))
+    }
   }
 
   /**
     * Create a new brand
     */
-  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val form: Form[Brand] = brandsForm(user.name).bindFromRequest
-      val people = personService.findActive
+  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val form: Form[Brand] = brandsForm(user.name).bindFromRequest
+    personService.findActive.flatMap { people =>
       form.fold(
-        formWithErrors ⇒ Future.successful(
-          BadRequest(views.html.v2.brand.form(user, None, people, formWithErrors))),
+        errors ⇒ badRequest(views.html.v2.brand.form(user, None, people, errors)),
         brand ⇒ {
-          if (Brand.exists(brand.code))
-            Future.successful(BadRequest(views.html.v2.brand.form(user, None, people,
-              form.withError("code", "constraint.brand.code.exists", brand.code))))
-          else if (Brand.nameExists(brand.uniqueName))
-            Future.successful(BadRequest(views.html.v2.brand.form(user, None, people,
-              form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
-          else {
-            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
-              val filename = Brand.generateImageName(picture.filename)
-              val source = Source.fromFile(picture.ref.file.getPath, encoding)
-              val byteArray = source.toArray.map(_.toByte)
-              source.close()
-              S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                brand.copy(picture = Some(filename)).insert
-                val log = activity(brand, user.person).created.insert()
-                Redirect(routes.Brands.index()).flashing("success" -> log.toString)
-              }.recover {
-                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.v2.brand.form(user, None, people,
-                  form.withError("picture", "Image cannot be temporary saved")))
+          (for {
+            existance <- brandService.exists(brand.code)
+            nameExistance <- brandService.nameExists(brand.uniqueName)
+          } yield (existance, nameExistance)) flatMap {
+            case (true, _) =>
+              badRequest(views.html.v2.brand.form(user, None, people,
+                form.withError("code", "constraint.brand.code.exists", brand.code)))
+            case (_, true) =>
+              badRequest(views.html.v2.brand.form(user, None, people,
+                form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName)))
+            case (false, false) =>
+              request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+                val filename = Brand.generateImageName(picture.filename)
+                val source = Source.fromFile(picture.ref.file.getPath, encoding)
+                val byteArray = source.toArray.map(_.toByte)
+                source.close()
+                S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                  brand.copy(picture = Some(filename)).insert
+                  val log = activity(brand, user.person).created.insert()
+                  Redirect(indexCall).flashing("success" -> log.toString)
+                }.recover {
+                  case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.v2.brand.form(user, None, people,
+                    form.withError("picture", "Image cannot be temporary saved")))
+                }
+              }.getOrElse {
+                brand.insert() flatMap { inserted =>
+                  val log = activity(inserted, user.person).created.insert()
+                  redirect(indexCall, "success" -> log.toString)
+                }
               }
-            }.getOrElse {
-              val b = brand.insert()
-              val log = activity(b, user.person).created.insert()
-              Future.successful(Redirect(routes.Brands.index()).flashing("success" -> log.toString))
-            }
           }
         })
+
+    }
   }
 
   /**
@@ -143,17 +152,18 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @param id Brand identifier
     */
-  def delete(id: Long) = SecuredBrandAction(id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      brandService.find(id) map { brand ⇒
+  def delete(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(id) flatMap { maybeBrand =>
+      maybeBrand map { brand =>
         brand.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Brand.cacheId(brand.code))
         }
         brand.delete()
         val log = activity(brand, user.person).deleted.insert()
-        Redirect(routes.Brands.index()).flashing("success" -> log.toString)
-      } getOrElse NotFound(views.html.notFoundPage(request.path))
+        redirect(indexCall, "success" -> log.toString)
+      } getOrElse notFound(views.html.notFoundPage(request.path))
+    }
   }
 
   /**
@@ -161,17 +171,19 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @param id Brand string identifier
     */
-  def deletePicture(id: Long) = SecuredBrandAction(id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      brandService.find(id).map { brand ⇒
+  def deletePicture(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(id) flatMap { maybeBrand =>
+      maybeBrand map { brand ⇒
         brand.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Brand.cacheId(brand.code))
         }
         brandService.update(brand, brand, None)
         val log = activity(brand, user.person).deletedImage.insert()
-        Redirect(routes.Brands.details(id)).flashing("success" -> log.toString)
-      }.getOrElse(NotFound(views.html.notFoundPage(request.path)))
+        val call: Call = routes.Brands.details(id)
+        redirect(call, "success" -> log.toString)
+      } getOrElse notFound(views.html.notFoundPage(request.path))
+    }
   }
 
   /**
@@ -179,140 +191,163 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @param id Brand identifier
     */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    brandService.find(id) map { brand ⇒
-      val links = brandService.links(id)
-      val coordinator = personService.find(brand.ownerId)
-      Ok(views.html.v2.brand.details(user, brand, coordinator, links))
-    } getOrElse NotFound(views.html.notFoundPage(request.path))
+  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(id) flatMap { maybeBrand =>
+      maybeBrand map { brand ⇒
+        (for {
+          links <- brandService.links(id)
+          coordinator <- personService.find(brand.ownerId)
+        } yield (links, coordinator)) flatMap { case (links, coordinator) =>
+          ok(views.html.v2.brand.details(user, brand, coordinator, links))
+        }
+      } getOrElse notFound(views.html.notFoundPage(request.path))
+    }
   }
 
   /**
     * Renders tab for the given brand
+    *
     * @param id Brand identifier
     * @param tab Tab identifier
     */
-  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def renderTabs(id: Long, tab: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "testimonials" ⇒
-          val testimonials = brandService.testimonials(id)
-          Ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
+          brandService.testimonials(id) flatMap { testimonials =>
+            ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
+          }
         case _ ⇒
-          val products = productService.findByBrand(id)
-          Ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
+          productService.findByBrand(id) flatMap { products =>
+            ok(views.html.v2.brand.tabs.products(products, viewOnly = true) { _ ⇒ play.twirl.api.Html("") })
+          }
       }
   }
 
   /**
     * Renders coordinator tab for the given brand
+    *
     * @param id Brand identifier
     * @param tab Tab identifier
     */
-  def renderCoordinatorTabs(id: Long, tab: String)  = SecuredBrandAction(id) { implicit request ⇒
+  def renderCoordinatorTabs(id: Long, tab: String)  = AsyncSecuredBrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "team" ⇒
-          val members = brandService.coordinators(id).sortBy(_._1.fullName)
-          val people = personService.findActive.filterNot(x ⇒ members.contains(x))
-          Ok(views.html.v2.brand.tabs.team(id, members, people))
+          (for {
+            coordinators <- brandService.coordinators(id)
+            people <- personService.findActive
+          } yield (coordinators, people)) flatMap { case (coordinators, people) =>
+            val members = coordinators.sortBy(_._1.fullName)
+            val filtered = people.filterNot(x ⇒ members.contains(x))
+            ok(views.html.v2.brand.tabs.team(id, members, filtered))
+          }
         case "templates" ⇒
-          val templates = certificateService.findByBrand(id)
-          Ok(views.html.v2.brand.tabs.templates(id, templates))
+          certificateService.findByBrand(id) flatMap { templates =>
+            ok(views.html.v2.brand.tabs.templates(id, templates))
+          }
         case "types" ⇒
-          val eventTypes = eventTypeService.findByBrand(id).sortBy(_.name)
-          Ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes))
+          eventTypeService.findByBrand(id) flatMap { eventTypes =>
+            ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes.sortBy(_.name)))
+          }
         case "badges" ⇒
-          val badges = brandBadgeService.findByBrand(id).sortBy(_.name)
-          Ok(views.html.v2.brand.tabs.badges(id, badges))
+          brandBadgeService.findByBrand(id) flatMap { badges =>
+            ok(views.html.v2.brand.tabs.badges(id, badges.sortBy(_.name)))
+          }
         case _ =>
-          brandService.findWithSettings(id).map { view =>
-            Ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))
-          }.getOrElse {
-            Ok("Unknown brand")
+          brandService.findWithSettings(id) flatMap { maybeView =>
+            maybeView map { view =>
+              ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))
+            } getOrElse {
+              ok(Html("Unknown brand"))
+            }
           }
       }
   }
 
   /**
     * Adds new coordinator to the given brand
+    *
     * @param id Brand identifier
     */
-  def addCoordinator(id: Long) = SecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addCoordinator(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val data = Form(single("personId" -> longNumber(min = 1)))
     data.bindFromRequest.fold(
       hasErrors ⇒ jsonBadRequest("personId should be a positive number"),
       personId ⇒
-        brandService.find(id) map { x ⇒
-          personService.find(personId) map { y ⇒
-            if (brandService.coordinators(id).exists(_._1 == y)) {
+        (for {
+          coordinators <- brandService.coordinators(id)
+          person <- personService.find(personId)
+        } yield (coordinators, person)) flatMap { case (coordinators, person) =>
+          person map { y ⇒
+            if (coordinators.exists(_._1 == y)) {
               jsonConflict(Messages("error.brand.alreadyMember"))
             } else {
               val coordinator = BrandCoordinator(None, id, personId)
-              brandCoordinatorService.insert(coordinator)
-              userAccountService.findByPerson(personId) map { account =>
-                userAccountService.update(account.copy(coordinator = true, activeRole = true))
-              } getOrElse {
-                val account = UserAccount.empty(personId).copy(coordinator = true, registered = true)
-                userAccountService.insert(account)
+              brandCoordinatorService.save(coordinator).flatMap { coordinator =>
+                val data = Json.obj("personId" -> personId, "brandId" -> id, "name" -> y.fullName)
+                jsonSuccess(Messages("success.brand.newMember"), Some(data))
               }
-              val data = Json.obj("personId" -> personId, "brandId" -> id, "name" -> y.fullName)
-              jsonSuccess(Messages("success.brand.newMember"), Some(data))
             }
           } getOrElse jsonNotFound(Messages("error.notFound", "person"))
-        } getOrElse jsonNotFound(Messages("error.notFound", "brand")))
+        })
   }
 
   /**
     * Removes the given coordinator from the given brand
+    *
     * @param id Brand id
     * @param personId Person id
     */
   def removeCoordinator(id: Long, personId: Long) = AsyncSecuredBrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      brandService.find(id) map { x ⇒
-        if (x.ownerId == personId) {
-          Future.successful(jsonConflict(Messages("error.brand.removeOwner")))
-        } else {
-          brandCoordinatorService.delete(id, personId)
-          if (brandService.findByCoordinator(personId).isEmpty) {
-            userAccountService.findByPerson(personId) foreach { account =>
-              userAccountService.update(account.copy(coordinator = false, activeRole = false))
+      brandService.find(id) flatMap {
+        case None => jsonNotFound(Messages("error.notFound", "brand"))
+        case Some(x) =>
+          if (x.ownerId == personId) {
+            jsonConflict(Messages("error.brand.removeOwner"))
+          } else {
+            (for {
+              _ <- brandCoordinatorService.delete(id, personId)
+              brand <- brandService.findByCoordinator(personId)
+            } yield brand.isEmpty) flatMap { noEntries =>
+              if (noEntries) {
+                userAccountService.findByPerson(personId) map { case Some(account) =>
+                  userAccountService.update(account.copy(coordinator = false, activeRole = false))
+                }
+              }
+              jsonSuccess(Messages("success.brand.deleteMember"))
             }
           }
-          Future.successful(jsonSuccess(Messages("success.brand.deleteMember")))
-        }
-      } getOrElse Future.successful(jsonNotFound(Messages("error.notFound", "brand")))
+      }
   }
 
   /**
     * Turns on a notification of the given type
+    *
     * @param id Brand id
     * @param personId Person id
     * @param notification Notification type
     */
-  def turnNotificationOff(id: Long,
-                          personId: Long,
-                          notification: String) = SecuredBrandAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandCoordinatorService.update(id, personId, notification, false)
+  def turnNotificationOff(id: Long, personId: Long, notification: String) = AsyncSecuredBrandAction(id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      brandCoordinatorService.update(id, personId, notification, false).flatMap { _ =>
         jsonSuccess("Changes saved")
+      }
   }
 
   /**
     * Turns off a notification of the given type
+    *
     * @param id Brand id
     * @param personId Person id
     * @param notification Notification type
     */
-  def turnNotificationOn(id: Long,
-                         personId: Long,
-                         notification: String) = SecuredBrandAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandCoordinatorService.update(id, personId, notification, true)
+  def turnNotificationOn(id: Long, personId: Long, notification: String) = AsyncSecuredBrandAction(id) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      brandCoordinatorService.update(id, personId, notification, true).flatMap { _ =>
         jsonSuccess("Changes saved")
+      }
   }
 
   /**
@@ -320,13 +355,15 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @param id Brand identifier
     */
-  def edit(id: Long) = SecuredBrandAction(id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      brandService.find(id) map { brand ⇒
+  def edit(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(id) flatMap { maybeBrand =>
+      maybeBrand map { brand ⇒
         val filledForm = brandsForm(user.name).fill(brand)
-        val people = personService.findActive
-        Ok(views.html.v2.brand.form(user, Some(id), people, filledForm))
-      } getOrElse NotFound(views.html.notFoundPage(request.path))
+        personService.findActive flatMap { people =>
+          ok(views.html.v2.brand.form(user, Some(id), people, filledForm))
+        }
+      } getOrElse notFound(views.html.notFoundPage(request.path))
+    }
   }
 
   /** HTML form mapping for creating and editing. */
@@ -378,53 +415,57 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     *
     * @param id Brand identifier
     */
-  def update(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      brandService.find(id).map { x ⇒
-        val people = personService.findActive
+  def update(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      brand <- brandService.find(id)
+      people <- personService.findActive
+    } yield (brand, people)) flatMap { case (maybeBrand, people) =>
+      maybeBrand map { x ⇒
         val form: Form[Brand] = brandsForm(user.name).bindFromRequest
         form.fold(
-          formWithErrors ⇒ Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people, form))),
+          formWithErrors ⇒ badRequest(views.html.v2.brand.form(user, Some(id), people, form)),
           brand ⇒ {
-            if (Brand.exists(brand.code, x.id))
-              Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people,
-                form.withError("code", "constraint.brand.code.exists", brand.code))))
-            else if (Brand.nameExists(brand.uniqueName, x.id))
-              Future.successful(BadRequest(views.html.v2.brand.form(user, Some(id), people,
-                form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName))))
-            else {
-              request.body.asMultipartFormData.get.file("picture").map { picture ⇒
-                val filename = Brand.generateImageName(picture.filename)
-                val source = Source.fromFile(picture.ref.file.getPath, encoding)
-                val byteArray = source.toArray.map(_.toByte)
-                source.close()
-                S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                  val updatedBrand = brandService.update(x, brand, Some(filename))
-                  Cache.remove(Brand.cacheId(x.code))
-                  if (x.code != updatedBrand.code) {
-                    Cache.remove(Brand.cacheId(updatedBrand.code))
+            (for {
+              sameCode <- brandService.exists(brand.code, Some(id))
+              sameName <- brandService.nameExists(brand.uniqueName, Some(id))
+            } yield (sameCode, sameName)) flatMap {
+              case (false, _) => badRequest(views.html.v2.brand.form(user, Some(id), people,
+                form.withError("code", "constraint.brand.code.exists", brand.code)))
+              case (_, false) => badRequest(views.html.v2.brand.form(user, Some(id), people,
+                form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName)))
+              case _ =>
+                request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+                  val filename = Brand.generateImageName(picture.filename)
+                  val source = Source.fromFile(picture.ref.file.getPath, encoding)
+                  val byteArray = source.toArray.map(_.toByte)
+                  source.close()
+                  S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                    val updatedBrand = brandService.update(x, brand, Some(filename))
+                    Cache.remove(Brand.cacheId(x.code))
+                    if (x.code != updatedBrand.code) {
+                      Cache.remove(Brand.cacheId(updatedBrand.code))
+                    }
+                    x.picture.map { oldPicture ⇒
+                      S3Bucket.remove(oldPicture)
+                    }
+                    val log = activity(brand, user.person).updated.insert()
+                    Redirect(routes.Brands.details(id)).flashing(
+                      "success" -> log.toString)
+                  }.recover {
+                    case S3Exception(status, code, message, originalXml) ⇒
+                      BadRequest(views.html.v2.brand.form(user, Some(id), people,
+                        form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                   }
-                  x.picture.map { oldPicture ⇒
-                    S3Bucket.remove(oldPicture)
-                  }
-                  val log = activity(brand, user.person).updated.insert()
-                  Redirect(routes.Brands.details(id)).flashing(
-                    "success" -> log.toString)
-                }.recover {
-                  case S3Exception(status, code, message, originalXml) ⇒
-                    BadRequest(views.html.v2.brand.form(user, Some(id), people,
-                      form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
+                }.getOrElse {
+                  val updatedBrand = brandService.update(x, brand, x.picture)
+                  val log = activity(updatedBrand, user.person).updated.insert()
+                  val route = routes.Brands.details(id)
+                  Future.successful(Redirect(route).flashing("success" -> log.toString))
                 }
-              }.getOrElse {
-                val updatedBrand = brandService.update(x, brand, x.picture)
-                val log = activity(updatedBrand, user.person).updated.insert()
-                val route = routes.Brands.details(id)
-                Future.successful(Redirect(route).flashing("success" -> log.toString))
-              }
             }
           })
-      }.getOrElse(Future.successful(NotFound(views.html.notFoundPage(request.path))))
+      } getOrElse notFound(views.html.notFoundPage(request.path))
+    }
   }
 
   /**
@@ -438,16 +479,18 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
       Future.successful(Ok(cached.get).as(contentType))
     } else {
       val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = brandService.find(code) map { brand ⇒
-        brand.picture map { picture ⇒
-          val result = S3Bucket.get(brand.picture.get)
-          result.map {
-            case BucketFile(name, contentType, content, acl, headers) ⇒ content
-          }.recover {
-            case S3Exception(status, code, message, originalXml) ⇒ empty
-          }
-        } getOrElse Future.successful(empty)
-      } getOrElse Future.successful(empty)
+      val image: Future[Array[Byte]] = brandService.find(code) flatMap {
+        case None => Future.successful(empty)
+        case Some(brand) =>
+          brand.picture map { picture ⇒
+            val result = S3Bucket.get(brand.picture.get)
+            result.map {
+              case BucketFile(name, contentType, content, acl, headers) ⇒ content
+            }.recover {
+              case S3Exception(status, code, message, originalXml) ⇒ empty
+            }
+          } getOrElse Future.successful(empty)
+      }
       image.map {
         case value ⇒
           Cache.set(Brand.cacheId(code), value)
@@ -462,32 +505,29 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
     * @param brandId Brand id
     * @param future If true, returns only future events; if false, only past
     */
-  def events(brandId: Long,
-             future: Option[Boolean] = None) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        implicit val eventWrites = new Writes[Event] {
-          def writes(data: Event): JsValue = {
-            Json.obj(
-              "id" -> data.id.get,
-              "title" -> data.longTitle)
-          }
+  def events(brandId: Long, future: Option[Boolean] = None) = AsyncSecuredRestrictedAction(Viewer) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      implicit val eventWrites = new Writes[Event] {
+        def writes(data: Event): JsValue = {
+          Json.obj(
+            "id" -> data.id.get,
+            "title" -> data.longTitle)
         }
+      }
 
-        brandService.findWithCoordinators(brandId) map { x ⇒
+      brandService.findWithCoordinators(brandId) flatMap {
+        case None => notFound("Brand not found")
+        case Some(x) =>
           val account = user.account
-          val events = if (
-            x.coordinators.exists(_._1.id == Some(account.personId))) {
+          val events = if (x.coordinators.exists(_._1.id == Some(account.personId))) {
             eventService.findByParameters(x.brand.id, future, archived = Some(false))
           } else {
-            eventService.findByFacilitator(
-              account.personId,
-              x.brand.id,
-              future,
-              archived = Some(false))
+            eventService.findByFacilitator(account.personId, x.brand.id, future, archived = Some(false))
           }
-          Ok(Json.toJson(events))
-        } getOrElse NotFound("Unknown brand")
+          events.flatMap { value =>
+            ok(Json.toJson(value))
+          }
+      }
   }
 }
 
@@ -495,6 +535,7 @@ object Brands extends Utilities {
 
   /**
     * Returns url to a brand's picture
+    *
     * @param brand Brand
     */
   def pictureUrl(brand: Brand): Option[String] = {

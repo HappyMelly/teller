@@ -35,6 +35,7 @@ import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 import views.Countries
 
+import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.util.Random
 
@@ -42,7 +43,7 @@ import scala.util.Random
  * Contains a set of functions for handling brand statistics
  */
 class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
     with Security
     with Services
     with Utilities {
@@ -66,13 +67,13 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * Renders index page with statistics for brands
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
+  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
-        Ok(views.html.v2.statistics.index(user, view.brand, brands))
+        ok(views.html.v2.statistics.index(user, view.brand, brands))
       } { (view, brands) =>
-        Ok(views.html.v2.statistics.index(user, view.get.brand, brands))
-      } { Redirect(routes.Dashboard.index()) }
+        ok(views.html.v2.statistics.index(user, view.get.brand, brands))
+      } { redirect(routes.Dashboard.index()) }
   }
 
   /**
@@ -81,33 +82,34 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand id
    */
-  def byFacilitators(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byFacilitators(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val licenses: List[License] = licenseService.findByBrand(brandId)
+      (for {
+        licenses <- licenseService.findByBrand(brandId)
+        profiles <- profileStrengthService.find(licenses.map(_.licenseeId), false)
+      } yield (licenses, profiles)) flatMap { case (licenses, profiles) =>
+        val (joined, left) = calculatedJoinedLeftNumbers(licenses)
+        val goodProfiles = profiles.filter(_.progress >= 80)
 
-      val (joined, left) = calculatedJoinedLeftNumbers(licenses)
-      val goodProfiles = profileStrengthService.
-        find(licenses.map(_.licenseeId), false).
-        filter(_.progress >= 80)
+        val stats = if (licenses.isEmpty)
+          List[(LocalDate, Int)]()
+        else
+          quarterStatsByFacilitators(licenses.filter(_.active))
 
-      val stats = if (licenses.isEmpty)
-        List[(LocalDate, Int)]()
-      else
-        quarterStatsByFacilitators(licenses.filter(_.active))
-
-      Ok(Json.obj("joined" -> joined,
-        "left" -> left,
-        "withGoodProfiles" -> goodProfiles.length,
-        "labels" -> stats.map(_._1.toString("MMM yyyy")),
-        "datasets" -> List(
-          Json.obj("label" -> "Number of facilitators",
-            "fillColor" -> "rgba(220,220,220,0.2)",
-            "strokeColor" -> "rgba(220,220,220,1)",
-            "pointColor" -> "rgba(220,220,220,1)",
-            "pointStrokeColor" -> "#fff",
-            "pointHighlightFill" -> "#fff",
-            "pointHighlightStroke" -> "rgba(220,220,220,1)",
-            "data" -> stats.map(_._2)))))
+        ok(Json.obj("joined" -> joined,
+          "left" -> left,
+          "withGoodProfiles" -> goodProfiles.length,
+          "labels" -> stats.map(_._1.toString("MMM yyyy")),
+          "datasets" -> List(
+            Json.obj("label" -> "Number of facilitators",
+              "fillColor" -> "rgba(220,220,220,0.2)",
+              "strokeColor" -> "rgba(220,220,220,1)",
+              "pointColor" -> "rgba(220,220,220,1)",
+              "pointStrokeColor" -> "#fff",
+              "pointHighlightFill" -> "#fff",
+              "pointHighlightStroke" -> "rgba(220,220,220,1)",
+              "data" -> stats.map(_._2)))))
+      }
   }
 
   /**
@@ -116,42 +118,45 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand id
    */
-  def byEvents(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byEvents(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val now = LocalDate.now()
-      val events = eventService.findByParameters(Some(brandId))
+      val actions = for {
+        events <- eventService.findByParameters(Some(brandId))
+        monthlyNumbers <- calculateLastMonthNumbers(events)
+        cancelledEvents <- calculatedCanceledEventsNumbers(brandId)
+      } yield (events, monthlyNumbers, cancelledEvents)
+      actions flatMap { case (events, (paid, free, rating, nps), (canceledPaid, canceledFree)) =>
+        val now = LocalDate.now()
 
-      val (futurePaid, futureFree) = calculateFutureEventsNumbers(events)
-      val (paid, free, rating, nps) = calculateLastMonthNumbers(events)
-      val (canceledPaid, canceledFree) = calculatedCanceledEventsNumbers(brandId)
-      val (facilitators, topFacilitators, organizers) = activityRangeNumbers(events)
-      val stats = if (events.isEmpty)
-        List[(LocalDate, Int)]()
-      else
-        quarterStatsByEvents(
-          events.filter(_.schedule.end.isBefore(now)).filter(_.confirmed))
+        val (futurePaid, futureFree) = calculateFutureEventsNumbers(events)
+        val (facilitators, topFacilitators, organizers) = activityRangeNumbers(events)
+        val stats = if (events.isEmpty)
+          List[(LocalDate, Int)]()
+        else
+          quarterStatsByEvents(
+            events.filter(_.schedule.end.isBefore(now)).filter(_.confirmed))
 
-      implicit val topFacilitatorWrites = new Writes[(Long, String, Int)] {
-        def writes(value: (Long, String, Int)): JsValue = {
-          val color = COLORS(Random.nextInt(COLORS.length))
-          Json.obj(
-            "id" -> value._1,
-            "label" -> value._2,
-            "value" -> value._3,
-            "color" -> color._2,
-            "highlight" -> color._1)
+        implicit val topFacilitatorWrites = new Writes[(Long, String, Int)] {
+          def writes(value: (Long, String, Int)): JsValue = {
+            val color = COLORS(Random.nextInt(COLORS.length))
+            Json.obj(
+              "id" -> value._1,
+              "label" -> value._2,
+              "value" -> value._3,
+              "color" -> color._2,
+              "highlight" -> color._1)
+          }
         }
-      }
 
-      Ok(Json.obj(
-        "events" -> Json.obj(
-          "future" -> Json.obj("paid" -> futurePaid, "free" -> futureFree),
-          "confirmed" -> Json.obj("paid" -> paid, "free" -> free),
-          "canceled" -> Json.obj("paid" -> canceledPaid, "free" -> canceledFree),
-          "rating" -> rating,
-          "nps" -> nps,
-          "labels" -> stats.map(_._1.toString("MMM yyyy")),
-          "datasets" -> List(
+        ok(Json.obj(
+          "events" -> Json.obj(
+            "future" -> Json.obj("paid" -> futurePaid, "free" -> futureFree),
+            "confirmed" -> Json.obj("paid" -> paid, "free" -> free),
+            "canceled" -> Json.obj("paid" -> canceledPaid, "free" -> canceledFree),
+            "rating" -> rating,
+            "nps" -> nps,
+            "labels" -> stats.map(_._1.toString("MMM yyyy")),
+            "datasets" -> List(
               Json.obj("label" -> "Number of facilitators",
                 "fillColor" -> "rgba(238,146,159,0.2)",
                 "strokeColor" -> "rgba(238,146,159,1)",
@@ -161,9 +166,10 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
                 "pointHighlightStroke" -> "rgba(220,220,220,1)",
                 "data" -> stats.map(_._2)))
           ),
-        "activeFacilitators" -> facilitators,
-        "topFacilitators" -> topFacilitators,
-        "organizers" -> organizers))
+          "activeFacilitators" -> facilitators,
+          "topFacilitators" -> topFacilitators,
+          "organizers" -> organizers))
+      }
   }
 
   /**
@@ -172,27 +178,26 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand id
    */
-  def byCountries(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byCountries(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val events = eventService.
-        findByParameters(Some(brandId), confirmed = Some(true), future = Some(false))
+      eventService.findByParameters(Some(brandId), confirmed = Some(true), future = Some(false)) flatMap { events =>
+        val perCountry = filterLastSixMonths(events).
+          groupBy(_.location.countryCode).
+          map(x ⇒ (Countries.name(x._1), x._2.length)).
+          toList.sortBy(_._2).reverse.take(TOP_LIMIT)
 
-      val perCountry = filterLastSixMonths(events).
-        groupBy(_.location.countryCode).
-        map(x ⇒ (Countries.name(x._1), x._2.length)).
-        toList.sortBy(_._2).reverse.take(TOP_LIMIT)
-
-      implicit val countryStat = new Writes[(String, Int)] {
-        def writes(value: (String, Int)): JsValue = {
-          val color = COLORS(Random.nextInt(COLORS.length))
-          Json.obj(
-            "value" -> value._2,
-            "label" -> value._1,
-            "color" -> color._2,
-            "highlight" -> color._1)
+        implicit val countryStat = new Writes[(String, Int)] {
+          def writes(value: (String, Int)): JsValue = {
+            val color = COLORS(Random.nextInt(COLORS.length))
+            Json.obj(
+              "value" -> value._2,
+              "label" -> value._1,
+              "color" -> color._2,
+              "highlight" -> color._1)
+          }
         }
+        ok(Json.toJson(perCountry))
       }
-      Ok(Json.toJson(perCountry))
   }
 
   /**
@@ -201,42 +206,43 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand id
    */
-  def byParticipants(brandId: Long) = SecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byParticipants(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val attendees = attendeeService.findByBrand(Some(brandId)).map(x => (x.attendee, x.event.schedule.start))
+      attendeeService.findByBrand(Some(brandId)) flatMap { results =>
+        val attendees = results.map(x => (x.attendee, x.event.schedule.start))
+        val statsByRoles = attendees.
+          filter(_._1.role.exists(_.nonEmpty)).
+          groupBy(_._1.role).map(x => (x._1.get, x._2.length)).toList
 
-      val statsByRoles = attendees.
-        filter(_._1.role.exists(_.nonEmpty)).
-        groupBy(_._1.role).map(x => (x._1.get, x._2.length)).toList
+        val stats = if (attendees.isEmpty)
+          List[(LocalDate, Int)]()
+        else
+          quarterStatsByParticipants(attendees)
 
-      val stats = if (attendees.isEmpty)
-        List[(LocalDate, Int)]()
-      else
-        quarterStatsByParticipants(attendees)
-
-      implicit val roleStats = new Writes[(String, Int)] {
-        def writes(value: (String, Int)): JsValue = {
-          val color = COLORS(Random.nextInt(COLORS.length))
-          Json.obj(
-            "value" -> value._2,
-            "label" -> value._1,
-            "color" -> color._2,
-            "highlight" -> color._1)
+        implicit val roleStats = new Writes[(String, Int)] {
+          def writes(value: (String, Int)): JsValue = {
+            val color = COLORS(Random.nextInt(COLORS.length))
+            Json.obj(
+              "value" -> value._2,
+              "label" -> value._1,
+              "color" -> color._2,
+              "highlight" -> color._1)
+          }
         }
-      }
 
-      Ok(Json.obj(
-        "roles" -> statsByRoles,
-        "labels" -> stats.map(_._1.toString("MMM yyyy")),
-        "datasets" -> List(
-          Json.obj("label" -> "Number of participants",
-            "fillColor" -> "rgba(220,220,220,0.2)",
-            "strokeColor" -> "rgba(220,220,220,1)",
-            "pointColor" -> "rgba(220,220,220,1)",
-            "pointStrokeColor" -> "#fff",
-            "pointHighlightFill" -> "#fff",
-            "pointHighlightStroke" -> "rgba(220,220,220,1)",
-            "data" -> stats.map(_._2)))))
+        ok(Json.obj(
+          "roles" -> statsByRoles,
+          "labels" -> stats.map(_._1.toString("MMM yyyy")),
+          "datasets" -> List(
+            Json.obj("label" -> "Number of participants",
+              "fillColor" -> "rgba(220,220,220,0.2)",
+              "strokeColor" -> "rgba(220,220,220,1)",
+              "pointColor" -> "rgba(220,220,220,1)",
+              "pointStrokeColor" -> "#fff",
+              "pointHighlightFill" -> "#fff",
+              "pointHighlightStroke" -> "rgba(220,220,220,1)",
+              "data" -> stats.map(_._2)))))
+      }
   }
 
   /**
@@ -252,13 +258,12 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * Returns number of paid and free cancelled events from last month
    * @param brandId Brand identifier
    */
-  protected def calculatedCanceledEventsNumbers(brandId: Long): (Int, Int) = {
-    val cancellations = eventCancellationService.
-      findByBrands(List(brandId)).
-      filter(x => lastMonth.contains(x.start.toDate.getTime) ||
+  protected def calculatedCanceledEventsNumbers(brandId: Long): Future[(Int, Int)] = {
+    eventCancellationService.findByBrands(List(brandId)) map { results =>
+      val cancellations = results.filter(x => lastMonth.contains(x.start.toDate.getTime) ||
         lastMonth.contains(x.end.toDate.getTime))
-
-    (cancellations.count(!_.free), cancellations.count(_.free))
+      (cancellations.count(!_.free), cancellations.count(_.free))
+    }
   }
 
   /**
@@ -288,15 +293,14 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * and nps of events from last month
    * @param events List of events
    */
-  protected def calculateLastMonthNumbers(events: List[Event]): (Int, Int, Float, Float) = {
+  protected def calculateLastMonthNumbers(events: List[Event]): Future[(Int, Int, Float, Float)] = {
     val filtered = filterLastMonth(events)
     if (filtered.isEmpty)
-      (0, 0, 0.0f, 0.0f)
+      Future.successful((0, 0, 0.0f, 0.0f))
     else
-      (filtered.count(!_.free),
-        filtered.count(_.free),
-        calculateAverageRating(filtered),
-        calculateNPS(filtered))
+      calculateNPS(filtered) map { nps =>
+        (filtered.count(!_.free), filtered.count(_.free), calculateAverageRating(filtered), nps)
+      }
   }
 
   /**
@@ -326,14 +330,15 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * Returns NPS for evaluations of the given events
    * @param events List of events
    */
-  protected def calculateNPS(events: List[Event]): Float = {
-    val evaluations = evaluationService.findByEvents(events.map(_.id.get))
-    if (evaluations.nonEmpty) {
-      val promoters = evaluations.count(_.impression >= 9)
-      val detractors = evaluations.count(_.impression <= 6)
-      (promoters - detractors) / evaluations.length.toFloat * 100
-    } else {
-      0.0f
+  protected def calculateNPS(events: List[Event]): Future[Float] = {
+    evaluationService.findByEvents(events.map(_.id.get)) map { evaluations =>
+      if (evaluations.nonEmpty) {
+        val promoters = evaluations.count(_.impression >= 9)
+        val detractors = evaluations.count(_.impression <= 6)
+        (promoters - detractors) / evaluations.length.toFloat * 100
+      } else {
+        0.0f
+      }
     }
   }
 

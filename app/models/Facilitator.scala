@@ -29,6 +29,8 @@ import models.event.Attendee
 import models.service.Services
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Represents facilitator entity
@@ -62,36 +64,45 @@ object Facilitator extends Services {
       case "init" =>
         initialCalculation()
       case eventId: Long ⇒
-        eventService.find(eventId) foreach { x ⇒
+        eventService.find(eventId) map { case Some(x) ⇒
           x.facilitatorIds.foreach { id ⇒
-            val events = eventService.findByFacilitator(id, Some(x.brandId)).map(_.id.get)
-            val evaluations = evaluationService.findByEventsWithAttendees(events).filter(_._3.approved)
-            val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
-              OldEvaluation.findByFacilitator(id)
-            else 
-              List()
-            val facilitator = calculateRatings(evaluations, oldEvaluations)
-            facilitatorService.update(facilitator.copy(personId = id, brandId = x.brandId))
+            val evaluationQuery = for {
+              events <- eventService.findByFacilitator(id, Some(x.brandId))
+              evaluations <- evaluationService.findByEventsWithAttendees(events.map(_.id.get))
+              oldEvaluations <- if (x.brandId == MGT30_IDENTIFIER)
+                  evaluationService.findOldEvaluations(id)
+                else
+                  Future.successful(List())
+            } yield (evaluations.filter(_._3.approved), oldEvaluations)
+            evaluationQuery map { case (evaluations, oldEvaluations) =>
+              val facilitator = calculateRatings(evaluations, oldEvaluations)
+              facilitatorService.update(facilitator.copy(personId = id, brandId = x.brandId))
+            }
           }
         }
     }
 
-    def initialCalculation() = {
-      facilitatorService.findAll.foreach { x =>
-        val events = eventService.findByFacilitator(x.personId, Some(x.brandId)).map(_.id.get)
-        val evaluations = evaluationService.findByEventsWithAttendees(events).filter(_._3.approved)
-        val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
-          OldEvaluation.findByFacilitator(x.personId)
-        else
-          List()
-        val facilitator = calculateRatings(evaluations, oldEvaluations)
-        facilitatorService.update(facilitator.copy(personId = x.personId, brandId = x.brandId))
+    def initialCalculation() = facilitatorService.findAll map { data =>
+      data.foreach { x =>
+        val evaluationQuery = for {
+          events <- eventService.findByFacilitator(x.personId, Some(x.brandId))
+          evaluations <- evaluationService.findByEventsWithAttendees(events.map(_.id.get))
+          oldEvaluations <- if (x.brandId == MGT30_IDENTIFIER)
+            evaluationService.findOldEvaluations(x.personId)
+          else
+            Future.successful(List())
+        } yield (evaluations.filter(_._3.approved), oldEvaluations)
+        evaluationQuery map { case (evaluations, oldEvaluations) =>
+          val facilitator = calculateRatings(evaluations, oldEvaluations)
+          facilitatorService.update(facilitator.copy(personId = x.personId, brandId = x.brandId))
+        }
       }
     }
 
     /**
      * Calculates average rating from the given evaluations
-     * @param evaluations Evaluations added to Teller
+      *
+      * @param evaluations Evaluations added to Teller
      * @param oldEvaluations Evaluations added to old Management 3.0 system
      * @return Returns facilitator object with calculated ratings
      */
@@ -114,7 +125,8 @@ object Facilitator extends Services {
 
     /**
      * Returns median for the given list of impressions
-     * @param impressions List of impressions
+      *
+      * @param impressions List of impressions
      */
     protected def calculateMedian(impressions: List[Int]): Float = {
       if (impressions.isEmpty) {
@@ -130,7 +142,8 @@ object Facilitator extends Services {
 
     /**
      * Returns NPS value for the given list of recommendations
-     * @param recommendations Recommendations
+      *
+      * @param recommendations Recommendations
      */
     protected def calculateNps(recommendations: List[Int]): Float = {
       if (recommendations.isEmpty) {
@@ -142,7 +155,8 @@ object Facilitator extends Services {
 
     /**
      * Returns average for the given sequence
-     * @param impressions Impressions
+      *
+      * @param impressions Impressions
      */
     protected def calculateAverage(impressions: List[Int]): Float = {
       if (impressions.isEmpty)
@@ -155,22 +169,22 @@ object Facilitator extends Services {
   /**
    * Update number of events and years of experience for all facilitators
    */
-  def updateFacilitatorExperience(): Unit = {
-    licenseService.findAll.foreach { license =>
+  def updateFacilitatorExperience(): Unit = licenseService.findAll map { licenses =>
+    licenses.foreach { license =>
       val yearsOfExperience = license.length.getStandardDays / 365
-      val facilitator = Facilitator(None, license.licenseeId, license.brandId,
-        yearsOfExperience.toInt, calculateNumberOfEvents(license))
-      facilitatorService.updateExperience(facilitator)
+      calculateNumberOfEvents(license) map { number =>
+        val facilitator = Facilitator(None, license.licenseeId, license.brandId,
+          yearsOfExperience.toInt, number)
+        facilitatorService.updateExperience(facilitator)
+      }
     }
   }
 
   /**
    * Returns number of events for the given license holder
-   * @param license License
+    *
+    * @param license License
    */
-  protected def calculateNumberOfEvents(license: License): Int = {
-    eventService.
-      findByFacilitator(license.licenseeId, Some(license.brandId)).
-      count(_.confirmed)
-  }
+  protected def calculateNumberOfEvents(license: License): Future[Int] =
+    eventService.findByFacilitator(license.licenseeId, Some(license.brandId)).map(_.count(_.confirmed))
 }

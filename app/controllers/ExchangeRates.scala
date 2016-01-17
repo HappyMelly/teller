@@ -25,6 +25,7 @@
 package controllers
 
 import models.ExchangeRate
+import models.service.Services
 import org.joda.money.{ CurrencyUnit, Money }
 import play.api.libs.json._
 import play.api.mvc.{ Action, Controller }
@@ -33,7 +34,7 @@ import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object ExchangeRates extends Controller {
+object ExchangeRates extends Controller with Services {
 
   case class ConversionResult(rate: BigDecimal, result: Money)
 
@@ -54,16 +55,16 @@ object ExchangeRates extends Controller {
   }
 
   def rates(base: CurrencyUnit, required: List[CurrencyUnit] = Nil) = Action.async {
-    val ratesFromDB: Seq[ExchangeRate] = ExchangeRate.ratesFromDatabase(base)
+    exchangeService.ratesFromDatabase(base) flatMap { ratesFromDB =>
+      val currenciesToLookUp = required.toSet -- ratesFromDB.map(_.counter).toSet
 
-    val currenciesToLookUp = required.toSet -- ratesFromDB.map(_.counter).toSet
+      val futureRates: Future[Seq[ExchangeRate]] = Future.sequence(currenciesToLookUp.map { counter ⇒
+        CurrencyConverter.findRate(base, counter)
+      }).map(_.flatten.toSeq)
+      val bothRateLists: Future[List[ExchangeRate]] = futureRates.map(r ⇒ r.toList ::: ratesFromDB.toList ::: Nil)
 
-    val futureRates: Future[Seq[ExchangeRate]] = Future.sequence(currenciesToLookUp.map { counter ⇒
-      CurrencyConverter.findRate(base, counter)
-    }).map(_.flatten.toSeq)
-    val bothRateLists: Future[List[ExchangeRate]] = futureRates.map(r ⇒ r.toList ::: ratesFromDB.toList ::: Nil)
-
-    bothRateLists.map(rates ⇒ Ok(Json.toJson(rates)))
+      bothRateLists.map(rates ⇒ Ok(Json.toJson(rates)))
+    }
   }
 
   def convert(amount: Money, target: CurrencyUnit) = Action.async {

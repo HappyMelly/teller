@@ -42,7 +42,7 @@ case class PaymentData(token: String,
 /**
  * Defines an interface for enrollment classes
  */
-trait Enrollment extends Controller
+trait Enrollment extends AsyncController
     with Services
     with Integrations
     with Utilities
@@ -59,9 +59,7 @@ trait Enrollment extends Controller
    * @param org Organisation which wants to become a member
    * @param member Member data
    */
-  protected def notify(person: Person,
-    org: Option[Organisation],
-    member: Member) = org map {
+  protected def notify(person: Person, org: Option[Organisation], member: Member) = org map {
       notifyAboutOrg(_, member, person)
     } getOrElse
       notifyAboutPerson(person, member)
@@ -86,9 +84,7 @@ trait Enrollment extends Controller
    * @param data Payment data
    * @return Returns customer identifier in the payment system
    */
-  protected def subscribe(person: Person,
-    org: Option[Organisation],
-    data: PaymentData): String = {
+  protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): String = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
     payment.subscribe(person, org, data.token, data.fee)

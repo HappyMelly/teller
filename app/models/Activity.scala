@@ -27,6 +27,9 @@ import models.service.ActivityService
 import org.joda.time.DateTime
 import play.api.i18n.{I18nSupport, Messages}
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 class InvalidActivityPredicate extends RuntimeException
 
 abstract class BaseActivity {
@@ -126,7 +129,7 @@ case class Activity @javax.inject.Inject() (id: Option[Long],
   override def insert(): Activity = if (predicate == Activity.Predicate.None)
     throw new InvalidActivityPredicate
   else
-    ActivityService.get.insert(this)
+    Await.result(ActivityService.get.insert(this), 3.seconds)
 }
 
 /**
@@ -209,6 +212,7 @@ object Activity {
 
   /**
    * Inserts new activity record to database
+ *
    * @param subject User
    * @param predicate Action name
    * @param activityObject Action description
@@ -243,7 +247,7 @@ object Activity {
       "null",
       0L,
       activityObject)
-    ActivityService.get.insert(activity)
+    Await.result(ActivityService.get.insert(activity), 3.seconds)
   }
 }
 

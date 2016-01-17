@@ -31,7 +31,6 @@ import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
 import models.BookingEntry.FieldChange
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.admin.TransactionType
 import models.service.Services
 import models.{AccountSummary, _}
 import org.joda.money.{CurrencyUnit, Money}
@@ -43,10 +42,11 @@ import play.api.mvc.{Result, _}
 import services.integrations.Integrations
 import services.{CurrencyConverter, S3Bucket, TellerRuntimeEnvironment}
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Controller
+    extends AsyncController
     with Security
     with Integrations
     with Services
@@ -96,52 +96,59 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
   /**
    * Renders the page for adding a new booking entry.
    */
-  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def add = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      b <- brandService.findAllWithCoordinator
+      t <- transactionTypeService.findAll
+    } yield (b, t)) flatMap { case (brands, types) =>
       val form = bookingEntryForm.fill(BookingEntry.blank)
       val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
 
-      Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll))
+      ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, types))
+    }
   }
 
   /**
    * Creates a booking entry from an ‘add form’ submission.
    */
-  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val currentUser = user.account
+    val form = bookingEntryForm(user).bindFromRequest
 
-      val currentUser = user.account
-      val form = bookingEntryForm(user).bindFromRequest
-
-      // Extracted function to handle the error case, either from validation or currency conversion failure,
-      // by redisplaying the edit page with error messages.
-      val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
-        val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
-        val brands = Brand.findAllWithCoordinator
-        val transactionTypes = TransactionType.findAll
-        BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes))
+    // Extracted function to handle the error case, either from validation or currency conversion failure,
+    // by redisplaying the edit page with error messages.
+    def handleFormWithErrors(formWithErrors: Form[BookingEntry]): Future[Result] = {
+      val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
+      (for {
+        brands <- brandService.findAllWithCoordinator
+        types <- transactionTypeService.findAll
+      } yield (brands, types)) flatMap { case (brands, types) =>
+        badRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, types))
       }
+    }
 
-      form.fold(
-        formWithErrors ⇒ Future.successful {
-          handleFormWithErrors(formWithErrors)
-        },
-        entry ⇒ {
-          entry.withSourceConverted.map { entry ⇒
-            // Create booking entry.
-            val insertedEntry = entry.copy(ownerId = currentUser.personId).insert
+    form.fold(
+      formWithErrors ⇒ handleFormWithErrors(formWithErrors),
+      entry ⇒ {
+        entry.withSourceConverted.flatMap { entry ⇒
+          // Create booking entry.
+          accountService.insertEntry(entry.copy(ownerId = currentUser.personId)) flatMap { insertedEntry =>
             val activityObject = Messages("models.BookingEntry.name", insertedEntry.bookingNumber.getOrElse(0).toString)
             val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)
             activityService.link(insertedEntry, activity)
             sendEmailNotification(insertedEntry, List.empty, activity, entry.participants)
-            sendEmailNotification(insertedEntry, List.empty, activity, Person.findActiveAdmins -- entry.participants)
+            personService.findActiveAdmins map { admins =>
+              sendEmailNotification(insertedEntry, List.empty, activity, admins -- entry.participants)
+            }
             nextPageResult(form("next").value, activity.toString, form, currentUser, user)
-          }.recover {
-            case e: CurrencyConverter.NoExchangeRateException ⇒
-              val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
-              handleFormWithErrors(formWithError)
           }
-        })
+        }.recover {
+          case e: CurrencyConverter.NoExchangeRateException ⇒
+            val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
+            import scala.concurrent.duration._
+            Await.result(handleFormWithErrors(formWithError), 3.seconds)
+        }
+      })
   }
 
   /**
@@ -158,14 +165,17 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
       richMessage = true)
   }
 
-  def details(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def details(bookingNumber: Int) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val attachmentForm = s3Form(bookingNumber)
-      BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
-        val currentUser = user.account
-        val activity = activityService.findForBookingEntry(bookingEntry.id.getOrElse(0))
-        Ok(views.html.booking.details(user, bookingEntry, currentUser, attachmentForm, activity))
-      }.getOrElse(NotFound)
+      bookingEntryService.findByBookingNumber(bookingNumber) flatMap {
+        case None => notFound("Booking entry not found")
+        case Some(bookingEntry) =>
+          val currentUser = user.account
+          activityService.findForBookingEntry(bookingEntry.id.getOrElse(0)) flatMap { activity =>
+            ok(views.html.booking.details(user, bookingEntry, currentUser, attachmentForm, activity))
+          }
+      }
   }
 
   /** This action exsits only so that there can be a route to `attachFile` without the `key` query parameter **/
@@ -179,24 +189,28 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
    * @param key The S3 object key for the uploaded file
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def attachFile(bookingNumber: Int, key: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def attachFile(bookingNumber: Int, key: String) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
-        // Update entity
-        val decodedKey = URLDecoder.decode(key, "UTF-8")
-        val updatedEntry = entry.copy(attachmentKey = Some(decodedKey))
-        BookingEntry.update(updatedEntry)
+      bookingEntryService.findByBookingNumber(bookingNumber) flatMap {
+        case None => notFound("Booking entry not found")
+        case Some(entry) =>
+          // Update entity
+          val decodedKey = URLDecoder.decode(key, "UTF-8")
+          val updatedEntry = entry.copy(attachmentKey = Some(decodedKey))
+          bookingEntryService.update(updatedEntry)
 
-        //Construct activity
-        val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
-        val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
-        val activity = Activity.insert(user.name, activityPredicate, activityObject)
-        activityService.link(entry, activity)
-        val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), decodedKey.split("/").last))
-        sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
+          //Construct activity
+          val activityPredicate = entry.attachmentKey.map(s ⇒ Activity.Predicate.Replaced).getOrElse(Activity.Predicate.Added)
+          val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
+          val activity = Activity.insert(user.name, activityPredicate, activityObject)
+          activityService.link(entry, activity)
+          val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), decodedKey.split("/").last))
+          personService.findActiveAdmins map { admins =>
+            sendEmailNotification(updatedEntry, changes, activity, admins)
+          }
 
-        Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          redirect(routes.BookingEntries.details(bookingNumber), "success" -> activity.toString)
+      }
   }
 
   /**
@@ -204,67 +218,86 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
    * @param bookingNumber the id of the BookingEntry to remove the attachment from
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
-  def deleteAttachment(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def deleteAttachment(bookingNumber: Int) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
-        val updatedEntry: BookingEntry = entry.copy(attachmentKey = None)
-        BookingEntry.update(updatedEntry)
+      bookingEntryService.findByBookingNumber(bookingNumber) flatMap {
+        case None => notFound("Booking entry not found")
+        case Some(entry) =>
+          val updatedEntry: BookingEntry = entry.copy(attachmentKey = None)
+          bookingEntryService.update(updatedEntry)
 
-        val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
-        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
-        activityService.link(entry, activity)
-        val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), ""))
-        sendEmailNotification(updatedEntry, changes, activity, Person.findActiveAdmins)
+          val activityObject = Messages("models.BookingEntry.attachment", bookingNumber.toString)
+          val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
+          activityService.link(entry, activity)
+          val changes = List(FieldChange("Attachment", entry.attachmentFilename.getOrElse(""), ""))
+          personService.findActiveAdmins map { admins =>
+            sendEmailNotification(updatedEntry, changes, activity, admins)
+          }
 
-        Redirect(routes.BookingEntries.details(bookingNumber)).flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+          redirect(routes.BookingEntries.details(bookingNumber), "success" -> activity.toString)
+      }
   }
 
-  def edit(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def edit(bookingNumber: Int) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      BookingEntry.findByBookingNumber(bookingNumber).map { bookingEntry ⇒
-        if (bookingEntry.editable) {
-          val form = bookingEntryForm.fill(bookingEntry)
-          val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
-          Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, Brand.findAllWithCoordinator, TransactionType.findAll, None, Some(bookingNumber)))
-        } else {
-          Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Cannot edit entry with an inactive account")
-        }
-      }.getOrElse(NotFound)
+      bookingEntryService.findByBookingNumber(bookingNumber) flatMap {
+        case None => notFound("Booking entry not found")
+        case Some(bookingEntry) =>
+          if (bookingEntry.editable) {
+            val form = bookingEntryForm.fill(bookingEntry)
+            val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
+            (for {
+              brands <- brandService.findAllWithCoordinator
+              types <- transactionTypeService.findAll
+            } yield (brands, types)) flatMap { case (brands, types) =>
+              ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, types, None, Some(bookingNumber)))
+            }
+          } else {
+            val msg = "Cannot edit entry with an inactive account"
+            redirect(routes.BookingEntries.details(bookingNumber), "error" -> msg)
+          }
+      }
   }
 
-  def delete(bookingNumber: Int) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(bookingNumber: Int) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      BookingEntry.findByBookingNumber(bookingNumber).map { entry ⇒
-        val currentUser = user.account
-        if (entry.editableBy(currentUser)) {
-          entry.id.map { id ⇒
-            val deletedEntry = entry.copy()
-            BookingEntry.delete(id)
-            val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
-            val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
-            activityService.link(entry, activity)
-            sendEmailNotification(deletedEntry, List.empty, activity, Person.findActiveAdmins)
-            Redirect(routes.BookingEntries.index).flashing("success" -> activity.toString)
-          }.getOrElse(NotFound)
-        } else {
-          Redirect(routes.BookingEntries.index).flashing("error" -> "Only the owner can delete a booking")
-        }
-      }.getOrElse(NotFound)
+      bookingEntryService.findByBookingNumber(bookingNumber) flatMap {
+        case None => notFound("Booking entry not found")
+        case Some(entry) =>
+          val currentUser = user.account
+          if (entry.editableBy(currentUser)) {
+            entry.id.map { id ⇒
+              val deletedEntry = entry.copy()
+              bookingEntryService.delete(id)
+              val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
+              val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)
+              activityService.link(entry, activity)
+              personService.findActiveAdmins map { admins =>
+                sendEmailNotification(deletedEntry, List.empty, activity, admins)
+              }
+              redirect(routes.BookingEntries.index(), "success" -> activity.toString)
+            }.getOrElse(notFound("Entry not found"))
+          } else {
+            redirect(routes.BookingEntries.index(), "error" -> "Only the owner can delete a booking")
+          }
+      }
   }
 
-  def index = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.booking.index(user, None, BookingEntry.findAll.map(e ⇒ (e, None))))
+  def index = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    bookingEntryService.findAll flatMap { entries =>
+      ok(views.html.booking.index(user, None, entries.map(e ⇒ (e, None))))
+    }
   }
 
   private def findFromAndToAccounts(user: ActiveUser): (List[AccountSummary], List[AccountSummary]) = {
-    val allActive: List[AccountSummary] = Account.findAllActive
+    import scala.concurrent.duration._
+    val allActive: List[AccountSummary] = Await.result(accountService.findAllActive, 3.seconds)
     if (user.account.admin) {
       (allActive, allActive)
     } else {
-      val accessible: List[AccountSummary] = user.person.findAccessibleAccounts
+      //val accessible: List[AccountSummary] = user.person.findAccessibleAccounts
+      // This is a stub
+      val accessible = List()
       (accessible, allActive)
     }
   }
@@ -273,7 +306,9 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
     if (user.account.admin) {
       true
     } else {
-      val accessibleAccountIds = user.person.findAccessibleAccounts.map(_.id)
+//      val accessibleAccountIds = user.person.findAccessibleAccounts.map(_.id)
+      // This is a stub
+      val accessibleAccountIds = List()
       accessibleAccountIds.contains(accountId)
     }
   }
@@ -284,75 +319,80 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
   def update(bookingNumber: Int) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      BookingEntry.findByBookingNumber(bookingNumber).map { existingEntry ⇒
-        val currentUser = user.account
-        if (existingEntry.editableBy(currentUser)) {
-          val form = bookingEntryForm(user).bindFromRequest
+      bookingEntryService.findByBookingNumber(bookingNumber) flatMap {
+        case None => notFound("Booking entry not found")
+        case Some(existingEntry) =>
+          val currentUser = user.account
+          if (existingEntry.editableBy(currentUser)) {
+            val form = bookingEntryForm(user).bindFromRequest
 
-          // Extracted function to handle the error case, either from validation or currency conversion failure,
-          // by redisplaying the edit page with error messages.
-          val handleFormWithErrors = (formWithErrors: Form[BookingEntry]) ⇒ {
-            val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
-            val brands = Brand.findAllWithCoordinator
-            val transactionTypes = TransactionType.findAll
-            BadRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, transactionTypes, None, Some(bookingNumber)))
-          }
-
-          form.fold(
-            formWithErrors ⇒ Future.successful {
-              handleFormWithErrors(formWithErrors)
-            },
-            editedEntry ⇒ {
-              // Update the entry with or without currency conversion, depending on whether the source amount changed,
-              // to avoid applying a new exchange rate when only the direction changed.
-              val sourceChanged = {
-                editedEntry.source.abs != existingEntry.source.abs || editedEntry.fromId != existingEntry.fromId || editedEntry.toId != existingEntry.toId
+            // Extracted function to handle the error case, either from validation or currency conversion failure,
+            // by redisplaying the edit page with error messages.
+            def handleFormWithErrors(formWithErrors: Form[BookingEntry]): Future[Result] = {
+              val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
+              (for {
+                brands <- brandService.findAllWithCoordinator
+                types <- transactionTypeService.findAll
+              } yield (brands, types)) flatMap { case (brands, types) =>
+                badRequest(views.html.booking.form(user, formWithErrors, fromAccounts, toAccounts, brands, types, None, Some(bookingNumber)))
               }
-              val futureUpdatedEntry = if (sourceChanged) {
-                editedEntry.withSourceConverted.map { editedEntry ⇒
-                  val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey)
-                  BookingEntry.update(updatedEntry)
-                  updatedEntry
+            }
+
+            form.fold(
+              formWithErrors ⇒ handleFormWithErrors(formWithErrors),
+              editedEntry ⇒ {
+                // Update the entry with or without currency conversion, depending on whether the source amount changed,
+                // to avoid applying a new exchange rate when only the direction changed.
+                val sourceChanged = {
+                  editedEntry.source.abs != existingEntry.source.abs || editedEntry.fromId != existingEntry.fromId || editedEntry.toId != existingEntry.toId
                 }
-              } else {
-                val directionChanged = editedEntry.source == existingEntry.source.multipliedBy(-1L)
-                val (fromAmount, toAmount) = if (directionChanged) {
-                  (existingEntry.fromAmount.multipliedBy(-1L), existingEntry.toAmount.multipliedBy(-1L))
+                val futureUpdatedEntry = if (sourceChanged) {
+                  editedEntry.withSourceConverted.map { editedEntry ⇒
+                    val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey)
+                    bookingEntryService.update(updatedEntry)
+                    updatedEntry
+                  }
                 } else {
-                  (existingEntry.fromAmount, existingEntry.toAmount)
+                  val directionChanged = editedEntry.source == existingEntry.source.multipliedBy(-1L)
+                  val (fromAmount, toAmount) = if (directionChanged) {
+                    (existingEntry.fromAmount.multipliedBy(-1L), existingEntry.toAmount.multipliedBy(-1L))
+                  } else {
+                    (existingEntry.fromAmount, existingEntry.toAmount)
+                  }
+                  val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey,
+                    fromAmount = fromAmount, toAmount = toAmount)
+                  bookingEntryService.update(updatedEntry)
+                  Future.successful(updatedEntry)
                 }
-                val updatedEntry = editedEntry.copy(id = existingEntry.id, attachmentKey = existingEntry.attachmentKey,
-                  fromAmount = fromAmount, toAmount = toAmount)
-                BookingEntry.update(updatedEntry)
-                Future.successful(updatedEntry)
-              }
 
-              futureUpdatedEntry.map { updatedEntry ⇒
-                // Construct a fully-populated entry from the edited entry by adding the missing properties from the
-                // existing entry (that are not included in edit/update), for use in the e-mail notification.
-                val populatedUpdatedEntry = updatedEntry.copy(bookingNumber = existingEntry.bookingNumber,
-                  ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
+                futureUpdatedEntry.flatMap { updatedEntry ⇒
+                  // Construct a fully-populated entry from the edited entry by adding the missing properties from the
+                  // existing entry (that are not included in edit/update), for use in the e-mail notification.
+                  val populatedUpdatedEntry = updatedEntry.copy(bookingNumber = existingEntry.bookingNumber,
+                    ownerId = existingEntry.ownerId, fromId = existingEntry.fromId, toId = existingEntry.toId)
 
-                val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
-                val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
-                activityService.link(existingEntry, activity)
+                  val activityObject = Messages("models.BookingEntry.name", bookingNumber.toString)
+                  val activity = Activity.insert(user.name, Activity.Predicate.Updated, activityObject)
+                  activityService.link(existingEntry, activity)
 
-                val changes = BookingEntry.compare(existingEntry, populatedUpdatedEntry)
-                sendEmailNotification(populatedUpdatedEntry, changes, activity, Person.findActiveAdmins)
+                  val changes = BookingEntry.compare(existingEntry, populatedUpdatedEntry)
+                  personService.findActiveAdmins map { admins =>
+                    sendEmailNotification(populatedUpdatedEntry, changes, activity, admins)
+                  }
 
-                nextPageResult(form("next").value, activity.toString, form, currentUser, user)
-              }.recover {
-                case e: CurrencyConverter.NoExchangeRateException ⇒
-                  val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
-                  handleFormWithErrors(formWithError)
-              }
-            })
-        } else {
-          Future.successful {
-            Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Editing entry not allowed")
+                  nextPageResult(form("next").value, activity.toString, form, currentUser, user)
+                }.recover {
+                  case e: CurrencyConverter.NoExchangeRateException ⇒
+                    val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")
+                    Await.result(handleFormWithErrors(formWithError), 3.seconds)
+                }
+              })
+          } else {
+            Future.successful {
+              Redirect(routes.BookingEntries.details(bookingNumber)).flashing("error" -> "Editing entry not allowed")
+            }
           }
-        }
-      }.getOrElse(Future.successful(NotFound))
+      }
   }
 
   // Redirect or re-render according to which submit button was clicked.
@@ -362,17 +402,19 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
     form: Form[BookingEntry],
     currentUser: UserAccount,
     user: ActiveUser)(implicit request: Request[AnyContent],
-      handler: AuthorisationHandler): Result = {
+      handler: AuthorisationHandler): Future[Result] = {
 
     next match {
-      case Some("add") ⇒ Redirect(routes.BookingEntries.add()).flashing("success" -> successMessage)
-      case Some("copy") ⇒ {
+      case Some("add") ⇒ redirect(routes.BookingEntries.add(), "success" -> successMessage)
+      case Some("copy") ⇒
         val (fromAccounts, toAccounts) = findFromAndToAccounts(user)
-        val brands = Brand.findAllWithCoordinator
-        val transactionTypes = TransactionType.findAll
-        Ok(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, transactionTypes, Some(successMessage)))
-      }
-      case _ ⇒ Redirect(routes.BookingEntries.index()).flashing("success" -> successMessage)
+        (for {
+          brands <- brandService.findAllWithCoordinator
+          types <- transactionTypeService.findAll
+        } yield (brands, types)) flatMap { case (brands, types) =>
+          badRequest(views.html.booking.form(user, form, fromAccounts, toAccounts, brands, types, Some(successMessage)))
+        }
+      case _ ⇒ redirect(routes.BookingEntries.index(), "success" -> successMessage)
     }
   }
 

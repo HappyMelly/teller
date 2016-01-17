@@ -24,28 +24,33 @@
  */
 package models.service
 
-import models.ContributionView
-import models.database.ContributionTable
+import models.{ContributorView, Contribution, ContributionView}
+import models.database.{OrganisationTable, PersonTable, ContributionTable}
 import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ContributionService extends HasDatabaseConfig[JdbcProfile]
-  with ContributionTable {
+  with ContributionTable
+  with OrganisationTable
+  with PersonTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import driver.api._
+  private val contributions = TableQuery[Contributions]
 
   /**
    * Returns a list of all contributions for the given contributor
+ *
    * @param contributorId Contributor identifier
    * @param isPerson If true this contributor is a person, otherwise - company
    */
   def contributions(contributorId: Long, isPerson: Boolean): Future[List[ContributionView]] = {
     val query = for {
-      contribution ← TableQuery[Contributions] if contribution.contributorId === contributorId &&
+      contribution ← contributions if contribution.contributorId === contributorId &&
         contribution.isPerson === isPerson
       product ← contribution.product
     } yield (contribution, product)
@@ -54,6 +59,60 @@ class ContributionService extends HasDatabaseConfig[JdbcProfile]
       case (contribution, product) ⇒ ContributionView(product, contribution)
     })
   }
+
+  /**
+    * Returns a list of contributors for the given product
+    */
+  def contributors(productId: Long): Future[List[ContributorView]] = {
+    val peopleQuery = for {
+      contribution ← contributions if contribution.productId === productId && contribution.isPerson === true
+      person ← TableQuery[People] if person.id === contribution.contributorId
+    } yield (contribution, person)
+
+    val orgQuery = for {
+      contribution ← contributions if contribution.productId === productId && contribution.isPerson === false
+      organisation ← TableQuery[Organisations] if organisation.id === contribution.contributorId
+    } yield (contribution, organisation)
+
+    val actions = for {
+      p <- peopleQuery.result
+      o <- orgQuery.result
+    } yield (p, o)
+    db.run(actions) map { case (people, orgs) =>
+      val peopleView = people.toList.map {
+        case (contribution, person) ⇒
+          ContributorView(person.firstName + " " + person.lastName, person.uniqueName, person.id.get, person.photo.url, contribution)
+      }
+      val orgView = orgs.toList.map {
+        case (contribution, organisation) ⇒ ContributorView(organisation.name, "", organisation.id.get, Some(""), contribution)
+      }
+      List.concat(peopleView, orgView).sortBy(_.name)
+    }
+  }
+
+  /**
+    * Deletes the given contribution from database
+    *
+    * @param id Contribution identifier
+    */
+  def delete(id: Long): Future[Int] = db.run(contributions.filter(_.id === id).delete)
+
+  /**
+    * Inserts new contribution to database
+    * @param contribution Contribution
+    */
+  def insert(contribution: Contribution): Future[Contribution] = {
+    val query = contributions returning contributions.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += contribution)
+  }
+
+  /**
+    * Returns the given contribution if exists
+ *
+    * @param id Contribution identifier
+    */
+  def find(id: Long): Future[Option[Contribution]] =
+    db.run(contributions.filter(_.id === id).result).map(_.headOption)
 }
 
 object ContributionService {

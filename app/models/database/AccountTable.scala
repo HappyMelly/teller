@@ -24,10 +24,9 @@
 
 package models.database
 
-import models.Account
 import models.JodaMoney._
+import models.Account
 import org.joda.money.CurrencyUnit
-import play.api.db.slick.Config.driver.simple._
 import slick.driver.JdbcProfile
 
 private[models] trait AccountTable extends PersonTable with OrganisationTable {
@@ -40,7 +39,7 @@ private[models] trait AccountTable extends PersonTable with OrganisationTable {
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def personId = column[Option[Long]]("PERSON_ID")
     def organisationId = column[Option[Long]]("ORGANISATION_ID")
-    def currency = column[CurrencyUnit]("CURRENCY", O.DBType("CHAR(3)"), O.Default(CurrencyUnit.of("EUR")))
+    def currency = column[CurrencyUnit]("CURRENCY", O.Length(3), O.Default(CurrencyUnit.of("EUR")))
     def active = column[Boolean]("ACTIVE", O.Default(false))
 
     def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)

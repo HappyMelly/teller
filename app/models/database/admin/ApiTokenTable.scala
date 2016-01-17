@@ -40,7 +40,7 @@ private[models] trait ApiTokenTable {
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def token = column[String]("TOKEN")
     def appName = column[String]("APP_NAME")
-    def appDescription = column[String]("APP_DESCRIPTION", O.DBType("TEXT"))
+    def appDescription = column[String]("APP_DESCRIPTION")
     def appWebsite = column[Option[String]]("APP_WEBSITE")
     def readWrite = column[Boolean]("WRITE_CALLS")
 

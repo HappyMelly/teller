@@ -31,6 +31,7 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers._
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class IdentityService extends HasDatabaseConfig[JdbcProfile]
@@ -97,6 +98,7 @@ class IdentityService extends HasDatabaseConfig[JdbcProfile]
   def findByUserId(userId: String, providerId: String): Future[Option[SocialIdentity]] = {
     val query = identities.filter(_.userId === userId).filter(_.providerId === providerId)
     db.run(query.result).map(_.headOption)
+  }
 
     /**
       * Returns user identity filled with account and person data if identity exists,
@@ -140,7 +142,7 @@ class IdentityService extends HasDatabaseConfig[JdbcProfile]
         } yield (identity, a, p, m)
       }
       db.run(q.result).map(_.headOption.map { result =>
-        Some(ActiveUser(userId, providerId, result._2, result._3, result._4))
+        ActiveUser(userId, providerId, result._2, result._3, result._4)
       })
     }
 
@@ -161,7 +163,7 @@ class IdentityService extends HasDatabaseConfig[JdbcProfile]
         (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
       } yield (identity, a, p, m)
       db.run(query.result).map(_.headOption.map { result =>
-        Some(ActiveUser(email, UsernamePasswordProvider.UsernamePassword, result._2, result._3, result._4))
+        ActiveUser(email, UsernamePasswordProvider.UsernamePassword, result._2, result._3, result._4)
       })
     }
 

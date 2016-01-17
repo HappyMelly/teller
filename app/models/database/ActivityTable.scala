@@ -23,6 +23,7 @@
  */
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.Activity
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile

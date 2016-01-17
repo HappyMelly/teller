@@ -40,8 +40,8 @@ private[models] trait BrandTestimonialTable {
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def brandId = column[Long]("BRAND_ID")
     def content = column[String]("CONTENT")
-    def name = column[String]("NAME", O.DBType("VARCHAR(254)"))
-    def company = column[Option[String]]("COMPANY", O.DBType("VARCHAR(254)"))
+    def name = column[String]("NAME", O.Length(254, varying = true))
+    def company = column[Option[String]]("COMPANY", O.Length(254, varying = true))
 
     def * = (id.?, brandId, content, name,
       company) <>(BrandTestimonial.tupled, BrandTestimonial.unapply)

@@ -29,10 +29,14 @@ import play.api.Play
 import play.api.Play.current
 import play.api.mvc._
 
-trait Utilities extends Controller with Services {
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
+trait Utilities extends AsyncController with Services {
 
   /**
     * Returns CDN url to image if CDN is set
+    *
     * @param path Path to image in Amazon S3 bucket
     */
   protected def cdnUrl(path: String): Option[String] = {
@@ -41,38 +45,42 @@ trait Utilities extends Controller with Services {
 
   /**
    * Returns an url with domain
-   * @param url Domain-less part of url
+    *
+    * @param url Domain-less part of url
    */
   protected def fullUrl(url: String): String = {
     Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
   
   protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
-                                  (coordinator: (BrandWithSettings, List[Brand]) => Result)
-                                  (facilitator: (Option[BrandWithSettings], List[Brand]) => Result)
-                                  (ordinaryUser: Result): Result = {
+                                  (coordinator: (BrandWithSettings, List[Brand]) => Future[Result])
+                                  (facilitator: (Option[BrandWithSettings], List[Brand]) => Future[Result])
+                                  (ordinaryUser: Future[Result]): Future[Result] = {
     if (account.isCoordinatorNow) {
-      val brands = brandService.findByCoordinator(account.personId).sortBy(_.brand.name)
-      brandId map { identifier =>
-        brands.find(_.brand.identifier == identifier) map { view =>
-          coordinator(view, brands.map(_.brand))
-        } getOrElse Redirect(routes.Dashboard.index())    
-      } getOrElse {
-        if (brands.nonEmpty) {
-          coordinator(brands.head, brands.map(_.brand))
-        } else Redirect(routes.Dashboard.index())
+      brandService.findByCoordinator(account.personId) flatMap { brands =>
+        val sorted = brands.sortBy(_.brand.name)
+        brandId map { identifier =>
+          sorted.find(_.brand.identifier == identifier) map { view =>
+            coordinator(view, sorted.map(_.brand))
+          } getOrElse redirect(routes.Dashboard.index())
+        } getOrElse {
+          if (sorted.nonEmpty) {
+            coordinator(sorted.head, sorted.map(_.brand))
+          } else redirect(routes.Dashboard.index())
+        }
       }
     } else if (account.isFacilitatorNow) {
-      val brands = brandService.findByLicense(account.personId)
-      brandId map { identifier =>
-        brands.find(_.brand.identifier == identifier) map { view =>
-          facilitator(Some(view), brands.map(_.brand))
-        } getOrElse Redirect(routes.Dashboard.index())
-      } getOrElse {
-        brands.length match {
-          case 1 => facilitator(Some(brands.head), brands.map(_.brand))
-          case 0 => Redirect(routes.Dashboard.index())
-          case _ => facilitator(None, brands.map(_.brand))
+      brandService.findByLicense(account.personId) flatMap { brands =>
+        brandId map { identifier =>
+          brands.find(_.brand.identifier == identifier) map { view =>
+            facilitator(Some(view), brands.map(_.brand))
+          } getOrElse redirect(routes.Dashboard.index())
+        } getOrElse {
+          brands.length match {
+            case 1 => facilitator(Some(brands.head), brands.map(_.brand))
+            case 0 => redirect(routes.Dashboard.index())
+            case _ => facilitator(None, brands.map(_.brand))
+          }
         }
       }
     } else ordinaryUser

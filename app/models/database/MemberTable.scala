@@ -23,6 +23,7 @@
  */
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.JodaMoney._
 import models.Member
 import org.joda.time.{DateTime, LocalDate}
@@ -40,7 +41,7 @@ private[models] trait MemberTable {
     def person = column[Boolean]("PERSON")
     def funder = column[Boolean]("FUNDER")
     def feeCurrency = column[String]("FEE_CURRENCY")
-    def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
+    def fee = column[BigDecimal]("FEE")
     def renewal = column[Boolean]("RENEWAL")
     def since = column[LocalDate]("SINCE")
     def until = column[LocalDate]("END")

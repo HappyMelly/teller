@@ -38,11 +38,8 @@ private[models] trait BrandSettingsTable {
   class BrandSettings(tag: Tag) extends Table[Settings](tag, "BRAND_SETTINGS") {
 
     def brandId = column[Long]("BRAND_ID", O.PrimaryKey)
-
     def certificates = column[Boolean]("CERTIFICATES")
-
     def licenseExpirationEmail = column[Boolean]("LICENSE_EXPIRATION_EMAIL")
-
     def licenseExpirationEmailBody = column[Option[String]]("LICENSE_EXPIRATION_EMAIL_BODY")
 
     def * = (brandId, certificates, licenseExpirationEmail, licenseExpirationEmailBody) <>(

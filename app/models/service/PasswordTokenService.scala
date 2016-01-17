@@ -32,6 +32,7 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers.MailToken
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**

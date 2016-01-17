@@ -32,6 +32,8 @@ import play.api.data.Forms._
 import play.api.libs.json._
 import views.Countries
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 /**
  * Participants API
  */
@@ -75,11 +77,12 @@ trait ParticipantsApi extends ApiAuthentication with Services {
     form.fold(
       formWithErrors ⇒ {
         val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
-        BadRequest(Json.prettyPrint(json))
+        badRequest(Json.prettyPrint(json))
       },
       data ⇒ {
-        val attendee = attendeeService.insert(data)
-        jsonOk(Json.obj("participant_id" -> attendee.identifier))
+        attendeeService.insert(data) flatMap { attendee =>
+          jsonOk(Json.obj("participant_id" -> attendee.identifier))
+        }
       })
   }
 
@@ -100,8 +103,9 @@ trait ParticipantsApi extends ApiAuthentication with Services {
    * @param eventId Event identifier
    */
   def attendees(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    val attendees = attendeeService.findByEvents(List(eventId)).map(_._2)
-    jsonOk(Json.toJson(attendees))
+    attendeeService.findByEvents(List(eventId)) flatMap { attendees =>
+      jsonOk(Json.toJson(attendees.map(_._2)))
+    }
   }
 
 }

@@ -24,15 +24,12 @@
 
 package models
 
-import models.database.{ Accounts, OrganisationMemberships, Organisations }
-import models.service.{ Services, OrganisationService, MemberService }
+import models.service.Services
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import org.joda.time.{DateTime, LocalDate}
 
-import scala.slick.lifted.Query
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 case class OrgView(org: Organisation, profile: SocialProfile)
 
@@ -70,7 +67,8 @@ case class Organisation(
 
   /**
    * Sets a new list of employees
-   * @param people New employees
+    *
+    * @param people New employees
    */
   def people_=(people: List[Person]) = {
     _people = Some(people)
@@ -80,33 +78,35 @@ case class Organisation(
    * Returns a list of people working in this organisation
    */
   def people: List[Person] = _people getOrElse {
-    val people = orgService.people(this.id.get)
+    val people = Await.result(orgService.people(this.identifier), 3.seconds)
     people_=(people)
     people
   }
 
   /**
    * Sets member data
-   * @param member Member data
+    *
+    * @param member Member data
    */
   def member_=(member: Member): Unit = _member = Some(member)
 
   /** Returns member data if person is a member, false None */
   def member: Option[Member] = _member map { Some(_) } getOrElse {
     id map { i ⇒
-      _member = orgService.member(i)
+      _member = Await.result(orgService.member(i), 3.seconds)
       _member
     } getOrElse None
   }
 
   /**
    * Adds member record to database
-   * @param funder Defines if this org becomes a funder
+    *
+    * @param funder Defines if this org becomes a funder
    * @param fee Amount of membership fee this org paid
    * @param userId Id of the user executing the action
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money, userId: Long): Member = {
+  def becomeMember(funder: Boolean, fee: Money, userId: Long): Future[Member] = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       renewal = true, since = LocalDate.now(),
       until = LocalDate.now().plusYears(1), existingObject = true,
@@ -118,7 +118,7 @@ case class Organisation(
    * Returns a list of this organisation's contributions.
    */
   lazy val contributions: List[ContributionView] = {
-    contributionService.contributions(this.id.get, isPerson = false)
+    Await.result(contributionService.contributions(this.identifier, isPerson = false), 3.seconds)
   }
 
   /**
@@ -152,7 +152,8 @@ object Organisation {
 
   /**
    * Returns an organisation with only two required fields filled
-   * @param name Organisation name
+    *
+    * @param name Organisation name
    * @param countryCode Country of residence
    */
   def apply(name: String, countryCode: String): Organisation = {

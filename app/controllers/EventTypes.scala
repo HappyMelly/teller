@@ -25,22 +25,23 @@
 package controllers
 
 import javax.inject.Inject
-import models.ActiveUser
+
 import models.UserRole.Role._
 import models.brand.EventType
 import models.service.Services
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
 import services.TellerRuntimeEnvironment
+import scala.concurrent.Future
 
 class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
+    with Activities
+    with I18nSupport
     with Security
-    with Services
-    with Activities {
+    with Services {
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(
@@ -67,13 +68,12 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand identifier
    */
-  def add(brandId: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(brandId) map { brand ⇒
-          Ok(views.html.v2.eventtype.form(user, brand, eventTypeForm))
-        } getOrElse Redirect(routes.Brands.index()).
-          flashing("error" -> Messages("error.brand.notFound"))
+  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    brandService.find(brandId) flatMap {
+      case None => redirect(routes.Brands.index(), "error" -> Messages("error.brand.notFound"))
+      case Some(brand) =>
+        ok(views.html.v2.eventtype.form(user, brand, eventTypeForm))
+    }
   }
 
   /**
@@ -81,25 +81,24 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val form = eventTypeForm.bindFromRequest
-        brandService.find(brandId) map { brand ⇒
-          form.fold(
-            withErrors ⇒
-              BadRequest(views.html.v2.eventtype.form(user, brand, withErrors)),
-            received ⇒ validateEventType(brandId, received) map { x ⇒
-              val withErrors = form.withError(x._1, x._2)
-              BadRequest(views.html.v2.eventtype.form(user, brand, withErrors))
-            } getOrElse {
-              val inserted = eventTypeService.insert(received.copy(brandId = brandId))
-              val log = activity(inserted, user.person, Some(brand)).connected.insert()
-              val route = routes.Brands.details(brandId).url + "#types"
-              Redirect(route).flashing("success" -> log.toString)
-            })
-        } getOrElse Redirect(routes.Brands.index()).
-          flashing("error" -> Messages("error.brand.notFound"))
+  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val form = eventTypeForm.bindFromRequest
+    brandService.find(brandId) flatMap {
+      case None => redirect(routes.Brands.index(), "error" -> Messages("error.brand.notFound"))
+      case Some(brand) =>
+        form.fold(
+          withErrors ⇒ badRequest(views.html.v2.eventtype.form(user, brand, withErrors)),
+          received ⇒ validateEventType(brandId, received) flatMap {
+            case None =>
+              eventTypeService.insert(received.copy(brandId = brandId)) flatMap { eventType =>
+                val route: String = routes.Brands.details(brandId).url + "#types"
+                redirect(route, "success" -> "Event type was added")
+              }
+            case Some(result) ⇒
+              val withErrors = form.withError(result._1, result._2)
+              badRequest(views.html.v2.eventtype.form(user, brand, withErrors))
+          })
+    }
   }
 
   /**
@@ -107,23 +106,23 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param id Type identifier
    */
-  def delete(brandId: Long, id: Long) = SecuredBrandAction(brandId) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      eventTypeService.find(id).map { eventType ⇒
-        val brand = eventType.brand
-        val route = routes.Brands.details(brand.id.get).url + "#types"
-        val events = eventService.findByParameters(
-          brandId = None,
-          eventType = Some(eventType.id.get))
-        if (events.nonEmpty) {
-          Redirect(route).flashing("error" -> Messages("error.eventType.tooManyEvents"))
-        } else {
-          eventTypeService.delete(id)
-          val log = activity(eventType, user.person, Some(brand)).disconnected.insert()
-          Redirect(route).flashing("success" -> log.toString)
-        }
-      }.getOrElse(NotFound)
+      (for {
+        eventType <- eventTypeService.find(id)
+        events <- eventService.findByParameters(brandId = None, eventType = Some(id))
+      } yield (eventType, events)) flatMap {
+        case (None, _) => notFound("")
+        case (Some(eventType), events) =>
+          val brand = eventType.brand
+          val route: String = routes.Brands.details(brand.id.get).url + "#types"
+          if (events.nonEmpty) {
+            redirect(route, "error" -> Messages("error.eventType.tooManyEvents"))
+          } else {
+            eventTypeService.delete(id)
+            redirect(route, "success" -> "Event type was deleted")
+          }
+      }
   }
 
   /**
@@ -131,9 +130,11 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param brandId Brand id
    */
-  def index(brandId: Long) = SecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
+  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(Json.toJson(eventTypeService.findByBrand(brandId)))
+      eventTypeService.findByBrand(brandId) flatMap { eventType =>
+        ok(Json.toJson(eventType))
+      }
   }
 
   /**
@@ -141,19 +142,21 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param id Event type identifier
    */
-  def update(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        eventTypeForm.bindFromRequest.fold(
-          hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
-          updated ⇒ brandService.find(updated.brandId) map { brand ⇒
-            validateUpdatedEventType(id, updated) map { x ⇒
-              jsonRequest(x._1, Messages(x._2))
-            } getOrElse {
-              eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
-              jsonSuccess("success")
+  def update(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      eventTypeForm.bindFromRequest.fold(
+        hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),
+        updated ⇒ brandService.find(updated.brandId) flatMap {
+          case None => jsonBadRequest(Messages("error.brand.notFound"))
+          case Some(brand) =>
+            validateUpdatedEventType(id, updated) flatMap {
+              case None =>
+                eventTypeService.update(updated.copy(id = Some(id), brandId = updated.brandId))
+                jsonSuccess("success")
+              case Some(result) =>
+                jsonRequest(result._1, Messages(result._2))
             }
-          } getOrElse jsonBadRequest(Messages("error.brand.notFound")))
+        })
   }
 
   /**
@@ -163,19 +166,22 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * @param value Event type object
    * @return returns a validation error if it's invalid
    */
-  protected def validateUpdatedEventType(id: Long,
-    value: EventType): Option[(Int, String)] = {
-    eventTypeService.find(id) map { x ⇒
-      val types = eventTypeService.findByBrand(value.brandId)
-      if (!types.exists(_.id == Some(id))) {
-        Some((BAD_REQUEST, "error.eventType.wrongBrand"))
-      } else {
-        if (types.exists(y ⇒ y.name == value.name && y.id != Some(id)))
-          Some((CONFLICT, "error.eventType.nameExists"))
-        else
-          None
-      }
-    } getOrElse Some((BAD_REQUEST, "error.eventType.notFound"))
+  protected def validateUpdatedEventType(id: Long, value: EventType): Future[Option[(Int, String)]] = {
+    (for {
+      eventType <- eventTypeService.find(id)
+      types <- eventTypeService.findByBrand(value.brandId)
+    } yield (eventType, types)) map {
+      case (None, _) => Some((BAD_REQUEST, "error.eventType.notFound"))
+      case (Some(eventType), types) =>
+        if (!types.exists(_.id.contains(id))) {
+          Some((BAD_REQUEST, "error.eventType.wrongBrand"))
+        } else {
+          if (types.exists(y ⇒ y.name == value.name && !y.id.contains(id)))
+            Some((CONFLICT, "error.eventType.nameExists"))
+          else
+            None
+        }
+    }
   }
 
   /**
@@ -185,12 +191,12 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
    * @param value Event type object
    * @return returns a validation error if invalid
    */
-  protected def validateEventType(brandId: Long,
-    value: EventType): Option[(String, String)] = {
-    val types = eventTypeService.findByBrand(brandId)
-    if (types.exists(y ⇒ y.name == value.name))
-      Some(("name", "error.eventType.nameExists"))
-    else
-      None
+  protected def validateEventType(brandId: Long, value: EventType): Future[Option[(String, String)]] = {
+    eventTypeService.findByBrand(brandId) map { types =>
+      if (types.exists(y ⇒ y.name == value.name))
+        Some(("name", "error.eventType.nameExists"))
+      else
+        None
+    }
   }
 }

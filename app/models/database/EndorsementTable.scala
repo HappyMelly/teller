@@ -25,7 +25,6 @@
 package models.database
 
 import models.Endorsement
-import play.api.db.slick.Config.driver.simple._
 import slick.driver.JdbcProfile
 
 private[models] trait EndorsementTable {
@@ -42,8 +41,8 @@ private[models] trait EndorsementTable {
     def personId = column[Long]("PERSON_ID")
     def brandId = column[Long]("BRAND_ID")
     def content = column[String]("CONTENT")
-    def name = column[String]("NAME", O.DBType("VARCHAR(254)"))
-    def company = column[Option[String]]("COMPANY", O.DBType("VARCHAR(254)"))
+    def name = column[String]("NAME", O.Length(254, varying = true))
+    def company = column[Option[String]]("COMPANY", O.Length(254, varying = true))
     def position = column[Int]("POSITION")
     def evaluationId = column[Long]("EVALUATION_ID")
     def rating = column[Option[Int]]("RATING")

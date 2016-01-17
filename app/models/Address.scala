@@ -24,11 +24,6 @@
 
 package models
 
-import models.database.Addresses
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
-
 case class Address(
   id: Option[Long] = None,
   street1: Option[String] = None,
@@ -38,20 +33,4 @@ case class Address(
   postCode: Option[String] = None,
   countryCode: String)
 
-object Address {
-
-  def find(id: Long): Address = DB.withSession { implicit session ⇒
-    TableQuery[Addresses].filter(_.id === id).first
-  }
-
-  def insert(address: Address): Address = DB.withSession { implicit session ⇒
-    val addresses = TableQuery[Addresses]
-    val id = (addresses returning addresses.map(_.id)) += address
-    address.copy(id = Some(id))
-  }
-
-  def update(address: Address): Unit = DB.withSession { implicit session ⇒
-    TableQuery[Addresses].filter(_.id === address.id).update(address)
-  }
-}
 

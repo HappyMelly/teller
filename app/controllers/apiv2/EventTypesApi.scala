@@ -23,16 +23,16 @@
  */
 package controllers.apiv2
 
-import models.Brand
 import models.brand.EventType
 import models.service.Services
 import play.api.libs.json._
-import play.mvc.Controller
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Event types API
  */
-trait EventTypesApi extends Controller with ApiAuthentication with Services {
+trait EventTypesApi extends ApiAuthentication with Services {
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(eventType: EventType): JsValue = {
@@ -46,13 +46,17 @@ trait EventTypesApi extends Controller with ApiAuthentication with Services {
 
   /**
    * Returns a list of event types for the given brand in JSON format
+ *
    * @param code Brand code
    */
-  def types(code: String) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        val brandId = Brand.find(code) map (_.brand.id.get) getOrElse 0L
-        jsonOk(Json.toJson(eventTypeService.findByBrand(brandId)))
+  def types(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    brandService.find(code) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(brand) =>
+        eventTypeService.findByBrand(brand.identifier) flatMap { eventTypes =>
+          jsonOk(Json.toJson(eventTypes))
+        }
+    }
   }
 }
 

@@ -54,4 +54,10 @@ private[models] trait ProfileStrengthTable {
     def forUpdate = steps
   }
 
+  object ProfileStrengths {
+
+    implicit val jsArrayMapper = MappedColumnType.base[JsArray, String](
+      { array ⇒ array.toString() }, { str ⇒ Json.parse(str).as[JsArray] })
+
+  }
 }

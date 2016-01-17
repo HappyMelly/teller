@@ -40,9 +40,9 @@ private[models] trait BrandFeeTable {
 
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def brandId = column[Long]("BRAND_ID")
-    def country = column[String]("COUNTRY", O.DBType("CHAR(2)"))
-    def feeCurrency = column[String]("FEE_CURRENCY", O.DBType("CHAR(3)"))
-    def feeAmount = column[BigDecimal]("FEE_AMOUNT", O.DBType("DECIMAL(13,3)"))
+    def country = column[String]("COUNTRY", O.Length(2))
+    def feeCurrency = column[String]("FEE_CURRENCY", O.Length(3))
+    def feeAmount = column[BigDecimal]("FEE_AMOUNT")
 
     type BrandFeesFields = (Option[Long], Long, String, String, BigDecimal)
 

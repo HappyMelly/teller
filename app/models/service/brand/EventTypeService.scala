@@ -25,12 +25,12 @@
 package models.service.brand
 
 import models.brand.EventType
-import models.database.brand.{EventTypeTable, EventTypes}
+import models.database.brand.EventTypeTable
 import play.api.Play
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.{HasDatabaseConfig, DatabaseConfigProvider, DB}
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class EventTypeService extends HasDatabaseConfig[JdbcProfile]
@@ -68,6 +68,12 @@ class EventTypeService extends HasDatabaseConfig[JdbcProfile]
    */
   def findByBrand(brandId: Long): Future[List[EventType]] =
     db.run(types.filter(_.brandId === brandId).result).map(_.toList)
+
+  /**
+    * Returns the requested event type
+    * @param id Event type id
+    */
+  def get(id: Long): Future[EventType] = db.run(types.filter(_.id === id).result).map(_.head)
 
   /**
    * Inserts event type data into database

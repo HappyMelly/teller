@@ -27,14 +27,17 @@ package models
 import models.service.Services
 import org.joda.time.DateTime
 
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+
 /** The 'owner' of an account **/
 trait AccountHolder extends Services {
   def name: String
   def levy: Boolean = false
-  lazy val account: Account = Account.find(this)
+  lazy val account: Account = Await.result(accountService.get(this), 3.seconds)
 
   /** Updates the `updatedBy` and `updated` properties, if applicable **/
-  def updated(updatedBy: String): AccountHolder = {
+  def updated(updatedBy: String): Future[AccountHolder] = {
     this match {
       case p: Person ⇒ p.copy(dateStamp = p.dateStamp.copy(
         updated = DateTime.now(),
@@ -45,7 +48,7 @@ trait AccountHolder extends Services {
           updatedBy = updatedBy))
         orgService.update(org)
       }
-      case _ ⇒ this
+      case _ ⇒ Future.successful(this)
     }
   }
 }

@@ -30,13 +30,13 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class UserAccountService extends HasDatabaseConfig[JdbcProfile] with UserAccountTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import driver.api._
-  private val accounts = TableQuery[UserAccounts]
 
   /**
    * @todo cover with tests
@@ -50,26 +50,20 @@ class UserAccountService extends HasDatabaseConfig[JdbcProfile] with UserAccount
     * @param personId Person identifier
     */
   def findByPerson(personId: Long): Future[Option[UserAccount]] =
-    db.run(accounts.filter(_.personId === personId).result).map(_.headOption)
+    db.run(userAccountQuery.findByPerson(personId).result).map(_.headOption)
 
   /**
    * Inserts the given account to database
    * @param account Account object
    * @return The given account with updated id
    */
-  def insert(account: UserAccount): Future[UserAccount] = {
-    val action = (accounts returning accounts.map(_.id) into ((a, id) => a.copy(id = Some(id)))) += account
-    db.run(action)
-  }
+  def insert(account: UserAccount): Future[UserAccount] = db.run(userAccountActions.insert(account))
 
   /**
     * Updates the given account in database
     * @param account User account
     */
-  def update(account: UserAccount) = {
-    db.run(accounts.filter(_.id === account.id).update(account))
-    account
-  }
+  def update(account: UserAccount) = db.run(userAccountActions.update(account)).map(_ => account)
 
   /**
    * Updates active role for the given user
@@ -94,7 +88,6 @@ class UserAccountService extends HasDatabaseConfig[JdbcProfile] with UserAccount
       person.socialProfile.linkedInUrl)
     db.run(action)
   }
-
 }
 
 object UserAccountService {

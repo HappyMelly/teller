@@ -33,10 +33,11 @@ import securesocial.core._
 
 import scala.concurrent.Future
 
+
 /**
  * Integrates SecureSocial authentication with Deadbolt.
  */
-trait Security extends SecureSocial with DeadboltActions with Services {
+trait Security extends SecureSocial with DeadboltActions with Services with AsyncController {
 
   /**
    * A redirect to the login page, used when authorisation fails due to
@@ -115,15 +116,17 @@ trait Security extends SecureSocial with DeadboltActions with Services {
     * @param roles Allowed roles
     * @param evaluationId Evaluation identifier
     */
-  def SecuredEvaluationAction(roles: List[UserRole.Role.Role], evaluationId: Long)(
-    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Result): Action[AnyContent] = {
-    securedAction() { implicit request => implicit handler => implicit user =>
-      eventService.findByEvaluation(evaluationId).map { event ⇒
-        if (eventManager(user.account, roles, event))
-          f(request)(handler)(user)(event)
-        else
-          throw new AuthenticationException
-      } getOrElse NotFound
+  def AsyncSecuredEvaluationAction(roles: List[UserRole.Role.Role], evaluationId: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
+    asyncSecuredAction() { implicit request => implicit handler => implicit user =>
+      eventService.findByEvaluation(evaluationId) flatMap {
+        case None => notFound("Evaluation not found")
+        case Some(event) =>
+          eventManager(user.account, roles, event) flatMap {
+            case false => throw new AuthenticationException
+            case true => f(request)(handler)(user)(event)
+          }
+      }
     }
   }
 
@@ -137,12 +140,14 @@ trait Security extends SecureSocial with DeadboltActions with Services {
   def AsyncSecuredEventAction(roles: List[UserRole.Role.Role], eventId: Long)(
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit handler => implicit user =>
-      eventService.find(eventId).map { event ⇒
-        if (eventManager(user.account, roles, event))
-          f(request)(handler)(user)(event)
-        else
-          throw new AuthenticationException
-      } getOrElse Future.successful(NotFound)
+      eventService.find(eventId) flatMap {
+        case None => notFound("Event not found")
+        case Some(event) =>
+          eventManager(user.account, roles, event) flatMap {
+            case false => throw new AuthenticationException
+            case true => f(request)(handler)(user)(event)
+          }
+      }
     }
   }
 
@@ -221,13 +226,14 @@ trait Security extends SecureSocial with DeadboltActions with Services {
     }
   }
 
-  protected def eventManager(account: UserAccount, roles: List[UserRole.Role.Role], event: models.Event): Boolean = {
+  protected def eventManager(account: UserAccount,
+                             roles: List[UserRole.Role.Role], event: models.Event): Future[Boolean] = {
     if (account.isCoordinatorNow && roles.contains(UserRole.Role.Coordinator))
       brandService.isCoordinator(event.brandId, account.personId)
     else if (account.isFacilitatorNow && roles.contains(UserRole.Role.Facilitator))
-      event.isFacilitator(account.personId)
+      Future.successful(event.isFacilitator(account.personId))
     else
-      false
+      Future.successful(false)
   }
 
   protected def asyncSecuredAction()(

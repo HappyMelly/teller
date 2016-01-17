@@ -24,20 +24,29 @@
 
 package controllers.apiv2
 
-import controllers.Products
+import controllers.{Brands, Products}
 import models.service.Services
-import models.{ Product, ProductView }
-import models.service.ProductsCollection
+import models.{Brand, Product, ProductView}
 import play.api.i18n.Messages
 import play.api.libs.json._
-import play.api.mvc.Controller
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Products API.
  */
-trait ProductsApi extends Controller with ApiAuthentication with Services {
+trait ProductsApi extends ApiAuthentication with Services {
 
-  import BrandsApi.brandWrites
+  implicit val brandWrites = new Writes[Brand] {
+    def writes(brand: Brand): JsValue = {
+      Json.obj(
+        "code" -> brand.code,
+        "unique_name" -> brand.uniqueName,
+        "name" -> brand.name,
+        "image" -> Brands.pictureUrl(brand),
+        "tagline" -> brand.tagLine)
+    }
+  }
 
   implicit val productWithBrandsWrites = new Writes[ProductView] {
     def writes(obj: ProductView): JsValue = {
@@ -51,7 +60,7 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
     }
   }
 
-  implicit val productWrites = new Writes[Product] {
+  implicit val productWrites: Writes[Product] = new Writes[Product] {
     def writes(obj: Product): JsValue = {
       Json.obj(
         "id" -> obj.id,
@@ -84,24 +93,31 @@ trait ProductsApi extends Controller with ApiAuthentication with Services {
 
   /**
    * Returns product in JSON format if exists
-   * @param id Product id
+    *
+    * @param id Product id
    */
-  def product(id: Long) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        productService.find(id) map { product ⇒
-          val withBrands = ProductView(product, productService.brands(id))
-          jsonOk(Json.toJson(withBrands)(productDetailsWrites))
-        } getOrElse jsonNotFound("Unknown product")
+  def product(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    (for {
+      p <- productService.find(id)
+      b <- productService.brands(id)
+    } yield (p, b)) flatMap {
+      case (None, _) => jsonNotFound("Product not found")
+      case (Some(product), brands) =>
+        val withBrands = ProductView(product, brands)
+        jsonOk(Json.toJson(withBrands)(productDetailsWrites))
+    }
   }
 
   /**
    * Returns list of products in JSON format
    */
-  def products = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    implicit token ⇒
-      val products = ProductsCollection.brands(productService.findActive)
+  def products = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    (for {
+      products <- productService.findAll
+      withBrands <- productService.collection.brands(products)
+    } yield withBrands) flatMap { products =>
       jsonOk(Json.toJson(products))
+    }
   }
 }
 

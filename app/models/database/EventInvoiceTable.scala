@@ -27,7 +27,9 @@ package models.database
 import models.EventInvoice
 import slick.driver.JdbcProfile
 
-private[models] trait EventInvoiceTable extends EventTable{
+private[models] trait EventInvoiceTable
+  extends EventTable
+  with OrganisationTable {
 
   protected val driver: JdbcProfile
   import driver.api._

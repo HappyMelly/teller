@@ -24,6 +24,7 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.JodaMoney._
 import models.payment.Record
 import org.joda.time.DateTime
@@ -43,7 +44,7 @@ private[models] trait PaymentRecordTable {
     def person = column[Boolean]("PERSON")
     def description = column[String]("DESCRIPTION")
     def feeCurrency = column[String]("FEE_CURRENCY")
-    def fee = column[BigDecimal]("FEE", O.DBType("DECIMAL(13,3)"))
+    def fee = column[BigDecimal]("FEE")
     def created = column[DateTime]("CREATED")
 
     type PaymentRecordsFields = (Option[Long], String, Long, Long, Boolean, String, String, BigDecimal, DateTime)

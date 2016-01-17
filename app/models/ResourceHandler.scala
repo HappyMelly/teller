@@ -28,6 +28,9 @@ import models.UserRole.DynamicRole
 import models.service.Services
 import play.api.mvc._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 /**
  * A security handler to check if a user is allowed to work with the specific objects.
  *
@@ -42,38 +45,44 @@ class ResourceHandler(user: ActiveUser)
     name match {
       case DynamicRole.Coordinator => brandService.isCoordinator(objectId, user.account.personId)
       case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
-      case DynamicRole.ProfileEditor => user.account.admin || user.account.personId == objectId
-      case DynamicRole.OrgMember => user.account.admin || orgMember(objectId, user.account.personId)
-      case _ ⇒ false
+      case DynamicRole.ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)
+      case DynamicRole.OrgMember => orgMember(objectId, user.account.personId).map(_ || user.account.admin)
+      case _ ⇒ Future.successful(false)
     }
   }
 
   def checkPermission[A](permissionValue: String, deadboltHandler: DeadboltHandler, request: Request[A]) = {
-    false
+    Future.successful(false)
   }
 
   /**
    * Returns true if the given user is allowed to execute a member-related action
-   * @param user Active user
+    *
+    * @param user Active user
     * @param memberId Member id to check
    */
-  protected def checkMemberPermission(user: ActiveUser, memberId: Long): Boolean = {
+  protected def checkMemberPermission(user: ActiveUser, memberId: Long): Future[Boolean] = {
     if (user.account.admin || user.person.member.exists(_.identifier == memberId))
-      true
+      Future.successful(true)
     else
-      memberService.find(memberId) exists { member ⇒
-        if (member.person)
-          false
-        else
-          orgMember(member.objectId, user.account.personId)
+      memberService.find(memberId) flatMap {
+        case None => Future.successful(false)
+        case Some(member) =>
+          if (member.person)
+            Future.successful(false)
+          else
+            orgMember(member.objectId, user.account.personId)
       }
   }
 
   /**
     * Returns true if the given person is a member of the given organisation
+    *
     * @param orgId Organisation identifier
     * @param personId Person identifier
     */
-  private def orgMember(orgId: Long, personId: Long): Boolean =
-    orgService.people(orgId).exists(_.identifier == personId)
+  private def orgMember(orgId: Long, personId: Long): Future[Boolean] =
+    orgService.people(orgId) map { people =>
+      people.exists(_.identifier == personId)
+    }
 }

@@ -25,7 +25,9 @@ package models
 
 import models.service.Services
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{DateTime, LocalDate}
+
+import scala.concurrent.Future
 
 case class Member(
     id: Option[Long],
@@ -109,8 +111,8 @@ case class Member(
     None
 
   /** Records this member to database */
-  def insert: Member = memberService.insert(this)
+  def insert: Future[Member] = memberService.insert(this)
 
   /** Updates this member in database */
-  def update: Member = memberService.update(this)
+  def update: Future[Member] = memberService.update(this)
 }

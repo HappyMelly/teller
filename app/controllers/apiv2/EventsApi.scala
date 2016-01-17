@@ -26,12 +26,14 @@ package controllers.apiv2
 import models.Event
 import models.service.Services
 import play.api.libs.json._
-import play.api.mvc._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Events API
  */
-trait EventsApi extends Controller with ApiAuthentication with Services {
+trait EventsApi extends ApiAuthentication with Services {
 
   import PeopleApi.personWrites
 
@@ -68,12 +70,11 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
    *
    * @param id Event identifier
    */
-  def event(id: Long) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        eventService find id map { event ⇒
-          jsonOk(Json.toJson(event)(eventDetailsWrites))
-        } getOrElse jsonNotFound("Unknown event")
+  def event(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    eventService.find(id) flatMap {
+      case None => jsonNotFound("Event not found")
+      case Some(event) => jsonOk(Json.toJson(event)(eventDetailsWrites))
+    }
   }
 
   /**
@@ -93,21 +94,23 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
     archived: Option[Boolean],
     facilitatorId: Option[Long],
     countryCode: Option[String],
-    eventType: Option[Long]) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        brandService.find(code) map { x ⇒
-          val types = eventTypeService.
-            findByBrand(x.id.get).
-            map(y ⇒ y.id.get -> y.name).toMap
-          val events = facilitatorId map { value ⇒
-            eventsByFacilitator(value, x.id, future, public)
-          } getOrElse {
-            eventsByBrand(x.id, future, public, archived, countryCode, eventType)
+    eventType: Option[Long]) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+      brandService.find(code) flatMap {
+        case None => jsonNotFound("Brand not found")
+        case Some(brand) =>
+          (for {
+            types <- eventTypeService.findByBrand(brand.identifier)
+            events <- facilitatorId map { value ⇒
+              eventsByFacilitator(value, brand.identifier, future, public)
+            } getOrElse {
+              eventsByBrand(brand.identifier, future, public, archived, countryCode, eventType)
+            }
+          } yield (types, events)) flatMap { case (types, events) =>
+            val typeNames = types.map(eventType => eventType.identifier -> eventType.name).toMap
+            eventService.applyFacilitators(events)
+            jsonOk(eventsToJson(events, typeNames))
           }
-          eventService.applyFacilitators(events)
-          jsonOk(eventsToJson(events, types))
-        } getOrElse jsonNotFound("Unknown brand")
+      }
   }
 
   /**
@@ -156,10 +159,10 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
    * @param public Only public events
    */
   protected def eventsByFacilitator(facilitatorId: Long,
-    brandId: Option[Long],
+    brandId: Long,
     future: Option[Boolean],
-    public: Option[Boolean]): List[Event] = {
-    eventService.findByFacilitator(facilitatorId, brandId, future, public, archived = Some(false))
+    public: Option[Boolean]): Future[List[Event]] = {
+    eventService.findByFacilitator(facilitatorId, Some(brandId), future, public, archived = Some(false))
   }
 
   /**
@@ -172,13 +175,13 @@ trait EventsApi extends Controller with ApiAuthentication with Services {
    * @param countryCode Only events in this country
    * @param eventType Only events of this type
    */
-  protected def eventsByBrand(brandId: Option[Long],
+  protected def eventsByBrand(brandId: Long,
     future: Option[Boolean],
     public: Option[Boolean],
     archived: Option[Boolean],
     countryCode: Option[String],
-    eventType: Option[Long]): List[Event] = {
-    eventService.findByParameters(brandId, future, public, archived, None, countryCode, eventType)
+    eventType: Option[Long]): Future[List[Event]] = {
+    eventService.findByParameters(Some(brandId), future, public, archived, None, countryCode, eventType)
   }
 }
 

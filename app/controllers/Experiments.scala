@@ -41,7 +41,7 @@ import services.integrations.Integrations
 import scala.concurrent.Future
 
 class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
     with Services
     with Security
     with Integrations
@@ -81,24 +81,26 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
   def create(memberId: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
-        error ⇒ Future.successful(
-          BadRequest(views.html.v2.experiment.form(user, memberId, error))),
+        error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
         experiment ⇒ {
-          memberService.find(memberId) map { member ⇒
-            val inserted = experimentService.insert(experiment.copy(memberId = memberId))
-            uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
-              experimentService.update(inserted.copy(picture = true))
-            } recover {
-              case e: RuntimeException ⇒ Unit
-            } map { _ ⇒
-              val url = if (member.person)
-                routes.People.details(member.objectId).url
-              else
-                routes.Organisations.details(member.objectId).url
-              notifyMembers(member, experiment, url + "#experiments")
-              Redirect(url + "#experiments")
-            }
-          } getOrElse Future.successful(NotFound("Member not found"))
+          memberService.find(memberId) flatMap {
+            case None => notFound("Member not found")
+            case Some(member) ⇒
+              experimentService.insert(experiment.copy(memberId = memberId)) flatMap { inserted =>
+                uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
+                  experimentService.update(inserted.copy(picture = true))
+                } recover {
+                  case e: RuntimeException ⇒ Unit
+                } map { _ ⇒
+                  val url = if (member.person)
+                    routes.People.details(member.objectId).url
+                  else
+                    routes.Organisations.details(member.objectId).url
+                  notifyMembers(member, experiment, url + "#experiments")
+                  Redirect(url + "#experiments")
+                }
+              }
+          }
         })
   }
 
@@ -111,11 +113,11 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        experimentService.delete(memberId, id)
-        Future.successful(jsonSuccess("ok"))
+  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      experimentService.delete(memberId, id) flatMap { _ =>
+        jsonSuccess("ok")
+      }
   }
 
   /**
@@ -127,13 +129,14 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param id Experiment identifier
    */
   def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        experimentService.find(id) map { experiment ⇒
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      experimentService.find(id) flatMap {
+        case None => jsonNotFound("Experiment not found")
+        case Some(experiment) =>
           Experiment.picture(id).remove()
           experimentService.update(experiment.copy(picture = false))
-          Future.successful(jsonSuccess("ok"))
-        } getOrElse Future.successful(jsonNotFound("Experiment not found"))
+          jsonSuccess("ok")
+      }
   }
 
   /**
@@ -145,13 +148,13 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        experimentService.find(id) map { experiment ⇒
-          Future.successful(
-            Ok(views.html.v2.experiment.form(user, memberId, form(user.name).fill(experiment), Some(id))))
-        } getOrElse Future.successful(NotFound("Experiment not found"))
+  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      experimentService.find(id) flatMap {
+        case None => notFound("Experiment not found")
+        case Some(experiment) =>
+          ok(views.html.v2.experiment.form(user, memberId, form(user.name).fill(experiment), Some(id)))
+      }
   }
 
   /**
@@ -159,11 +162,11 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member
    */
-  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val experiments = experimentService.findByMember(memberId)
-        Future.successful(Ok(views.html.v2.experiment.list(memberId, experiments)))
+  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      experimentService.findByMember(memberId) flatMap { experiments =>
+        ok(views.html.v2.experiment.list(memberId, experiments))
+      }
   }
 
   /**
@@ -182,30 +185,32 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param id Experiment identifier
    */
   def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        form(user.name).bindFromRequest.fold(
-          error ⇒ Future.successful(
-            BadRequest(views.html.v2.experiment.form(user, memberId, error))),
-          experiment ⇒ {
-            experimentService.find(id) map { existing ⇒
-              memberService.find(memberId) map { member ⇒
-                uploadImage(Experiment.picture(existing.id.get), "file") map { _ ⇒
-                  experimentService.update(experiment.copy(id = Some(id),
-                    memberId = memberId, picture = true))
-                } recover {
-                  case e: RuntimeException ⇒ experimentService.update(experiment.copy(id = Some(id),
-                    memberId = memberId, picture = existing.picture))
-                } map { _ ⇒
-                  val url = if (member.person)
-                    routes.People.details(member.objectId).url
-                  else
-                    routes.Organisations.details(member.objectId).url
-                  Redirect(url + "#experiments")
-                }
-              } getOrElse Future.successful(NotFound("Member not found"))
-            } getOrElse Future.successful(NotFound("Experiment not found"))
-          })
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      form(user.name).bindFromRequest.fold(
+        error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
+        experiment ⇒ {
+          (for {
+            existing <- experimentService.find(id)
+            member <- memberService.find(memberId)
+          } yield (existing, member)) flatMap {
+            case (None, _) => notFound("Experiment not found")
+            case (_, None) => notFound("Member not found")
+            case (Some(existing), Some(member)) =>
+              uploadImage(Experiment.picture(existing.id.get), "file") map { _ ⇒
+                experimentService.update(experiment.copy(id = Some(id),
+                  memberId = memberId, picture = true))
+              } recover {
+                case e: RuntimeException ⇒ experimentService.update(experiment.copy(id = Some(id),
+                  memberId = memberId, picture = existing.picture))
+              } map { _ ⇒
+                val url = if (member.person)
+                  routes.People.details(member.objectId).url
+                else
+                  routes.Organisations.details(member.objectId).url
+                Redirect(url + "#experiments")
+              }
+          }
+        })
   }
 
   /**

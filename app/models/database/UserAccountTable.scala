@@ -27,9 +27,21 @@ package models.database
 import models.UserAccount
 import slick.driver.JdbcProfile
 
-private[models] trait UserAccountTable {
+private[models] trait UserAccountTable extends PersonTable {
   protected val driver: JdbcProfile
   import driver.api._
+  protected val accounts = TableQuery[UserAccounts]
+
+  object userAccountQuery {
+    def findByPerson(personId: Long) = accounts.filter(_.personId === personId)
+  }
+
+  object userAccountActions {
+    def insert(account: UserAccount) =
+      (accounts returning accounts.map(_.id) into ((a, id) => a.copy(id = Some(id)))) += account
+
+    def update(account: UserAccount) = accounts.filter(_.id === account.id).update(account)
+  }
 
   /**
     * `UserAccount` database table mapping.

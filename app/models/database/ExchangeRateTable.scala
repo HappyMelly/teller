@@ -24,7 +24,9 @@
 
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.ExchangeRate
+import models.JodaMoney._
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile

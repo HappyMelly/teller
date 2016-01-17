@@ -30,6 +30,7 @@ import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class SocialProfileService extends HasDatabaseConfig[JdbcProfile]
@@ -133,7 +134,7 @@ class SocialProfileService extends HasDatabaseConfig[JdbcProfile]
    * @param profile Profile object
    * @param session Session
    */
-  def _insert(profile: SocialProfile)(implicit session: Session): SocialProfile = {
+  def _insert(profile: SocialProfile): SocialProfile = {
     profiles += profile
     profile
   }

@@ -37,7 +37,7 @@ import scala.language.postfixOps
 import scala.util.Try
 
 class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends JsonController
+    extends AsyncController
     with Security {
 
   /**
@@ -45,7 +45,7 @@ class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment)
    *
    * @param url Url to check
    */
-  def validate(url: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def validate(url: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val result = Try(Await.result(WS.url(url).head(), 1 second)).isSuccess
       if (result)

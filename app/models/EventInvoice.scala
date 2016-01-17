@@ -24,38 +24,26 @@
 
 package models
 
-import models.database.EventInvoices
-import models.service.OrganisationService
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+import models.service.{Services, OrganisationService}
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 case class EventInvoice(id: Option[Long],
     eventId: Option[Long],
     invoiceTo: Long,
     invoiceBy: Option[Long],
-    number: Option[String]) {
+    number: Option[String]) extends Services {
 
-  lazy val invoiceToOrg: Option[Organisation] = OrganisationService.get.find(invoiceTo)
-  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map { OrganisationService.get.find(_) }.getOrElse(None)
+  lazy val invoiceToOrg: Option[Organisation] = Await.result(orgService.find(invoiceTo), 3.seconds)
+  lazy val invoiceByOrg: Option[Organisation] = invoiceBy flatMap { value =>
+    Await.result(orgService.find(value), 3.seconds)
+  }
 }
 
 object EventInvoice {
 
   def empty: EventInvoice = EventInvoice(None, None, 0, None, None)
 
-  def findByEvent(id: Long): EventInvoice = DB.withSession { implicit session ⇒
-    TableQuery[EventInvoices].filter(_.eventId === id).first
-  }
-
-  def update(invoice: EventInvoice): Unit = DB.withSession {
-    implicit session: Session ⇒
-      _update(invoice)
-  }
-
-  def _update(invoice: EventInvoice)(implicit session: Session): Unit =
-    TableQuery[EventInvoices].filter(_.id === invoice.id)
-      .map(_.forUpdate)
-      .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
 }
 

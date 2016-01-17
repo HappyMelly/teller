@@ -1,5 +1,6 @@
 package models.database.event
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.DateStamp
 import models.event.EventRequest
 import org.joda.time.{DateTime, LocalDate}

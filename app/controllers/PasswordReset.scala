@@ -39,28 +39,27 @@ import scala.concurrent.Future
   */
 class PasswordReset @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
   extends BasePasswordReset
-  with JsonController {
+  with AsyncController {
 
   private val logger = play.api.Logger("securesocial.controllers.BasePasswordReset")
 
-  override def handleStartResetPassword = Action.async {
-    implicit request =>
-      startForm.bindFromRequest.fold(
-        errors => Future.successful(BadRequest(env.viewTemplates.getStartResetPasswordPage(errors))),
-        email => env.userService.findByEmailAndProvider(email, UsernamePasswordProvider.UsernamePassword).map {
-          maybeUser =>
-            maybeUser match {
-              case Some(user) =>
-                createToken(email, isSignUp = false).map { token =>
-                  env.mailer.sendPasswordResetEmail(user, token.uuid)
-                  env.userService.saveToken(token)
-                }
-              case None =>
-                env.mailer.sendUnkownEmailNotice(email)
-            }
-            jsonSuccess(Messages(BaseRegistration.ThankYouCheckEmail))
-        }
-      )
+  override def handleStartResetPassword = Action.async { implicit request =>
+    startForm.bindFromRequest.fold(
+      errors => Future.successful(BadRequest(env.viewTemplates.getStartResetPasswordPage(errors))),
+      email => env.userService.findByEmailAndProvider(email, UsernamePasswordProvider.UsernamePassword).flatMap {
+        maybeUser =>
+          maybeUser match {
+            case Some(user) =>
+              createToken(email, isSignUp = false).map { token =>
+                env.mailer.sendPasswordResetEmail(user, token.uuid)
+                env.userService.saveToken(token)
+              }
+            case None =>
+              env.mailer.sendUnkownEmailNotice(email)
+          }
+          jsonSuccess(Messages(BaseRegistration.ThankYouCheckEmail))
+      }
+    )
   }
 
 
