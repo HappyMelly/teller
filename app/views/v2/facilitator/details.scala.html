@@ -4,7 +4,7 @@
 
     @for(badge <- badges) {
     <label class="b-badge @if(facilitator.badges.contains(badge.id.get)) { is-selected }">
-        <input type="checkbox" @if(facilitator.badges.contains(badge.id.get)) { checked } class="b-badge__input js-badge-switcher"
+        <input type="checkbox" @if(facilitator.badges.contains(badge.id.get)) { checked } class="b-badge__input js-badge-input"
             data-id="@badge.id.get" data-brand="@badge.brandId" data-person="@facilitator.personId" />
 
         <div class="b-badge__img" style="background-image: url(@Badges.pictureUrl(badge, "icon")) ;"></div>

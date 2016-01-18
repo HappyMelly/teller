@@ -53,7 +53,7 @@
                 e.preventDefault();
             })
             .on('click', '.js-modal-save', function (e) {
-                self.hidePopup();
+                self.saveBadges();
 
                 e.stopPropagation();
                 e.preventDefault();
@@ -63,7 +63,7 @@
 
                 e.stopPropagation();
             })
-            .on('change', '.js-badge-switcher', function(e){
+            .on('change', '.js-badge-input', function(e){
                 var $this = $(this);
 
                 self.toggleBadge($this);
@@ -99,36 +99,48 @@
         });
     };
 
-    TableRowWithBadges.prototype.setBadgeActive = function($el){
+    TableRowWithBadges.prototype.prepareBadgesList = function(){
         var self = this,
-            url = jsRoutes.controllers.Facilitators.addBadge($el.data('person'), $el.data('brand'), $el.data('id')).url;
-        $.post(url, {}, function(data) {
-            $el.closest('.b-badge').addClass('is-selected');
-            success(data.message)
-        }, "json");
+            badges = [],
+            $badges = self.$modalContent.find('.b-badge');
+
+        $badges.each(function(index, el){
+            var $el = $(el),
+                $input = $el.find('.js-badge-input');
+
+            badges.push({
+                personId: $input.data('person'),
+                brandId: $input.data('brand'),
+                badgeId: $input.data('id'),
+                isActive: $input.prop('checked')
+            })
+        });
+
+        return badges;
     };
 
-    TableRowWithBadges.prototype.setBadgeUnactive = function($el){
+    TableRowWithBadges.prototype.saveBadges = function(){
         var self = this,
-            url = jsRoutes.controllers.Facilitators.deleteBadge($el.data('person'), $el.data('brand'), $el.data('id')).url;
+            arrBadges,
+            url = '/';
 
-        $.ajax({
-            type: "DELETE",
-            url: url,
-            data: {},
-            dataType: "json"
-        }).done(function(data) {
-            $el.closest('.b-badge').removeClass('is-selected');
-            success(data.message);
-        })
+        arrBadges = self.prepareBadgesList();
+
+        $.post(
+            url,
+            {
+                data: arrBadges
+            }, function (data) {
+                self.hidePopup();
+                success(data.message)
+            }, "json");
     };
 
-    TableRowWithBadges.prototype.toggleBadge = function($el){
-        if ($el.prop('checked')){
-            this.setBadgeActive($el);
-        } else {
-            this.setBadgeUnactive($el);
-        }
+
+    TableRowWithBadges.prototype.toggleBadge = function($el) {
+        var $root = $el.closest('.b-badge');
+
+        $root.toggleClass('is-selected', $el.prop('checked'));
     };
 
     App.widgets.TableRowWithBadges = TableRowWithBadges;
