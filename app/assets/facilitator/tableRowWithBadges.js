@@ -101,8 +101,7 @@
 
     TableRowWithBadges.prototype.setBadgeActive = function($el){
         var self = this,
-            url = jsRoutes.controllers.Facilitators.addBadge($el.data('person'), $el.data('brand'), $el.data('person')).url;
-
+            url = jsRoutes.controllers.Facilitators.addBadge($el.data('person'), $el.data('brand'), $el.data('id')).url;
         $.post(url, {}, function(data) {
             $el.closest('.b-badge').addClass('is-selected');
             success(data.message)
@@ -135,3 +134,5 @@
     App.widgets.TableRowWithBadges = TableRowWithBadges;
 
 })(jQuery, App);
+
+

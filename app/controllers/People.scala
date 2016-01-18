@@ -193,13 +193,23 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) map { person ⇒
-        val licenses = licenseService.licenses(id)
-        val facilitator = licenses.nonEmpty
+        val facilitators = facilitatorService.findByPerson(id)
+        val facilitator = facilitators.nonEmpty
         val memberships = person.organisations
+        val badgesInfo = if (facilitator) {
+          val badges = brandBadgeService.find(facilitators.flatMap(_.badges))
+          val brands = brandService.find(badges.map(_.brandId).distinct)
+          badges.map { badge =>
+            (badge, brands.find(_.brand.identifier == badge.brandId).map(_.brand.name).getOrElse(""))
+          }
+        } else {
+          List()
+        }
+
         val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
           memberships.contains(organisation))
         Ok(views.html.v2.person.details(user, person,
-          memberships, otherOrganisations, facilitator))
+          memberships, otherOrganisations, facilitator, badgesInfo))
       } getOrElse {
         Redirect(routes.People.index()).flashing(
           "error" -> Messages("error.notFound", Messages("models.Person")))

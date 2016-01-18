@@ -1,10 +1,12 @@
 @(person: Person,
     organisations: List[Organisation],
-    otherOrganisations: List[Organisation])(implicit request: Request[Any],
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    otherOrganisations: List[Organisation],
+    badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import templates.Formatters._
+@import controllers.brand.Badges
 
 <div class="block">
   <div class="block">
@@ -55,47 +57,26 @@
   </dl>
 </div>
 
-  <div class="block">
-    <h4>Badges</h4>
-    <div class="b-badges-list">
-      <div class="b-badge">
-        <div class="b-badge__img"></div>
-        <div class="b-badge__con">
-          <h5 class="b-badge__title">
-            Awesome badge
-          </h5>
-          <p class="b-badge__company">
-            Managment 3.0
-          </p>
+@if(badges.nonEmpty) {
+    <div class="block">
+        <h4>Badges</h4>
+        <div class="b-badges-list">
+            @for((badge, brandName) <- badges) {
+                <div class="b-badge">
+                    <div class="b-badge__img" style="background-image: url(@Badges.pictureUrl(badge, "icon"));"></div>
+                    <div class="b-badge__con">
+                        <h5 class="b-badge__title">
+                        @badge.name
+                        </h5>
+                        <p class="b-badge__company">
+                        @brandName
+                        </p>
+                    </div>
+                </div>
+            }
         </div>
-      </div>
-
-      <div class="b-badge">
-        <div class="b-badge__img"></div>
-        <div class="b-badge__con">
-          <h5 class="b-badge__title">
-            Best facilitator in M30
-          </h5>
-          <p class="b-badge__company">
-            Managment 3.0
-          </p>
-        </div>
-      </div>
-
-      <div class="b-badge">
-        <div class="b-badge__img"></div>
-        <div class="b-badge__con">
-          <h5 class="b-badge__title">
-            Certificate of knowledge
-          </h5>
-          <p class="b-badge__company">
-            Managment 3.0
-          </p>
-        </div>
-      </div>
-
     </div>
-  </div>
+}
 
 @person.bio.map { text =>
   <div class="block">
