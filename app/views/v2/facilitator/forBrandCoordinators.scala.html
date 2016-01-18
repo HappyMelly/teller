@@ -1,7 +1,8 @@
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
-    facilitators: List[(License, Person, Facilitator, Boolean, Boolean)])(implicit request: Request[Any],
+    facilitators: List[(License, Person, Facilitator, Boolean, Boolean, List[models.brand.Badge])])(implicit
+        request: Request[Any],
         flash: Flash,
         handler: AuthorisationHandler)
 
@@ -68,7 +69,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @for((license, person, data, joined, left) <- facilitators) {
+                            @for((license, person, data, joined, left, badges) <- facilitators) {
                                 <tr @if(license.expired) { class="inactive" } data-id="@person.identifier"
                                     data-brand="@brand.identifier">
                                     <td>

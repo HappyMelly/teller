@@ -1,7 +1,8 @@
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
-    facilitators: List[(License, Person, Facilitator, Boolean, Boolean)])(implicit request: Request[Any],
+    facilitators: List[(License, Person, Facilitator, Boolean, Boolean, List[models.brand.Badge])])(implicit
+        request: Request[Any],
         flash: Flash,
         handler: AuthorisationHandler)
 
@@ -62,7 +63,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @for((license, person, data, sameCountry, isNew) <- facilitators) {
+                            @for((license, person, data, sameCountry, isNew, badges) <- facilitators) {
                                 <tr @if(license.expired) { class="inactive" } >
                                     <td><a href="@routes.People.details(person.identifier)">@person.fullName</a></td>
                                     <td>@Countries.name(person.address.countryCode)</td>

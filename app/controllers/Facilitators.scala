@@ -251,6 +251,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
       val licenses = licenseService.findByBrand(brandId)
       val facilitatorData = facilitatorService.findByBrand(brandId)
       val people = personService.find(licenses.map(_.licenseeId))
+      val badges = brandBadgeService.findByBrand(brandId)
       PeopleCollection.addresses(people)
       Future.successful {
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
@@ -262,7 +263,8 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
               Facilitator(None, license.licenseeId, brandId)
             }
-            (license, person, data, joinedLastMonth, leftLastMonth)
+            val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
+            (license, person, data, joinedLastMonth, leftLastMonth, facilitatorBadges)
           }
           Ok(views.html.v2.facilitator.forBrandCoordinators(user, view.brand, brands, facilitators))
         } { (view, brands) =>
@@ -273,7 +275,8 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
               Facilitator(None, license.licenseeId, brandId)
             }
-            (license, person, data, sameCountry, isNew)
+            val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
+            (license, person, data, sameCountry, isNew, facilitatorBadges)
           }
           Ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
         } {
