@@ -237,7 +237,7 @@ class Events(environment: RuntimeEnvironment[ActiveUser])
    * Confirm form submits to this action.
    * @param id Event ID
    */
-  def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator), id) { implicit request ⇒
+  def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       eventService.confirm(id)
       val log = activity(event, user.person).confirmed.insert()
