@@ -68,6 +68,24 @@
 
                 self.toggleBadge($this);
             })
+            .on('mouseenter', function(){
+                var $this = $(this),
+                    $badgeSlider = $this.find('.js-badge-slider');
+
+                if ($badgeSlider.length){
+                    $badgeSlider.carousel({
+                        interval: 1500
+                    });
+                }
+            })
+            .on('mouseleave', function(){
+                var $this = $(this),
+                    $badgeSlider = $this.find('.js-badge-slider');
+
+                if ($badgeSlider.length){
+                    $badgeSlider.carousel('pause');
+                }
+            })
     };
 
     TableRowWithBadges.prototype.showPopup = function(){
