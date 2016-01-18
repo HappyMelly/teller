@@ -22,31 +22,50 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+function BadgeItem(el){
+    this.el = el;
+    this.$el = $(el);
+
+    this.assignEvents();
+}
+
+BadgeItem.prototype.assignEvents = function(){
+    var self = this;
+
+    self.$el
+        .on('click', '.js-badge-delete', function(e){
+            var result,
+                $this = $(this),
+                $root = $this.closest('.b-badge');
+
+            result = confirm("Remove this badge? You cannot undo this action");
+            if (result) {
+                 self.deleteBadge($root, $this.data('id'), $this.data('href'));
+            }
+            e.preventDefault();
+        })
+};
+
 /**
- * Deletes badge
+ * Delete badge
+ * @param {object} jquery element
  * @param {int} badgeId
  * @param {string} url
  */
-function deleteBadge(badgeId, url) {
+BadgeItem.prototype.deleteBadge = function($root, badgeId, badgeLink){
     $.ajax({
         type: "DELETE",
-        url:url,
+        url:badgeLink,
         dataType: "json"
     }).done(function(data) {
-        $('div[data-id="' + badgeId + '"]').remove();
+        $root.remove();
         success("Badge is deleted")
-    }).fail(function(jqXHR, status, error) {
-        //empty
     });
-    return false;
-}
+};
 
 $(document).ready( function() {
-    $('#badgeList').on('click', 'a.remove', function(e) {
-        var result = confirm("Remove this badge? You cannot undo this action");
-        if (result == true) {
-            return deleteBadge($(this).data('id'), $(this).data('href'));
-        }
-        return false;
+
+    $('.js-badge-item').each(function(index, item){
+        new BadgeItem(item);
     });
 });
