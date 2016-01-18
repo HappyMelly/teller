@@ -44,7 +44,7 @@ class MailChimpSpec extends Specification {
     "add a new subscriber to 'Funder' group" in {
       val mailChimp = new MailChimp(apiUrl, apiToken)
       val person = PersonHelper.one().copy(email = "3234213fosurenotexist@gmail.com")
-      mailChimp.subscribe(listId, person, funder = true) must_== true
+      mailChimp.subscribeToMembershipList(listId, person, funder = true) must_== true
 
       val listUrl = apiUrl + "lists/members.json"
       val data = Json.obj("apikey" -> apiToken, "id" -> listId).toString()
