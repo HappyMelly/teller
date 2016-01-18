@@ -6,7 +6,7 @@
 @main("Organizations", "orgs", user) {
 
   @html.indexPageHeader("Organizations") {
-    @restrict(handler, List(as(Admin.toString))) {
+    @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
       <a class="btn btn-success pull-right" href="@routes.Organisations.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Organization</a>
     }
@@ -17,7 +17,7 @@
       <p>There are no organizations</p>
     } else {
       @table(organisations) { organisation =>
-        @restrict(handler, List(as(Admin.toString))) {
+        @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
           <a href="@routes.Organisations.edit(organisation.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
 			}

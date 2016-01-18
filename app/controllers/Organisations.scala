@@ -74,7 +74,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create page.
    */
-  def add = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def add = SecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
@@ -119,7 +119,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def create = SecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Organisations.organisationForm.bindFromRequest.fold(
@@ -150,7 +150,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
    * Delete an organisation
    * @param id Organisation ID
    */
-  def delete(id: Long) = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def delete(id: Long) = SecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       orgService.find(id).map { organisation ⇒
@@ -211,7 +211,7 @@ class Organisations(environment: RuntimeEnvironment[ActiveUser])
   /**
    * List page.
    */
-  def index = SecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def index = SecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val organisations = orgService.findAll

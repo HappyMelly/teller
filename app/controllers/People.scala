@@ -25,7 +25,7 @@
 package controllers
 
 import controllers.Forms._
-import models.UserRole.DynamicRole
+import models.UserRole.{Role, DynamicRole}
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
@@ -93,7 +93,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def addRelationship() = SecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val relationshipForm = Form(tuple("page" -> text,
