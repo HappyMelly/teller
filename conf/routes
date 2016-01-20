@@ -159,10 +159,9 @@ POST          /member/:id/experiment/:experimentId                         @cont
 
 GET           /experiment/:id/picture                                      @controllers.Experiments.picture(id: Long, size: String ?= "")
 
-POST          /facilitator/:id/brand/:brandId/badge/:badgeId               @controllers.Facilitators.addBadge(id: Long, brandId: Long, badgeId: Long)
 POST          /facilitator/:id/country                                     @controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                    @controllers.Facilitators.addLanguage(id: Long)
-DELETE        /facilitator/:id/brand/:brandId/badge/:badgeId               @controllers.Facilitators.deleteBadge(id: Long, brandId: Long, badgeId: Long)
+POST          /facilitator/:id/brand/:brandId/badges                       @controllers.Facilitators.badges(id: Long, brandId: Long)
 GET           /facilitator/:id/country/:country/delete                     @controllers.Facilitators.deleteCountry(id: Long, country: String)
 GET           /facilitator/:id/language/:lang/delete                       @controllers.Facilitators.deleteLanguage(id: Long, lang: String)
 GET           /facilitator/:id/brand/:brandId                              @controllers.Facilitators.details(id: Long, brandId: Long)

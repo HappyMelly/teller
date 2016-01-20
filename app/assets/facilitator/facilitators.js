@@ -67,5 +67,8 @@ $(document).ready( function() {
     );
 
     $('[data-toggle="tooltip"]').tooltip();
+    $('#facilitators tr').each(function(index, el){
+        new App.widgets.TableRowWithSlidingBadges($(el));
+    })
 
 });

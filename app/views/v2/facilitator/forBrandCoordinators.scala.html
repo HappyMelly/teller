@@ -73,34 +73,7 @@
                                 <tr @if(license.expired) { class="inactive" } data-id="@person.identifier"
                                     data-brand="@brand.identifier">
                                     <td>
-                                        <div class="b-badge-img">
-                                            <div class="b-badge-slider slide js-badge-slider">
-                                                <div class="carousel-inner" role="listbox">
-                                                    <div class="b-badge-slider__i active item"  style="background-image: url(/assets/images/happymelly-face-white.png) ;"></div>
-                                                    <div class="b-badge-slider__i item"  style="background-image: url(/assets/images/badges/green.png) ;"></div>
-                                                    <div class="b-badge-slider__i item"  style="background-image: url(/assets/images/badges/pink.png) ;"></div>
-                                                </div>
-                                            </div>
-                                            <div class="b-badge-tooltip">
-                                                <div class="b-badge ">
-                                                    <div class="b-badge__img" style="background-image: url(/assets/images/happymelly-face-white.png) ;"></div>
-                                                    <div class="b-badge__con">
-                                                        <h5 class="b-badge__title">
-                                                        Badge Name Badge Name Badge Name Badge Name
-                                                        </h5>
-                                                    </div>
-                                                </div>
-                                                <div class="b-badge ">
-                                                    <div class="b-badge__img" style="background-image: url(/assets/images/happymelly-face-white.png) ;"></div>
-                                                    <div class="b-badge__con">
-                                                        <h5 class="b-badge__title">
-                                                        Badge Name
-                                                        </h5>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
+                                        @v2.facilitator.badges(badges)
                                         <a href="@routes.People.details(person.identifier)">@person.fullName</a>
                                     </td>
                                     <td>@Countries.name(person.address.countryCode)</td>
@@ -141,6 +114,7 @@
             </div>
         </div>
     </div>
+    <script src="@routes.Assets.at("facilitator/tableRowWithSlidingBadges.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("facilitator/tableRowWithBadges.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("facilitator/coordinators.js")" type="text/javascript"></script>
 }

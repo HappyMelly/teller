@@ -65,5 +65,6 @@ $(document).ready( function() {
 
     $('#facilitators tr').each(function(index, el){
         new App.widgets.TableRowWithBadges($(el));
+        new App.widgets.TableRowWithSlidingBadges($(el));
     })
 });

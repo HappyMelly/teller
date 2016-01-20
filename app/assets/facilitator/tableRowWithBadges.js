@@ -68,24 +68,6 @@
 
                 self.toggleBadge($this);
             })
-            .on('mouseenter', function(){
-                var $this = $(this),
-                    $badgeSlider = $this.find('.js-badge-slider');
-
-                if ($badgeSlider.length){
-                    $badgeSlider.carousel({
-                        interval: 1500
-                    });
-                }
-            })
-            .on('mouseleave', function(){
-                var $this = $(this),
-                    $badgeSlider = $this.find('.js-badge-slider');
-
-                if ($badgeSlider.length){
-                    $badgeSlider.carousel('pause');
-                }
-            })
     };
 
     TableRowWithBadges.prototype.showPopup = function(){
@@ -126,12 +108,9 @@
             var $el = $(el),
                 $input = $el.find('.js-badge-input');
 
-            badges.push({
-                personId: $input.data('person'),
-                brandId: $input.data('brand'),
-                badgeId: $input.data('id'),
-                isActive: $input.prop('checked')
-            })
+            if ($input.prop('checked')) {
+                badges.push($input.data('id'));
+            }
         });
 
         return badges;
@@ -140,14 +119,14 @@
     TableRowWithBadges.prototype.saveBadges = function(){
         var self = this,
             arrBadges,
-            url = '/';
+            url = jsRoutes.controllers.Facilitators.badges(this.data.personId, this.data.brandId).url;
 
         arrBadges = self.prepareBadgesList();
 
         $.post(
             url,
             {
-                data: arrBadges
+                badges: arrBadges
             }, function (data) {
                 self.hidePopup();
                 success(data.message)
