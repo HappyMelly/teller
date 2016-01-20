@@ -209,7 +209,7 @@ case class Evaluation(
     val cc = brand.coordinators.filter(_._2.notification.evaluation).map(_._1)
     email.send(event.facilitators.toSet,
       Some(cc.toSet), None, subject,
-      mail.templates.html.evaluation(this, attendee).toString(), richMessage = true)
+      mail.templates.evaluation.html.details(this, attendee, brand.brand).toString(), richMessage = true)
 
     this
   }

@@ -23,7 +23,7 @@ object EventReminder extends Services with Integrations {
       confirmed = Some(false)).foreach { event ⇒
       val subject = "Confirm your event " + event.title
       val url = Play.configuration.getString("application.baseUrl").getOrElse("")
-      val body = mail.templates.html.confirm(event, brand, url).toString()
+      val body = mail.templates.event.html.confirm(event, brand, url).toString()
       email.send(
         event.facilitators.toSet,
         None,
@@ -54,7 +54,7 @@ object EventReminder extends Services with Integrations {
     }.foreach { event ⇒
       val subject = "Confirm your event " + event.title
       val url = Play.configuration.getString("application.baseUrl").getOrElse("")
-      val body = mail.templates.html.confirmUpcoming(event, brand, url).toString()
+      val body = mail.templates.event.html.confirmUpcoming(event, brand, url).toString()
       email.send(
         event.facilitators.toSet,
         None,
