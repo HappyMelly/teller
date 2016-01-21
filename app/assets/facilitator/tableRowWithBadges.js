@@ -46,9 +46,8 @@
 
         this.$el
             .on('click', '.js-row-badges', function (e) {
-                self.getBadgesList(function(){
-                    self.showPopup();
-                });
+                self.getBadgesList();
+                self.showPopup();
 
                 e.preventDefault();
             })
@@ -129,6 +128,7 @@
                 badges: arrBadges
             }, function (data) {
                 self.hidePopup();
+                self.$el.trigger('hmtUpdateBadgesList');
                 success(data.message)
             }, "json");
     };

@@ -50,6 +50,10 @@ function filterByLicense(oSettings, aData, iDataIndex) {
 
 
 $(document).ready( function() {
+    $('#facilitators tr').each(function(index, el){
+        new App.widgets.TableRowWithSlidingBadges($(el));
+    })
+
     new App.widgets.DataTable(
         '.js-facilitators-table',
         {
@@ -67,8 +71,6 @@ $(document).ready( function() {
     );
 
     $('[data-toggle="tooltip"]').tooltip();
-    $('#facilitators tr').each(function(index, el){
-        new App.widgets.TableRowWithSlidingBadges($(el));
-    })
+
 
 });

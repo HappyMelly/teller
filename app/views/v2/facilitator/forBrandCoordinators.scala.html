@@ -73,7 +73,9 @@
                                 <tr @if(license.expired) { class="inactive" } data-id="@person.identifier"
                                     data-brand="@brand.identifier">
                                     <td>
-                                        @v2.facilitator.badges(badges)
+                                        <div class="js-row-badgeslist h-d-inline">
+                                            @v2.facilitator.badges(badges)
+                                        </div>
                                         <a href="@routes.People.details(person.identifier)">@person.fullName</a>
                                     </td>
                                     <td>@Countries.name(person.address.countryCode)</td>

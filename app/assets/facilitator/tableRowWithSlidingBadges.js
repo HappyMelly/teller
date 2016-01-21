@@ -56,6 +56,25 @@
                     $badgeSlider.carousel('pause');
                 }
             })
+            .on('hmtUpdateBadgesList', function(){
+                self.updateBadgesList();
+            })
+    };
+
+    TableRowWithSlidingBadges.prototype.updateBadgesList = function(){
+        var self = this,
+            url = '/',
+            $placeholder = self.$el.find('.js-row-badgeslist');
+
+        if (!$placeholder.length) return;
+
+        console.log('test');
+
+        $.post(
+            url,
+            {}, function (data) {
+                $placeholder.html(data);
+            }, "json");
     };
 
     App.widgets.TableRowWithSlidingBadges = TableRowWithSlidingBadges;

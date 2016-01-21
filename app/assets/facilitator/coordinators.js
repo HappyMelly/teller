@@ -43,6 +43,11 @@ function filterByLicense(oSettings, aData, iDataIndex) {
 
 $(document).ready( function() {
 
+    $('#facilitators tr').each(function(index, el){
+        new App.widgets.TableRowWithSlidingBadges($(el));
+        new App.widgets.TableRowWithBadges($(el));
+    });
+
     new App.widgets.DataTable(
         '.js-brandcoordinator-table',
         {
@@ -63,8 +68,5 @@ $(document).ready( function() {
     );
 
 
-    $('#facilitators tr').each(function(index, el){
-        new App.widgets.TableRowWithBadges($(el));
-        new App.widgets.TableRowWithSlidingBadges($(el));
-    })
+
 });
