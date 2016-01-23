@@ -3,6 +3,7 @@ package controllers
 import models.ActiveUser
 import models.UserRole.Role
 import models.service.Services
+import play.api.mvc.Action
 import securesocial.core.RuntimeEnvironment
 import scala.concurrent.Future
 
@@ -18,6 +19,7 @@ class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonCon
 
   /**
     * Renders details info for the given request
+ *
     * @param brandId Brand identifier
     * @param requestId Request identifier
     */
@@ -31,6 +33,7 @@ class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonCon
 
   /**
     * Returns list of event requests for the given brand
+ *
     * @param brandId Brand identifier
     */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
@@ -45,4 +48,18 @@ class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonCon
       }
     }
   }
+
+  /**
+    * Unsubscribes from automatic upcoming event notifications
+ *
+    * @param hashedId Hashed unique id
+    */
+  def unsubscribe(hashedId: String) = Action { implicit request ⇒
+    eventRequestService.find(hashedId) map { eventRequest =>
+      eventRequestService.update(eventRequest.copy(unsubscribed = true))
+      Ok(views.html.v2.eventRequest.unsubscribed())
+    } getOrElse NotFound(views.html.v2.eventRequest.notfound())
+  }
+
+
 }

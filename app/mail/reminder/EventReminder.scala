@@ -53,7 +53,8 @@ object EventReminder extends Services with Integrations {
         requests.filter(request => valid(request)).foreach { request =>
           val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
           if (suitableEvents.nonEmpty) {
-            val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, "")
+            val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
+            val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)
             val subject = s"Upcoming ${brand.name} events"
             email.send(Set(request), None, None, subject, body.toString(), from = brand.name, richMessage = true)
           }
@@ -90,6 +91,9 @@ object EventReminder extends Services with Integrations {
       Activity.insert("Teller", Activity.Predicate.Sent, msg)
     }
   }
+
+  protected def fullUrl(url: String) =
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
 
   /**
     * Returns true if the given request is time valid

@@ -3,6 +3,8 @@ package models.event
 import models.{Recipient, DateStamp}
 import org.joda.time.LocalDate
 
+import scala.util.Random
+
 /**
  * Represents request for an event
  *
@@ -17,6 +19,8 @@ import org.joda.time.LocalDate
  * @param comment Comment
  * @param name Name of the person who makes this request
  * @param email Email of the person who makes this request
+ * @param hashedId Unique hashed identifier
+ * @param unsubscribed If true the user doesn't receive upcoming event notifications
  * @param recordInfo Record info
  */
 case class EventRequest(id: Option[Long],
@@ -30,6 +34,8 @@ case class EventRequest(id: Option[Long],
   comment: Option[String],
   name: String,
   email: String,
+  hashedId: String = Random.alphanumeric.take(64).mkString,
+  unsubscribed: Boolean = false,
   recordInfo: DateStamp) extends Recipient {
 
   def fullName: String = name

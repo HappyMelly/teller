@@ -22,6 +22,15 @@ class EventRequestService {
   }
 
   /**
+    * Returns event request if exists
+ *
+    * @param hashedId Request id
+    */
+  def find(hashedId: String): Option[EventRequest] = DB.withSession { implicit session =>
+    requests.filter(_.hashedId === hashedId).firstOption
+  }
+
+  /**
    * Returns list of event requests belonged the given brand
    *
    * @param brandId Brand identifier
@@ -32,10 +41,10 @@ class EventRequestService {
     }
 
   /**
-    * Returns all event requests with one participant
+    * Returns all event requests with one participant valid for upcoming event notifications
     */
   def findWithOneParticipant: List[EventRequest] = DB.withSession { implicit session =>
-    requests.filter(_.participantsNumber === 1).list
+    requests.filter(_.participantsNumber === 1).filter(_.unsubscribed === false).list
   }
 
   /**
@@ -50,6 +59,14 @@ class EventRequestService {
       request.copy(id = Some(id))
   }
 
+  /**
+    * Update the given event request in dabase
+    * @param request Event request
+    */
+  def update(request: EventRequest): EventRequest = DB.withSession { implicit session =>
+    requests.filter(_.id === request.id).update(request)
+    request
+  }
 }
 
 object EventRequestService {

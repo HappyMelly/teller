@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -147,7 +147,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   }
 
   /**
-    * Sends event confirmation alert in the beginning of each day
+    * Sends event confirmation alert on the first day of each month
     */
   private def scheduleMonthlyAlerts = {
     val now = LocalDateTime.now()

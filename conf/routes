@@ -145,6 +145,8 @@ POST          /event/:id/attendee/:attendeeId                              @cont
 DELETE        /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.delete(id: Long, attendeeId: Long)
 GET           /event/:id/attendees                                         @controllers.event.Attendees.listByEvent(id: Long)
 
+GET           /eventrequest/:id/unsubscribe                                @controllers.EventRequests.unsubscribe(id: String)
+
 GET           /exchangerate                                                controllers.ExchangeRates.rate
 GET           /exchangerate/:target/:amount                                controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
 GET           /exchangerates/:base                                         controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
