@@ -32,6 +32,13 @@ class EventRequestService {
     }
 
   /**
+    * Returns all event requests with one participant
+    */
+  def findWithOneParticipant: List[EventRequest] = DB.withSession { implicit session =>
+    requests.filter(_.participantsNumber === 1).list
+  }
+
+  /**
    * Inserts event request into database
    *
    * @param request EventRequest object

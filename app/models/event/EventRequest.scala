@@ -1,10 +1,11 @@
 package models.event
 
-import models.DateStamp
+import models.{Recipient, DateStamp}
 import org.joda.time.LocalDate
 
 /**
  * Represents request for an event
+ *
  * @param id Request identifier
  * @param brandId Brand this event belongs to
  * @param countryCode Two-letter country code, ex. RU
@@ -29,7 +30,9 @@ case class EventRequest(id: Option[Long],
   comment: Option[String],
   name: String,
   email: String,
-  recordInfo: DateStamp) {
+  recordInfo: DateStamp) extends Recipient {
+
+  def fullName: String = name
 
   def participants: String = participantsNumber match {
     case 1 => "1"

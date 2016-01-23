@@ -122,8 +122,10 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   override def onStart(app: Application) {
     // this is a dirty hack as I don't want to pay Heroku additional $30 for only
     // sending notifications through  a separate process
+    EventReminder.sendUpcomingEventsNotification()
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
+      scheduleMonthlyAlerts
     }
   }
 
@@ -141,11 +143,27 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
         EventReminder.sendPostFactumConfirmation()
         EvaluationReminder.sendToAttendees()
         Facilitator.updateFacilitatorExperience()
-        if (now.getDayOfMonth == 1) {
-          ProfileStrengthReminder.sendToFacilitators()
-          ExperimentReminder.sendStatus()
-          BrandReminder.sendLicenseExpirationReminder()
-        }
       }
   }
+
+  /**
+    * Sends event confirmation alert in the beginning of each day
+    */
+  private def scheduleMonthlyAlerts = {
+    val now = LocalDateTime.now()
+    val targetDate = LocalDate.now.plusDays(1)
+    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
+    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
+    Akka.system.scheduler.schedule(
+      Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
+      Duration.create(24, TimeUnit.HOURS)) {
+      if (now.getDayOfMonth == 1) {
+        ProfileStrengthReminder.sendToFacilitators()
+        ExperimentReminder.sendStatus()
+        BrandReminder.sendLicenseExpirationReminder()
+        EventReminder.sendUpcomingEventsNotification()
+      }
+    }
+  }
+
 }
