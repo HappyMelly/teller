@@ -1,10 +1,12 @@
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
-    facilitators: List[(License, Person, Facilitator, Boolean, Boolean)])(implicit request: Request[Any],
+    facilitators: List[(License, Person, Facilitator, Boolean, Boolean, List[models.brand.Badge])])(implicit
+        request: Request[Any],
         flash: Flash,
         handler: AuthorisationHandler)
 
+@import controllers.brand.Badges
 @import views.Countries
 @import views.ViewHelpersV2._
 
@@ -16,68 +18,74 @@
             <div class="row">
                 <div class="col-md-12 content-block">
                     <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
-                    <div id="filter-containter">
-                        <div class="table-filters pull-left region">
-                            <span>Filter by region: </span>
-                            <div class="filter">
-                                <a href="#" class="active" data-type="all">All</a>&nbsp;<span class="counter">@facilitators.length</span>
+
+                    <div class="b-datatable js-facilitators-table">
+                        <div>
+                            <div class="table-filters pull-left js-filter-region">
+                                <span>Filter by region: </span>
+                                <div class="filter">
+                                    <a href="#" class="active js-filter-link" data-type="all">All</a>&nbsp;<span class="counter">@facilitators.length</span>
+                                </div>
+                                <div class="filter">
+                                    <a href="#" class="js-filter-link" data-type="country">From @Countries.name(user.person.address.countryCode)</a>&nbsp;<span class="counter">@facilitators.count(_._4)</span>
+                                </div>
                             </div>
-                            <div class="filter">
-                                <a href="#" data-type="country">From @Countries.name(user.person.address.countryCode)</a>&nbsp;<span class="counter">@facilitators.count(_._4)</span>
+                            <div class="table-filters pull-left js-filter-license">
+                                <span>Filter by license:</span>
+                                <div class="filter">
+                                    <a href="#" class="js-filter-link active" data-type="all">All</a>&nbsp;<span class="counter">@facilitators.length</span>
+                                </div>
+                                <div class="filter">
+                                    <a href="#" class="js-filter-link" data-type="new">New facilitators</a>&nbsp;<span class="counter">@facilitators.count(_._5)</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="table-filters pull-left license">
-                            <span>Filter by license:</span>
-                            <div class="filter">
-                                <a href="#" class="active" data-type="all">All</a>&nbsp;<span class="counter">@facilitators.length</span>
-                            </div>
-                            <div class="filter">
-                                <a href="#" data-type="new">New facilitators</a>&nbsp;<span class="counter">@facilitators.count(_._5)</span>
-                            </div>
-                        </div>
+                        <table id="facilitators" class="datatables table js-table-list">
+                            <thead>
+                                <tr>
+                                    <th width="15%">Facilitator</th>
+                                    <th width="15%">Country</th>
+                                    <th width="15%" class="number">Public events
+                                        @if(brand.code == "MGT30") {
+                                            <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
+                                            data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
+                                        }
+                                    </th>
+                                    <th width="15%" class="number">Private events
+                                        @if(brand.code == "MGT30") {
+                                            <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
+                                            data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
+                                        }
+                                    </th>
+                                    <th width="10%" class="number"># of events</th>
+                                    <th width="15%" class="date">Joined on</th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @for((license, person, data, sameCountry, isNew, badges) <- facilitators) {
+                                <tr @if(license.expired) { class="inactive" } >
+                                    <td>
+                                        @v2.facilitator.badges(badges)
+                                        <a href="@routes.People.details(person.identifier)">@person.fullName</a>
+                                    </td>
+                                    <td>@Countries.name(person.address.countryCode)</td>
+                                    <td>@data.publicRating</td>
+                                    <td>@data.privateRating</td>
+                                    <td>@data.numberOfEvents</td>
+                                    <td>@dateInterval(license.start, license.start)</td>
+                                    <td>@sameCountry</td>
+                                    <td>@isNew</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
                     </div>
-                    <table id="facilitators" class="datatables table">
-                        <thead>
-                            <tr>
-                                <th width="15%">Facilitator</th>
-                                <th width="15%">Country</th>
-                                <th width="15%" class="number">Public events
-                                    @if(brand.code == "MGT30") {
-                                        <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
-                                        data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
-                                    }
-                                </th>
-                                <th width="15%" class="number">Private events
-                                    @if(brand.code == "MGT30") {
-                                        <i class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
-                                        data-placement="bottom" title="Based on evaluations from Teller and old Management 3.0 evaluation system"></i>
-                                    }
-                                </th>
-                                <th width="10%" class="number"># of events</th>
-                                <th width="15%" class="date">Joined on</th>
-                                <th></th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @for((license, person, data, sameCountry, isNew) <- facilitators) {
-                            <tr @if(license.expired) { class="inactive" } >
-                                <td><a href="@routes.People.details(person.identifier)">@person.fullName</a></td>
-                                <td>@Countries.name(person.address.countryCode)</td>
-                                <td>@data.publicRating</td>
-                                <td>@data.privateRating</td>
-                                <td>@data.numberOfEvents</td>
-                                <td>@dateInterval(license.start, license.start)</td>
-                                <td>@sameCountry</td>
-                                <td>@isNew</td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
     </div>
-    <link rel="stylesheet" href="@routes.Assets.at("css/facilitator.min.css")">
+    <script src="@routes.Assets.at("facilitator/tableRowWithSlidingBadges.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("facilitator/facilitators.js")" type="text/javascript"></script>
 }

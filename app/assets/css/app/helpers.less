@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,12 +21,31 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-@import "settings";
+@import "./../settings";
 
-.expiring {
+.h-nowrap{
+  white-space: nowrap;
+}
+
+.h-rel{
+  position: relative;
+}
+
+.h-ellps{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.h-ovh{
+  overflow: hidden;
+}
+
+.h-d-inline{
+  display: inline-block;
+}
+
+/*== colors ==*/
+.h-pink{
   color: @pig-pink;
 }
-table.dataTable>thead>tr>th {
-  padding-left: 0;
-}
-

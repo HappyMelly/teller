@@ -7,22 +7,31 @@
     <p>You can give badges to facilitators to identity their achievements. These badges will be visible on facilitator profiles.
         By showing this information you are more transparent to potential attendees of your events, making it easier for
         them to see the differences between facilitators. It is also an incentive for facilitators to earn badges.</p>
-    <p class="text-muted"><i>You can add an unlimited number of badges.</p>
+    <p class="text-muted"><i>You can add an unlimited number of badges.</i></p>
     <p><a href="@controllers.brand.routes.Badges.add(brandId)">+ Add Badge</a></p>
 </div>
 
-<div class="badges" id="badgeList">
+<div class="b-badges-profile" id="badgeList">
 @for(badge <- badges) {
-    <div class="block" data-id="@badge.id.get">
-        <h4>@badge.name</h4>
-        <img class="picture" src="@controllers.brand.Badges.pictureUrl(badge)" width="100px"/>
-        <div class="actions font-sm">
-            <a href="@controllers.brand.routes.Badges.edit(brandId, badge.id.get)">Edit</a>
-            <a href="#" data-id="@badge.id.get" class="remove"
-                data-href="@controllers.brand.routes.Badges.delete(brandId, badge.id.get)">Delete</a>
+    <div class="b-badge js-badge-item" data-id="@badge.id.get">
+        <div class="b-badge__img" style="background-image: url(@controllers.brand.Badges.pictureUrl(badge)) ;"></div>
+        <div class="b-badge__con">
+            <h5 class="b-badge__title">
+            @badge.name
+            </h5>
+            <div class="b-badge__actions">
+                <a href="@controllers.brand.routes.Badges.edit(brandId, badge.id.get)"
+                    class="link-blue">
+                    Edit
+                </a> &nbsp;
+                <a href="#"
+                    data-id="@badge.id.get" class="js-badge-delete link-blue"
+                    data-href="@controllers.brand.routes.Badges.delete(brandId, badge.id.get)">
+                    Delete
+                </a>
+            </div>
         </div>
     </div>
 }
 </div>
-<link rel="stylesheet" href="@routes.Assets.at("css/badges.min.css")">
 <script src="@routes.Assets.at("brand/tabs/badges.js")" type="text/javascript"></script>

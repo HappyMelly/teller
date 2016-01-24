@@ -2,10 +2,11 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-        showFacilitationTab: Boolean)(implicit request: Request[Any],
-    flash: Flash,
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    showFacilitationTab: Boolean,
+    badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
+        flash: Flash,
+        handler: AuthorisationHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import be.objectify.deadbolt.scala.views.html._
@@ -95,7 +96,7 @@
             This person is <strong>deactivated</strong></div>
         }
         <div class="tab-pane active" id="personal-details">
-          @views.html.v2.person.tabs.details(person, organisations, otherOrganisations)
+          @views.html.v2.person.tabs.details(person, organisations, otherOrganisations, badges)
         </div>
         <div class="tab-pane" id="contributions"></div>
         @if(showFacilitationTab) {

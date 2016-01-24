@@ -68,29 +68,6 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Adds new badge to the given facilitator
-    * @param personId Facilitator identifier
-    * @param brandId Brand identifier
-    * @param badgeId Badge identifier
-    */
-  def addBadge(personId: Long, brandId: Long, badgeId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
-    implicit handler => implicit user => Future.successful {
-      brandBadgeService.find(badgeId) map { badge =>
-        if (badge.brandId == brandId) {
-          facilitatorService.find(brandId, personId) map { facilitator =>
-            if (!facilitator.badges.contains(badgeId)) {
-              facilitatorService.update(facilitator.copy(badges = facilitator.badges :+ badgeId))
-            }
-            jsonSuccess("Badge was added")
-          } getOrElse jsonBadRequest("Impossible to add badge to a person without license")
-        } else {
-          jsonNotFound("Badge not found")
-        }
-      } getOrElse jsonNotFound("Badge not found")
-    }
-  }
-
-  /**
     * Add a new country to a facilitator
     *
     * @param id Person identifier
@@ -156,26 +133,16 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /**
-    * Deletes badge from the given facilitator
+    * Retrieves badges for the given facilitator
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
-    * @param badgeId Badge identifier
     */
-  def deleteBadge(personId: Long, brandId: Long, badgeId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
-    implicit handler => implicit user => Future.successful {
-      brandBadgeService.find(badgeId) map { badge =>
-        if (badge.brandId == brandId) {
-          facilitatorService.find(brandId, personId) map { facilitator =>
-            if (facilitator.badges.contains(badgeId)) {
-              facilitatorService.update(facilitator.copy(badges = facilitator.badges.filterNot(_ == badgeId)))
-            }
-            jsonSuccess("Badge was removed")
-          } getOrElse jsonBadRequest("Impossible to remove badge to a person without license")
-        } else {
-          jsonNotFound("Badge not found")
-        }
-      } getOrElse jsonNotFound("Badge not found")
-    }
+  def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
+    implicit handler => implicit user =>
+      facilitatorService.find(brandId, personId) map { facilitator =>
+        val badges = brandBadgeService.findByBrand(brandId).filter(badge => facilitator.badges.contains(badge.id.get))
+        Future.successful(Ok(views.html.v2.facilitator.badges(badges)))
+      } getOrElse Future.successful(NotFound("Facilitator not found"))
   }
 
   /**
@@ -244,6 +211,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
 
   /**
     * Returns list of facilitators for the given brand
+    *
     * @param brandId Brand identifier
     */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
@@ -251,6 +219,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
       val licenses = licenseService.findByBrand(brandId)
       val facilitatorData = facilitatorService.findByBrand(brandId)
       val people = personService.find(licenses.map(_.licenseeId))
+      val badges = brandBadgeService.findByBrand(brandId)
       PeopleCollection.addresses(people)
       Future.successful {
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
@@ -262,7 +231,8 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
               Facilitator(None, license.licenseeId, brandId)
             }
-            (license, person, data, joinedLastMonth, leftLastMonth)
+            val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
+            (license, person, data, joinedLastMonth, leftLastMonth, facilitatorBadges)
           }
           Ok(views.html.v2.facilitator.forBrandCoordinators(user, view.brand, brands, facilitators))
         } { (view, brands) =>
@@ -273,7 +243,8 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
               Facilitator(None, license.licenseeId, brandId)
             }
-            (license, person, data, sameCountry, isNew)
+            val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
+            (license, person, data, sameCountry, isNew, facilitatorBadges)
           }
           Ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
         } {
@@ -293,6 +264,25 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
         PeopleCollection.organisations(facilitators)
       }
       Ok(Json.toJson(facilitators))
+  }
+
+  /**
+    * Updates badges for the given facilitator
+    * @param personId Facilitator identifier
+    * @param brandId Brand identifier
+    */
+  def updateBadges(personId: Long, brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+    implicit handler => implicit user =>
+      val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
+      form.bindFromRequest.fold(
+        errors => Future.successful(jsonBadRequest("'badges' field doesn't exist")),
+        badges =>
+          facilitatorService.find(brandId, personId) map { facilitator =>
+            val brandBadges = brandBadgeService.findByBrand(brandId).map(_.id.get)
+            facilitatorService.update(facilitator.copy(badges = badges.filter(x => brandBadges.contains(x))))
+            Future.successful(jsonSuccess("Badges were updated"))
+          } getOrElse Future.successful(jsonNotFound("Facilitator not found"))
+      )
   }
 
   protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {
