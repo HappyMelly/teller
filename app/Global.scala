@@ -25,6 +25,7 @@
 import java.lang.reflect.Constructor
 import java.util.concurrent.TimeUnit
 
+import _root_.services.cleaners.ExpiredEventRequestCleaner
 import mail.reminder._
 import services.{TellerRoutesService, LoginIdentityService}
 import models.{Facilitator, ActiveUser}
@@ -84,7 +85,8 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
   /**
    * Force using HTTPS on production
-   * @param request Request object
+    *
+    * @param request Request object
    * @return
    */
   override def onRouteRequest(request: RequestHeader): Option[Handler] = {
@@ -122,7 +124,6 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
   override def onStart(app: Application) {
     // this is a dirty hack as I don't want to pay Heroku additional $30 for only
     // sending notifications through  a separate process
-    EventReminder.sendUpcomingEventsNotification()
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleMonthlyAlerts
@@ -143,6 +144,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
         EventReminder.sendPostFactumConfirmation()
         EvaluationReminder.sendToAttendees()
         Facilitator.updateFacilitatorExperience()
+        ExpiredEventRequestCleaner.clean()
       }
   }
 

@@ -1,5 +1,8 @@
 package models.service.event
 
+import org.joda.time.LocalDate
+
+import models.database.PortableJodaSupport._
 import models.database.event.EventRequests
 import models.event.EventRequest
 import play.api.Play.current
@@ -14,7 +17,16 @@ class EventRequestService {
   private val requests = TableQuery[EventRequests]
 
   /**
+    * Deletes event requests which end date is less than the given date
+    * @param expiration Expiration date
+    */
+  def deleteExpired(expiration: LocalDate) = DB.withSession { implicit session =>
+    requests.filter(_.end <= expiration).mutate(_.delete())
+  }
+
+  /**
     * Returns event request if exists
+    *
     * @param requestId Request id
     */
   def find(requestId: Long): Option[EventRequest] = DB.withSession { implicit session =>
@@ -23,7 +35,7 @@ class EventRequestService {
 
   /**
     * Returns event request if exists
- *
+    *
     * @param hashedId Request id
     */
   def find(hashedId: String): Option[EventRequest] = DB.withSession { implicit session =>
@@ -61,6 +73,7 @@ class EventRequestService {
 
   /**
     * Update the given event request in dabase
+    *
     * @param request Event request
     */
   def update(request: EventRequest): EventRequest = DB.withSession { implicit session =>
