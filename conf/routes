@@ -161,7 +161,8 @@ GET           /experiment/:id/picture                                      @cont
 
 POST          /facilitator/:id/country                                     @controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                    @controllers.Facilitators.addLanguage(id: Long)
-POST          /facilitator/:id/brand/:brandId/badges                       @controllers.Facilitators.badges(id: Long, brandId: Long)
+GET           /facilitator/:id/brand/:brandId/badges                       @controllers.Facilitators.badges(id: Long, brandId: Long)
+POST          /facilitator/:id/brand/:brandId/badges                       @controllers.Facilitators.updateBadges(id: Long, brandId: Long)
 GET           /facilitator/:id/country/:country/delete                     @controllers.Facilitators.deleteCountry(id: Long, country: String)
 GET           /facilitator/:id/language/:lang/delete                       @controllers.Facilitators.deleteLanguage(id: Long, lang: String)
 GET           /facilitator/:id/brand/:brandId                              @controllers.Facilitators.details(id: Long, brandId: Long)

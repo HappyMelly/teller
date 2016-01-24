@@ -41,6 +41,21 @@ function filterByLicense(oSettings, aData, iDataIndex) {
     }
 }
 
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "name-with-badges-pre": function ( a ) {
+        var x = String(a).replace( /<div[\s\S]*?<a/g, "<a").replace(/<[\s\S]*?>/g, "");
+        return x;
+    },
+
+    "name-with-badges-asc": function ( a, b ) {
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+
+    "name-with-badges-desc": function ( a, b ) {
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+} );
+
 $(document).ready( function() {
 
     $('#facilitators tr').each(function(index, el){
@@ -57,6 +72,9 @@ $(document).ready( function() {
             "bLengthChange": false,
             "order": [[ 0, "asc" ]],
             "columnDefs": [{
+                "type": "name-with-badges",
+                "targets": 0
+            },{
                 "visible": false,
                 "targets": [6, 7, 8, 9]
             }, {

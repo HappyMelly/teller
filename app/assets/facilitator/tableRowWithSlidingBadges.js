@@ -31,6 +31,11 @@
     function TableRowWithSlidingBadges($el){
         this.$el = $el;
 
+        this.data = {
+            brandId: $el.data('brand'),
+            personId: $el.data('id')
+        };
+
         this.assignEvents();
     }
 
@@ -63,18 +68,16 @@
 
     TableRowWithSlidingBadges.prototype.updateBadgesList = function(){
         var self = this,
-            url = '/',
+            url = jsRoutes.controllers.Facilitators.badges(this.data.personId, this.data.brandId).url,
             $placeholder = self.$el.find('.js-row-badgeslist');
 
         if (!$placeholder.length) return;
 
-        console.log('test');
-
-        $.post(
+        $.get(
             url,
             {}, function (data) {
                 $placeholder.html(data);
-            }, "json");
+            }, "html");
     };
 
     App.widgets.TableRowWithSlidingBadges = TableRowWithSlidingBadges;

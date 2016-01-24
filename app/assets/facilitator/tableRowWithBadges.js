@@ -118,7 +118,7 @@
     TableRowWithBadges.prototype.saveBadges = function(){
         var self = this,
             arrBadges,
-            url = jsRoutes.controllers.Facilitators.badges(this.data.personId, this.data.brandId).url;
+            url = jsRoutes.controllers.Facilitators.updateBadges(this.data.personId, this.data.brandId).url;
 
         arrBadges = self.prepareBadgesList();
 

@@ -132,18 +132,17 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
         })
   }
 
-  def badges(personId: Long, brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+  /**
+    * Retrieves badges for the given facilitator
+    * @param personId Facilitator identifier
+    * @param brandId Brand identifier
+    */
+  def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
-      val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
-      form.bindFromRequest.fold(
-        errors => Future.successful(jsonBadRequest("'badges' field doesn't exist")),
-        badges =>
-          facilitatorService.find(brandId, personId) map { facilitator =>
-            val brandBadges = brandBadgeService.findByBrand(brandId).map(_.id.get)
-            facilitatorService.update(facilitator.copy(badges = badges.filter(x => brandBadges.contains(x))))
-            Future.successful(jsonSuccess("Badges were updated"))
-          } getOrElse Future.successful(jsonNotFound("Facilitator not found"))
-      )
+      facilitatorService.find(brandId, personId) map { facilitator =>
+        val badges = brandBadgeService.findByBrand(brandId).filter(badge => facilitator.badges.contains(badge.id.get))
+        Future.successful(Ok(views.html.v2.facilitator.badges(badges)))
+      } getOrElse Future.successful(NotFound("Facilitator not found"))
   }
 
   /**
@@ -265,6 +264,25 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
         PeopleCollection.organisations(facilitators)
       }
       Ok(Json.toJson(facilitators))
+  }
+
+  /**
+    * Updates badges for the given facilitator
+    * @param personId Facilitator identifier
+    * @param brandId Brand identifier
+    */
+  def updateBadges(personId: Long, brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+    implicit handler => implicit user =>
+      val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
+      form.bindFromRequest.fold(
+        errors => Future.successful(jsonBadRequest("'badges' field doesn't exist")),
+        badges =>
+          facilitatorService.find(brandId, personId) map { facilitator =>
+            val brandBadges = brandBadgeService.findByBrand(brandId).map(_.id.get)
+            facilitatorService.update(facilitator.copy(badges = badges.filter(x => brandBadges.contains(x))))
+            Future.successful(jsonSuccess("Badges were updated"))
+          } getOrElse Future.successful(jsonNotFound("Facilitator not found"))
+      )
   }
 
   protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {
