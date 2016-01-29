@@ -42,6 +42,7 @@ class ResourceHandler(user: ActiveUser)
     name match {
       case DynamicRole.Coordinator => brandService.isCoordinator(objectId, user.account.personId)
       case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
+      case DynamicRole.Funder => user.account.admin || user.member.exists(_.funder)
       case DynamicRole.ProfileEditor => user.account.admin || user.account.personId == objectId
       case DynamicRole.OrgMember => user.account.admin || orgMember(objectId, user.account.personId)
       case _ ⇒ false

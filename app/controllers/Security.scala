@@ -37,8 +37,8 @@ import scala.concurrent.Future
  * Integrates SecureSocial authentication with Deadbolt.
  */
 trait Security extends SecureSocial[ActiveUser]
-with DeadboltActions
-with Services {
+  with DeadboltActions
+  with Services {
 
   /**
    * A redirect to the login page, used when authorisation fails due to
@@ -219,6 +219,22 @@ with Services {
     f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit handler => implicit user =>
       val restrictedAction = Dynamic(role, id.toString, handler)(Action.async(f(_)(handler)(user)))
+      restrictedAction(request)
+    }
+  }
+
+  /**
+    * Asynchronously authenticates using SecureSocial and uses Deadbolt to
+    * restrict access to the given role
+    *
+    * @param role Role name
+    * @param id Object identifier
+    * @return
+    */
+  def SecuredDynamicAction(role: String, id: Long)(
+    f: Request[AnyContent] ⇒ AuthorisationHandler ⇒ ActiveUser ⇒ Result): Action[AnyContent] = {
+    asyncSecuredAction() { implicit request => implicit handler => implicit user =>
+      val restrictedAction = Dynamic(role, id.toString, handler)(Action(f(_)(handler)(user)))
       restrictedAction(request)
     }
   }

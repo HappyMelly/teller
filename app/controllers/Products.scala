@@ -25,6 +25,7 @@
 package controllers
 
 import fly.play.s3.{ BucketFile, S3Exception }
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models._
 import models.service.Services
@@ -98,13 +99,13 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Add page **/
-  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def add = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       Ok(views.html.product.form(user, None, None, productForm))
   }
 
   /** Add form submits to this action **/
-  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def create = AsyncSecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form: Form[Product] = productForm.bindFromRequest
@@ -142,7 +143,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Assign the product to a brand
    */
-  def addBrand() = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def addBrand() = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
@@ -175,7 +176,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Product id
    */
-  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def activation(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id).map { product ⇒
@@ -194,7 +195,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Unassign the product from the brand
    */
-  def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(productId) map { product: Product ⇒
@@ -215,7 +216,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Delete a product **/
-  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map { product ⇒
@@ -231,7 +232,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Delete picture form submits to this action **/
-  def deletePicture(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def deletePicture(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       productService.find(id) map { product ⇒
         product.picture.foreach { picture ⇒
@@ -268,7 +269,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Edit page **/
-  def edit(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def edit(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map {
@@ -279,7 +280,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       productService.find(id) map { existingProduct ⇒
@@ -355,6 +356,7 @@ object Products extends Utilities {
 
   /**
     * Returns url to a product's picture
+    *
     * @param product Product
     */
   def pictureUrl(product: Product): Option[String] = {

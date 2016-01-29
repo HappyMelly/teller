@@ -64,6 +64,7 @@ object UserRole {
     val Facilitator = "facilitator"
     val Coordinator = "coordinator"
     val Member = "member"
+    val Funder = "funder"
     val ProfileEditor = "profile-editor"
     val OrgMember = "org-member"
   }

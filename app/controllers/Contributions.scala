@@ -24,6 +24,7 @@
 
 package controllers
 
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.service.Services
 import models.{ ActiveUser, ActivityRecorder, Contribution }
@@ -50,10 +51,11 @@ class Contributions(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Add new contribution to a product
-   * @param page Label of a page where the action happened
+    *
+    * @param page Label of a page where the action happened
    * @return
    */
-  def create(page: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def create(page: String) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
@@ -89,7 +91,7 @@ class Contributions(environment: RuntimeEnvironment[ActiveUser])
    * @param page Label of a page where the action happened
    * @return
    */
-  def delete(id: Long, page: String) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(id: Long, page: String) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       Contribution.find(id).map { contribution ⇒
