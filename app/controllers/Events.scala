@@ -24,6 +24,7 @@
 
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import controllers.Forms._
 import mail.reminder.EvaluationReminder
 import models.UserRole.Role
@@ -35,23 +36,24 @@ import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.format.Formatter
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.mvc._
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import services.TellerRuntimeEnvironment
 import services.integrations.Integrations
 import views.Countries
 
 import scala.concurrent.Future
 
-class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Integrations
-    with Activities
-    with Utilities
-    with I18nSupport {
+class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                     val messagesApi: MessagesApi,
+                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Integrations
+  with Activities
+  with Utilities
+  with I18nSupport {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
 
@@ -587,7 +589,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   protected def formError(user: ActiveUser,
     form: Form[EventView],
     eventId: Option[Long])(implicit request: Request[Any],
-      handler: AuthorisationHandler,
+      handler: be.objectify.deadbolt.scala.DeadboltHandler,
       token: play.filters.csrf.CSRF.Token) = {
     brandService.findByUser(user.account) flatMap { brands =>
       badRequest(views.html.v2.event.form(user, eventId, brands, false, form))

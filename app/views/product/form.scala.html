@@ -4,7 +4,7 @@
     products: List[Product],
     form: Form[Product])(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 

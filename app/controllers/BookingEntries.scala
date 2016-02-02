@@ -26,6 +26,7 @@ package controllers
 
 import java.net.URLDecoder
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import controllers.Forms._
 import fly.play.s3.BUCKET_OWNER_FULL_CONTROL
 import models.BookingEntry.FieldChange
@@ -37,20 +38,24 @@ import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.{DateTime, LocalDate}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc.{Result, _}
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import services.integrations.Integrations
 import services.{CurrencyConverter, S3Bucket, TellerRuntimeEnvironment}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Integrations
-    with Services
-    with I18nSupport {
+class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                             val messagesApi: MessagesApi,
+                                             deadbolt: DeadboltActions,
+                                             handlers: HandlerCache,
+                                             actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Integrations
+  with Services
+  with I18nSupport {
 
   def bookingEntryForm(implicit user: ActiveUser) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -185,6 +190,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
 
   /**
    * Amazon S3 will redirect here after a successful upload.
+ *
    * @param bookingNumber the id of the BookingEntry that the file is being attached to
    * @param key The S3 object key for the uploaded file
    * @return Redirect to the booking entries’ detail page, flashing a success message
@@ -215,6 +221,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
 
   /**
    * Removes the attachment form the booking number. Note that the actual file on S3 is not deleted.
+ *
    * @param bookingNumber the id of the BookingEntry to remove the attachment from
    * @return Redirect to the booking entries’ detail page, flashing a success message
    */
@@ -402,7 +409,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
     form: Form[BookingEntry],
     currentUser: UserAccount,
     user: ActiveUser)(implicit request: Request[AnyContent],
-      handler: AuthorisationHandler): Future[Result] = {
+      handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
 
     next match {
       case Some("add") ⇒ redirect(routes.BookingEntries.add(), "success" -> successMessage)

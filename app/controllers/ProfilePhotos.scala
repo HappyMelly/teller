@@ -26,19 +26,19 @@ package controllers
 
 import javax.inject.Inject
 
-import models.service.Services
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.{Person, Photo}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.json.Json
 import services.TellerRuntimeEnvironment
 
-class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Files
-    with Utilities {
+class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Files
+  with Utilities {
 
   /**
    * Renders a screen for selecting a profile's photo

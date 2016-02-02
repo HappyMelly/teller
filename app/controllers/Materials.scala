@@ -24,22 +24,21 @@
 package controllers
 
 import javax.inject.Inject
-import models.ActiveUser
-import models.UserRole.DynamicRole
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Material
-import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
-import play.api.libs.json.{ JsValue, Writes, Json }
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 
-class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with I18nSupport
-    with Services
-    with Security {
+class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                           val messagesApi: MessagesApi,
+                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with I18nSupport {
 
   implicit val MaterialWrites = new Writes[Material] {
     def writes(link: Material): JsValue = {

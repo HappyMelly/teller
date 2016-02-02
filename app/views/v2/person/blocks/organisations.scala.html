@@ -1,7 +1,7 @@
 @(person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation])(implicit request: Request[Any],
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 

@@ -7,7 +7,7 @@
     fees: List[(String, String)])(implicit
     request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF

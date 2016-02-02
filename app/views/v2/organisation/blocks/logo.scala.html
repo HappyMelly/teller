@@ -1,6 +1,6 @@
 @(org: Organisation,
     width: String)(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._

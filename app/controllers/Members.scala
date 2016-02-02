@@ -25,30 +25,34 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.{Member, UserAccount, ActiveUser}
+import models.{ActiveUser, Member, UserAccount}
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc._
-import play.api.i18n.{I18nSupport, Messages}
 import services.TellerRuntimeEnvironment
 import templates.Formatters._
+
 import scala.concurrent.Future
 
 /** Renders pages and contains actions related to members */
-class Members @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends Enrollment
-    with AsyncController
-    with Activities
-    with I18nSupport
-    with Security
-    with Utilities
-    with MemberNotifications {
+class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                         val messagesApi: MessagesApi,
+                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Enrollment
+  with Activities
+  with I18nSupport
+  with Utilities
+  with MemberNotifications {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -337,7 +341,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment)
   }
 
   protected def personUpdateError(user: ActiveUser, form: Form[Long])(
-      implicit request: Request[AnyContent], handler: AuthorisationHandler): Future[Result] = {
+      implicit request: Request[AnyContent], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
     peopleNonMembers flatMap { people =>
       badRequest(views.html.member.existingPerson(user, people, form))
     }
@@ -378,7 +382,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment)
   }
 
   protected def orgUpdateError(user: ActiveUser, form: Form[Long])(
-    implicit request: Request[AnyContent], handler: AuthorisationHandler): Future[Result] = {
+    implicit request: Request[AnyContent], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
 
     orgsNonMembers flatMap { orgs =>
       badRequest(views.html.member.existingOrg(user, orgs, form))

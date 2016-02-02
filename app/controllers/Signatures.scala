@@ -26,18 +26,18 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Person
-import models.service.Services
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Files
-    with Activities {
+class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Files
+  with Activities {
 
   /**
    * Delete signature form submits to this action

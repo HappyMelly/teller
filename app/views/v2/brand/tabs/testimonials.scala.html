@@ -1,6 +1,6 @@
 @(brandId: Long,
     testimonials: List[models.brand.BrandTestimonial])(implicit request: Request[Any],
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.DynamicRole

@@ -23,10 +23,11 @@
  */
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.payment.{Payment, PaymentException, RequestException}
-import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.DateTime
@@ -34,7 +35,7 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{Logger, Play}
@@ -80,12 +81,13 @@ case class AuthenticationInfo(email: String, password: String)
  * -v
  * Contains actions for a registration process
  */
-class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends PasswordIdentities
-    with Enrollment
-    with Security
-    with Activities
-    with Services {
+class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                           val messagesApi: MessagesApi,
+                                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with PasswordIdentities
+  with Enrollment
+  with Activities {
 
   val REGISTRATION_COOKIE = "registration"
 
@@ -420,7 +422,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    * Redirects Viewer to an index page. Otherwise - run action
    */
   protected def redirectViewer(f: Future[Result])(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     user: ActiveUser): Future[Result] = if (user.account.viewer)
     redirect(routes.Dashboard.index())
   else
@@ -430,7 +432,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    * Checks if person data are in cache and redirects to a person data form if not
    */
   protected def checkPersonData(f: UserData ⇒ Future[Result])(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     user: ActiveUser): Future[Result] = {
     Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
       f(userData)

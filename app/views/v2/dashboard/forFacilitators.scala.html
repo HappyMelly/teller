@@ -5,7 +5,7 @@
   past: List[(Event, Option[Brand])],
   evaluations: List[((Event, models.event.Attendee, Evaluation),Option[Brand])])(implicit flash: Flash,
     request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     messages: Messages)
 
 @v2.main("Home", "", user) {

@@ -25,12 +25,14 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role
 import models.service.Services
 import models.{Brand, Endorsement}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json.{JsArray, JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 
@@ -41,11 +43,11 @@ case class EndorsementFormData(content: String,
   brandId: Long,
   company: Option[String])
 
-class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with I18nSupport
-    with Services
-    with Security {
+class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                              val messagesApi: MessagesApi,
+                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with I18nSupport{
 
   implicit val EndorsementWrites = new Writes[Endorsement] {
     def writes(endorsement: Endorsement): JsValue = {
@@ -67,7 +69,8 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
    * Renders endorsement add form
-   * @param personId Person identifier
+    *
+    * @param personId Person identifier
    */
   def add(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -115,7 +118,8 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
    * Renders endorsement edit form
-   * @param personId Person identifier
+    *
+    * @param personId Person identifier
    * @param id Endorsement identifier
    */
   def edit(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
@@ -201,7 +205,8 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
    * Creates an endorsement from the given evaluation
-   * @param eventId Event identifier
+    *
+    * @param eventId Event identifier
    * @param evaluationId Evaluation identifier
    */
   def createFromEvaluation(eventId: Long, evaluationId: Long) =
@@ -291,14 +296,16 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
    * Returns list of brands for which the given person has licenses
-   * @param personId Person identifier
+    *
+    * @param personId Person identifier
    */
   protected def brands(personId: Long): Future[List[Brand]] =
     brandService.findByLicense(personId).map(_.map(_.brand))
 
   /**
    * Returns maximum position of endorsements from the given list
-   * @param endorsements Endorsements
+    *
+    * @param endorsements Endorsements
    */
   protected def maxEndorsementPosition(endorsements: List[Endorsement]): Int = {
     if (endorsements.nonEmpty)

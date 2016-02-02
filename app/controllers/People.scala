@@ -24,6 +24,8 @@
 
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
@@ -35,7 +37,7 @@ import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.data.{Form, FormError}
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.mvc._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
@@ -45,14 +47,14 @@ import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Integrations
-    with Files
-    with Activities
-    with MemberNotifications {
+class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment,
+                                    val messagesApi: MessagesApi,
+                                    deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Integrations
+  with Files
+  with Activities
+  with MemberNotifications {
 
   val contentType = "image/jpeg"
   val indexCall: Call = routes.People.index()
@@ -255,7 +257,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 
   /**
    * Renders tab for the given person
-   * @param id Person or Member identifier
+    *
+    * @param id Person or Member identifier
    * @param tab Tab identifier
    */
   def renderTabs(id: Long, tab: String) = AsyncSecuredRestrictedAction(Viewer) {
@@ -321,7 +324,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 
   /**
    * Cancels a subscription for yearly-renewing membership
-   * @param id Person id
+    *
+    * @param id Person id
    */
   def cancel(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val url: String = routes.People.details(id).url + "#membership"
@@ -373,7 +377,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 
   /**
    * Compares social profiles and returns a list of errors for a form
-   * @param left Social profile object
+    *
+    * @param left Social profile object
    * @param right Social profile object
    */
   protected def compareSocialProfiles(left: SocialProfile, right: SocialProfile): List[FormError] = {
@@ -399,7 +404,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   /**
    * Retrieve facilitator statistics by brand, including years of experience,
    *  number of events and rating
-   * @param id Facilitator id
+    *
+    * @param id Facilitator id
    */
   protected def retrieveByBrandStatistics(id: Long) = {
     (for {
@@ -415,6 +421,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 
   /**
     * Updates the attributes of a person that shouldn't be changed on update
+    *
     * @param updated Updated object
     * @param existing Existing object
     * @param user Current active user

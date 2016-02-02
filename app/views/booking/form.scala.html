@@ -8,7 +8,7 @@
     bookingNumber: Option[Int] = None)(implicit flash: Flash,
         token: play.filters.csrf.CSRF.Token,
         request: Request[Any],
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         messages: Messages)
 @import helper.CSRF
 @import org.joda.money.CurrencyUnit

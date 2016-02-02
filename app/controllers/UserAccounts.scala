@@ -26,9 +26,10 @@ package controllers
 
 import java.util.UUID
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role.Viewer
 import models._
-import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
@@ -45,12 +46,11 @@ import scala.concurrent.{Await, Future}
 /**
  * User administration controller.
  */
-class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Utilities
-    with I18nSupport {
+class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Utilities
+  with I18nSupport {
 
   val CurrentPassword = "currentPassword"
   val NewPassword = "newPassword"

@@ -1,10 +1,13 @@
 package controllers.admin
 
-import controllers.{AsyncController, Security}
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import models.UserRole.Role
 import models._
 import models.service.Services
 import org.joda.time.LocalDate
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 import views.Countries
 
@@ -13,8 +16,10 @@ import scala.concurrent.Future
 /**
   * Pages for calculating the usage of Teller by brands
   */
-class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment) extends AsyncController
-  with Security
+class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                    val messagesApi: MessagesApi,
+                                    deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
   with Services {
 
   case class StatByCountry(stat: Map[String, List[(LocalDate, Int)]])
@@ -46,6 +51,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Calculates usage fee for brand
+    *
     * @param events Event usage fees per brand per month
     * @param licenses License usage fees per brand per month
     */
@@ -61,6 +67,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Returns events with calculated usage fee
+    *
     * @param byLocation Events grouped by country
     * @return
     */
@@ -119,6 +126,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Returns event usage fee per country
+    *
     * @param value Events
     */
   protected def eventStatsByCountry(value: Future[List[Event]]) = value map { events =>
@@ -139,6 +147,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Returns only events in a chargeable period: from Oct 2015 to the end of current month
+    *
     * @param events Events
     */
   protected def filterEventsByDate(events: List[Event]): List[Event] = {
@@ -148,6 +157,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Returns only licenses valid in a chargeable period: from Oct 2015 to the end of current month
+    *
     * @param licenses Licenses
     */
   protected def filterLicensesByDate(licenses: List[License]): List[License] = {
@@ -168,6 +178,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Returns usage fee per country per month
+    *
     * @param licenses Licenses
     */
   protected def licenseStatsByCountry(licenses: List[License]) = {
@@ -187,6 +198,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
 
   /**
     * Returns usage fee per brand per month
+    *
     * @param licenses License data
     */
   protected def licenseUsageByMonth(licenses: Map[Long, StatByCountry]): List[Item] =

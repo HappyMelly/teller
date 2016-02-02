@@ -25,8 +25,11 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import play.api.Play.current
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import play.api.libs.ws.WS
 import services.TellerRuntimeEnvironment
@@ -36,9 +39,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security {
+class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                      val messagesApi: MessagesApi,
+                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder) {
 
   /**
    * Validates the given url points to an existing page

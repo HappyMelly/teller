@@ -23,16 +23,15 @@
  */
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
-import models.service.Services
-import play.api.mvc._
 import services.TellerRuntimeEnvironment
 import views.Countries
 
-class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Services
-    with Security {
+class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder) {
 
   /**
    * Renders list of available fees for the given brand

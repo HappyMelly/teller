@@ -3,7 +3,7 @@
     attendee: models.event.Attendee)(implicit flash: Flash,
         request: Request[Any],
         token: play.filters.csrf.CSRF.Token,
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         messages: Messages)
 
 @import helper.CSRF

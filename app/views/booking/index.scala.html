@@ -2,7 +2,7 @@
         account: Option[Account],
         entries: List[(BookingEntrySummary, Option[org.joda.money.Money])],
         from: Option[org.joda.time.LocalDate] = None,
-        to: Option[org.joda.time.LocalDate] = None)(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+        to: Option[org.joda.time.LocalDate] = None)(implicit request: Request[Any], flash: Flash, handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
     @import models.UserRole.Role._
     @import be.objectify.deadbolt.scala.views.html._

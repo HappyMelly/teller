@@ -21,9 +21,10 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models
+package security
 
 import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
+import models.ActiveUser
 import models.UserRole.DynamicRole
 import models.service.Services
 import play.api.mvc._
@@ -36,9 +37,7 @@ import scala.concurrent.Future
  *
  * The system supports three roles - Viewer, Editor and Admin.
  */
-class ResourceHandler(user: ActiveUser)
-    extends DynamicResourceHandler
-    with Services {
+class ResourceHandler(user: ActiveUser) extends DynamicResourceHandler with Services {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong

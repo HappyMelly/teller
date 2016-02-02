@@ -24,21 +24,24 @@
 
 package controllers.admin
 
-import controllers.{AsyncController, Security}
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import models.UserRole.Role._
 import models.service.admin.TransactionTypeService
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.I18nSupport
+import play.api.i18n.{MessagesApi, I18nSupport}
 import play.twirl.api.Html
 import services.TellerRuntimeEnvironment
 
 /**
  * Pages for application configuration and administration.
  */
-class Administration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-  extends AsyncController
-  with Security
+class Administration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                             val messagesApi: MessagesApi,
+                                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
   with I18nSupport {
 
   val service = new TransactionTypeService

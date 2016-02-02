@@ -26,9 +26,10 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.event.Attendee
-import models.service.Services
 import models.{Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.libs.json.{JsValue, Json, Writes}
@@ -42,11 +43,10 @@ import scala.util.Random
 /**
  * Contains a set of functions for handling brand statistics
  */
-class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Utilities {
+class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Utilities {
 
   val TOP_LIMIT = 10
   val COLORS = Array(
@@ -65,7 +65,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Renders index page with statistics for brands
-   * @param brandId Brand identifier
+    *
+    * @param brandId Brand identifier
    */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -247,7 +248,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns number of facilitators who joined and left last month
-   * @param licenses List of licenses
+    *
+    * @param licenses List of licenses
    */
   protected def calculatedJoinedLeftNumbers(licenses: List[License]): (Int, Int) = {
     (licenses.count(x => lastMonth.contains(x.start.toDate.getTime)),
@@ -256,7 +258,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns number of paid and free cancelled events from last month
-   * @param brandId Brand identifier
+    *
+    * @param brandId Brand identifier
    */
   protected def calculatedCanceledEventsNumbers(brandId: Long): Future[(Int, Int)] = {
     eventCancellationService.findByBrands(List(brandId)) map { results =>
@@ -268,7 +271,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns number of paid and free future events
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def calculateFutureEventsNumbers(events: List[Event]): (Int, Int) = {
     val futureEvents = filterFuture(events)
@@ -278,7 +282,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
   /**
    * Returns number of active organizers, active facilitators and a list
    * of top 10 most active facilitators
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def activityRangeNumbers(events: List[Event]): (Int, List[(Long, String, Int)], Int) = {
     val filtered = filterByActivityRange(events)
@@ -291,7 +296,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
   /**
    * Returns number of paid and free events from last month, average rating
    * and nps of events from last month
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def calculateLastMonthNumbers(events: List[Event]): Future[(Int, Int, Float, Float)] = {
     val filtered = filterLastMonth(events)
@@ -305,7 +311,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns a list of facilitators with most number of events in last six months
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def findTopFacilitators(events: List[Event]): List[(Long, String, Int)] = {
     events.filter(_.schedule.end.isBefore(LocalDate.now)).
@@ -316,7 +323,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns average rating for the given events
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def calculateAverageRating(events: List[Event]): Float = {
     val numberOfEvents = events.count(_.rating > 0.01)
@@ -328,7 +336,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns NPS for evaluations of the given events
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def calculateNPS(events: List[Event]): Future[Float] = {
     evaluationService.findByEvents(events.map(_.id.get)) map { evaluations =>
@@ -344,14 +353,16 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Return confirmed events happened in the last six months or scheduled events
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def filterByActivityRange(events: List[Event]): List[Event] =
     filterLastSixMonths(events) ::: filterFuture(events)
 
   /**
    * Returns list of confirmed events happened in the last month
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def filterLastMonth(events: List[Event]): List[Event] = events.
     filter(_.confirmed).
@@ -360,7 +371,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns list of confirmed events happened in last six months
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def filterLastSixMonths(events: List[Event]): List[Event] = events.
     filter(_.schedule.end.isAfter(LocalDate.now.minusMonths(6))).
@@ -369,7 +381,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns list of future events
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def filterFuture(events: List[Event]): List[Event] =
     events.filter(_.schedule.start.isAfter(LocalDate.now()))
@@ -380,7 +393,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns accumulated number of participants per quarter starting from the first event
-   * @param attendees Attendees
+    *
+    * @param attendees Attendees
    */
   protected def quarterStatsByParticipants(attendees: List[(Attendee, LocalDate)]): List[(LocalDate, Int)] = {
     val perMonth = attendees
@@ -393,7 +407,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
   
   /**
    * Returns accumulated number of events per quarter starting from the first event
-   * @param rawEvents Events
+    *
+    * @param rawEvents Events
    */
   protected def quarterStatsByEvents(rawEvents: List[Event]): List[(LocalDate, Int)] = {
     val perMonth = rawEvents
@@ -406,7 +421,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Returns number of facilitators per quarter starting from the first license
-   * @param rawLicenses Licenses
+    *
+    * @param rawLicenses Licenses
    */
   protected def quarterStatsByFacilitators(rawLicenses: List[License]): List[(LocalDate, Int)] = {
     val licenses: List[License] = rawLicenses
@@ -420,7 +436,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
    * Converts monthly statistics to statistics by quarters
-   * @param monthStats Monthly statistics
+    *
+    * @param monthStats Monthly statistics
    */
   protected def convertMonthStatsToQuarterStats(monthStats: Map[LocalDate, Int]): List[(LocalDate, Int)] = {
     val start = monthStats.keys.toList.sortBy(_.toString).head

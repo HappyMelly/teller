@@ -52,7 +52,7 @@ class JodaCurrencyMapper(val driver: JdbcDriver) {
  * Joda Money conversions
  */
 object JodaMoney {
-  private val mapper = new JodaCurrencyMapper(slick.driver.MySQLDriver)
+  val mapper = new JodaCurrencyMapper(slick.driver.MySQLDriver)
 
   /**
    * Form mapping for Joda Money values, using an implicit conversion from `currency -> amount` to `Money`.

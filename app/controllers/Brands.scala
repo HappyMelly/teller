@@ -26,6 +26,8 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import controllers.Forms._
 import fly.play.s3.{BucketFile, S3Exception}
 import models.UserRole.Role._
@@ -38,7 +40,7 @@ import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
 import play.twirl.api.Html
@@ -47,10 +49,10 @@ import services._
 import scala.concurrent.Future
 import scala.io.Source
 
-class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment)
-  extends AsyncController
-  with Security
-  with Services
+class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                        val messagesApi: MessagesApi,
+                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
   with Activities {
 
   val contentType = "image/jpeg"

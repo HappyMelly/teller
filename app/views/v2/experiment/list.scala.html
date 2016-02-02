@@ -1,6 +1,6 @@
 @(memberId: Long,
   experiments: List[Experiment])(implicit request: Request[Any],
-  handler: AuthorisationHandler)
+  handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._

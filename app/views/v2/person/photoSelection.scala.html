@@ -2,7 +2,7 @@
   gravatarUrl: String,
   customUrl: String,
   active: String)(implicit request: Request[Any],
-  handler: AuthorisationHandler)
+  handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.html.dialog("photoSelection",
   "Use photo from gravatar or upload your own",

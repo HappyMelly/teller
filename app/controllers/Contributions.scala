@@ -26,20 +26,23 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role._
 import models.service.Services
 import models.{ActivityRecorder, Contribution}
 import play.api.data.Forms._
 import play.api.data._
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Activities {
+class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               val messagesApi: MessagesApi,
+                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Activities {
 
   /** HTML form mapping for creating and editing. */
   def contributionForm = Form(mapping(
@@ -51,7 +54,8 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
 
   /**
    * Add new contribution to a product
-   * @param page Label of a page where the action happened
+    *
+    * @param page Label of a page where the action happened
    * @return
    */
   def create(page: String) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒

@@ -28,26 +28,25 @@ import java.text.Collator
 import java.util.Locale
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
 import models._
-import models.service.Services
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import services.TellerRuntimeEnvironment
-
-import scala.concurrent.Future
-
 
 /**
  * Facilitators pages
  */
-class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Utilities {
+class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                              val messagesApi: MessagesApi,
+                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Utilities {
 
   implicit val organizationWrites = new Writes[Organisation] {
     def writes(data: Organisation): JsValue = {

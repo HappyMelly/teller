@@ -24,6 +24,8 @@
 
 package controllers
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role._
 import models._
 import models.service.Services
@@ -31,17 +33,15 @@ import org.joda.time.LocalDate
 import play.api.i18n.I18nSupport
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Dashboard @javax.inject.Inject() (environment: RuntimeEnvironment)
-    extends Controller
-    with Security
-    with Services
-    with Utilities
-    with I18nSupport {
-
-  override implicit val env: RuntimeEnvironment = environment
+class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Utilities
+  with I18nSupport {
 
   /**
    * About page - credits.

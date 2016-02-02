@@ -26,6 +26,8 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role._
 import models.brand.EventType
 import models.service.Services
@@ -36,12 +38,11 @@ import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
-class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Activities
-    with I18nSupport
-    with Security
-    with Services {
+class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Activities
+  with I18nSupport {
 
   /** HTML form mapping for creating and editing. */
   def eventTypeForm = Form(mapping(

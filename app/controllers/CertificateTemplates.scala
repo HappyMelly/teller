@@ -24,18 +24,20 @@
 
 package controllers
 
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
-import models.service.Services
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.I18nSupport
-import play.api.mvc._
 import services.TellerRuntimeEnvironment
 import views.Languages
 
-import scala.io.Source
 import scala.concurrent.Future
+import scala.io.Source
 
 /**
  * This class exists to simplify form handling and generation
@@ -44,10 +46,9 @@ case class FakeCertificateTemplate(language: String,
   template: Option[String],
   templateNoFacilitator: Option[String])
 
-class CertificateTemplates @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
+class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
     with Activities
     with I18nSupport {
 

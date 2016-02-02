@@ -25,11 +25,13 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.brand.BrandTestimonial
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 
@@ -37,10 +39,10 @@ case class TestimonialFormData(content: String,
   name: String,
   company: Option[String])
 
-class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Services
-    with Security {
+class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                   val messagesApi: MessagesApi,
+                                   deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder) {
 
   implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
     def writes(testimonial: BrandTestimonial): JsValue = {

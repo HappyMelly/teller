@@ -23,19 +23,21 @@
  */
 package controllers.brand
 
-import controllers.{AsyncController, Security}
-import models.service.Services
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 /**
   * Manages brand settings
   */
-class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-  extends AsyncController
-  with Services
-  with Security {
+class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                       val messagesApi: MessagesApi,
+                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder) {
 
   /**
     * Turns off license expiration reminder for the given brand

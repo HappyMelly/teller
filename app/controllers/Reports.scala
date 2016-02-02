@@ -27,20 +27,22 @@ package controllers
 import java.io.{File, FileOutputStream}
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.event.Attendee
-import models.service.Services
 import org.joda.time._
 import play.api.Play.current
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services {
+class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                         val messagesApi: MessagesApi,
+                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder) {
 
   /**
    * Generate a XLSX report with evaluations (if they're available)
@@ -83,6 +85,7 @@ class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment)
 
   /**
     * Returns the list of events based of current status of the given person
+    *
     * @param brand Brand
     * @param personId Person identifier
     */

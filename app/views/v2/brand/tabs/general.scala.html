@@ -1,7 +1,7 @@
 @(brand: Brand,
     coordinator: Option[Person],
     links: List[models.brand.BrandLink])(implicit request: Request[Any],
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import _root_.templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._

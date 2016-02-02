@@ -24,7 +24,7 @@
 
 package controllers
 
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.mvc.Action
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import securesocial.controllers.{BasePasswordReset, BaseRegistration}
@@ -37,7 +37,8 @@ import scala.concurrent.Future
 /**
   * Contains a set of methods for resetting user's password
   */
-class PasswordReset @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
+class PasswordReset @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                            val messagesApi: MessagesApi)
   extends BasePasswordReset
   with AsyncController {
 

@@ -2,7 +2,7 @@
   experiencePerBrand: List[(Facilitator, String)],
   endorsements: List[(Endorsement, String)],
   materials: List[Material])(implicit request: Request[Any],
-  handler: AuthorisationHandler)
+  handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF

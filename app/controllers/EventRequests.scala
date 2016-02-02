@@ -2,6 +2,8 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role
 import models.service.Services
 import services.TellerRuntimeEnvironment
@@ -9,13 +11,14 @@ import services.TellerRuntimeEnvironment
 /**
   * Contains methods for managing event requests UI
   */
-class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironment) extends AsyncController
-  with Security
-  with Services
+class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
   with Utilities {
 
   /**
     * Renders details info for the given request
+    *
     * @param brandId Brand identifier
     * @param requestId Request identifier
     */
@@ -29,6 +32,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
 
   /**
     * Returns list of event requests for the given brand
+    *
     * @param brandId Brand identifier
     */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {

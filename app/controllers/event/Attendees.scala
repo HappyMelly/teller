@@ -1,16 +1,17 @@
 package controllers.event
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
 import models.UserRole.Role
 import models.UserRole.Role._
 import models._
 import models.brand.Settings
 import models.event.{Attendee, AttendeeView}
-import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.twirl.api.Html
 import services.TellerRuntimeEnvironment
@@ -21,10 +22,10 @@ import scala.concurrent.Future
 /**
   * Created by sery0ga on 04/01/16.
   */
-class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-  extends AsyncController
-  with Security
-  with Services
+class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        val messagesApi: MessagesApi,
+                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
   with Activities
   with Utilities {
 

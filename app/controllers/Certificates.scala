@@ -26,20 +26,23 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.Certificate
 import models.UserRole.Role
 import models.service.Services
 import org.joda.time.LocalDate
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
-    with Services
-    with Files {
+class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                              val messagesApi: MessagesApi,
+                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Files {
 
   /**
    * Generate new certificate

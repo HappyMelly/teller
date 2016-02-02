@@ -24,14 +24,15 @@
 
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.JodaMoney.jodaMoney
 import models.UserRole.Role._
 import models._
 import models.event.Attendee
-import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import services.TellerRuntimeEnvironment
@@ -41,9 +42,11 @@ import scala.concurrent.Future
 /**
  * Content license pages and API.
  */
-class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment) extends PasswordIdentities
-  with Security
-  with Services
+class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                       val messagesApi: MessagesApi,
+                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with PasswordIdentities
   with Activities
   with I18nSupport {
 

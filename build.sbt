@@ -39,6 +39,8 @@ libraryDependencies ++= Seq(
     "net.kaliber" %% "play-s3" % "7.0.2" //s3 amazon support
   )
 
+routesGenerator := InjectedRoutesGenerator
+
 libraryDependencies += evolutions
 
 resolvers += Resolver.sonatypeRepo("releases")

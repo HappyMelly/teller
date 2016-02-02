@@ -1,6 +1,6 @@
 @(user: ActiveUser, people: List[PersonSummary])(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     messages: Messages)
 
 @import models.UserRole.Role._

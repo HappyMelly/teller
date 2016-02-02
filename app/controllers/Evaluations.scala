@@ -26,14 +26,16 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole._
 import models._
 import models.event.Attendee
-import models.service.{BrandWithCoordinators, Services}
+import models.service.BrandWithCoordinators
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
@@ -41,14 +43,14 @@ import services.integrations.Integrations
 
 import scala.concurrent.Future
 
-class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with I18nSupport
-    with Security
-    with Integrations
-    with Services
-    with Activities
-    with Utilities {
+class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                             val messagesApi: MessagesApi,
+                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with I18nSupport
+  with Integrations
+  with Activities
+  with Utilities {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String) = Form(mapping(

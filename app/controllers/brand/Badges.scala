@@ -23,25 +23,25 @@
  */
 package controllers.brand
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
 import models.DateStamp
 import models.brand.Badge
-import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.Crypto
 import play.twirl.api.Html
 import services.TellerRuntimeEnvironment
 
-import scala.concurrent.Future
-
-class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Services
-    with Security
-    with Files
-    with Utilities {
+class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                     val messagesApi: MessagesApi,
+                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Files
+  with Utilities {
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -162,6 +162,7 @@ object Badges extends Utilities {
 
   /**
     * Returns url to an badge's picture
+    *
     * @param badge Badge
     */
   def pictureUrl(badge: Badge, size: String = ""): Option[String] = {

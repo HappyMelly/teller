@@ -25,15 +25,19 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role._
 import models.service.Services
 import models.{Person, ProfileStrength}
+import play.api.i18n.MessagesApi
 import scala.concurrent.Future
 import services.TellerRuntimeEnvironment
 
-class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Security
+class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                  val messagesApi: MessagesApi,
+                                  deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+    extends Security(deadbolt, handlers, actionBuilder)
     with Services {
 
   /**
@@ -43,7 +47,7 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
    * @param steps If true completion steps are shown
    */
   def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    implicit request ⇒ implicit handler => implicit user ⇒
       profileStrengthService.find(id) flatMap {
         case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))
         case None =>

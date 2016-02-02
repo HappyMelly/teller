@@ -22,23 +22,27 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package security
 
 import be.objectify.deadbolt.core.models.Subject
-import be.objectify.deadbolt.scala.{ DeadboltHandler, DynamicResourceHandler }
-import models.{ ActiveUser, ResourceHandler }
-import play.api.i18n.{I18nSupport, Messages}
-import play.api.mvc.Results.Redirect
-import play.api.mvc.{ Request, Result }
+import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
+import controllers.routes
+import models.ActiveUser
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.mvc.{Request, Result}
+import securesocial.core.SecureSocial
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
 /**
  * Deadbolt authorisation handler.
  */
-class AuthorisationHandler @javax.inject.Inject() (user: ActiveUser)
+class AuthorisationHandler @javax.inject.Inject()  (override implicit val env: TellerRuntimeEnvironment,
+                                                    val messagesApi: MessagesApi)
   extends DeadboltHandler
-  with I18nSupport {
+  with I18nSupport
+  with SecureSocial {
 
   /**
    * Invoked prior to a constraint's test.  If Option.None is returned, the constraint is applied. If
@@ -54,15 +58,28 @@ class AuthorisationHandler @javax.inject.Inject() (user: ActiveUser)
    *
    * @return an option containing the current subject
    */
-  override def getSubject[A](request: Request[A]): Option[Subject] = Some(user.account)
+  override def getSubject[A](request: Request[A]): Option[Subject] = request match {
+    case secured: SecuredRequest[A] =>
+      secured.user match {
+        case user: ActiveUser ⇒ Some(user.account)
+        case _ => None
+      }
+    case _ => None
+  }
 
   /**
    * Gets the handler used for dealing with resources restricted to specific users/groups.
    *
    * @return an option containing the handler for restricted resources
    */
-  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] =
-    Some(new ResourceHandler(user))
+  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = request match {
+    case secured: SecuredRequest[A] =>
+      secured.user match {
+        case user: ActiveUser ⇒ Some(new ResourceHandler(user))
+        case _ => None
+      }
+    case _ => None
+  }
 
   /**
    * Invoked when an authorisation failure is detected for the request.

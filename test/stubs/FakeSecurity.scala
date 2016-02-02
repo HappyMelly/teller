@@ -24,12 +24,13 @@
 
 package stubs
 
-import controllers.{AuthorisationHandler, Security}
+import controllers.Security
 import helpers.{EventHelper, PersonHelper}
 import models._
 import org.joda.time.DateTime
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import securesocial.core.authenticator.Authenticator
+import be.objectify.deadbolt.scala.DeadboltHandler
 
 import scala.concurrent.Future
 

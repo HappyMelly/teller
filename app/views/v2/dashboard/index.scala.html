@@ -1,6 +1,6 @@
 @(user: ActiveUser)(implicit flash: Flash,
     request: Request[Any],
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @main("Home", "", user) {
   <div class="col-md-9 content-block">

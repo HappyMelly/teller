@@ -1,7 +1,7 @@
 @(user: ActiveUser, booking: BookingEntry, currentUser: UserAccount,
   attachmentForm: fly.play.s3.upload.Form, activityStream: List[Activity])(implicit request: Request[Any],
         flash: Flash,
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 @import scala.math.BigDecimal.RoundingMode

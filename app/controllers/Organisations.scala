@@ -26,29 +26,30 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import models.UserRole._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
-import models.service.Services
 import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Activities
-    with Files
-    with I18nSupport
-    with Security
-    with Services {
+class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               val messagesApi: MessagesApi,
+                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Activities
+  with Files
+  with I18nSupport {
 
   /**
    * Form target for toggling whether an organisation is active.

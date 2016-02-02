@@ -2,7 +2,7 @@
     transactionTypes: List[models.admin.TransactionType],
     form: Form[String])(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 

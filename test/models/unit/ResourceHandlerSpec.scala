@@ -29,6 +29,7 @@ import models._
 import models.service.{MemberService, OrganisationService}
 import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
 import org.specs2.mutable.Specification
+import security.ResourceHandler
 import stubs.{FakeServices, FakeSocialIdentity}
 
 class ResourceHandlerSpec extends Specification with IsolatedMockFactory {

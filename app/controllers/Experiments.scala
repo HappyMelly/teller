@@ -25,28 +25,30 @@ package controllers
 
 import javax.inject.Inject
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import models.UserRole.DynamicRole
 import models.UserRole.Role._
-import models.service.Services
 import models.{DateStamp, Experiment, Member}
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 import services.integrations.Integrations
 
 import scala.concurrent.Future
 
-class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Services
-    with Security
-    with Integrations
-    with Files
-    with Utilities {
+class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                             val messagesApi: MessagesApi,
+                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder)
+  with Integrations
+  with Files
+  with Utilities {
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -244,6 +246,7 @@ object Experiments extends Utilities {
 
   /**
     * Returns url to an experiment's picture
+    *
     * @param experiment Experiment
     */
   def pictureUrl(experiment: Experiment): Option[String] = {

@@ -23,18 +23,21 @@
  */
 package controllers
 
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.brand.BrandLink
-import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 
-class BrandLinks(override implicit val env: TellerRuntimeEnvironment)
-    extends AsyncController
-    with Services
-    with Security {
+class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            val messagesApi: MessagesApi,
+                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder) {
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
