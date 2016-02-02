@@ -23,8 +23,12 @@
  */
 package controllers.apiv2
 
+import javax.inject.Inject
+
+import controllers.apiv2.json.PersonConverter
 import models.Event
 import models.service.Services
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,9 +37,9 @@ import scala.concurrent.Future
 /**
  * Events API
  */
-trait EventsApi extends ApiAuthentication with Services {
+class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
 
-  import PeopleApi.personWrites
+  implicit val personWrites = (new PersonConverter).personWrites
 
   val eventDetailsWrites = new Writes[Event] {
     def writes(event: Event): JsValue = {
@@ -185,4 +189,3 @@ trait EventsApi extends ApiAuthentication with Services {
   }
 }
 
-object EventsApi extends EventsApi with ApiAuthentication

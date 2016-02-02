@@ -23,6 +23,8 @@
  */
 package services.integrations
 
+import javax.inject.Inject
+
 import akka.actor.{Actor, Props}
 import models.Recipient
 import play.api.Play.current
@@ -78,7 +80,7 @@ object EmailService {
   /**
    * Actor that sends an e-mail message synchronously.
    */
-  class EmailServiceActor extends Actor {
+  class EmailServiceActor @Inject() (mailerClient: MailerClient) extends Actor {
 
     def receive = {
       case message: EmailMessage ⇒ {
@@ -104,7 +106,7 @@ object EmailService {
         if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {
           Logger.debug(s"${message.body}")
         } else {
-          Try(mailer.MailerPlugin.send(withBody)).isSuccess
+          Try(mailerClient.send(withBody)).isSuccess
         }
       }
     }

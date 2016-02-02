@@ -35,9 +35,9 @@ import services.TellerRuntimeEnvironment
   * Manages brand settings
   */
 class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                       val messagesApi: MessagesApi,
+                                       override val messagesApi: MessagesApi,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder) {
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
 
   /**
     * Turns off license expiration reminder for the given brand

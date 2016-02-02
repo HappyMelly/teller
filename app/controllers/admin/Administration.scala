@@ -39,9 +39,9 @@ import services.TellerRuntimeEnvironment
  * Pages for application configuration and administration.
  */
 class Administration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                             val messagesApi: MessagesApi,
+                                             override val messagesApi: MessagesApi,
                                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with I18nSupport {
 
   val service = new TransactionTypeService

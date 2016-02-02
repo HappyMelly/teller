@@ -23,12 +23,15 @@
  */
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import models._
 import models.event.Attendee
 import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import views.Countries
 
@@ -37,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Participants API
  */
-trait ParticipantsApi extends ApiAuthentication with Services {
+class ParticipantsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
 
   def attendeeForm(appName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -109,5 +112,3 @@ trait ParticipantsApi extends ApiAuthentication with Services {
   }
 
 }
-
-object ParticipantsApi extends ParticipantsApi with Services

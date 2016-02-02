@@ -40,9 +40,9 @@ case class TestimonialFormData(content: String,
   company: Option[String])
 
 class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                   val messagesApi: MessagesApi,
+                                   override val messagesApi: MessagesApi,
                                    deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder) {
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
 
   implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
     def writes(testimonial: BrandTestimonial): JsValue = {

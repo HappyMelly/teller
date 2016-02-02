@@ -29,13 +29,15 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Person
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
 class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            override val messagesApi: MessagesApi,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Files
   with Activities {
 

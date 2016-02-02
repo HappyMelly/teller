@@ -24,10 +24,12 @@
 
 package controllers.apiv2
 
-import controllers.{Brands, Products}
+import javax.inject.Inject
+
+import controllers.apiv2.json.ProductConverter
+import models.ProductView
 import models.service.Services
-import models.{Brand, Product, ProductView}
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,61 +37,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Products API.
  */
-trait ProductsApi extends ApiAuthentication with Services {
+class ProductsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication
+  with I18nSupport
+  with Services {
 
-  implicit val brandWrites = new Writes[Brand] {
-    def writes(brand: Brand): JsValue = {
-      Json.obj(
-        "code" -> brand.code,
-        "unique_name" -> brand.uniqueName,
-        "name" -> brand.name,
-        "image" -> Brands.pictureUrl(brand),
-        "tagline" -> brand.tagLine)
-    }
-  }
+  private val converter = new ProductConverter
+  implicit val productWrites = converter.productWithBrandsWrites
 
-  implicit val productWithBrandsWrites = new Writes[ProductView] {
-    def writes(obj: ProductView): JsValue = {
-      Json.obj(
-        "id" -> obj.product.id,
-        "title" -> obj.product.title,
-        "subtitle" -> obj.product.subtitle,
-        "image" -> Products.pictureUrl(obj.product),
-        "brands" -> obj.brands,
-        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
-    }
-  }
-
-  implicit val productWrites: Writes[Product] = new Writes[Product] {
-    def writes(obj: Product): JsValue = {
-      Json.obj(
-        "id" -> obj.id,
-        "title" -> obj.title,
-        "subtitle" -> obj.subtitle,
-        "image" -> Products.pictureUrl(obj),
-        "category" -> obj.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
-    }
-  }
-
-  import ContributionsApi.contributorWrites
-
-  val productDetailsWrites = new Writes[ProductView] {
-    def writes(obj: ProductView): JsValue = {
-      Json.obj(
-        "id" -> obj.product.id,
-        "title" -> obj.product.title,
-        "subtitle" -> obj.product.subtitle,
-        "url" -> obj.product.url,
-        "description" -> obj.product.description,
-        "cta_url" -> obj.product.callToActionUrl,
-        "cta_text" -> obj.product.callToActionText,
-        "image" -> Products.pictureUrl(obj.product),
-        "brands" -> obj.brands,
-        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
-        "parent" -> obj.product.parentId,
-        "contributors" -> obj.product.contributors)
-    }
-  }
 
   /**
    * Returns product in JSON format if exists
@@ -104,7 +58,7 @@ trait ProductsApi extends ApiAuthentication with Services {
       case (None, _) => jsonNotFound("Product not found")
       case (Some(product), brands) =>
         val withBrands = ProductView(product, brands)
-        jsonOk(Json.toJson(withBrands)(productDetailsWrites))
+        jsonOk(Json.toJson(withBrands)(converter.productDetailsWrites))
     }
   }
 
@@ -120,5 +74,3 @@ trait ProductsApi extends ApiAuthentication with Services {
     }
   }
 }
-
-object ProductsApi extends ProductsApi with ApiAuthentication with Services

@@ -25,18 +25,19 @@
 package templates
 
 import play.api.data.Form
-import play.api.i18n.{I18nSupport, Lang}
+import play.api.i18n.{MessagesApi, I18nSupport, Lang}
 import play.api.mvc.RequestHeader
 import securesocial.controllers.{ ChangeInfo, RegistrationInfo, ViewTemplates }
 import securesocial.core.RuntimeEnvironment
 
 /**
  * Renders templates for SecureSocial
+ *
  * @param env Environment
  */
-class SecureSocialTemplates @javax.inject.Inject() (env: RuntimeEnvironment)
+class SecureSocialTemplates (env: RuntimeEnvironment, val messagesApi: MessagesApi)
   extends ViewTemplates
-  with I18nSupport {
+    with I18nSupport {
 
   implicit val implicitEnv = env
 

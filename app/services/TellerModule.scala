@@ -1,15 +1,14 @@
 package services
 
-import com.google.inject.{TypeLiteral, AbstractModule}
-import net.codingwell.scalaguice.ScalaModule
+import play.api.inject.{Binding, Module}
+import play.api.{Configuration, Environment}
 import securesocial.core.RuntimeEnvironment
 
 /**
   * Injector module
   */
-class TellerModule extends AbstractModule with ScalaModule {
-  override def configure() {
-    val environment: TellerRuntimeEnvironment = new TellerRuntimeEnvironment
-    bind(new TypeLiteral[RuntimeEnvironment] {}).toInstance(environment)
-  }
+class TellerModule extends Module {
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
+    bind[RuntimeEnvironment].to[TellerRuntimeEnvironment]
+  )
 }

@@ -50,9 +50,9 @@ import scala.concurrent.Future
 import scala.io.Source
 
 class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                        val messagesApi: MessagesApi,
+                        override val messagesApi: MessagesApi,
                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Activities {
 
   val contentType = "image/jpeg"
@@ -314,8 +314,10 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
               brand <- brandService.findByCoordinator(personId)
             } yield brand.isEmpty) flatMap { noEntries =>
               if (noEntries) {
-                userAccountService.findByPerson(personId) map { case Some(account) =>
-                  userAccountService.update(account.copy(coordinator = false, activeRole = false))
+                userAccountService.findByPerson(personId) map {
+                  case None => Future.successful(Unit)
+                  case Some(account) =>
+                    userAccountService.update(account.copy(coordinator = false, activeRole = false))
                 }
               }
               jsonSuccess(Messages("success.brand.deleteMember"))
@@ -533,7 +535,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 }
 
-object Brands extends Utilities {
+object Brands {
 
   /**
     * Returns url to a brand's picture
@@ -542,7 +544,7 @@ object Brands extends Utilities {
     */
   def pictureUrl(brand: Brand): Option[String] = {
     brand.picture.map { path =>
-      cdnUrl(path).orElse(Some(fullUrl(routes.Brands.picture(brand.code).url)))
+      Utilities.cdnUrl(path).orElse(Some(Utilities.fullUrl(routes.Brands.picture(brand.code).url)))
     } getOrElse None
   }
 }

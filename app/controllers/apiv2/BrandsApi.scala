@@ -23,10 +23,13 @@
  */
 package controllers.apiv2
 
+import javax.inject.Inject
+
+import controllers.apiv2.json.{PersonConverter, ProductConverter}
 import controllers.{Products, Brands}
 import models.brand.{BrandLink, BrandTestimonial}
 import models._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,7 +38,7 @@ import scala.concurrent.Future
 /**
  * Brands API
  */
-trait BrandsApi extends ApiAuthentication {
+class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
 
   implicit val brandWrites = new Writes[(Brand, Int)] {
     def writes(view: (Brand, Int)): JsValue = {
@@ -49,8 +52,8 @@ trait BrandsApi extends ApiAuthentication {
     }
   }
 
-  import PeopleApi.personWrites
-  import ProductsApi.productWrites
+  implicit val personWrites = (new PersonConverter).personWrites
+  implicit val productWrites = (new ProductConverter).productWrites
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
@@ -131,11 +134,13 @@ trait BrandsApi extends ApiAuthentication {
       case Some(brand) => fullView(brand)
       case None =>
         brandService.findByName(code) flatMap {
+          case None => Future.successful(None)
           case Some(brand) => fullView(brand)
         }
     }
-    view flatMap { brandView =>
-      jsonOk(Json.toJson(brandView)(detailsWrites))
+    view flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(brandView) => jsonOk(Json.toJson(brandView)(detailsWrites))
     }
   }
 
@@ -157,7 +162,7 @@ trait BrandsApi extends ApiAuthentication {
    *
    * @param brand Brand of interest
    */
-  protected def fullView(brand: Brand): Future[BrandFullView] = {
+  protected def fullView(brand: Brand): Future[Option[BrandFullView]] = {
     val id = brand.identifier
     (for {
       owner <- personService.find(brand.ownerId)
@@ -167,12 +172,11 @@ trait BrandsApi extends ApiAuthentication {
       testimonials <- brandService.testimonials(id)
       products <- productService.findByBrand(id)
     } yield (owner, member, events, links, testimonials, products)) map {
+      case (None, _, _, _, _, _) => None
       case (Some(owner), None, events, links, testimonials, products) =>
-        BrandFullView(brand, owner.copy(id = None), links, testimonials, events.take(3), products)
+        Some(BrandFullView(brand, owner.copy(id = None), links, testimonials, events.take(3), products))
       case (Some(owner), Some(member), events, links, testimonials, products) =>
-        BrandFullView(brand, owner.copy(id = member.id), links, testimonials, events.take(3), products)
+        Some(BrandFullView(brand, owner.copy(id = member.id), links, testimonials, events.take(3), products))
     }
   }
 }
-
-object BrandsApi extends BrandsApi

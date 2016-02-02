@@ -26,11 +26,14 @@ package controllers.apiv2
 import java.net.URLDecoder
 import java.text.Collator
 import java.util.Locale
+import javax.inject.Inject
 
+import controllers.apiv2.json.PersonConverter
 import controllers.brand.Badges
 import models._
 import models.brand.Badge
 import org.joda.time.LocalDate
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import views.Languages
 
@@ -40,7 +43,7 @@ import scala.concurrent.Future
 /**
  * Facilitators API
  */
-trait FacilitatorsApi extends ApiAuthentication {
+class FacilitatorsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
 
   implicit val facilitatorWrites = new Writes[(Person, Float)] {
     def writes(value: (Person, Float)): JsValue = {
@@ -85,8 +88,10 @@ trait FacilitatorsApi extends ApiAuthentication {
   }
 
   import OrganisationsApi.organisationWrites
-  import PeopleApi.addressWrites
-  import PeopleApi.licenseSummaryWrites
+  private val personConverter = new PersonConverter
+  implicit val personWrites = personConverter.personWrites
+  implicit val licenseWrites = personConverter.licenseSummaryWrites
+  implicit val addressWrites = personConverter.addressWrites
 
   implicit val endorsementWrites = new Writes[Endorsement] {
     def writes(endorsement: Endorsement) = {
@@ -181,11 +186,14 @@ trait FacilitatorsApi extends ApiAuthentication {
         person <- mayBePerson
         brand <- code.map(value => brandService.find(value)).getOrElse(Future.successful(None))
       } yield (person, brand)) flatMap {
-        case (Some(person), None) => withoutBrandData(person)
-        case (Some(person), Some(brand)) => withBrandData(person, brand)
+        case (None, _) => Future.successful(None)
+        case (Some(person), None) => withoutBrandData(person).map(value => Some(value))
+        case (Some(person), Some(brand)) => withBrandData(person, brand).map(value => Some(value))
       }
-      view flatMap { case (person, endorsements, materials, licenses, facilitator, urls) =>
-        jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, licenses, facilitator, urls)))
+      view flatMap {
+        case None => jsonNotFound("Person not found")
+        case Some((person, endorsements, materials, licenses, facilitator, urls)) =>
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, licenses, facilitator, urls)))
       }
   }
 
@@ -253,5 +261,3 @@ trait FacilitatorsApi extends ApiAuthentication {
     }
   }
 }
-
-object FacilitatorsApi extends FacilitatorsApi with ApiAuthentication

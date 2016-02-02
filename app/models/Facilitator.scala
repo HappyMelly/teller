@@ -64,7 +64,7 @@ object Facilitator extends Services {
       case "init" =>
         initialCalculation()
       case eventId: Long ⇒
-        eventService.find(eventId) map { case Some(x) ⇒
+        eventService.get(eventId) map { x ⇒
           x.facilitatorIds.foreach { id ⇒
             val evaluationQuery = for {
               events <- eventService.findByFacilitator(id, Some(x.brandId))

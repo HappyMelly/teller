@@ -43,9 +43,9 @@ import services.integrations.Integrations
 import scala.concurrent.Future
 
 class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                             val messagesApi: MessagesApi,
+                             override val messagesApi: MessagesApi,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations
   with Files
   with Utilities {
@@ -242,7 +242,7 @@ Check it here %s. You may find it useful :wink:
   }
 }
 
-object Experiments extends Utilities {
+object Experiments {
 
   /**
     * Returns url to an experiment's picture
@@ -252,7 +252,8 @@ object Experiments extends Utilities {
   def pictureUrl(experiment: Experiment): Option[String] = {
     if (experiment.picture) {
       val picture = Experiment.picture(experiment.id.get)
-      cdnUrl(picture.name).orElse(Some(fullUrl(controllers.routes.Experiments.picture(experiment.id.get).url)))
+      val url = Utilities.fullUrl(controllers.routes.Experiments.picture(experiment.id.get).url)
+      Utilities.cdnUrl(picture.name).orElse(Some(url))
     } else {
       None
     }

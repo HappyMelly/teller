@@ -25,76 +25,24 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
+import javax.inject.Inject
 
+import controllers.apiv2.json.PersonConverter
 import models._
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object PeopleApi extends ApiAuthentication {
+class PeopleApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
 
-  implicit val personWrites = new Writes[Person] {
-    def writes(person: Person): JsValue = {
-      Json.obj(
-        "id" -> person.id,
-        "unique_name" -> person.uniqueName,
-        "first_name" -> person.firstName,
-        "last_name" -> person.lastName,
-        "photo" -> person.photo.url,
-        "country" -> person.address.countryCode)
-    }
-  }
-
-  import OrganisationsApi.organisationWrites
-  import ContributionsApi.contributionWrites
-
-  implicit val licenseSummaryWrites = new Writes[LicenseView] {
-    def writes(license: LicenseView) = {
-      Json.obj(
-        "brand" -> license.brand.code,
-        "start" -> license.license.start,
-        "end" -> license.license.end)
-    }
-  }
-
-  implicit val addressWrites = new Writes[Address] {
-    def writes(address: Address) = Json.obj(
-      "street1" -> address.street1,
-      "street2" -> address.street2,
-      "city" -> address.city,
-      "post_code" -> address.postCode,
-      "province" -> address.province,
-      "country" -> address.countryCode)
-  }
-
-  val personDetailsWrites = new Writes[(Person, List[LicenseView])] {
-    def writes(view: (Person, List[LicenseView])) = {
-      Json.obj(
-        "id" -> view._1.id.get,
-        "unique_name" -> view._1.uniqueName,
-        "first_name" -> view._1.firstName,
-        "last_name" -> view._1.lastName,
-        "email_address" -> view._1.email,
-        "image" -> view._1.photo.url,
-        "address" -> view._1.address,
-        "bio" -> view._1.bio,
-        "interests" -> view._1.interests,
-        "twitter_handle" -> view._1.socialProfile.twitterHandle,
-        "facebook_url" -> view._1.socialProfile.facebookUrl,
-        "linkedin_url" -> view._1.socialProfile.linkedInUrl,
-        "google_plus_url" -> view._1.socialProfile.googlePlusUrl,
-        "website" -> view._1.webSite,
-        "blog" -> view._1.blog,
-        "active" -> view._1.active,
-        "organizations" -> view._1.organisations,
-        "licenses" -> view._2,
-        "contributions" -> view._1.contributions)
-    }
-  }
+  private val converter = new PersonConverter
+  implicit val personWrites = converter.personWrites
 
   /**
    * Get a list of people
-   * @param active If true only active members are retrieved
+    *
+    * @param active If true only active members are retrieved
    * @param query Retrieve only people whose name meets the pattern
    * @return
    */
@@ -108,7 +56,8 @@ object PeopleApi extends ApiAuthentication {
 
   /**
    * Get a person
-   * @param identifier Person identifier
+    *
+    * @param identifier Person identifier
    * @return
    */
   def person(identifier: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
@@ -122,9 +71,8 @@ object PeopleApi extends ApiAuthentication {
       case None => notFound("Person not found")
       case Some(person) =>
         licenseService.activeLicenses(person.identifier) flatMap { licenses =>
-          ok(Json.prettyPrint(Json.toJson((person, licenses))(personDetailsWrites)))
+          ok(Json.prettyPrint(Json.toJson((person, licenses))(converter.personDetailsWrites)))
         }
     }
   }
 }
-

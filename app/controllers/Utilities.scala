@@ -34,24 +34,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait Utilities extends AsyncController with Services {
 
-  /**
-    * Returns CDN url to image if CDN is set
-    *
-    * @param path Path to image in Amazon S3 bucket
-    */
-  protected def cdnUrl(path: String): Option[String] = {
-    Play.configuration.getString("cdn.url").map(url => Some(url + path)).getOrElse(None)
-  }
-
-  /**
-   * Returns an url with domain
-    *
-    * @param url Domain-less part of url
-   */
-  protected def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
-  
   protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
                                   (coordinator: (BrandWithSettings, List[Brand]) => Future[Result])
                                   (facilitator: (Option[BrandWithSettings], List[Brand]) => Future[Result])
@@ -84,5 +66,26 @@ trait Utilities extends AsyncController with Services {
         }
       }
     } else ordinaryUser
+  }
+}
+
+object Utilities {
+
+  /**
+    * Returns CDN url to image if CDN is set
+    *
+    * @param path Path to image in Amazon S3 bucket
+    */
+  def cdnUrl(path: String): Option[String] = {
+    Play.configuration.getString("cdn.url").map(url => Some(url + path)).getOrElse(None)
+  }
+
+  /**
+    * Returns an url with domain
+    *
+    * @param url Domain-less part of url
+    */
+  def fullUrl(url: String): String = {
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
 }

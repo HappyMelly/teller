@@ -73,7 +73,7 @@ case class EvaluationAttendeeView(evaluation: Evaluation, attendee: Attendee)
 /**
  * An evaluation which a participant gives to an event
  */
-case class Evaluation(
+case class  Evaluation(
                        id: Option[Long],
                        eventId: Long,
                        attendeeId: Long,
@@ -203,10 +203,12 @@ case class Evaluation(
     (for {
       brand <- brandService.get(event.brandId)
       attendee <- attendeeService.find(this.attendeeId, this.eventId)
-    } yield (brand, attendee)) map { case (brand, Some(attendee)) =>
-      val token = this.confirmationId getOrElse ""
-      EvaluationReminder.sendConfirmRequest(attendee, brand, defaultHook, token)
-      this
+    } yield (brand, attendee)) map {
+      case (_, None) => this
+      case (brand, Some(attendee)) =>
+        val token = this.confirmationId getOrElse ""
+        EvaluationReminder.sendConfirmRequest(attendee, brand, defaultHook, token)
+        this
     }
   }
 
@@ -215,14 +217,16 @@ case class Evaluation(
       brand <- brandService.get(event.brandId)
       attendee <- attendeeService.find(this.attendeeId, this.eventId)
       coordinators <- brandService.coordinators(event.brandId)
-    } yield (brand, attendee, coordinators)) map { case (brand, Some(attendee), coordinators) =>
-      val impression = views.Evaluations.impression(facilitatorImpression)
-      val subject = s"New evaluation (General impression: $impression)"
-      val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-      email.send(event.facilitators.toSet, Some(cc.toSet), None, subject,
-        mail.templates.html.evaluation(this, attendee).toString(), richMessage = true)
+    } yield (brand, attendee, coordinators)) map {
+      case (_, None, _) => this
+      case (brand, Some(attendee), coordinators) =>
+        val impression = views.Evaluations.impression(facilitatorImpression)
+        val subject = s"New evaluation (General impression: $impression)"
+        val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
+        email.send(event.facilitators.toSet, Some(cc.toSet), None, subject,
+          mail.templates.html.evaluation(this, attendee).toString(), richMessage = true)
 
-      this
+        this
     }
   }
 

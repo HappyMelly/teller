@@ -1,7 +1,10 @@
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import controllers.{Experiments, Utilities}
 import models.Experiment
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -9,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Experiments API
  */
-trait ExperimentsApi extends ApiAuthentication with Utilities {
+class ExperimentsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Utilities {
 
   implicit val experimentWrites = new Writes[Experiment] {
     def writes(experiment: Experiment): JsValue = {
@@ -46,5 +49,3 @@ trait ExperimentsApi extends ApiAuthentication with Utilities {
     }
   }
 }
-
-object ExperimentsApi extends ExperimentsApi

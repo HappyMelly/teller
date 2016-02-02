@@ -67,7 +67,8 @@ class BrandService extends Services
 
   /**
    * Returns list of coordinators for the given brand
-   * @param brandId Brand identifier
+    *
+    * @param brandId Brand identifier
    */
   def coordinators(brandId: Long): Future[List[(Person, BrandCoordinator)]] = {
     val query = for {
@@ -98,7 +99,8 @@ class BrandService extends Services
   /**
    * Deletes brand and all related brand data (which are allowed to be deleted
    *  automatically) from database
-   * @param brand Brand to delete
+    *
+    * @param brand Brand to delete
    */
   def delete(brand: Brand): Unit = {
     socialProfileService.delete(brand.id.get, ProfileType.Brand)
@@ -159,13 +161,15 @@ class BrandService extends Services
 
   /**
    * Returns brand if it exists, otherwise - None
-   * @param id Brand identifier
+    *
+    * @param id Brand identifier
    */
   def find(id: Long): Future[Option[Brand]] = db.run(brands.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns brand if it exists, otherwise - None
-   * @param code Brand code
+    *
+    * @param code Brand code
    */
   def find(code: String): Future[Option[Brand]] = db.run(brands.filter(_.code === code).result).map(_.headOption)
 
@@ -178,6 +182,7 @@ class BrandService extends Services
 
   /**
     * Returns list of brands with settings for the given identifiers
+    *
     * @param ids Brand identifiers
     */
   def find(ids: List[Long]): Future[List[BrandWithSettings]] = {
@@ -223,7 +228,8 @@ class BrandService extends Services
 
   /**
    * Returns list of brands belonging to one coordinator
-   * @param coordinatorId Coordinator identifier
+    *
+    * @param coordinatorId Coordinator identifier
    */
   def findByCoordinator(coordinatorId: Long): Future[List[BrandWithSettings]] = {
     val query = for {
@@ -236,6 +242,7 @@ class BrandService extends Services
 
   /**
     * Returns list of brands with settings belonging to the given license holder
+    *
     * @param licenseeId License holder identifier
     */
   def findByLicense(licenseeId: Long): Future[List[BrandWithSettings]] = {
@@ -252,6 +259,7 @@ class BrandService extends Services
     * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
     *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
     *  license holders.
+    *
     *  @deprecated
     */
   def findByUser(user: UserAccount): Future[List[Brand]] = {
@@ -273,7 +281,8 @@ class BrandService extends Services
 
   /**
    * Returns brand with its coordinators if exists; otherwise - None
-   * @param id Brand id
+    *
+    * @param id Brand id
    */
   def findWithCoordinators(id: Long): Future[Option[BrandWithCoordinators]] =
     (for {
@@ -286,6 +295,7 @@ class BrandService extends Services
 
   /**
     * Returns brand with settings if exists
+    *
     * @param id Brand identifier
     */
   def findWithSettings(id: Long): Future[Option[BrandWithSettings]] = {
@@ -298,13 +308,15 @@ class BrandService extends Services
 
   /**
     * Returns the given brand
+    *
     * @param id Brand identifier
     */
   def get(id: Long): Future[Brand] = db.run(brands.filter(_.id === id).result).map(_.head)
 
   /**
    * Returns true if the given person is a coordinator of the given brand
-   * @param brandId Brand id
+    *
+    * @param brandId Brand id
    * @param personId Person id
    */
   def isCoordinator(brandId: Long, personId: Long): Future[Boolean] = {
@@ -314,7 +326,8 @@ class BrandService extends Services
 
   /**
    * Adds brand and all related records to database
-   * @param brand Brand object
+    *
+    * @param brand Brand object
    * @return Updated brand object with ID
    */
   def insert(brand: Brand): Future[Brand] = {
@@ -368,7 +381,8 @@ class BrandService extends Services
 
   /**
    * Update brand
-   * @param old Brand data before update
+    *
+    * @param old Brand data before update
    * @param updated Brand data including updated fields from the from
    * @param picture New brand picture
    * @return Updated brand object
@@ -390,17 +404,14 @@ class BrandService extends Services
       u.evaluationUrl, u.evaluationHookUrl, u.recordInfo.updated, u.recordInfo.updatedBy)
     db.run(brands.filter(_.id === u.id).map(_.forUpdate).update(updateTuple))
 
-    brandService.isCoordinator(old.id.get, updated.ownerId) map { case false =>
-        if (old.ownerId != updated.ownerId) {
-        val owner = BrandCoordinator(None, updated.id.get, updated.ownerId, BrandNotifications(true, true, true))
-        brandCoordinatorService.save(owner)
-      }
-    }
+    updateOwnerRecord(old.identifier, updated.ownerId, old.ownerId)
+
     u
   }
 
   /**
     * Update brand settings in database
+    *
     * @param value Brand settings
     */
   def updateSettings(value: Settings): Future[Int] =
@@ -417,6 +428,23 @@ class BrandService extends Services
         filter(_.brandId === testimonial.brand).
         update(testimonial)
     db.run(action)
+  }
+
+  /**
+    * Adds new brand coordinator record for a new owner
+    * @param brandId Brand identifier
+    * @param newOwner New owner identifier
+    * @param oldOwner Old owner identifier
+    */
+  protected def updateOwnerRecord(brandId: Long, newOwner: Long, oldOwner: Long): Future[Unit] = {
+    (for {
+      value <- brandService.isCoordinator(brandId, newOwner) if value
+    } yield ()) map { _ =>
+      if (oldOwner != newOwner) {
+        val owner = BrandCoordinator(None, brandId, newOwner, BrandNotifications(true, true, true))
+        brandCoordinatorService.save(owner)
+      }
+    }
   }
 
   /**

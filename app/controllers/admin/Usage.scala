@@ -17,9 +17,9 @@ import scala.concurrent.Future
   * Pages for calculating the usage of Teller by brands
   */
 class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                    val messagesApi: MessagesApi,
+                                    override val messagesApi: MessagesApi,
                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Services {
 
   case class StatByCountry(stat: Map[String, List[(LocalDate, Int)]])

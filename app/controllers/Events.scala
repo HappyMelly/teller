@@ -47,9 +47,9 @@ import views.Countries
 import scala.concurrent.Future
 
 class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                     val messagesApi: MessagesApi,
+                                     override val messagesApi: MessagesApi,
                                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations
   with Activities
   with Utilities
@@ -289,9 +289,9 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         case None => notFound("")
         case Some(x) =>
           (for {
-            eventType <- eventTypeService.find(x.event.eventTypeId)
+            eventType <- eventTypeService.find(x.event.eventTypeId) if eventType.isDefined
             fees <- feeService.findByBrand(x.event.brandId)
-          } yield (eventType, fees)) flatMap { case (Some(eventType), fees) =>
+          } yield (eventType.get, fees)) flatMap { case (eventType, fees) =>
             roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
               val orgs = user.person.organisations
               val printableFees = fees.
@@ -465,21 +465,23 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             case Some(errors) ⇒
               formError(user, form.withError("facilitatorIds", Messages("error.event.invalidLicense")), Some(id))
             case None =>
-              eventService.findWithInvoice(id) flatMap { case Some(view) =>
-                val updated = received.copy(event = received.event.copy(id = Some(id)),
-                  invoice = received.invoice.copy(id = view.invoice.id))
-                updated.event.facilitatorIds_=(received.event.facilitatorIds)
+              eventService.findWithInvoice(id) flatMap {
+                case None => notFound("Event not found")
+                case Some(view) =>
+                  val updated = received.copy(event = received.event.copy(id = Some(id)),
+                    invoice = received.invoice.copy(id = view.invoice.id))
+                  updated.event.facilitatorIds_=(received.event.facilitatorIds)
 
-                // it's important to compare before updating as with lazy
-                // initialization invoice and facilitators data
-                // for an old event will be destroyed
-                val changes = Comparator.compare(view, updated)
-                eventService.update(updated)
+                  // it's important to compare before updating as with lazy
+                  // initialization invoice and facilitators data
+                  // for an old event will be destroyed
+                  val changes = Comparator.compare(view, updated)
+                  eventService.update(updated)
 
-                val log = activity(updated.event, user.person).updated.insert()
-                sendEmailNotification(updated.event, changes, log)
+                  val log = activity(updated.event, user.person).updated.insert()
+                  sendEmailNotification(updated.event, changes, log)
 
-                redirect(routes.Events.details(id), "success" -> "Event was updated")
+                  redirect(routes.Events.details(id), "success" -> "Event was updated")
               }
           }
         })
@@ -520,7 +522,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
               }
 
               val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
-              redirect(routes.Events.details(id), "error" -> activity.toString)
+              redirect(routes.Events.details(id), "error" -> activity.string)
             } else {
                 redirect(routes.Events.details(id), "error" -> "Some people are not the attendees of the event")
             }
@@ -609,9 +611,9 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     activity: BaseActivity)(implicit request: RequestHeader): Future[Unit] = {
 
     (for {
-      b <- brandService.findWithCoordinators(event.brandId)
+      b <- brandService.findWithCoordinators(event.brandId) if b.isDefined
       e <- eventTypeService.get(event.eventTypeId)
-    } yield (b, e)) map { case (Some(x), eventType) =>
+    } yield (b.get, e)) map { case (x, eventType) =>
       val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
       val subject = s"${activity.description} event"
       email.send(recipients.toSet, None, None, subject,

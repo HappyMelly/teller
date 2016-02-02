@@ -38,8 +38,8 @@ import scala.concurrent.Future
 /**
  * Deadbolt authorisation handler.
  */
-class AuthorisationHandler @javax.inject.Inject()  (override implicit val env: TellerRuntimeEnvironment,
-                                                    val messagesApi: MessagesApi)
+class AuthorisationHandler @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                                   val messagesApi: MessagesApi)
   extends DeadboltHandler
   with I18nSupport
   with SecureSocial {
@@ -58,13 +58,16 @@ class AuthorisationHandler @javax.inject.Inject()  (override implicit val env: T
    *
    * @return an option containing the current subject
    */
-  override def getSubject[A](request: Request[A]): Option[Subject] = request match {
-    case secured: SecuredRequest[A] =>
-      secured.user match {
-        case user: ActiveUser ⇒ Some(user.account)
-        case _ => None
+  override def getSubject[A](request: Request[A]): Future[Option[Subject]] = {
+    try {
+      val securedRequest = request.asInstanceOf[SecuredRequest[A]]
+      securedRequest.user match {
+        case user: ActiveUser ⇒ Future.successful(Some(user.account))
+        case _ => Future.successful(None)
       }
-    case _ => None
+    } catch {
+      case e: ClassCastException => Future.successful(None)
+    }
   }
 
   /**
@@ -72,13 +75,16 @@ class AuthorisationHandler @javax.inject.Inject()  (override implicit val env: T
    *
    * @return an option containing the handler for restricted resources
    */
-  override def getDynamicResourceHandler[A](request: Request[A]): Option[DynamicResourceHandler] = request match {
-    case secured: SecuredRequest[A] =>
-      secured.user match {
-        case user: ActiveUser ⇒ Some(new ResourceHandler(user))
-        case _ => None
+  override def getDynamicResourceHandler[A](request: Request[A]): Future[Option[DynamicResourceHandler]] = {
+    try {
+      val securedRequest = request.asInstanceOf[SecuredRequest[A]]
+      securedRequest.user match {
+        case user: ActiveUser ⇒ Future.successful(Some(new ResourceHandler(user)))
+        case _ => Future.successful(None)
       }
-    case _ => None
+    } catch {
+      case e: ClassCastException => Future.successful(None)
+    }
   }
 
   /**

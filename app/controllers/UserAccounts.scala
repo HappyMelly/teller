@@ -33,7 +33,7 @@ import models._
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
 import securesocial.core.PasswordInfo
@@ -47,8 +47,9 @@ import scala.concurrent.{Await, Future}
  * User administration controller.
  */
 class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                           override val messagesApi: MessagesApi,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Utilities
   with I18nSupport {
 
@@ -205,7 +206,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
               env.mailer.sendEmail("Confirm your email", info._1,
                 (None, Some(mail.templates.password.html.confirmEmail(
                   user.person.firstName,
-                  fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
+                  Utilities.fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
                   user.person.email)))
               )
               val msg = "Confirmation email was sent to your new email address"

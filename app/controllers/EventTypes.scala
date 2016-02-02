@@ -33,14 +33,15 @@ import models.brand.EventType
 import models.service.Services
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            override val messagesApi: MessagesApi,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Activities
   with I18nSupport {
 

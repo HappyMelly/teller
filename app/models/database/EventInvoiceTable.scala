@@ -43,7 +43,7 @@ private[models] trait EventInvoiceTable
     def invoiceTo = column[Long]("INVOICE_TO")
     def invoiceBy = column[Option[Long]]("INVOICE_BY")
     def number = column[Option[String]]("NUMBER")
-    def event = foreignKey("EVENT_INVOICE_FK", eventId, TableQuery[Events])(_.id)
+    def event = foreignKey("EVENT_INVOICE_FK", eventId, TableQuery[Events])(_.id.?)
     def invoicedOrg = foreignKey("INVOICE_TO_FK", invoiceTo, TableQuery[Organisations])(_.id)
 
     def * = (id.?, eventId, invoiceTo, invoiceBy, number) <>(

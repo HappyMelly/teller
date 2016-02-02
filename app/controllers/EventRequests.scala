@@ -6,14 +6,16 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role
 import models.service.Services
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 /**
   * Contains methods for managing event requests UI
   */
 class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               override val messagesApi: MessagesApi,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Utilities {
 
   /**

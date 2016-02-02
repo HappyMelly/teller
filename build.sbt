@@ -11,7 +11,6 @@ scalacOptions += "-feature"
 lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 libraryDependencies ++= Seq(
-    jdbc,
     cache,
     ws,
     filters,
@@ -19,7 +18,7 @@ libraryDependencies ++= Seq(
     "be.objectify" %% "deadbolt-scala" % "2.4.2",
     "com.andersen-gott" %% "scravatar" % "1.0.3", //gravatar support
     "com.sksamuel.scrimage" %% "scrimage-core" % "2.1.0", //image resizing
-    "com.github.mumoshu" %% "play2-memcached-play23" % "0.7.0",
+    "com.github.mumoshu" %% "play2-memcached-play24" % "0.7.0",
     "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
     "com.typesafe.play" %% "play-slick" % "1.1.1",
     "com.typesafe.play" %% "play-slick-evolutions" % "1.1.1",
@@ -35,7 +34,6 @@ libraryDependencies ++= Seq(
     "org.planet42" %% "laika-core" % "0.5.1",
     "org.jsoup" % "jsoup" % "1.7.3",
     "ws.securesocial" %% "securesocial" % "3.0-M4",
-    "net.codingwell" %% "scala-guice" % "4.0.1",
     "net.kaliber" %% "play-s3" % "7.0.2" //s3 amazon support
   )
 
@@ -47,7 +45,7 @@ resolvers += Resolver.sonatypeRepo("releases")
 
 resolvers += "Kaliber Internal Repository" at "https://jars.kaliber.io/artifactory/libs-release-local"
 
-resolvers += "Spy Repo" at "http://files.couchbase.com/maven2"
+resolvers += "Spy Repository" at "http://files.couchbase.com/maven2"
 
 routesImport += "binders._"
 

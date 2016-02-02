@@ -105,7 +105,7 @@ trait Enrollment extends AsyncController
   private def sendWelcomeEmail(person: Person, url: String, name: String) = {
     email.send(Set(person),
       subject = "Welcome to Happy Melly network",
-      body = mail.templates.html.welcome(fullUrl(url), url, name).toString(),
+      body = mail.templates.html.welcome(Utilities.fullUrl(url), url, name).toString(),
       richMessage = true)
   }
 

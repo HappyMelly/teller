@@ -34,7 +34,7 @@ import services.CurrencyConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object ExchangeRates extends Controller with Services {
+class ExchangeRates extends Controller with Services {
 
   case class ConversionResult(rate: BigDecimal, result: Money)
 

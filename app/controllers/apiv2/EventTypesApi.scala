@@ -23,8 +23,11 @@
  */
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import models.brand.EventType
 import models.service.Services
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +35,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Event types API
  */
-trait EventTypesApi extends ApiAuthentication with Services {
+class EventTypesApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
 
   implicit val eventTypeWrites = new Writes[EventType] {
     def writes(eventType: EventType): JsValue = {
@@ -59,5 +62,3 @@ trait EventTypesApi extends ApiAuthentication with Services {
     }
   }
 }
-
-object EventTypesApi extends EventTypesApi with ApiAuthentication

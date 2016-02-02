@@ -99,9 +99,9 @@ case class PersistingExchangeRateProvider(private val wrappedProvider: ExchangeR
 
   override def apply(base: CurrencyUnit, counter: CurrencyUnit): Future[Option[ExchangeRate]] = {
     val futureMaybeRate: Future[Option[ExchangeRate]] = wrappedProvider(base, counter)
-    futureMaybeRate flatMap { case Some(rate) =>
-      if (rate.id.isEmpty)
-        exchangeService.insert(rate).map(x => Some(x))
+    futureMaybeRate.filter(_.isDefined) flatMap { rate =>
+      if (rate.get.id.isEmpty)
+        exchangeService.insert(rate.get).map(x => Some(x))
       else
         Future.successful(None)
     }

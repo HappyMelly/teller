@@ -29,8 +29,7 @@ import models._
 import models.database._
 import org.joda.time.LocalDate
 import play.api.Play
-import play.api.Play.current
-import play.api.db.slick.{HasDatabaseConfig, DatabaseConfigProvider}
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global

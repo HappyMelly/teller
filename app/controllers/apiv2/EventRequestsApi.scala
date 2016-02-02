@@ -1,11 +1,14 @@
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import models.event.EventRequest
 import models.service.Services
 import models.{APIError, DateStamp}
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import views.Countries
 
@@ -14,7 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * API for adding event requests
  */
-trait EventRequestsApi extends ApiAuthentication with Services {
+class EventRequestsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
 
   def form(brandId: Long, appName: String) = Form(mapping(
     "country" -> nonEmptyText.verifying(
@@ -63,4 +66,3 @@ trait EventRequestsApi extends ApiAuthentication with Services {
   }
 }
 
-object EventRequestsApi extends EventRequestsApi

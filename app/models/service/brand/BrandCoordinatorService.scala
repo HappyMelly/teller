@@ -62,7 +62,7 @@ class BrandCoordinatorService extends HasDatabaseConfig[JdbcProfile]
     val actions = (for {
       _ <- coordinators += coordinator
       _ <- userAccountQuery.findByPerson(coordinator.personId).result.headOption.flatMap {
-        case account => updateUserAccountQuery(coordinator.personId)
+        case Some(account) => updateUserAccountQuery(coordinator.personId)
         case None => insertUserAccountQuery(coordinator.personId)
       }
     } yield ()).transactionally

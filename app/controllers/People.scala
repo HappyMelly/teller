@@ -48,9 +48,9 @@ import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment,
-                                    val messagesApi: MessagesApi,
+                                    override val messagesApi: MessagesApi,
                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations
   with Files
   with Activities
@@ -233,16 +233,16 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                 case None =>
                   val modified = resetReadOnlyAttributes(person, oldPerson)
 
-                  personService.member(id) map { case Some(x) ⇒
+                  personService.member(id).filter(_.isDefined) map { _ =>
                     val msg = connectMeMessage(oldPerson.socialProfile, modified.socialProfile)
                     msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
                   }
                   modified.update flatMap { _ =>
                     if (modified.email != oldPerson.email) {
-                      identityService.findByEmail(oldPerson.email) map { case Some(identity) =>
-                        if (identity.userId.exists(_ == id)) {
+                      identityService.findByEmail(oldPerson.email).filter(_.isDefined) map { identity =>
+                        if (identity.get.userId.exists(_ == id)) {
                           identityService.delete(oldPerson.email)
-                          identityService.insert(identity.copy(email = modified.email))
+                          identityService.insert(identity.get.copy(email = modified.email))
                         }
                       }
                     }

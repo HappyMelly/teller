@@ -40,9 +40,9 @@ import scala.language.postfixOps
 import scala.util.Try
 
 class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                      val messagesApi: MessagesApi,
+                      override val messagesApi: MessagesApi,
                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder) {
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
 
   /**
    * Validates the given url points to an existing page

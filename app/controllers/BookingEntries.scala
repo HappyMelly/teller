@@ -48,11 +48,11 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                             val messagesApi: MessagesApi,
+                                             override val messagesApi: MessagesApi,
                                              deadbolt: DeadboltActions,
                                              handlers: HandlerCache,
                                              actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations
   with Services
   with I18nSupport {
@@ -145,7 +145,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
             personService.findActiveAdmins map { admins =>
               sendEmailNotification(insertedEntry, List.empty, activity, admins -- entry.participants)
             }
-            nextPageResult(form("next").value, activity.toString, form, currentUser, user)
+            nextPageResult(form("next").value, activity.string, form, currentUser, user)
           }
         }.recover {
           case e: CurrencyConverter.NoExchangeRateException ⇒
@@ -215,7 +215,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
             sendEmailNotification(updatedEntry, changes, activity, admins)
           }
 
-          redirect(routes.BookingEntries.details(bookingNumber), "success" -> activity.toString)
+          redirect(routes.BookingEntries.details(bookingNumber), "success" -> activity.string)
       }
   }
 
@@ -241,7 +241,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
             sendEmailNotification(updatedEntry, changes, activity, admins)
           }
 
-          redirect(routes.BookingEntries.details(bookingNumber), "success" -> activity.toString)
+          redirect(routes.BookingEntries.details(bookingNumber), "success" -> activity.string)
       }
   }
 
@@ -282,7 +282,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
               personService.findActiveAdmins map { admins =>
                 sendEmailNotification(deletedEntry, List.empty, activity, admins)
               }
-              redirect(routes.BookingEntries.index(), "success" -> activity.toString)
+              redirect(routes.BookingEntries.index(), "success" -> activity.string)
             }.getOrElse(notFound("Entry not found"))
           } else {
             redirect(routes.BookingEntries.index(), "error" -> "Only the owner can delete a booking")
@@ -387,7 +387,7 @@ class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRu
                     sendEmailNotification(populatedUpdatedEntry, changes, activity, admins)
                   }
 
-                  nextPageResult(form("next").value, activity.toString, form, currentUser, user)
+                  nextPageResult(form("next").value, activity.string, form, currentUser, user)
                 }.recover {
                   case e: CurrencyConverter.NoExchangeRateException ⇒
                     val formWithError = form.withGlobalError(s"On-line currency conversion failed (${e.getMessage}). Please try again.")

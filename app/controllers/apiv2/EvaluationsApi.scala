@@ -23,11 +23,14 @@
  */
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import models._
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,7 +38,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Evaluations API
  */
-trait EvaluationsApi extends ApiAuthentication {
+class EvaluationsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
@@ -151,5 +154,3 @@ trait EvaluationsApi extends ApiAuthentication {
     }
   }
 }
-
-object EvaluationsApi extends EvaluationsApi with ApiAuthentication

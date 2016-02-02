@@ -79,6 +79,15 @@ class AccountService extends HasDatabaseConfig[JdbcProfile]
     } yield (account, person, organisation)
 
     db.run(query.result).map(_.toList.map {
+      case (account, None, None) =>
+        val holder = Account.accountHolderName(None, None, None)
+        AccountSummary(account.identifier, holder, account.currency, account.active)
+      case (account, Some(person), None) =>
+        val holder = Account.accountHolderName(Some(person.firstName), Some(person.lastName), None)
+        AccountSummary(account.identifier, holder, account.currency, account.active)
+      case (account, None, Some(organisation)) =>
+        val holder = Account.accountHolderName(None, None, Some(organisation.name))
+        AccountSummary(account.identifier, holder, account.currency, account.active)
       case (account, Some(person), Some(organisation)) ⇒ {
         val holder = Account.accountHolderName(Some(person.firstName), Some(person.lastName), Some(organisation.name))
         AccountSummary(account.identifier, holder, account.currency, account.active)

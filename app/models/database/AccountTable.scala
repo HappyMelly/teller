@@ -42,8 +42,8 @@ private[models] trait AccountTable extends PersonTable with OrganisationTable {
     def currency = column[CurrencyUnit]("CURRENCY", O.Length(3), O.Default(CurrencyUnit.of("EUR")))
     def active = column[Boolean]("ACTIVE", O.Default(false))
 
-    def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
-    def organisation = foreignKey("PERSON_FK", organisationId, TableQuery[Organisations])(_.id)
+    def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id.?)
+    def organisation = foreignKey("PERSON_FK", organisationId, TableQuery[Organisations])(_.id.?)
 
     def * = (id.?, organisationId, personId, currency, active) <>(
       (Account.apply _).tupled, Account.unapply)

@@ -44,9 +44,9 @@ import services.integrations.Integrations
 import scala.concurrent.Future
 
 class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                             val messagesApi: MessagesApi,
+                             override val messagesApi: MessagesApi,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with I18nSupport
   with Integrations
   with Activities
@@ -178,20 +178,22 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
           (for {
             attendee <- attendeeService.find(x.eval.attendeeId, x.eval.eventId)
             endorsementData <- endorsementPair(x, user.person.identifier, id)
-          } yield (attendee, endorsementData)) flatMap { case (Some(attendee), (facilitator, endorsement)) =>
-            roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
-              ok(views.html.v2.evaluation.details(user, view.brand, brands, x,
-                attendee.fullName,
-                view.settings.certificates,
-                facilitator,
-                endorsement))
-            } { (view, brands) =>
-              ok(views.html.v2.evaluation.details(user, view.get.brand, brands, x,
-                attendee.fullName,
-                view.get.settings.certificates,
-                facilitator,
-                endorsement))
-            } { redirect(routes.Dashboard.index()) }
+          } yield (attendee, endorsementData)) flatMap {
+            case (None, _) => notFound("Attendee not found")
+            case (Some(attendee), (facilitator, endorsement)) =>
+              roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
+                ok(views.html.v2.evaluation.details(user, view.brand, brands, x,
+                  attendee.fullName,
+                  view.settings.certificates,
+                  facilitator,
+                  endorsement))
+              } { (view, brands) =>
+                ok(views.html.v2.evaluation.details(user, view.get.brand, brands, x,
+                  attendee.fullName,
+                  view.get.settings.certificates,
+                  facilitator,
+                  endorsement))
+              } { redirect(routes.Dashboard.index()) }
           }
       }
   }
@@ -280,9 +282,9 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   protected def sendApprovalConfirmation(approver: Person, evaluation: Evaluation, attendee: Attendee, event: Event) = {
     (for {
-      withSettings <- brandService.findWithSettings(event.brandId)
+      withSettings <- brandService.findWithSettings(event.brandId) if withSettings.isDefined
       coordinators <- brandService.coordinators(event.brandId)
-    } yield (withSettings, coordinators)) foreach { case (Some(withSettings), coordinators) =>
+    } yield (withSettings.get, coordinators)) foreach { case (withSettings, coordinators) =>
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
       if (attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
         val cert = new Certificate(evaluation.handled, event, attendee)
@@ -310,7 +312,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param event Related event
    */
   protected def sendRejectionConfirmation(rejector: Person, attendee: Attendee, event: Event) = {
-    brandService.findWithCoordinators(event.brandId) foreach { case Some(view) ⇒
+    brandService.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
       val bcc = view.coordinators.filter(_._2.notification.evaluation).map(_._1)
       val subject = s"Your ${view.brand.name} certificate"
       email.send(Set(attendee),

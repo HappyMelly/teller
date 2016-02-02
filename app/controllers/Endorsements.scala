@@ -44,9 +44,9 @@ case class EndorsementFormData(content: String,
   company: Option[String])
 
 class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                              val messagesApi: MessagesApi,
+                              override val messagesApi: MessagesApi,
                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with I18nSupport{
 
   implicit val EndorsementWrites = new Writes[Endorsement] {

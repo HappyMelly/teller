@@ -503,8 +503,8 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
    * @param person Person object to update profile strength for
    */
   protected def updateProfileStrength(person: Person): Unit = {
-    profileStrengthService.find(person.id.get, false) map { case Some(strength) ⇒
-      profileStrengthService.update(ProfileStrength.forPerson(strength, person))
+    profileStrengthService.find(person.id.get, false).filter(_.isDefined) map { strength ⇒
+      profileStrengthService.update(ProfileStrength.forPerson(strength.get, person))
     }
   }
 }

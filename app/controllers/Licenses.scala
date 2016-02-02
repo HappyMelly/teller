@@ -43,9 +43,9 @@ import scala.concurrent.Future
  * Content license pages and API.
  */
 class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                       val messagesApi: MessagesApi,
+                                       override val messagesApi: MessagesApi,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with PasswordIdentities
   with Activities
   with I18nSupport {
@@ -131,8 +131,11 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                 checkOtherAccountEmail(person) flatMap { result =>
                   if (!result) {
                     licenseService.add(license.copy(licenseeId = personId)) flatMap { addedLicense =>
-                      profileStrengthService.find(personId, org = false) map { case Some(x) ⇒
-                        profileStrengthService.update(ProfileStrength.forFacilitator(x))
+                      val query = for {
+                        strength <- profileStrengthService.find(personId, org = false) if strength.isDefined
+                      } yield strength.get
+                      query.map { strength =>
+                        profileStrengthService.update(ProfileStrength.forFacilitator(strength))
                       }
                       createFacilitatorAccount(person, brand._2)
                       val route: String = routes.People.details(personId).url + "#facilitation"
@@ -185,8 +188,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       license <- licenseService.add(license.copy(licenseeId = person.identifier))
                     } yield (person, license)
                     actions flatMap { case (person, license) =>
-                      profileStrengthService.find(person.identifier, org = false) map { case Some(x) ⇒
-                        profileStrengthService.update(ProfileStrength.forFacilitator(x))
+                      profileStrengthService.find(person.identifier, org = false).filter(_.isDefined) map { x ⇒
+                        profileStrengthService.update(ProfileStrength.forFacilitator(x.get))
                       }
                       createFacilitatorAccount(person, brand._2)
                       activity(license, user.person).created.insert()
@@ -217,7 +220,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           licenseService.delete(id)
           licenseService.licenses(licenseeId) map { licenses =>
             if (licenses.isEmpty) {
-              userAccountService.findByPerson(licenseeId) map { case Some(account) =>
+              userAccountService.findByPerson(licenseeId).filter(_.isDefined).map(_.get) map { account =>
                 userAccountService.update(account.copy(facilitator = false, activeRole = true))
               }
 

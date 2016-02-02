@@ -44,9 +44,9 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                               val messagesApi: MessagesApi,
+                               override val messagesApi: MessagesApi,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Activities
   with Files
   with I18nSupport {
@@ -309,7 +309,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   }
 }
 
-object Organisations extends Utilities {
+object Organisations {
 
   /**
    * HTML form mapping for creating and editing.
@@ -358,6 +358,6 @@ object Organisations extends Utilities {
     */
   def logoUrl(orgId: Long): Option[String] = {
     val logo = Organisation.logo(orgId)
-    cdnUrl(logo.name).orElse(Some(fullUrl(controllers.routes.Organisations.logo(orgId).url)))
+    Utilities.cdnUrl(logo.name).orElse(Some(Utilities.fullUrl(controllers.routes.Organisations.logo(orgId).url)))
   }
 }

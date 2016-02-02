@@ -24,7 +24,10 @@
 
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import models.brand.BrandFee
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +35,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Provides API for working with event fees
  */
-trait BrandFeesApi extends ApiAuthentication {
+class BrandFeesApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
 
   /**
    * EventFee to JSON converter
@@ -61,5 +64,3 @@ trait BrandFeesApi extends ApiAuthentication {
     }
   }
 }
-
-object BrandFeesApi extends BrandFeesApi

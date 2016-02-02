@@ -39,9 +39,9 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                              val messagesApi: MessagesApi,
+                              override val messagesApi: MessagesApi,
                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Files {
 
   /**
@@ -61,6 +61,7 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
           brand <- brandService.findWithCoordinators(event.brandId)
         } yield (attendee, brand)) flatMap {
           case (None, _) => Future.successful(NotFound)
+          case (_, None) => notFound("Brand not found")
           case (Some(attendee), Some(brand)) =>
             val issued = attendee.issued getOrElse LocalDate.now()
             val certificate = new Certificate(Some(issued), event, attendee, renew = true)

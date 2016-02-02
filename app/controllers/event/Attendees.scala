@@ -23,9 +23,9 @@ import scala.concurrent.Future
   * Created by sery0ga on 04/01/16.
   */
 class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                        val messagesApi: MessagesApi,
+                                        override val messagesApi: MessagesApi,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Activities
   with Utilities {
 
@@ -170,6 +170,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
       withSettings <- brandService.findWithSettings(brandId)
     } yield (withCoordinators, withSettings)) flatMap {
       case (None, _) => ok(Json.toJson(List[String]()))
+      case (_, None) => ok(Json.toJson(List[String]()))
       case (Some(view), Some(withSettings)) =>
         val account = user.account
         val coordinator = view.coordinators.exists(_._1.id == Some(account.personId))

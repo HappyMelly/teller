@@ -40,9 +40,9 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                         val messagesApi: MessagesApi,
+                         override val messagesApi: MessagesApi,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder) {
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
 
   /**
    * Generate a XLSX report with evaluations (if they're available)

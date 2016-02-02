@@ -31,12 +31,14 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.{Person, Photo}
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import services.TellerRuntimeEnvironment
 
 class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               override val messagesApi: MessagesApi,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Files
   with Utilities {
 
@@ -124,6 +126,6 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   protected def photoUrl(id: Long): Option[String] = {
     val photo = Person.photo(id)
-    cdnUrl(photo.name).orElse(Some(fullUrl(routes.ProfilePhotos.photo(id).url)))
+    Utilities.cdnUrl(photo.name).orElse(Some(Utilities.fullUrl(routes.ProfilePhotos.photo(id).url)))
   }
 }

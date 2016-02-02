@@ -44,9 +44,9 @@ import scala.concurrent.Future
 import scala.io.Source
 
 class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                       val messagesApi: MessagesApi,
+                                       override val messagesApi: MessagesApi,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder) {
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
@@ -361,7 +361,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
 
 }
 
-object Products extends Utilities {
+object Products {
 
   /**
     * Returns url to a product's picture
@@ -370,7 +370,7 @@ object Products extends Utilities {
     */
   def pictureUrl(product: Product): Option[String] = {
     product.picture.map { path =>
-      cdnUrl(path).orElse(Some(fullUrl(routes.Products.picture(product.id.get).url)))
+      Utilities.cdnUrl(path).orElse(Some(Utilities.fullUrl(routes.Products.picture(product.id.get).url)))
     } getOrElse None
   }
 }

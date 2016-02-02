@@ -73,8 +73,8 @@ private[models] trait BookingEntryTable
     def owner = foreignKey("BOOKING_OWNER_FK", ownerId, TableQuery[People])(_.id)
     def from = foreignKey("BOOKING_FROM_FK", fromId, TableQuery[Accounts])(_.id)
     def to = foreignKey("BOOKING_TO_FK", toId, TableQuery[Accounts])(_.id)
-    def brand = foreignKey("BOOKING_BRAND_FK", brandId, TableQuery[Brands])(_.id)
-    def transactionType = foreignKey("TRANSACTION_TYPE_FK", transactionTypeId, TableQuery[TransactionTypes])(_.id)
+    def brand = foreignKey("BOOKING_BRAND_FK", brandId, TableQuery[Brands])(_.id.?)
+    def transactionType = foreignKey("TRANSACTION_TYPE_FK", transactionTypeId, TableQuery[TransactionTypes])(_.id.?)
 
     def deleted = column[Boolean]("DELETED")
 

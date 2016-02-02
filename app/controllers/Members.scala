@@ -45,9 +45,9 @@ import scala.concurrent.Future
 
 /** Renders pages and contains actions related to members */
 class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                         val messagesApi: MessagesApi,
+                         override val messagesApi: MessagesApi,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Enrollment
   with Activities
   with I18nSupport
@@ -176,7 +176,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
             error ⇒ jsonBadRequest("Reason does not exist"),
             reason ⇒ {
               memberService.update(member.copy(reason = reason))
-              profileStrengthService.find(personId, false) flatMap { case Some(strength) ⇒
+              profileStrengthService.find(personId, false).filter(_.isDefined).map(_.get) flatMap { strength ⇒
                 if (reason.isDefined && reason.get.length > 0) {
                   profileStrengthService.update(strength.markComplete("reason"))
                 } else {
@@ -199,7 +199,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case Some(member) =>
         memberService.delete(member.objectId, member.person) flatMap { _ =>
           val url = profileUrl(member)
-          val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(member.name, fullUrl(url))
+          val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(member.name, Utilities.fullUrl(url))
           slack.send(msg)
           redirect(url, "success" -> "Membership was cancelled")
         }
@@ -407,7 +407,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
     if (changedFields.nonEmpty) {
       var msg = "Hey @channel, member %s was updated.".format(before.name)
       changedFields.foreach(v ⇒ msg += " %s.".format(v.get))
-      msg += " <%s|View profile>".format(fullUrl(url))
+      msg += " <%s|View profile>".format(Utilities.fullUrl(url))
       Some(msg)
     } else
       None

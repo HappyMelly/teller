@@ -43,9 +43,9 @@ import services.TellerRuntimeEnvironment
  * Facilitators pages
  */
 class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                              val messagesApi: MessagesApi,
+                              override val messagesApi: MessagesApi,
                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Utilities {
 
   implicit val organizationWrites = new Writes[Organisation] {
@@ -139,7 +139,10 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
           case (Some(person), languages) ⇒
             if (!languages.exists(_.language == language)) {
               facilitatorService.insertLanguage(FacilitatorLanguage(id, language))
-              profileStrengthService.find(id, false) flatMap { case Some(profile) ⇒
+              val query = for {
+                profile <- profileStrengthService.find(id, false) if !profile.isDefined
+              } yield profile.get
+              query map { profile =>
                 profileStrengthService.update(profile.markComplete("language"))
               }
             }

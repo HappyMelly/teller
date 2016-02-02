@@ -26,12 +26,14 @@ package controllers
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 import views.Countries
 
 class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        override val messagesApi: MessagesApi,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder) {
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
 
   /**
    * Renders list of available fees for the given brand

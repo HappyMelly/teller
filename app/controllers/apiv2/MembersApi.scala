@@ -25,11 +25,13 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
+import javax.inject.Inject
 
-import controllers.apiv2.PeopleApi._
+import controllers.apiv2.json.{ContributionConverter, PersonConverter}
 import controllers.{Experiments, Organisations, Utilities}
 import models._
 import models.service.Services
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import views.Countries
 
@@ -37,7 +39,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-trait MembersApi extends ApiAuthentication with Services with Utilities {
+class MembersApi @Inject() (val messagesApi: MessagesApi)
+  extends ApiAuthentication
+  with Services
+  with Utilities {
 
   case class MemberView(member: Member, country: String)
   case class MemberPersonView(member: Member, experiments: List[Experiment])
@@ -70,8 +75,9 @@ trait MembersApi extends ApiAuthentication with Services with Utilities {
     }
   }
 
-
-  import ContributionsApi.contributionWrites
+  implicit val addressWrites = (new PersonConverter).addressWrites
+  implicit val contributionWrites = (new ContributionConverter).contributionWrites
+  implicit val personWrites = (new PersonConverter).personWrites
   import OrganisationsApi.organisationWrites
 
   val personDetailsWrites = new Writes[Person] {
@@ -163,7 +169,8 @@ trait MembersApi extends ApiAuthentication with Services with Utilities {
 
   /**
    * Returns list of members for the given query
-   * @param query List of member names separated by commas
+    *
+    * @param query List of member names separated by commas
    */
   def membersByNames(query: String) = TokenSecuredAction(readWrite = false) { implicit request => implicit token =>
     val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
@@ -185,7 +192,8 @@ trait MembersApi extends ApiAuthentication with Services with Utilities {
 
   /**
    * Returns member's data in JSON format if it exists
-   * @param identifier Member identifier
+    *
+    * @param identifier Member identifier
    * @param person Member is a person if true, otherwise - organisation
    */
   def member(identifier: String, person: Boolean = true) = TokenSecuredAction(readWrite = false) { implicit request ⇒
@@ -209,7 +217,8 @@ trait MembersApi extends ApiAuthentication with Services with Utilities {
 
   /**
    * Returns member by the name of
-   * @param identifier Object identifier
+    *
+    * @param identifier Object identifier
    * @param person Member is a person if true, otherwise - organisation
    * @return
    */
@@ -273,7 +282,8 @@ trait MembersApi extends ApiAuthentication with Services with Utilities {
 
   /**
    * Returns 'person' if the given member is a person, otherwise - 'org'
-   * @param member Member object
+    *
+    * @param member Member object
    */
   private def readableMemberType(member: Member): String = {
     if (member.person)
@@ -284,4 +294,3 @@ trait MembersApi extends ApiAuthentication with Services with Utilities {
 
 }
 
-object MembersApi extends MembersApi with ApiAuthentication with Services

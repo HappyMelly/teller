@@ -30,7 +30,7 @@ import models.UserRole.Role._
 import models._
 import models.service.Services
 import org.joda.time.LocalDate
-import play.api.i18n.I18nSupport
+import play.api.i18n.{MessagesApi, I18nSupport}
 import play.api.mvc._
 import securesocial.core.RuntimeEnvironment
 import services.TellerRuntimeEnvironment
@@ -38,25 +38,24 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.Future
 
 class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        override val messagesApi: MessagesApi,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Utilities
   with I18nSupport {
 
   /**
    * About page - credits.
    */
-  def about = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.about(user))
+  def about = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.about(user))
   }
 
   /**
    * API v2 documentation page.
    */
-  def apiv2 = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.apiv2.index(user))
+  def apiv2 = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.apiv2.index(user))
   }
 
   /**

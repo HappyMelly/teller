@@ -37,9 +37,9 @@ import play.twirl.api.Html
 import services.TellerRuntimeEnvironment
 
 class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                     val messagesApi: MessagesApi,
+                                     override val messagesApi: MessagesApi,
                                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Files
   with Utilities {
 
@@ -158,7 +158,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   protected def generatedName = Crypto.sign(DateTime.now().toString) + ".jpg"
 }
 
-object Badges extends Utilities {
+object Badges {
 
   /**
     * Returns url to an badge's picture
@@ -167,6 +167,6 @@ object Badges extends Utilities {
     */
   def pictureUrl(badge: Badge, size: String = ""): Option[String] = {
     val picture = Badge.picture(badge.file).file(size)
-    cdnUrl(picture.name).orElse(Some(fullUrl(routes.Badges.picture(badge.file).url)))
+    Utilities.cdnUrl(picture.name).orElse(Some(Utilities.fullUrl(routes.Badges.picture(badge.file).url)))
   }
 }

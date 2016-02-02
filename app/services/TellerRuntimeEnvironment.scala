@@ -24,7 +24,9 @@
 
 package services
 
+import javax.inject.Inject
 import models.ActiveUser
+import play.api.i18n.MessagesApi
 import securesocial.controllers.ViewTemplates
 import securesocial.core.RuntimeEnvironment
 import securesocial.core.providers._
@@ -36,10 +38,10 @@ import scala.collection.immutable.ListMap
 /**
   * Runtime environment for SecureSocial library to work
   */
-class TellerRuntimeEnvironment extends RuntimeEnvironment.Default {
+class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi) extends RuntimeEnvironment.Default {
   type U = ActiveUser
   override lazy val routes: RoutesService = new TellerRoutesService()
-  override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this)
+  override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this, messagesApi)
   override lazy val mailTemplates: MailTemplates = new MailTemplates(this)
   override lazy val userService: LoginIdentityService = new LoginIdentityService
   override lazy val providers = ListMap(

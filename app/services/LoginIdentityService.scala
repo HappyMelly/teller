@@ -50,7 +50,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
    * @param userId User identifier from a social network
    * @return
    */
-  def find(providerId: String, userId: String): Future[Option[BasicProfile]] =
+  def find(providerId: String, userId: String): Future[Option[BasicProfile]] = {
     if (providerId == UsernamePasswordProvider.UsernamePassword)
       identityService.findByEmail(userId) map {
         case None => None
@@ -61,6 +61,7 @@ class LoginIdentityService extends UserService[ActiveUser] with Services {
         case None => None
         case Some(identity) => Some(identity.profile)
       }
+  }
 
   /**
    * Saves a profile. This method gets called when a user logs in, registers or changes his password.

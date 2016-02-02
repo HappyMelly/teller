@@ -25,7 +25,7 @@ package models
 
 import models.service.ActivityService
 import org.joda.time.DateTime
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.Messages
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -55,7 +55,7 @@ abstract class BaseActivity {
   def made: BaseActivity
   def becameSupporter: BaseActivity
 
-  def description: String
+  def description()(implicit messages: Messages): String
   def insert(): BaseActivity
 }
 /**
@@ -67,7 +67,7 @@ abstract class BaseActivity {
  * @param predicate The action performed from the possible `Activity.Predicate` values
  * @param activityObject The name of the data the action was
  */
-case class Activity @javax.inject.Inject() (id: Option[Long],
+case class Activity(id: Option[Long],
     subjectId: Long,
     subject: String,
     predicate: String,
@@ -77,10 +77,10 @@ case class Activity @javax.inject.Inject() (id: Option[Long],
     supportiveObjectType: Option[String] = None,
     supportiveObjectId: Option[Long] = None,
     supportiveObject: Option[String] = None,
-    timestamp: DateTime = DateTime.now()) extends BaseActivity with I18nSupport {
+    timestamp: DateTime = DateTime.now()) extends BaseActivity {
 
   // Full description including subject (current user’s name).
-  override def description: String = {
+  override def description()(implicit messages: Messages): String = {
     val who = subject + " (id = %s)".format(subjectId)
     val what = activityObject map { a ⇒
       "%s (id = %s) %s".format(objectType, objectId, a)
@@ -97,7 +97,7 @@ case class Activity @javax.inject.Inject() (id: Option[Long],
   }
 
   // Short description for use in Flash messages.
-  override def toString = {
+  def string()(implicit messages: Messages) = {
     val what = objectType + " " + activityObject.getOrElse("")
     supportiveObject map { obj ⇒
       val whom = supportiveObjectType.getOrElse("") + " " + obj

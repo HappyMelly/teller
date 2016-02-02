@@ -32,7 +32,7 @@ import models.UserRole.Role._
 import models.brand.CertificateTemplate
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.I18nSupport
+import play.api.i18n.{MessagesApi, I18nSupport}
 import services.TellerRuntimeEnvironment
 import views.Languages
 
@@ -47,8 +47,9 @@ case class FakeCertificateTemplate(language: String,
   templateNoFacilitator: Option[String])
 
 class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                      override val messagesApi: MessagesApi,
                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
     with Activities
     with I18nSupport {
 

@@ -32,6 +32,7 @@ import models.UserRole.Role._
 import models.event.Attendee
 import models.{Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
+import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 import views.Countries
@@ -44,8 +45,9 @@ import scala.util.Random
  * Contains a set of functions for handling brand statistics
  */
 class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            override val messagesApi: MessagesApi,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Utilities {
 
   val TOP_LIMIT = 10

@@ -82,9 +82,9 @@ case class AuthenticationInfo(email: String, password: String)
  * Contains actions for a registration process
  */
 class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                           val messagesApi: MessagesApi,
+                                           override val messagesApi: MessagesApi,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)
+  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with PasswordIdentities
   with Enrollment
   with Activities {

@@ -24,11 +24,13 @@
 
 package controllers
 
+import _root_.services.TellerRuntimeEnvironment
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import models.UserRole.DynamicRole
 import models.service.Services
 import models.{ActiveUser, UserAccount, UserRole}
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.mvc._
 import securesocial.controllers.MailTokenBasedOperations
 import securesocial.core._
@@ -40,6 +42,7 @@ import scala.concurrent.Future
  * Integrates SecureSocial authentication with Deadbolt.
  */
 class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+              (val messagesApi: MessagesApi, override implicit val env: TellerRuntimeEnvironment)
   extends MailTokenBasedOperations with Services with AsyncController {
 
   val handler = handlers(HandlerKeys.defaultHandler)

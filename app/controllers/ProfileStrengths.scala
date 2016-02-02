@@ -35,9 +35,9 @@ import scala.concurrent.Future
 import services.TellerRuntimeEnvironment
 
 class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                  val messagesApi: MessagesApi,
+                                  override val messagesApi: MessagesApi,
                                   deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-    extends Security(deadbolt, handlers, actionBuilder)
+    extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
     with Services {
 
   /**
