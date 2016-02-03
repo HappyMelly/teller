@@ -2,11 +2,11 @@ package controllers
 
 import javax.inject.Inject
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
-import models.service.Services
 import play.api.i18n.MessagesApi
+import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
 
 /**
@@ -55,11 +55,14 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
  *
     * @param hashedId Hashed unique id
     */
-  def unsubscribe(hashedId: String) = Action { implicit request ⇒
-    eventRequestService.find(hashedId) map { eventRequest =>
-      eventRequestService.update(eventRequest.copy(unsubscribed = true))
-      Ok(views.html.v2.eventRequest.unsubscribed())
-    } getOrElse NotFound(views.html.v2.eventRequest.notfound())
+  def unsubscribe(hashedId: String) = Action.async { implicit request ⇒
+    eventRequestService.find(hashedId) flatMap {
+      case None => notFound(views.html.v2.eventRequest.notfound())
+      case Some(eventRequest) =>
+        eventRequestService.update(eventRequest.copy(unsubscribed = true)) flatMap { _ =>
+          ok(views.html.v2.eventRequest.unsubscribed())
+        }
+    }
   }
 
 

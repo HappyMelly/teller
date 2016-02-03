@@ -91,32 +91,33 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = AsyncSecuredRestrictedAction(Admin, Role.Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    val relationshipForm = Form(tuple("page" -> text,
-      "personId" -> longNumber,
-      "organisationId" -> longNumber))
+  def addRelationship() = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val relationshipForm = Form(tuple("page" -> text,
+        "personId" -> longNumber,
+        "organisationId" -> longNumber))
 
-    relationshipForm.bindFromRequest.fold(
-      errors ⇒ badRequest("organisationId missing"),
-      { case (page, personId, organisationId) ⇒
-        (for {
-          p <- personService.find(personId)
-          o <- orgService.find(organisationId)
-        } yield (p, o)) flatMap {
-          case (None, _) => notFound("Person not found")
-          case (_, None) => notFound("Organisation not found")
-          case (Some(person), Some(organisation)) =>
-            person.addRelation(organisationId)
+      relationshipForm.bindFromRequest.fold(
+        errors ⇒ badRequest("organisationId missing"),
+        { case (page, personId, organisationId) ⇒
+          (for {
+            p <- personService.find(personId)
+            o <- orgService.find(organisationId)
+          } yield (p, o)) flatMap {
+            case (None, _) => notFound("Person not found")
+            case (_, None) => notFound("Organisation not found")
+            case (Some(person), Some(organisation)) =>
+              person.addRelation(organisationId)
 
-            val log = activity(person, user.person, Some(organisation)).connected.insert()
-            // Redirect to the page we came from - either the person or organisation details page.
-            val action: String = if (page == "person")
-              routes.People.details(personId).url
-            else
-              routes.Organisations.details(organisationId).url
-            redirect(action, "success" -> log.toString)
-        }
-      })
+              val log = activity(person, user.person, Some(organisation)).connected.insert()
+              // Redirect to the page we came from - either the person or organisation details page.
+              val action: String = if (page == "person")
+                routes.People.details(personId).url
+              else
+                routes.Organisations.details(organisationId).url
+              redirect(action, "success" -> log.toString)
+          }
+        })
   }
 
   /**
@@ -186,30 +187,34 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      personService.find(id) map { person ⇒
-        val facilitators = facilitatorService.findByPerson(id)
+  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      p <- personService.find(id)
+      f <- facilitatorService.findByPerson(id)
+      m <- personService.memberships(id)
+      o <- orgService.findActive
+    } yield (p, f, m, o)) flatMap {
+      case (None, _, _, _) => redirect(indexCall, "error" -> "Person not found")
+      case (Some(person), facilitators, memberships, orgs) =>
         val facilitator = facilitators.nonEmpty
-        val memberships = person.organisations
+        val otherOrganisations = orgs.filterNot(organisation ⇒ memberships.contains(organisation))
         val badgesInfo = if (facilitator) {
-          val badges = brandBadgeService.find(facilitators.flatMap(_.badges))
-          val brands = brandService.find(badges.map(_.brandId).distinct)
-          badges.map { badge =>
-            (badge, brands.find(_.brand.identifier == badge.brandId).map(_.brand.name).getOrElse(""))
+          val query = for {
+            badges <- brandBadgeService.find(facilitators.flatMap(_.badges))
+            brands <- brandService.find(badges.map(_.brandId).distinct)
+          } yield (badges, brands)
+          query map { case (badges, brands) =>
+            badges.map { badge =>
+              (badge, brands.find(_.brand.identifier == badge.brandId).map(_.brand.name).getOrElse(""))
+            }
           }
         } else {
-          List()
+          Future.successful(List())
         }
-
-        val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
-          memberships.contains(organisation))
-        Ok(views.html.v2.person.details(user, person,
-          memberships, otherOrganisations, facilitator, badgesInfo))
-      } getOrElse {
-        Redirect(routes.People.index()).flashing(
-          "error" -> Messages("error.notFound", Messages("models.Person")))
-      }
+        badgesInfo flatMap { info =>
+          ok(views.html.v2.person.details(user, person, memberships, otherOrganisations, facilitator, info))
+        }
+    }
   }
 
   /**

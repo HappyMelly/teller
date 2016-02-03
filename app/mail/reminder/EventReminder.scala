@@ -25,7 +25,7 @@ object EventReminder extends Services with Integrations {
         events.foreach { event ⇒
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
-          val body = mail.templates.html.confirm(event, brand, url).toString()
+          val body = mail.templates.event.html.confirm(event, brand, url).toString()
           email.send(
             event.facilitators.toSet,
             None,
@@ -46,23 +46,26 @@ object EventReminder extends Services with Integrations {
   /**
     * Sends email notifications about upcoming events to the users who left
     */
-  def sendUpcomingEventsNotification() = eventRequestService.findWithOneParticipant.groupBy(_.brandId).foreach {
-    case (brandId, requests) =>
+  def sendUpcomingEventsNotification() = eventRequestService.findWithOneParticipant map { results =>
+    results.groupBy(_.brandId).foreach { case (brandId, requests) =>
       val endOfPeriod = LocalDate.now().plusMonths(3)
-      brandService.find(brandId).foreach { brand =>
-        val events = eventService.findByParameters(Some(brandId), public = Some(true), future = Some(true),
-          archived = Some(false)).filter(_.schedule.start.isBefore(endOfPeriod))
-
-        requests.filter(request => valid(request)).foreach { request =>
-          val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
-          if (suitableEvents.nonEmpty) {
-            val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
-            val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)
-            val subject = s"Upcoming ${brand.name} events"
-            email.send(Set(request), None, None, subject, body.toString(), from = brand.name, richMessage = true)
+      brandService.get(brandId).foreach { brand =>
+        val futureEvents = eventService.findByParameters(Some(brandId), public = Some(true), future = Some(true),
+          archived = Some(false))
+        futureEvents map { unfilteredEvents =>
+          val events = unfilteredEvents.filter(_.schedule.start.isBefore(endOfPeriod))
+          requests.filter(request => valid(request)).foreach { request =>
+            val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
+            if (suitableEvents.nonEmpty) {
+              val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
+              val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)
+              val subject = s"Upcoming ${brand.name} events"
+              email.send(Set(request), None, None, subject, body.toString(), from = brand.name, richMessage = true)
+            }
           }
         }
       }
+    }
   }
 
   /**
@@ -79,7 +82,7 @@ object EventReminder extends Services with Integrations {
         }.foreach { event ⇒
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
-          val body = mail.templates.html.confirmUpcoming(event, brand, url).toString()
+          val body = mail.templates.event.html.confirmUpcoming(event, brand, url).toString()
           email.send(
             event.facilitators.toSet,
             None,
@@ -101,6 +104,7 @@ object EventReminder extends Services with Integrations {
 
   /**
     * Returns true if the given request is time valid
+    *
     * @param request Event request
     */
   protected def valid(request: EventRequest): Boolean = {

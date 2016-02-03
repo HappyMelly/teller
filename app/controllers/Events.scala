@@ -617,7 +617,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
       val subject = s"${activity.description} event"
       email.send(recipients.toSet, None, None, subject,
-        mail.templates.html.event(event, eventType.name, x.brand, changes).toString, richMessage = true)
+        mail.templates.event.html.details(event, eventType.name, x.brand, changes).toString, richMessage = true)
     }
   }
 

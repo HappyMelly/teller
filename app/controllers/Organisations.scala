@@ -74,8 +74,9 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * Create page.
    */
-  def add = AsyncSecuredRestrictedAction(Role.Admin, Role.Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
+  def add = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒ implicit handler ⇒
+    implicit user ⇒
+      ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
   }
 
   /**
@@ -116,15 +117,16 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * Create form submits to this action.
    */
-  def create = AsyncSecuredRestrictedAction(Role.Admin, Role.Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    Organisations.organisationForm.bindFromRequest.fold(
-      formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
-      view ⇒ {
-        orgService.insert(view) flatMap { orgView =>
-          val activity = Activity.insert(user.name, Activity.Predicate.Created, orgView.org.name)
-          redirect(routes.Organisations.index(), "success" -> activity.toString)
-        }
-      })
+  def create = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒ implicit handler ⇒
+    implicit user ⇒
+      Organisations.organisationForm.bindFromRequest.fold(
+        formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
+        view ⇒ {
+          orgService.insert(view) flatMap { orgView =>
+            val activity = Activity.insert(user.name, Activity.Predicate.Created, orgView.org.name)
+            redirect(routes.Organisations.index(), "success" -> activity.toString)
+          }
+        })
   }
 
   /**
@@ -147,7 +149,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def delete(id: Long) = AsyncSecuredRestrictedAction(Role.Admin, Role.Coordinator) { implicit request ⇒
+  def delete(id: Long) = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       orgService.find(id) flatMap {
         case None => notFound("Organisation not found")
@@ -214,10 +216,11 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * List page.
    */
-  def index = AsyncSecuredRestrictedAction(Role.Admin, Role.Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    orgService.findAll flatMap { organisations =>
-      ok(views.html.v2.organisation.index(user, organisations))
-    }
+  def index = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      orgService.findAll flatMap { organisations =>
+        ok(views.html.v2.organisation.index(user, organisations))
+      }
   }
 
   /**

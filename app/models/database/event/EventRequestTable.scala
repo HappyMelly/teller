@@ -27,23 +27,25 @@ private[models] trait EventRequestTable {
     def comment = column[Option[String]]("COMMENT")
     def name = column[String]("NAME")
     def email = column[String]("EMAIL")
+    def hashedId = column[String]("HASHED_ID")
+    def unsubscribed = column[Boolean]("UNSUBSCRIBED")
     def created = column[DateTime]("CREATED")
     def createdBy = column[String]("CREATED_BY")
     def updated = column[DateTime]("UPDATED")
     def updatedBy = column[String]("UPDATED_BY")
 
     type EventRequestFields = (Option[Long], Long, String, Option[String], String,
-      Option[LocalDate], Option[LocalDate], Int, Option[String], String, String,
+      Option[LocalDate], Option[LocalDate], Int, Option[String], String, String, String, Boolean,
       DateTime, String, DateTime, String)
 
     def * = (id.?, brandId, countryCode, city, language, start, end,
-      participantsNumber, comment, name, email, created, createdBy, updated,
+      participantsNumber, comment, name, email, hashedId, unsubscribed, created, createdBy, updated,
       updatedBy) <>((e: EventRequestFields) => EventRequest(e._1, e._2, e._3,
-      e._4, e._5, e._6, e._7, e._8, e._9, e._10, e._11,
-      DateStamp(e._12, e._13, e._14, e._15)),
+      e._4, e._5, e._6, e._7, e._8, e._9, e._10, e._11, e._12, e._13,
+      DateStamp(e._14, e._15, e._16, e._17)),
       (e: EventRequest) => Some((e.id, e.brandId, e.countryCode, e.city,
         e.language, e.start, e.end, e.participantsNumber, e.comment, e.name,
-        e.email, e.recordInfo.created, e.recordInfo.createdBy,
+        e.email, e.hashedId, e.unsubscribed, e.recordInfo.created, e.recordInfo.createdBy,
         e.recordInfo.updated, e.recordInfo.updatedBy)))
 
   }

@@ -224,7 +224,7 @@ case class  Evaluation(
         val subject = s"New evaluation (General impression: $impression)"
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
         email.send(event.facilitators.toSet, Some(cc.toSet), None, subject,
-          mail.templates.html.evaluation(this, attendee).toString(), richMessage = true)
+          mail.templates.evaluation.html.details(this, attendee, brand).toString(), richMessage = true)
 
         this
     }

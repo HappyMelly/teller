@@ -2,7 +2,7 @@
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
     badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 

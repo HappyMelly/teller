@@ -39,6 +39,8 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import services.TellerRuntimeEnvironment
 
+import scala.concurrent.Future
+
 /**
  * Facilitators pages
  */
@@ -133,10 +135,15 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     */
   def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
-      facilitatorService.find(brandId, personId) map { facilitator =>
-        val badges = brandBadgeService.findByBrand(brandId).filter(badge => facilitator.badges.contains(badge.id.get))
-        Future.successful(Ok(views.html.v2.facilitator.badges(badges)))
-      } getOrElse Future.successful(NotFound("Facilitator not found"))
+      (for {
+        f <- facilitatorService.find(brandId, personId)
+        b <- brandBadgeService.findByBrand(brandId)
+      } yield (f, b)) flatMap {
+        case (None, _) => notFound("Facilitator not found")
+        case (Some(facilitator), badges) =>
+          val filteredBadges = badges.filter(badge => facilitator.badges.contains(badge.id.get))
+          ok(views.html.v2.facilitator.badges(filteredBadges))
+      }
   }
 
   /**
@@ -251,13 +258,20 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     implicit handler => implicit user =>
       val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
       form.bindFromRequest.fold(
-        errors => Future.successful(jsonBadRequest("'badges' field doesn't exist")),
+        errors => jsonBadRequest("'badges' field doesn't exist"),
         badges =>
-          facilitatorService.find(brandId, personId) map { facilitator =>
-            val brandBadges = brandBadgeService.findByBrand(brandId).map(_.id.get)
-            facilitatorService.update(facilitator.copy(badges = badges.filter(x => brandBadges.contains(x))))
-            Future.successful(jsonSuccess("Badges were updated"))
-          } getOrElse Future.successful(jsonNotFound("Facilitator not found"))
+          (for {
+            f <- facilitatorService.find(brandId, personId)
+            b <- brandBadgeService.findByBrand(brandId)
+          } yield (f, b.map(_.id.get))) flatMap {
+            case (None, _) => jsonNotFound("Facilitator not found")
+            case (Some(facilitator), brandBadges) =>
+              val valueToUpdate = facilitator.copy(badges = badges.filter(x => brandBadges.contains(x)))
+              facilitatorService.update(valueToUpdate) flatMap { _ =>
+                jsonSuccess("Badges were updated")
+              }
+
+          }
       )
   }
 

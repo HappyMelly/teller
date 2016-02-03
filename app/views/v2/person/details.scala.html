@@ -5,7 +5,7 @@
     showFacilitationTab: Boolean,
     badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
         flash: Flash,
-        handler: AuthorisationHandler,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 
