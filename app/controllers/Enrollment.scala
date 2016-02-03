@@ -71,8 +71,10 @@ trait Enrollment extends AsyncController
    * @return Returns true if the person is successfully subscribed
    */
   protected def subscribe(person: Person, member: Member): Unit = {
-    val listIds = Play.configuration.getString("mailchimp.listIds").getOrElse("")
-    listIds.split(",").toList.foreach( id => mailChimp.subscribe(id.replace("\"", ""), person, member.funder))
+    val membershipListId = Play.configuration.getString("mailchimp.membershipListId").getOrElse("")
+    mailChimp.subscribeToMembershipList(membershipListId, person, member.funder)
+    val newsletterListId = Play.configuration.getString("mailchimp.newsletterListId").getOrElse("")
+    mailChimp.subscribeToNewsletterList(newsletterListId, person)
   }
 
   /**

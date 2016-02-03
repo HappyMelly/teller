@@ -27,7 +27,7 @@ package controllers
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import models.UserRole.DynamicRole
+import models.UserRole.{Role, DynamicRole}
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
@@ -91,7 +91,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addRelationship() = AsyncSecuredRestrictedAction(Admin, Role.Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val relationshipForm = Form(tuple("page" -> text,
       "personId" -> longNumber,
       "organisationId" -> longNumber))
@@ -186,19 +186,30 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    (for {
-      p <- personService.find(id)
-      l <- licenseService.licensees(id)
-      m <- personService.memberships(id)
-      o <- orgService.findActive
-    } yield (p, l, m, o)) flatMap {
-      case (None, _, _, _) => redirect(indexCall, "error" -> "Person not found")
-      case (Some(person), licenses, memberships, orgs) =>
-        val facilitator = licenses.nonEmpty
-        val otherOrganisations = orgs.filterNot(organisation ⇒ memberships.contains(organisation))
-        ok(views.html.v2.person.details(user, person, memberships, otherOrganisations, facilitator))
-    }
+  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      personService.find(id) map { person ⇒
+        val facilitators = facilitatorService.findByPerson(id)
+        val facilitator = facilitators.nonEmpty
+        val memberships = person.organisations
+        val badgesInfo = if (facilitator) {
+          val badges = brandBadgeService.find(facilitators.flatMap(_.badges))
+          val brands = brandService.find(badges.map(_.brandId).distinct)
+          badges.map { badge =>
+            (badge, brands.find(_.brand.identifier == badge.brandId).map(_.brand.name).getOrElse(""))
+          }
+        } else {
+          List()
+        }
+
+        val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
+          memberships.contains(organisation))
+        Ok(views.html.v2.person.details(user, person,
+          memberships, otherOrganisations, facilitator, badgesInfo))
+      } getOrElse {
+        Redirect(routes.People.index()).flashing(
+          "error" -> Messages("error.notFound", Messages("models.Person")))
+      }
   }
 
   /**

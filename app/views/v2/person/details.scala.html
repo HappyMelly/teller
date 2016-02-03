@@ -2,9 +2,10 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-    showFacilitationTab: Boolean)(implicit request: Request[Any],
+    showFacilitationTab: Boolean,
+    badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
         flash: Flash,
-        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        handler: AuthorisationHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 
@@ -96,7 +97,7 @@
             This person is <strong>deactivated</strong></div>
         }
         <div class="tab-pane active" id="personal-details">
-          @views.html.v2.person.tabs.details(person, organisations, otherOrganisations)
+          @views.html.v2.person.tabs.details(person, organisations, otherOrganisations, badges)
         </div>
         <div class="tab-pane" id="contributions"></div>
         @if(showFacilitationTab) {

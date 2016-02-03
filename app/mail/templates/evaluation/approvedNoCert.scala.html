@@ -1,25 +1,19 @@
 @(brand: Brand, attendee: models.event.Attendee, facilitator: Person)
 
-@mail.templates.html.tmpl {
-  <tr>
-    <td valign="top" style="background-color: rgb(72, 177, 112); color: #ffffff;">
-      <h3 style="font-size: 20px; font-weight: normal">Evaluation Approved</h3>
-    </td>
-  </tr>
-  <tr>
-    <td valign="top">
-      <h3>Hi @attendee.fullName, </h3>
-      <table cellpadding="0" cellspacing="0" border="0" style="font-size: 12px ; line-height: 16px ; width: 100%">
-        <tbody>
-          <tr>
-            <td>
-              <p>Thanks for attending a @brand.name event. Your evaluation was approved by <strong>@{facilitator.fullName}(<a href="mailto:@facilitator.email" target="_blank">@facilitator.email</a>)</strong>.</p>
-              <p>Thanks for attending! </p>
-              <p style="font-weight: bold">The @brand.name team</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </td>
-  </tr>
+@mail.templates.html.tmpl(s"Your ${brand.name} evaluation was approved", controllers.Brands.pictureUrl(brand)) {
+
+    @mail.templates.html.title(s"Hi ${attendee.fullName},")
+    @mail.templates.html.paragraph {
+        Thanks for attending a @brand.name event. Your evaluation was approved by <strong>@{facilitator.fullName}
+            (<a href="mailto:@facilitator.email" target="_blank">@facilitator.email</a>)</strong>.
+    }
+    @mail.templates.html.paragraph {
+        Thanks for attending!
+    }
+    @mail.templates.html.paragraph {
+        The @brand.name team
+    }
+    @brand.webSite.map { url =>
+        @mail.templates.html.link(url)
+    }
 }

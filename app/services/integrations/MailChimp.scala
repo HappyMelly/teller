@@ -29,12 +29,34 @@ import play.api.Play.current
 import play.api.libs.json.Json
 import play.api.libs.ws.WS
 import play.Logger
+import views.Countries
 import scala.util.Try
 
 /**
  * MailChimp integration
  */
 class MailChimp(apiUrl: String, apiToken: String) {
+
+  /**
+    * Subscribes the given person to the given list and assigns the person
+    *  to "Funders" or "Supporters" group
+    * @param listId Mailchimp list id
+    * @param person Person
+    * @return Returns true if the person was successfully subscribed
+    */
+  def subscribeToNewsletterList(listId: String, person: Person): Boolean = {
+    val url = apiUrl + "lists/subscribe.json"
+    val request = Json.obj("apikey" -> apiToken,
+      "id" -> listId,
+      "email" -> Json.obj("email" -> person.email),
+      "merge_vars" -> Json.obj("FNAME" -> person.firstName,
+        "LNAME" -> person.lastName,
+        "MMERGE3" -> Countries.name(person.address.countryCode)),
+      "double_optin" -> false,
+      "update_existing" -> true,
+      "replace_interests" -> false).toString()
+    Try(WS.url(url).post(request)).isSuccess
+  }
 
   /**
    * Subscribes the given person to the given list and assigns the person
@@ -44,7 +66,7 @@ class MailChimp(apiUrl: String, apiToken: String) {
    * @param funder if true, the person is added to "Funder" group; otherwise, to "Supporters"
    * @return Returns true if the person was successfully subscribed
    */
-  def subscribe(listId: String, person: Person, funder: Boolean): Boolean = {
+  def subscribeToMembershipList(listId: String, person: Person, funder: Boolean): Boolean = {
     val group = if (funder) "Funder" else "Supporter"
     val url = apiUrl + "lists/subscribe.json"
     val request = Json.obj("apikey" -> apiToken,

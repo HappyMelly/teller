@@ -1,10 +1,13 @@
 package models.event
 
-import models.DateStamp
+import models.{Recipient, DateStamp}
 import org.joda.time.LocalDate
+
+import scala.util.Random
 
 /**
  * Represents request for an event
+ *
  * @param id Request identifier
  * @param brandId Brand this event belongs to
  * @param countryCode Two-letter country code, ex. RU
@@ -16,6 +19,8 @@ import org.joda.time.LocalDate
  * @param comment Comment
  * @param name Name of the person who makes this request
  * @param email Email of the person who makes this request
+ * @param hashedId Unique hashed identifier
+ * @param unsubscribed If true the user doesn't receive upcoming event notifications
  * @param recordInfo Record info
  */
 case class EventRequest(id: Option[Long],
@@ -29,7 +34,11 @@ case class EventRequest(id: Option[Long],
   comment: Option[String],
   name: String,
   email: String,
-  recordInfo: DateStamp) {
+  hashedId: String = Random.alphanumeric.take(64).mkString,
+  unsubscribed: Boolean = false,
+  recordInfo: DateStamp) extends Recipient {
+
+  def fullName: String = name
 
   def participants: String = participantsNumber match {
     case 1 => "1"

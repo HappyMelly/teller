@@ -74,7 +74,7 @@ class FakeMailChimp(apiUrl: String, apiToken: String)
   var personName: String = ""
   var funder: Boolean = false
 
-  override def subscribe(listId: String, person: Person, funder: Boolean): Boolean = {
+  override def subscribeToMembershipList(listId: String, person: Person, funder: Boolean): Boolean = {
     this.listId = listId
     this.personName = person.fullName
     this.funder = funder

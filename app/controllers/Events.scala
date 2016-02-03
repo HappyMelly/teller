@@ -243,7 +243,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event ID
    */
-  def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator), id) { implicit request ⇒
+  def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       eventService.confirm(id) flatMap { _ =>
         val log = activity(event, user.person).confirmed.insert()

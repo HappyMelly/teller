@@ -1,5 +1,7 @@
 package models.service.event
 
+import org.joda.time.LocalDate
+
 import models.database.event.EventRequestTable
 import models.event.EventRequest
 import play.api.Play
@@ -20,11 +22,29 @@ class EventRequestService extends HasDatabaseConfig[JdbcProfile]
   private val requests = TableQuery[EventRequests]
 
   /**
+    * Deletes event requests which end date is less than the given date
+    * @param expiration Expiration date
+    */
+  def deleteExpired(expiration: LocalDate) = DB.withSession { implicit session =>
+    requests.filter(_.end <= expiration).mutate(_.delete())
+  }
+
+  /**
     * Returns event request if exists
+    *
     * @param requestId Request id
     */
   def find(requestId: Long): Future[Option[EventRequest]] =
     db.run(requests.filter(_.id === requestId).result).map(_.headOption)
+
+  /**
+    * Returns event request if exists
+    *
+    * @param hashedId Request id
+    */
+  def find(hashedId: String): Option[EventRequest] = DB.withSession { implicit session =>
+    requests.filter(_.hashedId === hashedId).firstOption
+  }
 
   /**
    * Returns list of event requests belonged the given brand
@@ -33,6 +53,13 @@ class EventRequestService extends HasDatabaseConfig[JdbcProfile]
    */
   def findByBrand(brandId: Long): Future[List[EventRequest]] =
     db.run(requests.filter(_.brandId === brandId).result).map(_.toList)
+
+  /**
+    * Returns all event requests with one participant valid for upcoming event notifications
+    */
+  def findWithOneParticipant: List[EventRequest] = DB.withSession { implicit session =>
+    requests.filter(_.participantsNumber === 1).filter(_.unsubscribed === false).list
+  }
 
   /**
    * Inserts event request into database
@@ -45,6 +72,15 @@ class EventRequestService extends HasDatabaseConfig[JdbcProfile]
     db.run(query += request)
   }
 
+  /**
+    * Update the given event request in dabase
+    *
+    * @param request Event request
+    */
+  def update(request: EventRequest): EventRequest = DB.withSession { implicit session =>
+    requests.filter(_.id === request.id).update(request)
+    request
+  }
 }
 
 object EventRequestService {

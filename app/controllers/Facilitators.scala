@@ -67,33 +67,6 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   }
 
   /**
-    * Adds new badge to the given facilitator
-    *
-    * @param personId Facilitator identifier
-    * @param brandId Brand identifier
-    * @param badgeId Badge identifier
-    */
-  def addBadge(personId: Long, brandId: Long, badgeId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
-    implicit handler => implicit user =>
-      brandBadgeService.find(badgeId) flatMap {
-        case None => jsonNotFound("Badge not found")
-        case Some(badge) =>
-          if (badge.brandId == brandId) {
-            facilitatorService.find(brandId, personId) flatMap {
-              case None => jsonBadRequest("Impossible to add badge to a person without license")
-              case Some(facilitator) =>
-                if (!facilitator.badges.contains(badgeId)) {
-                  facilitatorService.update(facilitator.copy(badges = facilitator.badges :+ badgeId))
-                }
-                jsonSuccess("Badge was added")
-            }
-          } else {
-            jsonNotFound("Badge not found")
-          }
-      }
-    }
-
-  /**
     * Add a new country to a facilitator
     *
     * @param id Person identifier
@@ -154,30 +127,16 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   }
 
   /**
-    * Deletes badge from the given facilitator
-    *
+    * Retrieves badges for the given facilitator
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
-    * @param badgeId Badge identifier
     */
-  def deleteBadge(personId: Long, brandId: Long, badgeId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+  def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
-      (for {
-        badge <- brandBadgeService.find(badgeId)
-        facilitator <- facilitatorService.find(brandId, personId)
-      } yield (badge, facilitator)) flatMap {
-        case (None, _) => jsonNotFound("Badge not found")
-        case (_, None) => jsonBadRequest("Impossible to remove badge to a person without license")
-        case (Some(badge), Some(facilitator)) =>
-          if (badge.brandId == brandId) {
-            if (facilitator.badges.contains(badgeId)) {
-              facilitatorService.update(facilitator.copy(badges = facilitator.badges.filterNot(_ == badgeId)))
-            }
-            jsonSuccess("Badge was removed")
-          } else {
-            jsonNotFound("Badge not found")
-          }
-      }
+      facilitatorService.find(brandId, personId) map { facilitator =>
+        val badges = brandBadgeService.findByBrand(brandId).filter(badge => facilitator.badges.contains(badge.id.get))
+        Future.successful(Ok(views.html.v2.facilitator.badges(badges)))
+      } getOrElse Future.successful(NotFound("Facilitator not found"))
   }
 
   /**
@@ -231,7 +190,8 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
         licenses <- licenseService.findByBrand(brandId)
         facilitators <- facilitatorService.findByBrand(brandId)
         people <- personService.find(licenses.map(_.licenseeId))
-      } yield (licenses, facilitators, people)) flatMap { case (licenses, facilitatorData, people) =>
+        badges <- brandBadgeService.findByBrand(brandId)
+      } yield (licenses, facilitators, people, badges)) flatMap { case (licenses, facilitatorData, people, badges) =>
         personService.collection.addresses(people)
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           val facilitators = licenses.map { license =>
@@ -242,7 +202,8 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
             val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
               Facilitator(None, license.licenseeId, brandId)
             }
-            (license, person, data, joinedLastMonth, leftLastMonth)
+            val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
+            (license, person, data, joinedLastMonth, leftLastMonth, facilitatorBadges)
           }
           ok(views.html.v2.facilitator.forBrandCoordinators(user, view.brand, brands, facilitators))
         } { (view, brands) =>
@@ -253,7 +214,8 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
             val data = facilitatorData.find(_.personId == license.licenseeId).getOrElse {
               Facilitator(None, license.licenseeId, brandId)
             }
-            (license, person, data, sameCountry, isNew)
+            val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
+            (license, person, data, sameCountry, isNew, facilitatorBadges)
           }
           ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
         } {
@@ -278,6 +240,25 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
         }
         ok(Json.toJson(facilitators.sortBy(_.fullName.toLowerCase)(ord)))
       }
+  }
+
+  /**
+    * Updates badges for the given facilitator
+    * @param personId Facilitator identifier
+    * @param brandId Brand identifier
+    */
+  def updateBadges(personId: Long, brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+    implicit handler => implicit user =>
+      val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
+      form.bindFromRequest.fold(
+        errors => Future.successful(jsonBadRequest("'badges' field doesn't exist")),
+        badges =>
+          facilitatorService.find(brandId, personId) map { facilitator =>
+            val brandBadges = brandBadgeService.findByBrand(brandId).map(_.id.get)
+            facilitatorService.update(facilitator.copy(badges = badges.filter(x => brandBadges.contains(x))))
+            Future.successful(jsonSuccess("Badges were updated"))
+          } getOrElse Future.successful(jsonNotFound("Facilitator not found"))
+      )
   }
 
   protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {

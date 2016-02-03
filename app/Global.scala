@@ -24,6 +24,7 @@
 
 import java.util.concurrent.TimeUnit
 
+import _root_.services.cleaners.ExpiredEventRequestCleaner
 import mail.reminder._
 import models.Facilitator
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
@@ -46,7 +47,8 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
 
   /**
    * Force using HTTPS on production
-   * @param request Request object
+    *
+    * @param request Request object
    * @return
    */
   override def onRouteRequest(request: RequestHeader): Option[Handler] = {
@@ -86,6 +88,7 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
     // sending notifications through  a separate process
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
+      scheduleMonthlyAlerts
     }
   }
 
@@ -103,11 +106,28 @@ object Global extends WithFilters(CSRFFilter()) with GlobalSettings {
         EventReminder.sendPostFactumConfirmation()
         EvaluationReminder.sendToAttendees()
         Facilitator.updateFacilitatorExperience()
-        if (now.getDayOfMonth == 1) {
-          ProfileStrengthReminder.sendToFacilitators()
-          ExperimentReminder.sendStatus()
-          BrandReminder.sendLicenseExpirationReminder()
-        }
+        ExpiredEventRequestCleaner.clean()
       }
   }
+
+  /**
+    * Sends event confirmation alert on the first day of each month
+    */
+  private def scheduleMonthlyAlerts = {
+    val now = LocalDateTime.now()
+    val targetDate = LocalDate.now.plusDays(1)
+    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
+    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
+    Akka.system.scheduler.schedule(
+      Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
+      Duration.create(24, TimeUnit.HOURS)) {
+      if (now.getDayOfMonth == 1) {
+        ProfileStrengthReminder.sendToFacilitators()
+        ExperimentReminder.sendStatus()
+        BrandReminder.sendLicenseExpirationReminder()
+        EventReminder.sendUpcomingEventsNotification()
+      }
+    }
+  }
+
 }

@@ -1,7 +1,8 @@
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
-    facilitators: List[(License, Person, Facilitator, Boolean, Boolean)])(implicit request: Request[Any],
+    facilitators: List[(License, Person, Facilitator, Boolean, Boolean, List[models.brand.Badge])])(implicit
+        request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
@@ -16,66 +17,106 @@
             <div class="row">
                 <div class="col-md-12 content-block">
                     <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
-                    <div id="filter-containter">
-                        <div class="table-filters">
+
+                    <div class="b-datatable js-brandcoordinator-table">
+                        <div class="table-filters" >
                             <span>Filter by License: </span>
                             <div class="filter">
-                                <a href="#" data-type="all">All</a>&nbsp;<span class="counter">@facilitators.length</span>
+                                <a class="js-filter-link" href="#" data-type="all">
+                                    All
+                                </a>&nbsp;
+                                <span class="counter">@facilitators.length</span>
                             </div>
                             <div class="filter">
-                                <a href="#" class="active" data-type="active">Active</a>&nbsp;<span class="counter">@facilitators.count(_._1.active)</span>
+                                <a href="#" class="active js-filter-link" data-type="active">
+                                    Active
+                                </a>&nbsp;
+                                <span class="counter">@facilitators.count(_._1.active)</span>
                             </div>
                             <div class="filter">
-                                <a href="#" data-type="joined">Joined last month</a>&nbsp;<span class="counter">@facilitators.count(_._4)</span>
+                                <a class="js-filter-link" href="#" data-type="joined">
+                                    Joined last month
+                                </a>&nbsp;
+                                <span class="counter">@facilitators.count(_._4)</span>
                             </div>
                             <div class="filter">
-                                <a href="#" data-type="left">Left last month</a>&nbsp;<span class="counter">@facilitators.count(_._5)</span>
+                                <a class="js-filter-link" href="#" data-type="left">
+                                    Left last month
+                                </a>&nbsp;
+                                <span class="counter">@facilitators.count(_._5)</span>
                             </div>
                             <div class="filter">
-                                <a href="#" data-type="expiring">Expiring</a>&nbsp;<span class="counter">@facilitators.count(_._1.expiring)</span>
+                                <a class="js-filter-link" href="#" data-type="expiring">
+                                    Expiring
+                                </a>&nbsp;
+                                <span class="counter">@facilitators.count(_._1.expiring)</span>
                             </div>
                         </div>
+                        <table id="facilitators" class="table js-table-list">
+                            <thead>
+                                <tr>
+                                    <th width="20%">Facilitator</th>
+                                    <th width="20%">Country</th>
+                                    <th width="15%" class="number">Public events</th>
+                                    <th width="15%" class="number">Private events</th>
+                                    <th width="15%" class="date">Joined on</th>
+                                    <th width="15%" class="date">License expire on</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @for((license, person, data, joined, left, badges) <- facilitators) {
+                                <tr @if(license.expired) { class="inactive" } data-id="@person.identifier"
+                                    data-brand="@brand.identifier">
+                                    <td>
+                                        <div class="js-row-badgeslist h-d-inline">
+                                            @v2.facilitator.badges(badges)
+                                        </div>
+                                        <a href="@routes.People.details(person.identifier)">@person.fullName</a>
+                                    </td>
+                                    <td>@Countries.name(person.address.countryCode)</td>
+                                    <td>@data.publicRating</td>
+                                    <td>@data.privateRating</td>
+                                    <td>@dateInterval(license.start, license.start)</td>
+                                    <td @if(license.expiring) { class="h-pink" } >@dateInterval(license.end, license.end)</td>
+                                    <td>@license.active</td>
+                                    <td>@joined</td>
+                                    <td>@left</td>
+                                    <td>@license.expiring</td>
+                                    <td>
+
+                                        @if(!license.expired) {
+                                        <a href="javascript:void(0)"
+                                            class="link-blue h-nowrap js-row-badges">
+                                            Assign badges
+                                        </a>
+                                        }
+
+                                        <div class="modal fade js-row-modal" tabindex="-1" role="dialog" aria-hidden="true">
+                                        @v2.html.dialog("modalBadges",
+                                            "Select badges you want to assign to",
+                                            action = None,
+                                            actionId = None) {
+
+                                            <div class="b-badge-popup js-modalbadge-content"></div>
+                                        }
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            }
+                            </tbody>
+                        </table>
                     </div>
-                    <table id="facilitators" class="datatables table">
-                        <thead>
-                            <tr>
-                                <th width="20%">Facilitator</th>
-                                <th width="20%">Country</th>
-                                <th width="15%" class="number">Public events</th>
-                                <th width="15%" class="number">Private events</th>
-                                <th width="15%" class="date">Joined on</th>
-                                <th width="15%" class="date">License expire on</th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @for((license, person, data, joined, left) <- facilitators) {
-                            <tr @if(license.expired) { class="inactive" } data-id="@person.identifier"
-                                data-brand="@brand.identifier">
-                                <td><a href="@routes.People.details(person.identifier)">@person.fullName</a></td>
-                                <td>@Countries.name(person.address.countryCode)</td>
-                                <td>@data.publicRating</td>
-                                <td>@data.privateRating</td>
-                                <td>@dateInterval(license.start, license.start)</td>
-                                <td @if(license.expiring) { class="expiring" } >@dateInterval(license.end, license.end)</td>
-                                <td>@license.active</td>
-                                <td>@joined</td>
-                                <td>@left</td>
-                                <td>@license.expiring</td>
-                                <td><div class="circle-show-more">
-                                    <span class="glyphicon glyphicon-chevron-down"></span></div></td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
     </div>
-    <link rel="stylesheet" href="@routes.Assets.at("css/facilitator.min.css")">
+    <script src="@routes.Assets.at("facilitator/tableRowWithSlidingBadges.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("facilitator/tableRowWithBadges.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("facilitator/coordinators.js")" type="text/javascript"></script>
 }

@@ -28,6 +28,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import models.UserRole.DynamicRole
 import models.UserRole.Role._
 import models.service.Services
 import models.{ActivityRecorder, Contribution}
@@ -58,7 +59,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param page Label of a page where the action happened
    * @return
    */
-  def create(page: String) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def create(page: String) = AsyncSecuredDynamicAction(DynamicRole.Funder, 0)  { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
@@ -94,7 +95,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param page Label of a page where the action happened
    * @return
    */
-  def delete(id: Long, page: String) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def delete(id: Long, page: String) = AsyncSecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       contributionService.find(id) flatMap {
         case None => notFound("Contribution not found")

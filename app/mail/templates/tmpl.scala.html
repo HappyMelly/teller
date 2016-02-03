@@ -1,35 +1,184 @@
-@(content: Html)
+@(title: String, logo: Option[String])(content: Html)
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type"  content="text/html charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Happy Melly teller</title>
+    <style type="text/css">
+    img {
+        outline: none;
+        text-decoration: none;
+        -ms-interpolation-mode: bicubic;
+    }
+
+    a img {
+        border: none;
+    }
+
+    .image_fix {
+        display: block;
+    }
+
+    table td {
+        border-collapse: collapse;
+    }
+
+    table {
+        border-collapse: collapse;
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+    }
+    </style>
+
+      <!--[if gte mso 9|IE]>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+    </style>
+    <![endif]-->
+
   </head>
-  <body>
-    <table cellpadding="0" cellspacing="0" border="0"
-    style="margin:0px;padding:0px;width:100%!important;line-height:100%!important;font-family: Arial, Helvetica, sans-serif;color: #606060;">
-      <tbody>
-        <tr>
-          <td valign="top">
-            <table cellpadding="15" cellspacing="0" border="0" align="center"
-            style="margin-top:10px;background-color:rgb(255,255,255);border:1px solid rgb(204,204,204);width:550px;font-size: 15px; line-height: 150%;">
-              <tbody>
-                @content
-              </tbody>
-            </table>
-            <table cellpadding="0" cellspacing="0" border="0" align="center"
-            style="margin-top:10px;width:550px">
-              <tbody>
+
+  <body bgcolor="#FFFFFF" style="margin: 0; padding: 0; width: 100% !important; height: 100% !important;">
+    <style type="text/css">
+    .ExternalClass {
+        width: 100%;
+    }
+
+    .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+        line-height: 100%;
+    }
+
+    #backgroundTable {
+        margin: 0;
+        padding: 0;
+        width: 100% !important;
+        line-height: 100% !important;
+    }
+
+    img {
+        outline: none;
+        text-decoration: none;
+        -ms-interpolation-mode: bicubic;
+    }
+
+    @@media only screen and (max-width: 560px) {
+        body {
+            -webkit-text-size-adjust: 100% !important;
+        }
+
+        html {
+            -webkit-text-size-adjust: none; /* Prevent font scaling in landscape */
+        }
+    }
+
+    @@-ms-viewport {
+        width: device-width;
+    }
+    </style>
+
+
+    <div align="center">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr><td align="center" valign="top" >
+            <!--[if (gte mso 9)|(IE)]>
+            <table width="548" border="0" cellspacing="0" cellpadding="0">
+                <tr><td align="center" valign="top"><![endif]-->
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" class="table700" style="min-width: 320px; max-width: 548px;">
+            <tr>
+              <td style="border-collapse: collapse; background: #ffffff;">
+                <div style="height:40px;line-height:40px;font-size:20px;"> &nbsp; </div>
+              </td>
+            </tr>
+            <tr><td style="border-collapse: collapse;border: 1px solid #c5c5c5;">
+              <table border="0" width="100%" cellpadding="0" cellspacing="0" style="border-spacing: 0">
                 <tr>
-                  <td valign="top"
-                  style="text-transform:uppercase;color:rgb(153,153,153);font-size:11px;width:50%"> THIS E-MAIL IS AN AUTOMATIC NOTIFICATION FROM <a href="http://teller.happymelly.com" target="_blank">HAPPY MELLY TELLER</a>
+                  <td style="border-collapse: collapse">
+                      <!-- Head -->
+                    <table border="0" width="100%" cellpadding="0" cellspacing="0" style="border-spacing: 0">
+                      <tr>
+                        <td style="border-collapse: collapse; background: #e7e7e7; padding-left: 13px; padding-right: 13px; ">
+                          <table border="0" width="100%" cellpadding="0" cellspacing="0" style="border-spacing: 0">
+                            <tr>
+                              <td style="border-collapse: collapse; line-height: 15px;">
+                                <div style="height:12px;line-height:12px;font-size:10px;"> &nbsp; </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="border-collapse: collapse; ">
+                                <table border="0" width="100%" cellpadding="0" cellspacing="0" style="border-spacing: 0">
+                                  <tr>
+                                    @logo.map { url =>
+                                        <td style="border-collapse: collapse" valign="middle" height="65">
+                                            <img src="@url" width="65" border="0" height="65" alt="" style="display: block ; border: none ; outline: none ;" />
+                                        </td>
+                                    }
+                                    <td style="border-collapse: collapse; " width="20">
+                                      <div style="height: 5px;font-size: 5px;line-height: 5px;"> &nbsp;</div>
+                                    </td>
+                                    <td style="font-size: 20px;mso-line-height-rule: exactly; line-height: 20px; font-family: HelveticaNeue, Arial, Helvetica, sans-serif;  color: #333333; text-align: left;" valign="middle">
+                                      @title
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="border-collapse: collapse">
+                                <div style="height:15px;line-height:15px;font-size:13px;"> &nbsp; </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                      <!-- end Head -->
                   </td>
                 </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+                <tr>
+                  <td style="border-collapse: collapse;padding-left: 15px; padding-right: 15px; ">
+                      <!-- Content -->
+                    <table border="0" width="100%" cellpadding="0" cellspacing="0" style="border-spacing: 0">
+                      <tr>
+                        <td style="border-collapse: collapse">
+                          <div style="height:27px;line-height:27px;font-size:25px;"> &nbsp; </div>
+                        </td>
+                      </tr>
+                      @content
+                      <tr>
+                        <td style="border-collapse: collapse">
+                          <div style="height:30px;line-height:30px;font-size:30px;"> &nbsp; </div>
+                        </td>
+                      </tr>
+
+
+                    </table>
+                      <!-- end of Content -->
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+            <tr>
+              <td style="border-collapse: collapse">
+                <div style="height:50px;line-height:50px;font-size:50px;"> &nbsp; </div>
+              </td>
+            </tr>
+
+          </table>
+            <!--[if (gte mso 9)|(IE)]></td></tr></table><![endif]-->
+        </td></tr>
+      </table>
+    </div>
+
+
+    <div style="display: none; white-space: nowrap; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; font-size: 15px; line-height: normal; font-family: courier; color: #ffffff;">
+      - - - - - - - - - - - - - - - - - - - - - - - - - -
+    </div>
+
+
 
   </body>
 </html>

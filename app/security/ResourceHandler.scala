@@ -44,6 +44,7 @@ class ResourceHandler(user: ActiveUser) extends DynamicResourceHandler with Serv
     name match {
       case DynamicRole.Coordinator => brandService.isCoordinator(objectId, user.account.personId)
       case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
+      case DynamicRole.Funder => user.account.admin || user.member.exists(_.funder)
       case DynamicRole.ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)
       case DynamicRole.OrgMember => orgMember(objectId, user.account.personId).map(_ || user.account.admin)
       case _ ⇒ Future.successful(false)

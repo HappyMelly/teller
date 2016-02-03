@@ -2,14 +2,14 @@
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     messages: Messages)
-@import models.UserRole.Role._
+
 @import be.objectify.deadbolt.scala.views.html._
-@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.DynamicRole
 
 @main("Products", "products", user) {
 
   @html.indexPageHeader("Products") {
-    @restrict(handler, List(as(Admin.toString))) {
+    @dynamic(handler, DynamicRole.Funder, "0") {
       <a class="btn btn-success pull-right" href="@routes.Products.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Product</a>
     }
@@ -20,7 +20,7 @@
       <p>There are no products</p>
     } else {
       @table(products) { product =>
-        @restrict(handler, List(as(Admin.toString))) {
+        @dynamic(handler, DynamicRole.Funder, "0") {
           <a href="@routes.Products.edit(product.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }

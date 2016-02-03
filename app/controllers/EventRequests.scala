@@ -49,4 +49,18 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
         }
       }
   }
+
+  /**
+    * Unsubscribes from automatic upcoming event notifications
+ *
+    * @param hashedId Hashed unique id
+    */
+  def unsubscribe(hashedId: String) = Action { implicit request ⇒
+    eventRequestService.find(hashedId) map { eventRequest =>
+      eventRequestService.update(eventRequest.copy(unsubscribed = true))
+      Ok(views.html.v2.eventRequest.unsubscribed())
+    } getOrElse NotFound(views.html.v2.eventRequest.notfound())
+  }
+
+
 }

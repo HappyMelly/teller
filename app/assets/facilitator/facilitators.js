@@ -26,7 +26,7 @@
  * Filter facilitators by country
  */
 function filterByRegion(oSettings, aData, iDataIndex) {
-    var type = $('.region > .filter > a.active').data('type');
+    var type = $('.js-filter-region .js-filter-link.active').data('type');
     switch(type) {
         case 'country':
             return aData[6] == 'true';
@@ -39,7 +39,7 @@ function filterByRegion(oSettings, aData, iDataIndex) {
  * Filter facilitators by license
  */
 function filterByLicense(oSettings, aData, iDataIndex) {
-    var type = $('.license > .filter > a.active').data('type');
+    var type = $('.js-filter-license .js-filter-link.active').data('type');
     switch(type) {
         case 'new':
             return aData[7] == 'true';
@@ -50,12 +50,13 @@ function filterByLicense(oSettings, aData, iDataIndex) {
 
 
 $(document).ready( function() {
-    $.fn.dataTable.moment('d MMM yyyy');
-    $.fn.dataTableExt.afnFiltering.push(filterByRegion);
-    $.fn.dataTableExt.afnFiltering.push(filterByLicense);
+    $('#facilitators tr').each(function(index, el){
+        new App.widgets.TableRowWithSlidingBadges($(el));
+    })
 
-    var facilitators = $('#facilitators')
-        .dataTable({
+    new App.widgets.DataTable(
+        '.js-facilitators-table',
+        {
             "sDom": '<"toolbar">rtip',
             "iDisplayLength": 25,
             "asStripeClasses":[],
@@ -65,25 +66,11 @@ $(document).ready( function() {
                 "visible": false,
                 "targets": [6, 7]
             }]
-        });
+        },
+        [filterByRegion, filterByLicense]
+    );
 
-    $("div.toolbar").html($('#filter-containter').html());
-    $('#filter-containter').empty();
-
-    facilitators.fnDraw();
-
-    $('.license > .filter > a').on('click', function(e) {
-        e.preventDefault();
-        $('.license > .filter > a').removeClass('active');
-        $(this).addClass('active');
-        facilitators.fnDraw();
-    });
-    $('.region > .filter > a').on('click', function(e) {
-        e.preventDefault();
-        $('.region > .filter > a').removeClass('active');
-        $(this).addClass('active');
-        facilitators.fnDraw();
-    });
     $('[data-toggle="tooltip"]').tooltip();
+
 
 });

@@ -1,19 +1,14 @@
-@(evaluation: Evaluation, attendee: models.event.Attendee)(implicit messages: Messages)
+@(evaluation: Evaluation, attendee: models.event.Attendee, brand: Brand)(implicit messages: Messages)
 
 @import play.api.Play
 @import play.api.Play.current
 @import views.Evaluations
 
-@mail.templates.html.tmpl {
-  <tr>
-    <td valign="top" style="background-color:rgb(72, 177, 112); color: #ffffff;">
-      <h3 style="font-size:20px;font-weight:normal">New evaluation (General Impression: @Evaluations.impression(evaluation.facilitatorImpression))</h3>
-      <p>Please accept or reject the certificate</p>
-    </td>
-  </tr>
+@mail.templates.html.tmpl("New evaluation (Impression: @Evaluations.impression(evaluation.facilitatorImpression))",
+    controllers.Brands.pictureUrl(brand)) {
   <tr>
     <td valign="top">
-      <h3>Hi everybody</h3>
+      <h3>Hi there</h3>
       <p>Here is an evaluation of one of your events. Please check if all is well, and <a href="@Play.configuration.getString("application.baseUrl")@routes.Evaluations.details(evaluation.id.getOrElse(0)).url" target="_blank">accept or reject</a> this evaluation on our website. When you accept the evaluation, we send the certificate directly to the participant. When you reject it, we ask the participant to contact you to learn the reason.</p>
 
       <p>When the participant is waiting for courseware materials, we expect you to make those available in the format and method you prefer.</p>

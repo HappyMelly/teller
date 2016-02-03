@@ -1,6 +1,7 @@
 package mail.reminder
 
 import models.Activity
+import models.event.EventRequest
 import models.service.Services
 import org.joda.time.{Duration, LocalDate}
 import play.api.Play
@@ -43,6 +44,28 @@ object EventReminder extends Services with Integrations {
   }
 
   /**
+    * Sends email notifications about upcoming events to the users who left
+    */
+  def sendUpcomingEventsNotification() = eventRequestService.findWithOneParticipant.groupBy(_.brandId).foreach {
+    case (brandId, requests) =>
+      val endOfPeriod = LocalDate.now().plusMonths(3)
+      brandService.find(brandId).foreach { brand =>
+        val events = eventService.findByParameters(Some(brandId), public = Some(true), future = Some(true),
+          archived = Some(false)).filter(_.schedule.start.isBefore(endOfPeriod))
+
+        requests.filter(request => valid(request)).foreach { request =>
+          val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
+          if (suitableEvents.nonEmpty) {
+            val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
+            val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)
+            val subject = s"Upcoming ${brand.name} events"
+            email.send(Set(request), None, None, subject, body.toString(), from = brand.name, richMessage = true)
+          }
+        }
+      }
+  }
+
+  /**
    * Sends email notifications to facilitators asking to confirm
    *  upcoming events which are unconfirmed
    */
@@ -73,4 +96,15 @@ object EventReminder extends Services with Integrations {
     }
   }
 
+  protected def fullUrl(url: String) =
+    Play.configuration.getString("application.baseUrl").getOrElse("") + url
+
+  /**
+    * Returns true if the given request is time valid
+    * @param request Event request
+    */
+  protected def valid(request: EventRequest): Boolean = {
+    val now = LocalDate.now()
+    request.start.map(_.isBefore(now)).getOrElse(true) && request.end.map(_.isAfter(now)).getOrElse(true)
+  }
 }

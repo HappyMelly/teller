@@ -9,12 +9,7 @@
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML
 
-@mail.templates.html.tmpl {
-<tr>
-    <td valign="top" style="background-color: rgb(72, 177, 112); color: #ffffff;">
-        <h3 style="font-size: 20px ; font-weight: normal">Event "@event.title"</h3>
-    </td>
-</tr>
+@mail.templates.html.tmpl(s"Event '${event.title}'", controllers.Brands.pictureUrl(brand)) {
 <tr>
     <td valign="top">
         @event.details.description.map { description => @Html(Transform.from(Markdown).to(HTML).fromString(description).toString) }

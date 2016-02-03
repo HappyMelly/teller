@@ -34,7 +34,7 @@ class EventRequestsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthe
     (country, city, language, start, end, participantsNumber, comment, name,
       email) => EventRequest(None, brandId, country, city, language, start,
       end, participantsNumber, comment, name, email,
-      DateStamp(DateTime.now(), appName, DateTime.now(), appName))
+      recordInfo = DateStamp(DateTime.now(), appName, DateTime.now(), appName))
   })({
     (r: EventRequest) => Some((r.countryCode, r.city, r.language, r.start,
       r.end, r.participantsNumber, r.comment, r.name, r.email))

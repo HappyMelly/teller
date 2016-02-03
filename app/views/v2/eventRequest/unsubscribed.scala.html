@@ -1,0 +1,13 @@
+@()(implicit request: Request[Any], flash: Flash)
+
+@layout.unauthorized("W00t!") {
+  <div class="container">
+    <h1>Congratulations</h1>
+
+    <p>You successfully unsubscribed from future notifications about upcoming events in your area.</p>
+
+    <br/><br/>
+    <h3><a href="@routes.LoginPage.login()">Back to login page</a></h3>
+
+  </div>
+}

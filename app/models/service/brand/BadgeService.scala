@@ -55,6 +55,17 @@ class BadgeService extends HasDatabaseConfig[JdbcProfile]
   def find(id: Long): Future[Option[Badge]] = db.run(badges.filter(_.id === id).result).map(_.headOption)
 
   /**
+    * Returns list of badges for the given ids
+    * @param ids List of identifiers
+    */
+  def find(ids: List[Long]): List[Badge] = DB.withSession { implicit session =>
+    if (ids.isEmpty)
+      List()
+    else
+      badges.filter(_.id inSet ids).list
+  }
+
+  /**
    * Returns a list of fees belonged to the given brand
    * @param brandId Brand id
    */
