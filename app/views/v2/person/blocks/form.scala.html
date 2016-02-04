@@ -32,27 +32,45 @@
 <input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
 <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
-@v2.html.block("Social Profiles", Some("grey")) {
-  @defining(form("profile.twitterHandle")) { field =>
-    <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
-      <label for="@field.id" class="col-md-2 control-label">Twitter username</label>
-      <div class="col-md-7">
-        <div class="input-group">
-          <span class="input-group-addon">@@</span>
-          <input type="text" id="@field.id" name="@field.name"
-          value="@field.value.getOrElse("")"
-          placeholder="MyTwitter"
-          class="form-control">
-        </div>
+@v2.html.block("Connect Profiles", Some("grey")) {
+<div class="row">
+  <label class="control-label col-md-2">
+    Social Profiles
+  </label>
+  <div class="col-md-10">
+    <div class="b-connect ">
+      <div class="b-connect-i type-tw">
+        <i class="b-connect-i__img"></i>
+        <a href="#" class="btn b-connect-i__btn">
+          <span class="text">Connect</span>
+          <span class="complete">Connected</span>
+        </a>
+      </div>
+      <div class="b-connect-i type-fb">
+        <i class="b-connect-i__img type-fb"></i>
+        <a href="#" class="btn b-connect-i__btn">
+          <span class="text">Connect</span>
+          <span class="complete">Connected</span>
+        </a>
+      </div>
+      <div class="b-connect-i type-linkedin">
+        <i class="b-connect-i__img "></i>
+        <a href="#" class="btn b-connect-i__btn">
+          <span class="text">Connect</span>
+          <span class="complete">Connected</span>
+        </a>
+      </div>
+      <div class="b-connect-i type-gp">
+        <i class="b-connect-i__img "></i>
+        <a href="#" class="btn b-connect-i__btn">
+          <span class="text">Connect</span>
+          <span class="complete">Connected</span>
+        </a>
       </div>
     </div>
-  }
-  @v2.html.text(form("profile.facebookUrl"), '_label -> "Facebook profile",
-    'placeholder -> "http://www.facebook.com/my.profile", '_help -> "")
-  @v2.html.text(form("profile.linkedInUrl"), '_label -> "LinkedIn profile",
-    'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
-  @v2.html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
-    'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
+  </div>
+</div>
+
 }
 
 @v2.html.block("On The Web", Some("yellow")) {

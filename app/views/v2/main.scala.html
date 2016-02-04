@@ -17,6 +17,7 @@
   <body class='@if(withMelly) { with-melly }'>
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>
     <div id="wrapper">
+      @views.html.v2.layout.notification()
       <div class="navbar navbar-inverse" role="nagivation">
           <div class="container">
               <a class="navbar-brand" href="/">Happy Melly</a>
