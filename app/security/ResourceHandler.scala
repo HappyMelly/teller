@@ -24,8 +24,8 @@
 package security
 
 import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
-import models.ActiveUser
-import models.UserRole.DynamicRole
+import models.{UserRole, ActiveUser}
+import models.UserRole.Role._
 import models.service.Services
 import play.api.mvc._
 
@@ -41,12 +41,12 @@ class ResourceHandler(user: ActiveUser) extends DynamicResourceHandler with Serv
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong
-    name match {
-      case DynamicRole.Coordinator => brandService.isCoordinator(objectId, user.account.personId)
-      case DynamicRole.Member ⇒ checkMemberPermission(user, objectId)
-      case DynamicRole.Funder => Future.successful(user.account.admin || user.member.exists(_.funder))
-      case DynamicRole.ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)
-      case DynamicRole.OrgMember => orgMember(objectId, user.account.personId).map(_ || user.account.admin)
+    UserRole.forName(name) match {
+      case Coordinator => brandService.isCoordinator(objectId, user.account.personId)
+      case Member ⇒ checkMemberPermission(user, objectId)
+      case Funder => Future.successful(user.account.admin || user.member.exists(_.funder))
+      case ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)
+      case OrgMember => orgMember(objectId, user.account.personId).map(_ || user.account.admin)
       case _ ⇒ Future.successful(false)
     }
   }

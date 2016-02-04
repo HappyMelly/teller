@@ -41,7 +41,7 @@
         Your membership will be automatically renewed at the end of a renewal
         period. The date of the next renewal is <b>@m.until</b>.
       </p>
-      @dynamic(handler, DynamicRole.OrgMember, org.identifier.toString) {
+      @dynamic(handler, Role.OrgMember.toString, org.identifier.toString) {
         <p>
           You can <a href="#" data-toggle="modal" data-target=".cancelModal">stop automatic renewal</a> any time. In this case your membership
           will be valid till <b>@m.until</b>.

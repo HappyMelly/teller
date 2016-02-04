@@ -44,7 +44,7 @@
               </form>
             </div>
           }
-          @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+          @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
             <div class="button">
               <form method="post" class="form-inline"
               action="@CSRF(routes.People.activation(person.identifier))">

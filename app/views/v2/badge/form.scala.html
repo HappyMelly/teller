@@ -12,7 +12,9 @@
 
 @v2.main("Badge", "brand", user, withMelly = true) {
   <div class="form">
-    @v2.html.block("") { <h1>Add Badge</h1> }
+    @v2.html.block("") {
+      @badgeId.map { _ => <h1>Edit Badge</h1> }.getOrElse { <h1>Add Badge</h1> }
+    }
     @v2.html.form(action = badgeId.map { id =>
       CSRF(controllers.brand.routes.Badges.update(brandId, id))
     }.getOrElse {

@@ -12,8 +12,7 @@
         messages: Messages)
 
 @import helper.CSRF
-@import models.UserRole.Role._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 @import templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
@@ -28,7 +27,7 @@
             }
             @view.product.title
             <div class="actions pull-right">
-            @dynamic(handler, DynamicRole.Funder, "0") {
+            @dynamic(handler, Role.Funder.toString, "0") {
                 <div class="button">
                     <a class="btn btn-default" href="@routes.Products.edit(view.product.id.get)">
                         <i class="glyphicon glyphicon-pencil"></i> Edit
@@ -136,7 +135,7 @@
                             </td>
                             <td>@contributor.contribution.role</td>
                             <td>
-                            @restrict(handler, List(as(Admin.toString))) {
+                            @restrict(handler, List(as(Role.Admin.toString))) {
                                 <a href="@routes.Contributions.delete(contributor.contribution.id.get, "product")">
                                     <i class="glyphicon glyphicon-pencil"></i> Remove contributor</a>
                             }
@@ -145,7 +144,7 @@
                     }
                     </tbody>
                 </table>
-                @dynamic(handler, DynamicRole.Funder, "0") {
+                @dynamic(handler, Role.Funder.toString, "0") {
                     <form class="form-inline pull-right" method="POST"
                     action="@CSRF(routes.Contributions.create("contributor"))" id="contributor">
                         <input type="hidden" name="page" value="product">
@@ -171,7 +170,7 @@
             </div>
             <div class="tab-pane" id="products">
             @views.html.product.table(derivatives) { product =>
-                @dynamic(handler, DynamicRole.Funder, "0") {
+                @dynamic(handler, Role.Funder.toString, "0") {
                     <a href="@routes.Products.edit(view.product.id.get)">
                         <i class="glyphicon glyphicon-pencil"></i> Edit</a>
                 }
@@ -190,7 +189,7 @@
                         <tr>
                             <td><a href="@routes.Brands.details(brand.id.get)">@brand.name</a></td>
                             <td>
-                            @dynamic(handler, DynamicRole.Funder, "0") {
+                            @dynamic(handler, Role.Funder.toString, "0") {
                                 <a href="@routes.Products.deleteBrand("product", view.product.id.get, brand.id.get)">
                                     <i class="glyphicon glyphicon-pencil"></i> Unassign brand</a>
                             }
@@ -199,7 +198,7 @@
                     }
                     </tbody>
                 </table>
-                @dynamic(handler, DynamicRole.Funder, "0") {
+                @dynamic(handler, Role.Funder.toString, "0") {
                     <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Products.addBrand)">
                         <p>
                             <input type="hidden" name="page" value="product">

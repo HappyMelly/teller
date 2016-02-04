@@ -33,17 +33,11 @@ case class UserRole(role: UserRole.Role.Role) extends be.objectify.deadbolt.core
   import UserRole._
 
   def admin: Boolean = role == Role.Admin
-
   def viewer: Boolean = role == Role.Viewer
-
   def unregistered: Boolean = role == Role.Unregistered || viewer
-
   def member: Boolean = role == Role.Member
-
   def facilitator: Boolean = role == Role.Facilitator
-
   def coordinator: Boolean = role == Role.Coordinator
-
   def brandViewer: Boolean = facilitator || coordinator
 
 }
@@ -58,15 +52,10 @@ object UserRole {
     val Member = Value("member")
     val Facilitator = Value("facilitator")
     val Coordinator = Value("coordinator")
-  }
+    val Funder = Value("funder")
+    val ProfileEditor = Value("profile-editor")
+    val OrgMember = Value("org-member")
 
-  object DynamicRole {
-    val Facilitator = "facilitator"
-    val Coordinator = "coordinator"
-    val Member = "member"
-    val Funder = "funder"
-    val ProfileEditor = "profile-editor"
-    val OrgMember = "org-member"
   }
 
   def forName(name: String): UserRole = UserRole(Role.withName(name))

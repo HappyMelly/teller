@@ -6,7 +6,7 @@
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 @import views.Countries
 
 <div class="col-md-6">
@@ -16,14 +16,14 @@
     @for(country <- person.countries) {
       <tr><td>
         @Messages("country." + country.country)&nbsp;
-        @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+        @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
           <a class="pull-right" href="@routes.Facilitators.deleteCountry(person.id.get, country.country)">Delete</a>
         }
       </td></tr>
     }
     </tbody>
   </table>
-  @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+  @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
     <form method="POST" action="@CSRF(routes.Facilitators.addCountry(person.id.get))">
       <div class="form-group">
         <select name="country" class="form-control input-sm">

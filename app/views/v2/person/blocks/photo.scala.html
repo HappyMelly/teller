@@ -3,10 +3,10 @@
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 <div class="b-avatar @if(person.photo.url.nonEmpty) { b-avatar_stat_real } js-person-photo">
-@dynamicOr(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+@dynamicOr(handler, Role.ProfileEditor.toString, person.identifier.toString) {
     @person.photo.url.map { photo =>
         <img width="@width" class="b-avatar__img b-avatar__img-real " src="@photo"/>
     }

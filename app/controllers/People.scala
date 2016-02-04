@@ -27,7 +27,6 @@ package controllers
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import models.UserRole.{Role, DynamicRole}
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
@@ -91,7 +90,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
+  def addRelationship() = AsyncSecuredRestrictedAction(List(Admin, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val relationshipForm = Form(tuple("page" -> text,
         "personId" -> longNumber,
@@ -222,7 +221,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) { implicit request ⇒
+  def edit(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) flatMap {
         case None => notFound("Person not found")
@@ -236,7 +235,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) { implicit request ⇒
+  def update(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       personService.find(id) flatMap {
         case None => notFound("Person not found")

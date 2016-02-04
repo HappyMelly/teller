@@ -26,21 +26,20 @@ package controllers
 
 import javax.inject.Inject
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import fly.play.s3.{BucketFile, S3Exception}
 import models.UserRole.Role._
 import models._
 import models.brand.BrandCoordinator
-import models.service.Services
 import org.joda.time._
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
 import play.twirl.api.Html

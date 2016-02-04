@@ -146,8 +146,8 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
                   }
                 } recover {
                   case e: RuntimeException ⇒
-                    val error = formWithData.withGlobalError(e.getMessage)
-                    BadRequest(views.html.v2.badge.form(user, brandId, error))
+                    brandBadgeService.update(badge.copy(id = Some(id), file = existing.file))
+                    Redirect(controllers.routes.Brands.details(brandId) + "#badges")
                 }
               } else {
                 notFound(Html("Badge not found"))

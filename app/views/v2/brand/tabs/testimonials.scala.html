@@ -3,10 +3,10 @@
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 <h4>Testimonials</h4>
-<p>Share with everyone what satisfied customers say about you. @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
+<p>Share with everyone what satisfied customers say about you. @dynamic(handler, Role.Coordinator.toString, brandId.toString) {
     <a href="@routes.BrandTestimonials.add(brandId)">+ Add Testimonial</a>
 }
 </p>
@@ -17,7 +17,7 @@
                 <div class="text-muted">&mdash; <span class="tooltip-content">@(testimonial.name)@testimonial.company.map { company =>, @company }</span>
                 </div>
                 <div class="content"><i>@testimonial.content</i></div>
-                @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
+                @dynamic(handler, Role.Coordinator.toString, brandId.toString) {
                     <div class="actions font-sm">
                         <a href="@routes.BrandTestimonials.update(brandId, testimonial.id.get)">
                             Edit</a>

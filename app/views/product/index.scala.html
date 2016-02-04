@@ -4,12 +4,12 @@
     messages: Messages)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 @main("Products", "products", user) {
 
   @html.indexPageHeader("Products") {
-    @dynamic(handler, DynamicRole.Funder, "0") {
+    @dynamic(handler, Role.Funder.toString, "0") {
       <a class="btn btn-success pull-right" href="@routes.Products.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Product</a>
     }
@@ -20,7 +20,7 @@
       <p>There are no products</p>
     } else {
       @table(products) { product =>
-        @dynamic(handler, DynamicRole.Funder, "0") {
+        @dynamic(handler, Role.Funder.toString, "0") {
           <a href="@routes.Products.edit(product.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }

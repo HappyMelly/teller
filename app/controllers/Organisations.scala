@@ -29,7 +29,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import models.UserRole._
+import models.UserRole.Role
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
 import org.joda.time.DateTime
@@ -84,7 +84,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation id
    */
-  def cancel(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) { implicit request ⇒
+  def cancel(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val url: String = routes.Organisations.details(id).url + "#membership"
       orgService.find(id) flatMap {
@@ -165,7 +165,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Organisation identifier
    */
-  def deleteLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
+  def deleteLogo(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisation.logo(id).remove()
       orgService.updateLogo(id, false)
@@ -203,7 +203,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) { implicit request ⇒
+  def edit(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       orgService.findWithProfile(id) flatMap {
         case None => notFound("Organisation not found")
@@ -277,7 +277,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
+  def update(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       orgService.findWithProfile(id) flatMap {
         case None => notFound("Organisation not found")
@@ -300,7 +300,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Organisation identifier
    */
-  def uploadLogo(id: Long) = AsyncSecuredDynamicAction(DynamicRole.OrgMember, id) {
+  def uploadLogo(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       uploadFile(Organisation.logo(id), "logo") flatMap { _ ⇒
         orgService.updateLogo(id, true)

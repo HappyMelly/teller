@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.brand.BrandLink
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 

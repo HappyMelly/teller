@@ -28,8 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import models.UserRole.DynamicRole
-import models.UserRole.Role._
+import models.UserRole.Role
 import models.{DateStamp, Experiment, Member}
 import org.joda.time.DateTime
 import play.api.Play
@@ -69,7 +68,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member identifier
    */
-  def add(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) {
+  def add(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Future.successful(
         Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
@@ -80,7 +79,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
+  def create(memberId: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
@@ -115,7 +114,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) { implicit request ⇒
+  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       experimentService.delete(memberId, id) flatMap { _ =>
         jsonSuccess("ok")
@@ -130,7 +129,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
+  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       experimentService.find(id) flatMap {
         case None => jsonNotFound("Experiment not found")
@@ -150,7 +149,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       experimentService.find(id) flatMap {
         case None => notFound("Experiment not found")
@@ -164,7 +163,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member
    */
-  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       experimentService.findByMember(memberId) flatMap { experiments =>
         ok(views.html.v2.experiment.list(memberId, experiments))
@@ -186,7 +185,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(DynamicRole.Member, memberId) {
+  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),

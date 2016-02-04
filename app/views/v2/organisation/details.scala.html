@@ -58,7 +58,7 @@
               </form>
             </div>
           }
-          @dynamic(handler, DynamicRole.OrgMember, view.org.identifier.toString) {
+          @dynamic(handler, Role.OrgMember.toString, view.org.identifier.toString) {
             <div class="button">
               <a class="btn btn-primary"
                 href="@routes.Organisations.edit(view.org.id.get)">Edit</a>

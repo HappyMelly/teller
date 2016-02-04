@@ -8,8 +8,7 @@
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
-@import models.UserRole.DynamicRole
-
+@import models.UserRole.Role
 
 @v2.main(brand.code + " - Brand", "brands", user) {
     <div class="row profile-header">
@@ -18,7 +17,7 @@
               <h2>@brand.name</h2>
               @views.html.element.profiles(brand.socialProfile, None)
               <div class="actions pull-right">
-                  @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                  @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
                       <div class="button">
                           <a class="btn btn-primary" href="@routes.Brands.edit(brand.id.get)">Edit</a>
                       </div>
@@ -91,7 +90,7 @@
                         </a>
                     </div>
 
-                    @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                    @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
                         <div class="b-sidemenu__group">
                             <div class="b-sidemenu__head">
                                 Settings

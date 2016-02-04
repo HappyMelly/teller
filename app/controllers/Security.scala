@@ -27,10 +27,10 @@ package controllers
 import _root_.services.TellerRuntimeEnvironment
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
-import models.UserRole.DynamicRole
+import models.UserRole.Role._
 import models.service.Services
 import models.{ActiveUser, UserAccount, UserRole}
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.MessagesApi
 import play.api.mvc._
 import securesocial.controllers.MailTokenBasedOperations
 import securesocial.core._
@@ -94,7 +94,7 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   def SecuredBrandAction(brandId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      val restrictedAction = deadbolt.Dynamic(DynamicRole.Coordinator, brandId.toString, handler)(
+      val restrictedAction = deadbolt.Dynamic(Coordinator.toString, brandId.toString, handler)(
         Action(f(_)(handler)(user)))
       restrictedAction(request)
     }
@@ -109,7 +109,7 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   def AsyncSecuredBrandAction(brandId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      val restrictedAction = deadbolt.Dynamic(DynamicRole.Coordinator, brandId.toString, handler)(
+      val restrictedAction = deadbolt.Dynamic(Coordinator.toString, brandId.toString, handler)(
         Action.async(f(_)(handler)(user)))
       restrictedAction(request)
     }
@@ -166,7 +166,7 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   def AsyncSecuredProfileAction(personId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      val restrictedAction = deadbolt.Dynamic(DynamicRole.ProfileEditor, personId.toString, handler)(
+      val restrictedAction = deadbolt.Dynamic(ProfileEditor.toString, personId.toString, handler)(
         Action.async(f(_)(handler)(user)))
       restrictedAction(request)
     }
@@ -181,7 +181,8 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   def SecuredProfileAction(personId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser => Result): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      val restrictedAction = deadbolt.Dynamic(DynamicRole.ProfileEditor, personId.toString, handler)(Action(f(_)(handler)(user)))
+      val restrictedAction = deadbolt.Dynamic(ProfileEditor.toString, personId.toString, handler)(
+        Action(f(_)(handler)(user)))
       restrictedAction(request)
     }
   }
@@ -225,10 +226,10 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
     * @param id Object identifier
     * @return
     */
-  def AsyncSecuredDynamicAction(role: String, id: Long)(
+  def AsyncSecuredDynamicAction(role: UserRole.Role.Role, id: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      val restrictedAction = deadbolt.Dynamic(role, id.toString, handler)(Action.async(f(_)(handler)(user)))
+      val restrictedAction = deadbolt.Dynamic(role.toString, id.toString, handler)(Action.async(f(_)(handler)(user)))
       restrictedAction(request)
     }
   }

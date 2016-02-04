@@ -5,7 +5,7 @@
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 <h4>Event Types</h4>
 <p>Event Types help you to categories your events. The brand should have at least
@@ -17,7 +17,7 @@ to the default value.</p>
 per event. For example, <code>max hours = 16</code> and a facilitator creates an event
   for 25 hours of this type. The facilitator will be charged for only 16 hours. Additional
   9 hours are free.</p>
-@dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
+@dynamic(handler, Role.Coordinator.toString, brandId.toString) {
     <a class="btn btn-primary btn-sm pull-right" href="@routes.EventTypes.add(brandId)">+ Add Event Type</a>
 }
 <br/>
@@ -44,7 +44,7 @@ per event. For example, <code>max hours = 16</code> and a facilitator creates an
         <td data-name="maxHours">@eventType.maxHours</td>
         <th data-name="free"><input type="checkbox" @if(eventType.free){checked}/></th>
         <th style="font-weight: normal;">
-        @dynamic(handler, DynamicRole.Coordinator, brandId.toString) {
+        @dynamic(handler, Role.Coordinator.toString, brandId.toString) {
           <a class="font-sm" href="@routes.EventTypes.delete(eventType.brandId, eventType.id.get)">Remove</a>
         }
         </th>
