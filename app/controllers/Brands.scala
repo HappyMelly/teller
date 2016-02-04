@@ -131,7 +131,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                 S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
                   brand.copy(picture = Some(filename)).insert
                   val log = activity(brand, user.person).created.insert()
-                  Redirect(indexCall).flashing("success" -> log.toString)
+                  Redirect(indexCall).flashing("success" -> "Brand was added")
                 }.recover {
                   case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.v2.brand.form(user, None, people,
                     form.withError("picture", "Image cannot be temporary saved")))
@@ -139,7 +139,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
               }.getOrElse {
                 brand.insert() flatMap { inserted =>
                   val log = activity(inserted, user.person).created.insert()
-                  redirect(indexCall, "success" -> log.toString)
+                  redirect(indexCall, "success" -> "Brand was added")
                 }
               }
           }
@@ -162,7 +162,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
         }
         brand.delete()
         val log = activity(brand, user.person).deleted.insert()
-        redirect(indexCall, "success" -> log.toString)
+        redirect(indexCall, "success" -> "Brand was deleted")
       } getOrElse notFound(views.html.notFoundPage(request.path))
     }
   }
@@ -182,7 +182,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
         brandService.update(brand, brand, None)
         val log = activity(brand, user.person).deletedImage.insert()
         val call: Call = routes.Brands.details(id)
-        redirect(call, "success" -> log.toString)
+        redirect(call, "success" -> "Brand picture was removed")
       } getOrElse notFound(views.html.notFoundPage(request.path))
     }
   }
@@ -432,9 +432,9 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
               sameCode <- brandService.exists(brand.code, Some(id))
               sameName <- brandService.nameExists(brand.uniqueName, Some(id))
             } yield (sameCode, sameName)) flatMap {
-              case (false, _) => badRequest(views.html.v2.brand.form(user, Some(id), people,
+              case (true, _) => badRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("code", "constraint.brand.code.exists", brand.code)))
-              case (_, false) => badRequest(views.html.v2.brand.form(user, Some(id), people,
+              case (_, true) => badRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("uniqueName", "constraint.brand.code.exists", brand.uniqueName)))
               case _ =>
                 request.body.asMultipartFormData.get.file("picture").map { picture ⇒
@@ -452,8 +452,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                       S3Bucket.remove(oldPicture)
                     }
                     val log = activity(brand, user.person).updated.insert()
-                    Redirect(routes.Brands.details(id)).flashing(
-                      "success" -> log.toString)
+                    Redirect(routes.Brands.details(id)).flashing("success" -> "Brand was updated")
                   }.recover {
                     case S3Exception(status, code, message, originalXml) ⇒
                       BadRequest(views.html.v2.brand.form(user, Some(id), people,
@@ -463,7 +462,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                   val updatedBrand = brandService.update(x, brand, x.picture)
                   val log = activity(updatedBrand, user.person).updated.insert()
                   val route = routes.Brands.details(id)
-                  Future.successful(Redirect(route).flashing("success" -> log.toString))
+                  Future.successful(Redirect(route).flashing("success" -> "Brand was updated"))
                 }
             }
           })

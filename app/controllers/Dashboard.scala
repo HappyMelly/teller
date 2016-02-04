@@ -24,15 +24,12 @@
 
 package controllers
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
-import models.service.Services
 import org.joda.time.LocalDate
-import play.api.i18n.{MessagesApi, I18nSupport}
-import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{I18nSupport, MessagesApi}
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
