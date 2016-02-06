@@ -1,0 +1,23 @@
+@**
+* Generates Person(Facilitator) badge
+*@
+@(image: String, url: String, rating: String)(body: => Html)
+
+
+<div class="b-persprofile">
+    <a href="@url"
+        style="background-image: url(@image) ;"
+        class="b-persprofile__img"></a>
+    <div class="b-persprofile__con">
+        <h3>
+            @body
+        </h3>
+        <div class="b-rating">
+            Rating
+            <span class="b-rating__star">
+                <i class="fa fa-star"></i>
+                @rating
+            </span>
+        </div>
+    </div>
+</div>
