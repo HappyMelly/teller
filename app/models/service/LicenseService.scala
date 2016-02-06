@@ -58,10 +58,10 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
       result <- insertAction += license
       status <- profileQuery.result
       _ <- if (status) {
+        DBIO.successful(true)
+      } else {
         val facilitator = Facilitator(None, license.licenseeId, license.brandId)
         TableQuery[Facilitators] += facilitator
-      } else {
-        DBIO.successful(true)
       }
     } yield result).transactionally
     db.run(actions)

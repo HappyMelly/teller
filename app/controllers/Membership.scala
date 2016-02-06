@@ -39,11 +39,13 @@ import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
+import services.integrations.Email
 
 import scala.concurrent.Future
 
 class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
+                            val email: Email,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Enrollment

@@ -40,7 +40,7 @@ import play.api.i18n.{MessagesApi, Messages}
 import play.api.mvc._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 
 import scala.collection.mutable
 import scala.concurrent.{Await, Future}
@@ -48,6 +48,7 @@ import scala.language.postfixOps
 
 class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment,
                                     override val messagesApi: MessagesApi,
+                                    val email: Email,
                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations

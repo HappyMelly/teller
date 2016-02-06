@@ -37,12 +37,13 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 
 import scala.concurrent.Future
 
 class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment,
                              override val messagesApi: MessagesApi,
+                             val email: Email,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations

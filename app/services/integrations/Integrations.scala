@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -32,8 +32,7 @@ import play.api.Play.current
  */
 trait Integrations {
 
-  /** Returns Email notifier */
-  def email: Email = new Email
+  val email: EmailComponent
 
   /** Returns Slack notifier */
   def slack: Slack = {

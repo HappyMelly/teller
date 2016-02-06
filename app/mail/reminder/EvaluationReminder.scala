@@ -1,11 +1,13 @@
 package mail.reminder
 
+import javax.inject.Inject
+
 import controllers.routes
 import models._
 import models.event.Attendee
 import models.service.Services
 import org.joda.time.{Duration, LocalDate}
-import services.integrations.Integrations
+import services.integrations._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -13,7 +15,7 @@ import scala.concurrent.Future
 /**
  * Contains methods for notifying Teller users about their evaluations
  */
-object EvaluationReminder extends Services with Integrations {
+class EvaluationReminder @Inject() (val email: EmailComponent) extends Services with Integrations {
 
   /**
    * Sends evaluation and confirmation requests to participants of events

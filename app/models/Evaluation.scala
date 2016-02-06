@@ -28,7 +28,7 @@ import mail.reminder.EvaluationReminder
 import models.event.Attendee
 import models.service._
 import org.joda.time.LocalDate
-import services.integrations.Integrations
+import services.integrations.{EmailComponent, Integrations}
 
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
@@ -90,7 +90,7 @@ case class  Evaluation(
                        status: EvaluationStatus.Value,
                        handled: Option[LocalDate],
                        confirmationId: Option[String],
-                       recordInfo: DateStamp) extends ActivityRecorder with Integrations with Services {
+                       recordInfo: DateStamp) extends ActivityRecorder with Services {
 
   val impression: Int = facilitatorImpression
 
@@ -134,16 +134,16 @@ case class  Evaluation(
    * @param withConfirmation If true, the evaluation should be confirmed first by the participant
    * @return Returns an updated evaluation with id
    */
-  def add(defaultHook: String, withConfirmation: Boolean = false): Future[Evaluation] =
+  def add(defaultHook: String, withConfirmation: Boolean = false, email: EmailComponent): Future[Evaluation] =
     if (withConfirmation) {
       val hash = Random.alphanumeric.take(64).mkString
       val confirmed = this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))
       evaluationService.add(confirmed) flatMap { evaluation =>
-        evaluation.sendConfirmationRequest(defaultHook)
+        evaluation.sendConfirmationRequest(defaultHook, email)
       }
     } else {
       evaluationService.add(this.copy(status = EvaluationStatus.Pending)) flatMap { evaluation =>
-        evaluation.sendNewEvaluationNotification()
+        evaluation.sendNewEvaluationNotification(email)
       }
     }
 
@@ -187,9 +187,9 @@ case class  Evaluation(
   /**
    * Sets the evaluation to Pending state and returns the updated evaluation
    */
-  def confirm(): Future[Evaluation] = {
+  def confirm(email: EmailComponent): Future[Evaluation] = {
     this.copy(status = EvaluationStatus.Pending).update() flatMap { evaluation =>
-      evaluation.sendNewEvaluationNotification()
+      evaluation.sendNewEvaluationNotification(email)
     }
   }
 
@@ -199,7 +199,7 @@ case class  Evaluation(
     * @param defaultHook Link to a default confirmation page
    * @return Returns the evaluation
    */
-  def sendConfirmationRequest(defaultHook: String): Future[Evaluation] = {
+  def sendConfirmationRequest(defaultHook: String, email: EmailComponent): Future[Evaluation] = {
     (for {
       brand <- brandService.get(event.brandId)
       attendee <- attendeeService.find(this.attendeeId, this.eventId)
@@ -207,12 +207,12 @@ case class  Evaluation(
       case (_, None) => this
       case (brand, Some(attendee)) =>
         val token = this.confirmationId getOrElse ""
-        EvaluationReminder.sendConfirmRequest(attendee, brand, defaultHook, token)
+        (new EvaluationReminder(email)).sendConfirmRequest(attendee, brand, defaultHook, token)
         this
     }
   }
 
-  protected def sendNewEvaluationNotification() = {
+  protected def sendNewEvaluationNotification(email: EmailComponent) = {
     (for {
       brand <- brandService.get(event.brandId)
       attendee <- attendeeService.find(this.attendeeId, this.eventId)

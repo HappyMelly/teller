@@ -39,12 +39,13 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
-import services.integrations.Integrations
+import services.integrations.{EmailComponent, Integrations}
 
 import scala.concurrent.Future
 
 class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment,
                              override val messagesApi: MessagesApi,
+                             val email: EmailComponent,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with I18nSupport
@@ -138,7 +139,8 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
             errors ⇒ badRequest(views.html.v2.evaluation.form(user, errors, attendee)),
             evaluation ⇒ {
               val defaultHook = request.host + routes.Evaluations.confirm("").url
-              evaluation.copy(eventId = eventId, attendeeId = attendeeId).add(defaultHook) flatMap { eval =>
+              val modified = evaluation.copy(eventId = eventId, attendeeId = attendeeId)
+              modified.add(defaultHook, false, email) flatMap { eval =>
                 redirect(routes.Events.details(eventId), "success" -> "Attendee was added")
               }
             })
@@ -238,7 +240,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
         case None => jsonNotFound("Evaluation not found")
         case Some(evaluation) =>
           val defaultHook = request.host + routes.Evaluations.confirm("").url
-          evaluation.sendConfirmationRequest(defaultHook)
+          evaluation.sendConfirmationRequest(defaultHook, email)
           jsonSuccess("Confirmation request was sent")
       }
   }
@@ -252,7 +254,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     evaluationService.findByConfirmationId(confirmationId) flatMap {
       case None => notFound(views.html.evaluation.notfound())
       case Some(evaluation) =>
-        evaluation.confirm()
+        evaluation.confirm(email)
         ok(views.html.evaluation.confirmed())
     }
   }
@@ -288,7 +290,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
       if (attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
         val cert = new Certificate(evaluation.handled, event, attendee)
-        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver)
+        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email)
         attendeeService.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
       } else if (attendee.certificate.isEmpty) {
         val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
@@ -299,7 +301,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
           subject, body, from = withSettings.brand.name, richMessage = true, None)
       } else {
         val cert = new Certificate(evaluation.handled, event, attendee, renew = true)
-        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver)
+        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email)
       }
     }
   }

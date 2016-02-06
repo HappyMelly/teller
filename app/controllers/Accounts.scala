@@ -26,18 +26,18 @@ package controllers
 
 import javax.inject.Inject
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
-import play.api.mvc.Controller
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import services.CurrencyConverter.NoExchangeRateException
 import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Future
 
 class Accounts @Inject() (override implicit val env: TellerRuntimeEnvironment,

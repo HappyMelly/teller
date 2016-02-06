@@ -39,6 +39,7 @@ import play.api.data.Forms._
 import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc._
 import services.TellerRuntimeEnvironment
+import services.integrations.Email
 import templates.Formatters._
 
 import scala.concurrent.Future
@@ -46,6 +47,7 @@ import scala.concurrent.Future
 /** Renders pages and contains actions related to members */
 class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
                          override val messagesApi: MessagesApi,
+                         val email: Email,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Enrollment

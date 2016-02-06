@@ -36,7 +36,7 @@ import org.joda.time.LocalDate
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import services.S3Bucket
-import services.integrations.Integrations
+import services.integrations.{EmailComponent, Integrations}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -48,16 +48,17 @@ import scala.language.postfixOps
 case class Certificate(issued: Option[LocalDate],
    event: Event,
    attendee: Attendee,
-   renew: Boolean = false)(implicit messages: Messages) extends Integrations {
+   renew: Boolean = false)(implicit messages: Messages) {
 
   val id = issued.map(_.toString("yyMM")).getOrElse("") + f"${attendee.id.get}%03d"
 
   /**
    * Creates and sends new certificate to a participant
-   * @param brand Brand data
+    *
+    * @param brand Brand data
    * @param approver Person who generates the certificate
    */
-  def generateAndSend(brand: BrandWithCoordinators, approver: Person) {
+  def generateAndSend(brand: BrandWithCoordinators, approver: Person, email: EmailComponent) {
     val contentType = "application/pdf"
     val pdf = if (brand.brand.code == "LCM")
       lcmCertificate(brand.brand.id.get, event, attendee)
@@ -67,20 +68,20 @@ case class Certificate(issued: Option[LocalDate],
       Certificate.file(id).remove()
     }
     S3Bucket.add(BucketFile(Certificate.fullFileName(id), contentType, pdf)).map { unit ⇒
-      sendEmail(brand, approver, pdf)
+      sendEmail(brand, approver, pdf, email)
     }.recover {
       case S3Exception(status, code, message, originalXml) ⇒ {}
     }
   }
 
-  def send(brand: BrandWithCoordinators, approver: Person) {
+  def send(brand: BrandWithCoordinators, approver: Person, email: EmailComponent) {
     val pdf = Certificate.file(id).uploadToCache()
     pdf.foreach { value ⇒
-      sendEmail(brand, approver, value)
+      sendEmail(brand, approver, value, email)
     }
   }
 
-  private def sendEmail(brand: BrandWithCoordinators, approver: Person, data: Array[Byte]) {
+  private def sendEmail(brand: BrandWithCoordinators, approver: Person, data: Array[Byte], email: EmailComponent) {
     val file = java.io.File.createTempFile("cert", ".pdf")
     (new java.io.FileOutputStream(file)).write(data)
     val brandName = brand.brand.code match {

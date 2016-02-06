@@ -25,30 +25,32 @@
 package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import mail.reminder.EvaluationReminder
 import models.UserRole.Role
-import models.event.Comparator
+import models.event.{Attendee, Comparator}
 import models.event.Comparator.FieldChange
-import models.service.Services
 import models.{Location, Schedule, _}
 import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data._
 import play.api.data.format.Formatter
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc._
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import services.TellerRuntimeEnvironment
-import services.integrations.Integrations
+import services.integrations._
 import views.Countries
 
 import scala.concurrent.Future
 
 class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                      override val messagesApi: MessagesApi,
-                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+                                     val email: Email,
+                                     deadbolt: DeadboltActions,
+                                     handlers: HandlerCache,
+                                     actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with Integrations
   with Activities
@@ -227,8 +229,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         cancelForm.bindFromRequest.fold(
           failure ⇒ redirect(routes.Dashboard.index(), "error" -> "Something goes wrong :("),
           data ⇒ {
-            event.cancel(user.person.id.get, data.reason,
-              data.participants, data.details)
+            event.cancel(user.person.id.get, data.reason, data.participants, data.details)
             val log = activity(event, user.person).deleted.insert()
             sendEmailNotification(event, List.empty, log)
             redirect(routes.Dashboard.index(), "success" -> "Event was cancelled")
@@ -337,7 +338,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       } yield (e, b)) flatMap {
         case (None, _) => notFound("Event not found")
         case (Some(view), brands) =>
-          ok(views.html.v2.event.form(user, None, brands, emptyForm = false, eventForm.fill(view)))
+          ok(views.html.v2.event.form(user, Some(id), brands, emptyForm = false, eventForm.fill(view)))
       }
   }
 
@@ -512,23 +513,31 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             a <- attendeeService.findByEvents(List(event.identifier))
             b <- brandService.get(event.brandId)
           } yield (a, b)) flatMap { case (unfilteredAttendees, brand) =>
-            val attendees = unfilteredAttendees.map(_._2)
+            val attendees = unfilteredAttendees.map(_._2).filter(a => requestData.attendeeIds.contains(a.identifier))
             if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {
               import scala.util.matching.Regex
               val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
-              attendees.filter(a => requestData.attendeeIds.contains(a.identifier)).foreach { attendee ⇒
+              val reminder = new EvaluationReminder(email)
+              attendees.foreach { attendee ⇒
                 val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
-                EvaluationReminder.sendEvaluationRequest(attendee, brand, body)
+                reminder.sendEvaluationRequest(attendee, brand, body)
               }
 
-              val activity = Activity.insert(user.name, Activity.Predicate.Sent, event.title)
-              redirect(routes.Events.details(id), "error" -> activity.string)
+              Activity.insert(user.name, Activity.Predicate.Sent, event.title)
+              redirect(routes.Events.details(id), "success" -> requestMessage(attendees))
             } else {
                 redirect(routes.Events.details(id), "error" -> "Some people are not the attendees of the event")
             }
           }
         })
   }
+
+  protected def requestMessage(attendees: Seq[Attendee]): String =
+    if (attendees.length == 1)
+      "Evaluation request was sent to one attendee"
+    else
+      s"Evaluation request was sent to ${attendees.length} attendees"
+
 
   /**
    * Returns none if the given event is valid; otherwise returns a list with errors

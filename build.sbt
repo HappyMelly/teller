@@ -1,5 +1,3 @@
-import play.sbt.PlayImport.PlayKeys._
-
 name := "happymelly-teller"
 
 version := "1.7-SNAPSHOT"

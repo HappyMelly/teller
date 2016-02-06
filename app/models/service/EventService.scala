@@ -37,7 +37,7 @@ import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EventService extends Integrations with Services
+class EventService extends Services
   with HasDatabaseConfig[JdbcProfile]
   with EvaluationTable
   with EventTable
@@ -65,6 +65,7 @@ class EventService extends Integrations with Services
     val actions = (for {
       _ <- TableQuery[EventFacilitators].filter(_.eventId === id).delete
       _ <- TableQuery[EventInvoices].filter(_.eventId === id).delete
+      _ <- events.filter(_.id === id).delete
     } yield ()).transactionally
     db.run(actions)
   }
@@ -292,12 +293,15 @@ class EventService extends Integrations with Services
       view.event.notPublic, view.event.archived, view.event.confirmed,
       view.event.free, view.event.followUp)
 
-    events.filter(_.id === view.event.id).map(_.forUpdate).update(updateTuple)
-
     val facilitators = TableQuery[EventFacilitators]
-    facilitators.filter(_.eventId === view.event.id).delete
-    view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
-      facilitators += (view.event.id.get, facilitatorId))
+    val actions = (for {
+      _ <- events.filter(_.id === view.event.id).map(_.forUpdate).update(updateTuple)
+      _ <- facilitators.filter(_.eventId === view.event.id).delete
+      _ <- DBIO.sequence(view.event.facilitatorIds.distinct.map(facilitatorId ⇒
+        facilitators += (view.event.id.get, facilitatorId)
+      ))
+    } yield ()).transactionally
+    db.run(actions)
     eventInvoiceService.update(view.invoice)
 
     view

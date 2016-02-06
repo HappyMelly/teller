@@ -47,6 +47,7 @@ import securesocial.core.services.SaveMode
 import securesocial.core.utils._
 import securesocial.core.{AuthenticationMethod, BasicProfile, SecureSocial}
 import services.TellerRuntimeEnvironment
+import services.integrations.Email
 import views.Countries
 
 import scala.concurrent.{Await, Future}
@@ -83,6 +84,7 @@ case class AuthenticationInfo(email: String, password: String)
  */
 class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                            override val messagesApi: MessagesApi,
+                                           val email: Email,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
   with PasswordIdentities

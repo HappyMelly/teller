@@ -1,16 +1,18 @@
 package mail.reminder
 
+import javax.inject.Inject
+
 import models.service.Services
 import play.api.Play
 import play.api.Play.current
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Contains methods for notifying Teller users about their experiments
  */
-object ExperimentReminder extends Services with Integrations {
+class ExperimentReminder @Inject() (val email: Email) extends Services with Integrations {
 
   def sendStatus(): Unit = {
     (for {

@@ -41,7 +41,7 @@ import play.api.data.Forms._
 import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc.{Result, _}
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 import services.{CurrencyConverter, S3Bucket, TellerRuntimeEnvironment}
 
 import scala.concurrent.duration._
@@ -49,6 +49,7 @@ import scala.concurrent.{Await, Future}
 
 class BookingEntries @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                              override val messagesApi: MessagesApi,
+                                             val email: Email,
                                              deadbolt: DeadboltActions,
                                              handlers: HandlerCache,
                                              actionBuilder: ActionBuilders)

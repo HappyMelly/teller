@@ -1,19 +1,21 @@
 package mail.reminder
 
+import javax.inject.Inject
+
 import models.Activity
 import models.event.EventRequest
 import models.service.Services
 import org.joda.time.{Duration, LocalDate}
 import play.api.Play
 import play.api.Play.current
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Contains methods for notifying Teller users about the status of their events
  */
-object EventReminder extends Services with Integrations {
+class EventReminder @Inject() (val email: Email) extends Services with Integrations {
 
   /**
    * Sends email notifications to facilitators asking to confirm or delete

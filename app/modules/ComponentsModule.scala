@@ -1,14 +1,14 @@
-package services
+package modules
 
 import play.api.inject.{Binding, Module}
 import play.api.{Configuration, Environment}
-import securesocial.core.RuntimeEnvironment
+import services.integrations._
 
 /**
   * Injector module
   */
-class TellerModule extends Module {
+class ComponentsModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = Seq(
-    bind[RuntimeEnvironment].to[TellerRuntimeEnvironment]
+    bind[EmailComponent].to[Email]
   )
 }

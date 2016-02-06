@@ -197,11 +197,7 @@ case class Event(
    * @param participants Number of participants already registered to the event
    * @param details Details (emails, names) of registered participants
    */
-  def cancel(facilitatorId: Long,
-    reason: Option[String],
-    participants: Option[Int],
-    details: Option[String]): Unit = {
-
+  def cancel(facilitatorId: Long, reason: Option[String], participants: Option[Int], details: Option[String]): Unit = {
     eventTypeService.find(this.eventTypeId) map { types =>
       val eventType = types.map(_.name).getOrElse("")
       val cancellation = EventCancellation(None, this.brandId, facilitatorId,

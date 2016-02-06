@@ -1,10 +1,12 @@
 package mail.reminder
 
+import javax.inject.Inject
+
 import models.service.Services
 import models.{Activity, ProfileStrength}
 import play.api.Play
 import play.api.Play.current
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -12,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * Contains methods for notifying Teller users about the quality of their
  * profile
  */
-object ProfileStrengthReminder extends Services with Integrations {
+class ProfileStrengthReminder @Inject() (val email: Email) extends Services with Integrations {
 
   /**
    * Sends profile strength reminders to all facilitators with profile strength

@@ -336,6 +336,6 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
           "label" -> Messages("models.EvaluationStatus." + status),
           "value" -> status.id)),
       "creation" -> data.map(_.recordInfo.created).map(_.toString("yyyy-MM-dd")),
-      "handled" -> data.map(_.handled).map(_.toString))
+      "handled" -> data.map(_.handled.map(_.toString)))
   }
 }

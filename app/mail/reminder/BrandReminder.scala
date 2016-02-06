@@ -1,14 +1,15 @@
 package mail.reminder
 
+import javax.inject.Inject
 import models.service.Services
-import services.integrations.Integrations
+import services.integrations.{Email, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Contains methods for notifying Teller users about brand-related events
   */
-object BrandReminder extends Services with Integrations {
+class BrandReminder @Inject() (val email: Email) extends Services with Integrations {
 
   def sendLicenseExpirationReminder(): Unit = {
     (for {

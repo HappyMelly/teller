@@ -32,13 +32,15 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
+import services.integrations.EmailComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Evaluations API
  */
-class EvaluationsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
+class EvaluationsApi @Inject() (val messagesApi: MessagesApi,
+                                val email: EmailComponent) extends ApiAuthentication {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
@@ -128,7 +130,7 @@ class EvaluationsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthent
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
             val url = request.host + controllers.routes.Evaluations.confirm("").url
-            evaluation.add(url, withConfirmation = true) flatMap { createdEvaluation =>
+            evaluation.add(url, withConfirmation = true, email) flatMap { createdEvaluation =>
               val message = "new evaluation for " + attendee.fullName
               Activity.insert(name, Activity.Predicate.Created, message)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
@@ -146,7 +148,7 @@ class EvaluationsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthent
     evaluationService.findByConfirmationId(confirmationId) flatMap {
       case None => jsonNotFound("Unknown evaluation")
       case Some(x) =>
-        x.confirm()
+        x.confirm(email)
         val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
         Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
 
