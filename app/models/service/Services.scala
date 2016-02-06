@@ -24,8 +24,7 @@
  */
 package models.service
 
-import models.BookingEntry
-import models.service.admin.{TransactionTypeService, ApiTokenService}
+import models.service.admin.{ApiTokenService, TransactionTypeService}
 import models.service.brand._
 import models.service.event._
 

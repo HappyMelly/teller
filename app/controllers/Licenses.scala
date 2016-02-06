@@ -177,12 +177,12 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
             license ⇒ {
               brands.find(_._1 == license.brandId) map { brand =>
                 identityService.findByEmail(attendee.email) flatMap {
-                  case None =>
+                  case Some(_) =>
                     val msg = "The email of this facilitator is used in another account. This facilitator won't be able to login" +
                       " by email. Please update the email first and then proceed."
                     val errors = form.withGlobalError(msg)
                     badRequest(views.html.v2.license.attendeeForm(user, errors, brands, attendee))
-                  case Some(_) =>
+                  case None =>
                     val actions = for {
                       person <- createPersonFromAttendee(attendee)
                       license <- licenseService.add(license.copy(licenseeId = person.identifier))

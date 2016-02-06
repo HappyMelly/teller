@@ -115,7 +115,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                 routes.People.details(personId).url
               else
                 routes.Organisations.details(organisationId).url
-              redirect(action, "success" -> log.toString)
+              redirect(action, "success" -> "Person is a member of the organisation now")
           }
         })
   }
@@ -129,7 +129,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
       person ⇒ {
         personService.insert(person) flatMap { updatedPerson =>
           val log = activity(updatedPerson, user.person).created.insert()
-          redirect(indexCall, "success" -> log.toString)
+          redirect(indexCall, "success" -> "New person was added")
         }
       })
   }
@@ -148,7 +148,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         } else {
           personService.delete(person)
           val log = activity(person, user.person).deleted.insert()
-          redirect(indexCall, "success" -> log.toString)
+          redirect(indexCall, "success" -> "Person was deleted")
         }
     }
   }
@@ -178,7 +178,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
             routes.People.details(personId).url
           else
             routes.Organisations.details(organisationId).url
-          redirect(action, "success" -> log.toString)
+          redirect(action, "success" -> "Person is no longer a member of the organisation")
       }
   }
 

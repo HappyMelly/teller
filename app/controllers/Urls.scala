@@ -51,10 +51,13 @@ class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def validate(url: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val result = Try(Await.result(WS.url(url).head(), 1 second)).isSuccess
-      if (result)
-        jsonOk(Json.obj("result" -> "valid"))
-      else
-        jsonOk(Json.obj("result" -> "invalid"))
+      WS.url(url).head().flatMap { response =>
+        if (response.status >= 200 && response.status < 300)
+          jsonOk(Json.obj("result" -> "valid"))
+        else
+          jsonOk(Json.obj("result" -> "invalid"))
+      }.recover { case _ =>
+        Ok(Json.prettyPrint(Json.obj("result" -> "invalid")))
+      }
   }
 }

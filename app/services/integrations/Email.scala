@@ -117,12 +117,7 @@ class EmailActor @Inject()(mailerClient: MailerClient) extends Actor {
         withAttachments.copy(bodyText = Some(message.body.trim))
 
       Logger.debug(s"Sending e-mail with subject: ${message.subject}")
-
-      if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {
-        Logger.debug(s"${message.body}")
-      } else {
-        mailerClient.send(withBody)
-      }
+      mailerClient.send(withBody)
     }
   }
 }

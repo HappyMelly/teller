@@ -132,7 +132,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
               }.getOrElse {
                 productService.insert(product) flatMap { _ =>
                   val activity = Activity.insert(user.name, Activity.Predicate.Created, product.title)
-                  redirect(indexCall, "success" -> activity.toString)
+                  redirect(indexCall, "success" -> "New product was added")
                 }
               }
           }
@@ -166,7 +166,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                 routes.Products.details(productId)
               else
                 routes.Brands.details(brand.id.get)
-              redirect(action, "success" -> activity.toString)
+              redirect(action, "success" -> "Product was assigned to a brand")
           }
         }
       })
@@ -214,7 +214,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
             routes.Products.details(productId)
           else
             routes.Brands.details(brand.id.get)
-          redirect(action, "success" -> activity.toString)
+          redirect(action, "success" -> "Product is not longer assigned to a brand")
       }
   }
 
@@ -229,7 +229,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
         }
         productService.delete(id)
         val activity = Activity.insert(user.name, Activity.Predicate.Deleted, product.title)
-        redirect(indexCall, "success" -> activity.toString)
+        redirect(indexCall, "success" -> "Product was deleted")
     }
   }
 
@@ -247,7 +247,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           val activity = Activity.insert(user.name,
             Activity.Predicate.Deleted, "image from the product " + product.title)
           val call: Call = routes.Products.details(id)
-          redirect(call, "success" -> activity.toString)
+          redirect(call, "success" -> "Product's image was deleted")
       }
   }
 
@@ -312,7 +312,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       }
                       val activity = Activity.insert(user.name,
                         Activity.Predicate.Updated, product.title)
-                      Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
+                      Redirect(routes.Products.details(id)).flashing("success" -> "Product was updated")
                     }.recover {
                       case S3Exception(status, code, message, originalXml) ⇒
                         BadRequest(views.html.product.form(user, Some(id), title, products,
@@ -322,7 +322,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                     productService.update(product.copy(id = Some(id)).copy(picture = existingProduct.picture))
                     val activity = Activity.insert(user.name,
                       Activity.Predicate.Updated, product.title)
-                    Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> activity.toString))
+                    Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> "Product was updated"))
                   }
               }
             })

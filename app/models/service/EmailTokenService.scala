@@ -67,7 +67,7 @@ class EmailTokenService extends HasDatabaseConfig[JdbcProfile]
     * Adds new token to the database
     * @param token Token
     */
-  def insert(token: EmailToken): Future[EmailToken] = db.run((tokens returning tokens) += token)
+  def insert(token: EmailToken): Future[EmailToken] = db.run(tokens += token).map(_ => token)
 }
 
 object EmailTokenService {

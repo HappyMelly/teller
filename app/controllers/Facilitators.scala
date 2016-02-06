@@ -115,7 +115,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
             if (!languages.exists(_.language == language)) {
               facilitatorService.insertLanguage(FacilitatorLanguage(id, language))
               val query = for {
-                profile <- profileStrengthService.find(id, false) if !profile.isDefined
+                profile <- profileStrengthService.find(id, false) if profile.isDefined
               } yield profile.get
               query map { profile =>
                 profileStrengthService.update(profile.markComplete("language"))
@@ -169,6 +169,11 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   def deleteLanguage(id: Long, language: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       facilitatorService.deleteLanguage(id, language) flatMap { _ =>
+        profileStrengthService.find(id, org = false) map {
+          case None => Future.successful(None)
+          case Some(profile) =>
+            profileStrengthService.update(profile.markIncomplete("language"))
+        }
         val url: String = routes.People.details(id).url + "#facilitation"
         redirect(url, "success" -> "Language was deleted from facilitator")
       }

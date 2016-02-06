@@ -25,14 +25,15 @@ package controllers
 
 import javax.inject.Inject
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.service.Services
-import models.{Person, ProfileStrength}
+import models.{ActiveUser, ProfileStrength}
 import play.api.i18n.MessagesApi
-import scala.concurrent.Future
 import services.TellerRuntimeEnvironment
+
+import scala.concurrent.Future
 
 class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                   override val messagesApi: MessagesApi,
@@ -52,7 +53,7 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
         case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))
         case None =>
           if (id == user.person.identifier) {
-            initializeProfileStrength(user.person) flatMap { profileStrength =>
+            initializeProfileStrength(user) flatMap { profileStrength =>
               profileStrengthService.insert(profileStrength)
             } flatMap { profileStrength =>
               ok(views.html.v2.profile.widget(id, profileStrength, steps))
@@ -66,18 +67,18 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
   /**
    * Returns new profile strength based on the given person data
    *
-   * @param person Person
+   * @param user Active user
    */
-  protected def initializeProfileStrength(person: Person): Future[ProfileStrength] = {
-    val id = person.identifier
+  protected def initializeProfileStrength(user: ActiveUser): Future[ProfileStrength] = {
+    val id = user.person.identifier
     val strength = ProfileStrength.empty(id, org = false)
-    val strengthWithMember = if (person.isMember)
+    val strengthWithMember = if (user.member.isDefined)
       ProfileStrength.forMember(strength)
     else
       strength
     val query = for {
       licenses <- licenseService.activeLicenses(id)
-      languages <- facilitatorService.languages(person.identifier)
+      languages <- facilitatorService.languages(id)
     } yield (licenses, languages)
     val strengthWithFacilitator = query map { case (licenses, languages) =>
       if (licenses.nonEmpty) {
@@ -91,7 +92,7 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
       }
     }
     strengthWithFacilitator map { value =>
-      ProfileStrength.forPerson(value, person)
+      ProfileStrength.forPerson(value, user.person)
     }
   }
 }

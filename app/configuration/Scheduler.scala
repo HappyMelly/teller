@@ -47,6 +47,7 @@ class Scheduler @Inject() (val env: Environment, val email: Email) extends ISche
   start
 
   private def start = {
+    (new EventReminder(email)).sendPostFactumConfirmation()
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleMonthlyAlerts

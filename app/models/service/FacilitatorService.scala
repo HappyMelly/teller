@@ -24,7 +24,7 @@
 
 package models.service
 
-import models.database.{FacilitatorCountryTable, FacilitatorLanguageTable, FacilitatorTable}
+import models.database.{ProfileStrengthTable, FacilitatorCountryTable, FacilitatorLanguageTable, FacilitatorTable}
 import models.{Facilitator, FacilitatorCountry, FacilitatorLanguage}
 import play.api.Play
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
@@ -39,7 +39,8 @@ import scala.concurrent.Future
 class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
   with FacilitatorTable
   with FacilitatorCountryTable
-  with FacilitatorLanguageTable {
+  with FacilitatorLanguageTable
+  with ProfileStrengthTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   import driver.api._
@@ -55,6 +56,7 @@ class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Deletes the given country from the given person
+    *
     * @param personId Person identifier
     * @param country Country
     */
@@ -63,6 +65,7 @@ class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Deletes the given language from the given person
+    *
     * @param personId Person identifier
     * @param language Language
     */

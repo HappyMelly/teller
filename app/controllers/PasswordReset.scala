@@ -46,7 +46,7 @@ class PasswordReset @javax.inject.Inject() (override implicit val env: TellerRun
 
   override def handleStartResetPassword = Action.async { implicit request =>
     startForm.bindFromRequest.fold(
-      errors => Future.successful(BadRequest(env.viewTemplates.getStartResetPasswordPage(errors))),
+      errors => badRequest(env.viewTemplates.getStartResetPasswordPage(errors)),
       email => env.userService.findByEmailAndProvider(email, UsernamePasswordProvider.UsernamePassword).flatMap {
         maybeUser =>
           maybeUser match {

@@ -66,7 +66,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
             orgService.activate(id, active)
             val activity = Activity.insert(user.name,
               if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)
-            redirect(routes.Organisations.details(id),"success" -> activity.toString)
+            redirect(routes.Organisations.details(id),"success" -> "Activation status was changed")
           })
       }
   }
@@ -124,7 +124,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
         view ⇒ {
           orgService.insert(view) flatMap { orgView =>
             val activity = Activity.insert(user.name, Activity.Predicate.Created, orgView.org.name)
-            redirect(routes.Organisations.index(), "success" -> activity.toString)
+            redirect(routes.Organisations.index(), "success" -> "Organisation was created")
           }
         })
   }
@@ -156,7 +156,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
         case Some(organisation) ⇒
           orgService.delete(id)
           val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)
-          redirect(routes.Organisations.index(), "success" -> activity.toString)
+          redirect(routes.Organisations.index(), "success" -> "Organisation was deleted")
       }
   }
 
@@ -289,7 +289,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
               val updatedProfile = view.profile.forOrg.copy(objectId = id)
               orgService.update(OrgView(updatedOrg, updatedProfile)) flatMap { _ =>
                 val log = activity(updatedOrg, user.person).updated.insert()
-                redirect(routes.Organisations.details(id), "success" -> log.toString)
+                redirect(routes.Organisations.details(id), "success" -> "Organisation was updated")
               }
             })
       }
