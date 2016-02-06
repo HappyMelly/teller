@@ -1,0 +1,95 @@
+@import "./../../settings";
+
+.b-event{
+  padding-top: 16px;
+  padding-bottom: 22px;
+  border-top: 1px solid #eaeaea;
+  border-bottom: 1px solid #eaeaea;
+  .clearfix();
+}
+
+.b-event__info{
+  float: left;
+  width: 35%;
+  .box-sizing(border-box);
+  padding-right: 6%;
+  line-height: 18px;
+
+  p{
+    margin-bottom: 10px;
+  }
+}
+
+.b-event__title{
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 600;
+  color: #777777;
+}
+
+.b-event__people{
+  overflow: hidden;
+}
+
+.b-event__people-list{
+  .clearfix();
+
+  .b-persprofile{
+    margin-right: 25px;
+    margin-bottom: 20px;
+  }
+}
+
+
+// Facilitator in the list
+.b-persprofile{
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  width: 206px;
+}
+
+.b-persprofile__img{
+  position: absolute;
+  display: block;
+  left: 0;
+  top: 0;
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  overflow: hidden;
+  -webkit-background-size: cover;
+  background-size: cover ;
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+  background-color: #f5f5f5;
+}
+
+.b-persprofile__con{
+  margin-left: 80px;
+  position: relative;
+  top: -1px;
+
+  h3{
+    font-size: 18px;
+    line-height: 24px;
+    margin: 0 0 4px 0;
+  }
+}
+
+.b-rating{
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.b-rating__star{
+  display: inline-block;
+  vertical-align: middle;
+  color: #ffc550;
+  font-weight: 700;
+
+  .fa-star{
+    vertical-align: 0;
+  }
+}
