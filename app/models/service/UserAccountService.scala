@@ -26,16 +26,16 @@ package models.service
 
 import models.database.UserAccountTable
 import models.{Person, UserAccount}
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class UserAccountService extends HasDatabaseConfig[JdbcProfile] with UserAccountTable {
+class UserAccountService(app: Application) extends HasDatabaseConfig[JdbcProfile] with UserAccountTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   /**
@@ -88,10 +88,4 @@ class UserAccountService extends HasDatabaseConfig[JdbcProfile] with UserAccount
       person.socialProfile.linkedInUrl)
     db.run(action)
   }
-}
-
-object UserAccountService {
-  private val instance = new UserAccountService
-
-  def get: UserAccountService = instance
 }

@@ -3,7 +3,6 @@
     derivatives: List[Product],
     parent: Option[Product],
     brands: List[BrandView],
-    contributors: List[ContributorView],
     people: List[PersonSummary],
     organisations: List[Organisation])(implicit request: Request[Any],
         flash: Flash,
@@ -55,9 +54,9 @@
                     <form class="delete form-inline" method="post" text="product"
                     action="@CSRF(routes.Products.delete(view.product.id.getOrElse(0)))">
                         <div data-toggle="tooltip" data-placement="bottom"
-                            @if(derivatives.nonEmpty || contributors.nonEmpty) { title="@Messages("error.view.nonDeletable")" }>
+                            @if(derivatives.nonEmpty || view.contributors.nonEmpty) { title="@Messages("error.view.nonDeletable")" }>
                             <button class="btn btn-danger" type="submit"
-                                @if(derivatives.nonEmpty || contributors.nonEmpty) { disabled="disabled" }>
+                                @if(derivatives.nonEmpty || view.contributors.nonEmpty) { disabled="disabled" }>
                                 <i class="glyphicon glyphicon-white glyphicon-trash"></i> Delete
                             </button>
                         </div>
@@ -122,7 +121,7 @@
                         <th></th>
                     </thead>
                     <tbody>
-                    @for(contributor <- contributors) {
+                    @for(contributor <- view.contributors) {
                         <tr>
                             <td>
                             @if(contributor.contribution.isPerson) {

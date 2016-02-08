@@ -40,7 +40,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Participants API
  */
-class ParticipantsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
+class ParticipantsApi @Inject() (val services: Services,
+                                 override val messagesApi: MessagesApi)
+  extends ApiAuthentication(services, messagesApi) {
 
   def attendeeForm(appName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -83,7 +85,7 @@ class ParticipantsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthen
         badRequest(Json.prettyPrint(json))
       },
       data ⇒ {
-        attendeeService.insert(data) flatMap { attendee =>
+        services.attendeeService.insert(data) flatMap { attendee =>
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
         }
       })
@@ -106,7 +108,7 @@ class ParticipantsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthen
    * @param eventId Event identifier
    */
   def attendees(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    attendeeService.findByEvents(List(eventId)) flatMap { attendees =>
+    services.attendeeService.findByEvents(List(eventId)) flatMap { attendees =>
       jsonOk(Json.toJson(attendees.map(_._2)))
     }
   }

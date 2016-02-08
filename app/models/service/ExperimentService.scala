@@ -27,17 +27,17 @@ package models.service
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.Experiment
 import models.database.ExperimentTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ExperimentService extends HasDatabaseConfig[JdbcProfile]
+class ExperimentService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with ExperimentTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val experiments = TableQuery[Experiments]
 
@@ -96,10 +96,4 @@ class ExperimentService extends HasDatabaseConfig[JdbcProfile]
       experiment.recordInfo.updatedBy)
     db.run(experiments.filter(_.id === experiment.id.get).map(_.forUpdate).update(fields))
   }
-}
-
-object ExperimentService {
-  private val _instance = new ExperimentService
-
-  def get: ExperimentService = _instance
 }

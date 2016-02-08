@@ -27,18 +27,18 @@ package models.service
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.{ProductBrandAssociationTable, ProductTable}
 import models.{Brand, Product, ProductView}
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ProductService extends HasDatabaseConfig[JdbcProfile]
+class ProductService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with ProductTable
   with ProductBrandAssociationTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val products = TableQuery[Products]
@@ -190,7 +190,7 @@ class ProductService extends HasDatabaseConfig[JdbcProfile]
       } yield (relation.productId, brand)
       val result = db.run(query.result).map(_.toList.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2))))
       result map { brands =>
-        products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List())))
+        products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List()), List()))
       }
     }
   }
@@ -203,10 +203,4 @@ class ProductService extends HasDatabaseConfig[JdbcProfile]
    */
   private def switchState(id: Long, active: Boolean): Unit =
     db.run(products.filter(_.id === id).map(_.active).update(active))
-}
-
-object ProductService {
-  private val instance = new ProductService
-
-  def get: ProductService = instance
 }

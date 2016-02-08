@@ -28,10 +28,11 @@ import models.service.Services
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-case class OrgView(org: Organisation, profile: SocialProfile)
+case class OrgView(org: Organisation, profile: SocialProfile,
+                   members: List[Person] = List(),
+                   contributions: List[ContributionView] = List())
 
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
@@ -54,49 +55,7 @@ case class Organisation(
     about: Option[String] = None,
     logo: Boolean = false,
     active: Boolean = true,
-    dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
-
-  /** Contains a list of people working in this organisation */
-  private var _people: Option[List[Person]] = None
-  private var _member: Option[Member] = None
-
-  /**
-   * Returns true if this person may be deleted.
-   */
-  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && people.isEmpty
-
-  /**
-   * Sets a new list of employees
-    *
-    * @param people New employees
-   */
-  def people_=(people: List[Person]) = {
-    _people = Some(people)
-  }
-
-  /**
-   * Returns a list of people working in this organisation
-   */
-  def people: List[Person] = _people getOrElse {
-    val people = Await.result(orgService.people(this.identifier), 3.seconds)
-    people_=(people)
-    people
-  }
-
-  /**
-   * Sets member data
-    *
-    * @param member Member data
-   */
-  def member_=(member: Member): Unit = _member = Some(member)
-
-  /** Returns member data if person is a member, false None */
-  def member: Option[Member] = _member map { Some(_) } getOrElse {
-    id map { i ⇒
-      _member = Await.result(orgService.member(i), 3.seconds)
-      _member
-    } getOrElse None
-  }
+    dateStamp: DateStamp) extends ActivityRecorder {
 
   /**
    * Adds member record to database
@@ -106,19 +65,12 @@ case class Organisation(
    * @param userId Id of the user executing the action
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money, userId: Long): Future[Member] = {
+  def becomeMember(funder: Boolean, fee: Money, userId: Long, services: Services): Future[Member] = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       renewal = true, since = LocalDate.now(),
       until = LocalDate.now().plusYears(1), existingObject = true,
       reason = None, created = DateTime.now(), userId, DateTime.now(), userId)
-    memberService.insert(m)
-  }
-
-  /**
-   * Returns a list of this organisation's contributions.
-   */
-  lazy val contributions: List[ContributionView] = {
-    Await.result(contributionService.contributions(this.identifier, isPerson = false), 3.seconds)
+    services.memberService.insert(m)
   }
 
   /**

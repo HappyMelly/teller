@@ -37,9 +37,9 @@ import scala.concurrent.Future
 
 class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                   override val messagesApi: MessagesApi,
+                                  val services: Services,
                                   deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-    extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
-    with Services {
+    extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
    * Returns profile strength widget for a person
@@ -49,12 +49,12 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
    */
   def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
     implicit request ⇒ implicit handler => implicit user ⇒
-      profileStrengthService.find(id) flatMap {
+      services.profileStrengthService.find(id) flatMap {
         case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))
         case None =>
           if (id == user.person.identifier) {
             initializeProfileStrength(user) flatMap { profileStrength =>
-              profileStrengthService.insert(profileStrength)
+              services.profileStrengthService.insert(profileStrength)
             } flatMap { profileStrength =>
               ok(views.html.v2.profile.widget(id, profileStrength, steps))
             }
@@ -77,8 +77,8 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
     else
       strength
     val query = for {
-      licenses <- licenseService.activeLicenses(id)
-      languages <- facilitatorService.languages(id)
+      licenses <- services.licenseService.activeLicenses(id)
+      languages <- services.facilitatorService.languages(id)
     } yield (licenses, languages)
     val strengthWithFacilitator = query map { case (licenses, languages) =>
       if (licenses.nonEmpty) {

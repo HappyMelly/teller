@@ -29,6 +29,7 @@ import controllers.apiv2.json.{PersonConverter, ProductConverter}
 import controllers.{Products, Brands}
 import models.brand.{BrandLink, BrandTestimonial}
 import models._
+import models.service.Services
 import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json._
 
@@ -38,7 +39,8 @@ import scala.concurrent.Future
 /**
  * Brands API
  */
-class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication {
+class BrandsApi @Inject() (val services: Services,
+                           override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
   implicit val brandWrites = new Writes[(Brand, Int)] {
     def writes(view: (Brand, Int)): JsValue = {
@@ -91,6 +93,7 @@ class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
   }
 
   case class BrandFullView(brand: Brand,
+                           profile: SocialProfile,
                           coordinator: Person,
                           links: List[BrandLink],
                           testimonials: List[BrandTestimonial],
@@ -109,14 +112,14 @@ class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
         "coordinator" -> view.coordinator,
         "contact_info" -> Json.obj(
           "email" -> view.brand.contactEmail,
-          "skype" -> view.brand.socialProfile.skype,
-          "phone" -> view.brand.socialProfile.phone,
-          "form" -> view.brand.socialProfile.contactForm),
+          "skype" -> view.profile.skype,
+          "phone" -> view.profile.phone,
+          "form" -> view.profile.contactForm),
         "social_profile" -> Json.obj(
-          "facebook" -> view.brand.socialProfile.facebookUrl,
-          "twitter" -> view.brand.socialProfile.twitterHandle,
-          "google_plus" -> view.brand.socialProfile.googlePlusUrl,
-          "linkedin" -> view.brand.socialProfile.linkedInUrl),
+          "facebook" -> view.profile.facebookUrl,
+          "twitter" -> view.profile.twitterHandle,
+          "google_plus" -> view.profile.googlePlusUrl,
+          "linkedin" -> view.profile.linkedInUrl),
         "products" -> view.products,
         "links" -> view.links,
         "testimonials" -> view.testimonials,
@@ -130,10 +133,10 @@ class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
     * @param code Brand code
    */
   def brand(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    val view = brandService.find(code) flatMap {
+    val view = services.brandService.find(code) flatMap {
       case Some(brand) => fullView(brand)
       case None =>
-        brandService.findByName(code) flatMap {
+        services.brandService.findByName(code) flatMap {
           case None => Future.successful(None)
           case Some(brand) => fullView(brand)
         }
@@ -149,8 +152,8 @@ class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
    */
   def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      brands <- brandService.findAll
-      products <- productService.findNumberPerBrand
+      brands <- services.brandService.findAll
+      products <- services.productService.findNumberPerBrand
     } yield (brands, products)) flatMap { case (brands, products) =>
       val brandsWithProducts = brands.filter(_.active).map(brand => (brand, products.getOrElse(brand.identifier, 0)))
       jsonOk(Json.toJson(brandsWithProducts))
@@ -165,18 +168,19 @@ class BrandsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
   protected def fullView(brand: Brand): Future[Option[BrandFullView]] = {
     val id = brand.identifier
     (for {
-      owner <- personService.find(brand.ownerId)
-      member <- memberService.findByObject(brand.ownerId, person = true)
-      events <- eventService.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
-      links <- brandService.links(id)
-      testimonials <- brandService.testimonials(id)
-      products <- productService.findByBrand(id)
-    } yield (owner, member, events, links, testimonials, products)) map {
-      case (None, _, _, _, _, _) => None
-      case (Some(owner), None, events, links, testimonials, products) =>
-        Some(BrandFullView(brand, owner.copy(id = None), links, testimonials, events.take(3), products))
-      case (Some(owner), Some(member), events, links, testimonials, products) =>
-        Some(BrandFullView(brand, owner.copy(id = member.id), links, testimonials, events.take(3), products))
+      owner <- services.personService.find(brand.ownerId)
+      member <- services.memberService.findByObject(brand.ownerId, person = true)
+      events <- services.eventService.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
+      links <- services.brandService.links(id)
+      testimonials <- services.brandService.testimonials(id)
+      products <- services.productService.findByBrand(id)
+      profile <- services.socialProfileService.find(id, ProfileType.Brand)
+    } yield (owner, member, events, links, testimonials, products, profile)) map {
+      case (None, _, _, _, _, _, _) => None
+      case (Some(owner), None, events, links, testimonials, products, profile) =>
+        Some(BrandFullView(brand, profile, owner.copy(id = None), links, testimonials, events.take(3), products))
+      case (Some(owner), Some(member), events, links, testimonials, products, profile) =>
+        Some(BrandFullView(brand, profile, owner.copy(id = member.id), links, testimonials, events.take(3), products))
     }
   }
 }

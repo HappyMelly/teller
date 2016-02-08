@@ -24,80 +24,82 @@
  */
 package models.service
 
+import javax.inject.{Singleton, Inject}
+
 import models.service.admin.{ApiTokenService, TransactionTypeService}
 import models.service.brand._
 import models.service.event._
+import play.api.Application
+
+trait IServices
 
 /** Contains references to all services so we can stub them in tests */
-trait Services {
+@Singleton
+class Services @Inject() (val app: Application) extends IServices {
 
-  def accountService: AccountService = AccountService.get
+  lazy val addressService: AddressService = new AddressService(app)
 
-  def addressService: AddressService = AddressService.get
+  lazy val activityService: ActivityService = new ActivityService(app)
 
-  def activityService: ActivityService = ActivityService.get
+  lazy val apiTokenService: ApiTokenService = new ApiTokenService(app)
 
-  def apiTokenService: ApiTokenService = ApiTokenService.get
+  lazy val attendeeService: AttendeeService = new AttendeeService(app)
 
-  def attendeeService: AttendeeService = AttendeeService.get
+  lazy val brandService: BrandService = new BrandService(app, this)
 
-  def bookingEntryService: BookingEntryService = BookingEntryService.get
+  lazy val brandBadgeService: BadgeService = new BadgeService(app)
 
-  def brandService: BrandService = BrandService.get
+  lazy val brandCoordinatorService: BrandCoordinatorService = new BrandCoordinatorService(app)
 
-  def brandBadgeService: BadgeService = BadgeService.get
+  lazy val certificateService: CertificateTemplateService = new CertificateTemplateService(app)
 
-  def brandCoordinatorService: BrandCoordinatorService = BrandCoordinatorService.get
+  lazy val contributionService: ContributionService = new ContributionService(app)
 
-  def certificateService: CertificateTemplateService = CertificateTemplateService.get
+  lazy val emailToken: EmailTokenService = new EmailTokenService(app)
 
-  def contributionService: ContributionService = ContributionService.get
+  lazy val evaluationService: EvaluationService = new EvaluationService(app, this)
 
-  def emailToken: EmailTokenService = EmailTokenService.get
+  lazy val eventService: EventService = new EventService(app, this)
 
-  def evaluationService: EvaluationService = EvaluationService.get
+  lazy val eventInvoiceService: EventInvoiceService = new EventInvoiceService(app)
 
-  def eventService: EventService = EventService.get
+  lazy val eventCancellationService: EventCancellationService = new EventCancellationService(app)
 
-  def eventInvoiceService: EventInvoiceService = EventInvoiceService.get
+  lazy val eventRequestService: EventRequestService = new EventRequestService(app)
 
-  def eventCancellationService: EventCancellationService = EventCancellationService.get
+  lazy val eventTypeService: EventTypeService = new EventTypeService(app)
 
-  def eventRequestService: EventRequestService = EventRequestService.get
+  lazy val exchangeService: ExchangeRateService = new ExchangeRateService(app)
 
-  def eventTypeService: EventTypeService = EventTypeService.get
+  lazy val experimentService: ExperimentService = new ExperimentService(app)
 
-  def exchangeService: ExchangeRateService = ExchangeRateService.get
+  lazy val facilitatorService: FacilitatorService = new FacilitatorService(app)
 
-  def experimentService: ExperimentService = ExperimentService.get
+  lazy val feeService: BrandFeeService = new BrandFeeService(app)
 
-  def facilitatorService: FacilitatorService = FacilitatorService.get
+  lazy val mailTokenService: PasswordTokenService = new PasswordTokenService(app)
 
-  def feeService: BrandFeeService = BrandFeeService.get
+  lazy val memberService: MemberService = new MemberService(app)
 
-  def mailTokenService: PasswordTokenService = PasswordTokenService.get
+  lazy val licenseService: LicenseService = new LicenseService(app)
 
-  def memberService: MemberService = MemberService.get
+  lazy val orgService: OrganisationService = new OrganisationService(app, this)
 
-  def licenseService: LicenseService = LicenseService.get
+  lazy val paymentRecordService: PaymentRecordService = new PaymentRecordService(app)
 
-  def orgService: OrganisationService = OrganisationService.get
+  lazy val personService: PersonService = new PersonService(app, this)
 
-  def paymentRecordService: PaymentRecordService = PaymentRecordService.get
+  lazy val productService: ProductService = new ProductService(app)
 
-  def personService: PersonService = PersonService.get
+  lazy val profileStrengthService: ProfileStrengthService = new ProfileStrengthService(app)
 
-  def productService: ProductService = ProductService.get
+  lazy val registeringUserService: RegisteringUserService = new RegisteringUserService(app)
 
-  def profileStrengthService: ProfileStrengthService = ProfileStrengthService.get
+  lazy val socialProfileService: SocialProfileService = new SocialProfileService(app)
 
-  def registeringUserService: RegisteringUserService = RegisteringUserService.get
+  lazy val userAccountService: UserAccountService = new UserAccountService(app)
 
-  def socialProfileService: SocialProfileService = SocialProfileService.get
+  lazy val identityService: IdentityService = new IdentityService(app)
 
-  def userAccountService: UserAccountService = UserAccountService.get
-
-  def identityService: IdentityService = IdentityService.get
-
-  def transactionTypeService: TransactionTypeService = TransactionTypeService.get
+  lazy val transactionTypeService: TransactionTypeService = new TransactionTypeService(app)
 }

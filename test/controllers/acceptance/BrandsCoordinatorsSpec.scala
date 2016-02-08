@@ -79,7 +79,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e1 = {
     val req = fakePostRequest().withFormUrlEncodedBody("personId" -> "1")
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("brand not found")
@@ -88,8 +88,8 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   def e2 = {
     val req = fakePostRequest().withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (personService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.personService.find(_: Long)) expects 1L returning None
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("person not found")
@@ -100,9 +100,9 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
     val brand = BrandHelper.one
     val person = PersonHelper.one()
     val coordinator = BrandCoordinator(Some(1L), 1L, 1L)
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (personService.find(_: Long)) expects 1L returning Some(person)
-    (brandService.coordinators(_)) expects 1L returning List((person, coordinator))
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
+    (services.brandService.coordinators(_)) expects 1L returning List((person, coordinator))
     val res = controller.addCoordinator(1L).apply(req)
     status(res) must equalTo(CONFLICT)
     contentAsString(res) must contain("This person is already a coordinator")
@@ -112,9 +112,9 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
     val req = fakePostRequest().withFormUrlEncodedBody("personId" -> "1")
     val brand = BrandHelper.one
     val person = PersonHelper.one()
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (personService.find(_: Long)) expects 1L returning Some(person)
-    (brandService.coordinators _) expects 1L returning List()
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
+    (services.brandService.coordinators _) expects 1L returning List()
     val coordinator = BrandCoordinator(None, 1L, 1L, BrandNotifications())
     (brandTeamMemberService.insert _) expects coordinator
     val res = controller.addCoordinator(1L).apply(req)
@@ -132,7 +132,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e6 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     val res = controller.removeCoordinator(1L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(NOT_FOUND)
     contentAsString(res) must contain("brand not found")
@@ -140,7 +140,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e7 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
     val res = controller.removeCoordinator(1L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(CONFLICT)
     contentAsString(res) must contain("You cannot remove brand owner from the list of coordinators")
@@ -148,8 +148,8 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e8 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (brandService.findByCoordinator _) expects 2L returning List(BrandWithSettings(BrandHelper.two, Settings(2L)))
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.findByCoordinator _) expects 2L returning List(BrandWithSettings(BrandHelper.two, Settings(2L)))
     (brandTeamMemberService.delete(_, _)) expects (1L, 2L)
     val res = controller.removeCoordinator(1L, 2L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)

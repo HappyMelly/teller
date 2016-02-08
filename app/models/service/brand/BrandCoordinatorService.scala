@@ -28,7 +28,7 @@ import models.UserAccount
 import models.brand.BrandCoordinator
 import models.database.UserAccountTable
 import models.database.brand.BrandCoordinatorTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -38,11 +38,11 @@ import scala.concurrent.Future
 /**
  * Contains a set of functions for managing team members in database
  */
-class BrandCoordinatorService extends HasDatabaseConfig[JdbcProfile]
+class BrandCoordinatorService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with BrandCoordinatorTable
   with UserAccountTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val coordinators = TableQuery[BrandCoordinators]
 
@@ -87,10 +87,4 @@ class BrandCoordinatorService extends HasDatabaseConfig[JdbcProfile]
 
   protected def updateUserAccountQuery(personId: Long) =
     userAccountQuery.findByPerson(personId).map(x => (x.coordinator, x.activeRole)).update((true, true))
-}
-
-object BrandCoordinatorService {
-  private val instance = new BrandCoordinatorService
-
-  def get: BrandCoordinatorService = instance
 }

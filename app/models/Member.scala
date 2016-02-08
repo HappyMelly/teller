@@ -23,11 +23,8 @@
  */
 package models
 
-import models.service.Services
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
-
-import scala.concurrent.Future
 
 case class Member(
     id: Option[Long],
@@ -43,7 +40,7 @@ case class Member(
     created: DateTime,
     createdBy: Long,
     updated: DateTime,
-    updatedBy: Long) extends Services with ActivityRecorder {
+    updatedBy: Long) extends ActivityRecorder {
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)
 
@@ -109,10 +106,4 @@ case class Member(
     _memberObj._1.get.photo.url
   else
     None
-
-  /** Records this member to database */
-  def insert: Future[Member] = memberService.insert(this)
-
-  /** Updates this member in database */
-  def update: Future[Member] = memberService.update(this)
 }

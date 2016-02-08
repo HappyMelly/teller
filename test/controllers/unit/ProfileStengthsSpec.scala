@@ -50,7 +50,7 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
 
   "When a person is not a member and not a facilitator and has a bio" >> {
     "then an default profile strength with 3 incomplete steps should be returned" in {
-      (licenseService.activeLicenses _) expects 1L returning List()
+      (services.licenseService.activeLicenses _) expects 1L returning List()
       val person = PersonHelper.one().copy(bio = Some("test"))
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
       steps.exists(_.name == "about") must_== false
@@ -58,7 +58,7 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
   }
   "When a person is a member and not a facilitator" >> {
     "and reason is not filled, then a profile strength with member steps should be returned" in {
-      (licenseService.activeLicenses _) expects 1L returning List()
+      (services.licenseService.activeLicenses _) expects 1L returning List()
       val person = PersonHelper.one()
       person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
@@ -66,7 +66,7 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
       steps.exists(_.name == "member") must_== false
     }
     "and reason is filled, then a profile strength with member steps should be returned" in {
-      (licenseService.activeLicenses _) expects 1L returning List()
+      (services.licenseService.activeLicenses _) expects 1L returning List()
       val person = PersonHelper.one()
       person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
@@ -82,17 +82,17 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
     val licenseView = LicenseView(brand, license)
 
     "and has no signature and languages, then a profile strength with facilitator steps should be returned" in {
-      (licenseService.activeLicenses _) expects 1L returning List(licenseView)
-      (facilitatorService.languages _) expects 1L returning List()
+      (services.licenseService.activeLicenses _) expects 1L returning List(licenseView)
+      (services.facilitatorService.languages _) expects 1L returning List()
       val person = PersonHelper.one()
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
       steps.exists(_.name == "signature") must_== true
       steps.exists(_.name == "language") must_== true
     }
     "and has a signature and 1 language, then a profile strength with facilitator steps should be returned" in {
-      (licenseService.activeLicenses _) expects 1L returning List(licenseView)
+      (services.licenseService.activeLicenses _) expects 1L returning List(licenseView)
       val language = FacilitatorLanguage(1L, "EN")
-      (facilitatorService.languages _) expects 1L returning List(language)
+      (services.facilitatorService.languages _) expects 1L returning List(language)
       val person = PersonHelper.one().copy(signature = true)
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
       steps.exists(_.name == "signature") must_== false

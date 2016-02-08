@@ -29,6 +29,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import models.UserRole.Role
+import models.service.Services
 import models.{DateStamp, Experiment, Member}
 import org.joda.time.DateTime
 import play.api.Play
@@ -43,12 +44,13 @@ import scala.concurrent.Future
 
 class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment,
                              override val messagesApi: MessagesApi,
+                             val services: Services,
                              val email: Email,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware
   with Integrations
-  with Files
-  with Utilities {
+  with Files {
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -85,12 +87,12 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
         experiment ⇒ {
-          memberService.find(memberId) flatMap {
+          services.memberService.find(memberId) flatMap {
             case None => notFound("Member not found")
             case Some(member) ⇒
-              experimentService.insert(experiment.copy(memberId = memberId)) flatMap { inserted =>
+              services.experimentService.insert(experiment.copy(memberId = memberId)) flatMap { inserted =>
                 uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
-                  experimentService.update(inserted.copy(picture = true))
+                  services.experimentService.update(inserted.copy(picture = true))
                 } recover {
                   case e: RuntimeException ⇒ Unit
                 } map { _ ⇒
@@ -117,7 +119,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      experimentService.delete(memberId, id) flatMap { _ =>
+      services.experimentService.delete(memberId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }
@@ -132,11 +134,11 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      experimentService.find(id) flatMap {
+      services.experimentService.find(id) flatMap {
         case None => jsonNotFound("Experiment not found")
         case Some(experiment) =>
           Experiment.picture(id).remove()
-          experimentService.update(experiment.copy(picture = false))
+          services.experimentService.update(experiment.copy(picture = false))
           jsonSuccess("ok")
       }
   }
@@ -152,7 +154,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      experimentService.find(id) flatMap {
+      services.experimentService.find(id) flatMap {
         case None => notFound("Experiment not found")
         case Some(experiment) =>
           ok(views.html.v2.experiment.form(user, memberId, form(user.name).fill(experiment), Some(id)))
@@ -166,7 +168,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      experimentService.findByMember(memberId) flatMap { experiments =>
+      services.experimentService.findByMember(memberId) flatMap { experiments =>
         ok(views.html.v2.experiment.list(memberId, experiments))
       }
   }
@@ -192,17 +194,17 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
         experiment ⇒ {
           (for {
-            existing <- experimentService.find(id)
-            member <- memberService.find(memberId)
+            existing <- services.experimentService.find(id)
+            member <- services.memberService.find(memberId)
           } yield (existing, member)) flatMap {
             case (None, _) => notFound("Experiment not found")
             case (_, None) => notFound("Member not found")
             case (Some(existing), Some(member)) =>
               uploadImage(Experiment.picture(existing.id.get), "file") map { _ ⇒
-                experimentService.update(experiment.copy(id = Some(id),
+                services.experimentService.update(experiment.copy(id = Some(id),
                   memberId = memberId, picture = true))
               } recover {
-                case e: RuntimeException ⇒ experimentService.update(experiment.copy(id = Some(id),
+                case e: RuntimeException ⇒ services.experimentService.update(experiment.copy(id = Some(id),
                   memberId = memberId, picture = existing.picture))
               } map { _ ⇒
                 val url = if (member.person)

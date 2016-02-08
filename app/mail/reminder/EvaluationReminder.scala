@@ -15,28 +15,28 @@ import scala.concurrent.Future
 /**
  * Contains methods for notifying Teller users about their evaluations
  */
-class EvaluationReminder @Inject() (val email: EmailComponent) extends Services with Integrations {
+class EvaluationReminder @Inject() (val email: EmailComponent, val services: Services) extends Integrations {
 
   /**
    * Sends evaluation and confirmation requests to participants of events
    * on the first, the thirds and the sevenths days after the event
    */
-  def sendToAttendees() = brandService.findAll map { brands =>
+  def sendToAttendees() = services.brandService.findAll map { brands =>
     brands.foreach { brand ⇒
       if (brand.evaluationUrl.isDefined) {
         val today = LocalDate.now().toDate.getTime
-        val unfilteredEvents = eventService.findByParameters(brandId = brand.id, future = Some(false))
+        val unfilteredEvents = services.eventService.findByParameters(brandId = brand.id, future = Some(false))
         val events = unfilteredEvents.map(_.filter(_.followUp).filter { event =>
           val duration = (new Duration(event.schedule.end.toDate.getTime, today)).getStandardDays
           duration == 1 || duration == 3 || duration == 7
         }.map(_.id.get))
         val attendees = for {
           e <- events
-          a <- evaluationService.findEvaluationsByEvents(e)
+          a <- services.evaluationService.findEvaluationsByEvents(e)
         } yield a
         attendees.map(_.filter(_.evaluation.isEmpty).foreach { view =>
           val welcomeMsg = s"Hi ${view.attendee.firstName},"
-          val facilitatorId = view.event.facilitatorIds.head
+          val facilitatorId = view.event.facilitatorIds(services).head
           val body = mail.templates.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId, brand.evaluationUrl).toString()
           sendEvaluationRequest(view.attendee, brand, body)
         })

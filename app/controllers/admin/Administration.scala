@@ -28,10 +28,12 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
 import models.UserRole.Role._
+import models.service.Services
 import models.service.admin.TransactionTypeService
+import play.api.Application
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.twirl.api.Html
 import services.TellerRuntimeEnvironment
 
@@ -40,11 +42,15 @@ import services.TellerRuntimeEnvironment
  */
 class Administration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                              override val messagesApi: MessagesApi,
-                                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+                                             val app: Application,
+                                             val services: Services,
+                                             deadbolt: DeadboltActions,
+                                             handlers: HandlerCache,
+                                             actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with I18nSupport {
 
-  val service = new TransactionTypeService
+  val service = new TransactionTypeService(app)
   val transactionTypeForm = Form(single("name" -> nonEmptyText))
 
   /**

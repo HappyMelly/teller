@@ -26,6 +26,7 @@ package services
 
 import javax.inject.Inject
 
+import models.service.Services
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
 import play.twirl.api.{Html, Txt}
@@ -42,14 +43,16 @@ import scala.collection.immutable.ListMap
 /**
   * Runtime environment for SecureSocial library to work
   */
-class TellerRuntimeEnvironment @Inject() (messagesApi: MessagesApi, email: Email) extends RuntimeEnvironment.Default {
+class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
+                                          val email: Email,
+                                          val services: Services) extends RuntimeEnvironment.Default {
   type U = ActiveUser
 
   override lazy val routes: RoutesService = new TellerRoutesService()
   override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this, messagesApi)
   override lazy val mailTemplates: MailTemplates = new MailTemplates(this)
   override lazy val mailer: Mailer = new MailerTest(mailTemplates, email)
-  override lazy val userService: LoginIdentityService = new LoginIdentityService
+  override lazy val userService: LoginIdentityService = new LoginIdentityService(services)
   override lazy val providers = ListMap(
     include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter))),
     include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),

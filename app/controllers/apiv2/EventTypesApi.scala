@@ -35,15 +35,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Event types API
  */
-class EventTypesApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
+class EventTypesApi @Inject() (val services: Services,
+                               override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
-  implicit val eventTypeWrites = new Writes[EventType] {
-    def writes(eventType: EventType): JsValue = {
+  implicit val eventTypeWrites = new Writes[(EventType, String)] {
+    def writes(view: (EventType, String)): JsValue = {
       Json.obj(
-        "id" -> eventType.id,
-        "brand" -> eventType.brand.code,
-        "name" -> eventType.name,
-        "title" -> eventType.defaultTitle)
+        "id" -> view._1.id,
+        "brand" -> view._2,
+        "name" -> view._1.name,
+        "title" -> view._1.defaultTitle)
     }
   }
 
@@ -53,11 +54,11 @@ class EventTypesApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenti
    * @param code Brand code
    */
   def types(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    brandService.find(code) flatMap {
+    services.brandService.find(code) flatMap {
       case None => jsonNotFound("Brand not found")
       case Some(brand) =>
-        eventTypeService.findByBrand(brand.identifier) flatMap { eventTypes =>
-          jsonOk(Json.toJson(eventTypes))
+        services.eventTypeService.findByBrand(brand.identifier) flatMap { eventTypes =>
+          jsonOk(Json.toJson(eventTypes.map(x => (x, code))))
         }
     }
   }

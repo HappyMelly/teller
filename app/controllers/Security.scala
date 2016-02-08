@@ -41,9 +41,12 @@ import scala.concurrent.Future
 /**
  * Integrates SecureSocial authentication with Deadbolt.
  */
-class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+class Security(deadbolt: DeadboltActions,
+               handlers: HandlerCache,
+               actionBuilder: ActionBuilders,
+               services: Services)
               (val messagesApi: MessagesApi, override implicit val env: TellerRuntimeEnvironment)
-  extends MailTokenBasedOperations with Services with AsyncController {
+  extends MailTokenBasedOperations with AsyncController {
 
   val handler = handlers(HandlerKeys.defaultHandler)
 
@@ -125,7 +128,7 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   def AsyncSecuredEvaluationAction(roles: List[UserRole.Role.Role], evaluationId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      eventService.findByEvaluation(evaluationId) flatMap {
+      services.eventService.findByEvaluation(evaluationId) flatMap {
         case None => notFound("Evaluation not found")
         case Some(event) =>
           eventManager(user.account, roles, event) flatMap {
@@ -146,7 +149,7 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   def AsyncSecuredEventAction(roles: List[UserRole.Role.Role], eventId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      eventService.find(eventId) flatMap {
+      services.eventService.find(eventId) flatMap {
         case None => notFound("Event not found")
         case Some(event) =>
           eventManager(user.account, roles, event) flatMap {
@@ -237,9 +240,9 @@ class Security(deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder:
   protected def eventManager(account: UserAccount,
                              roles: List[UserRole.Role.Role], event: models.Event): Future[Boolean] = {
     if (account.isCoordinatorNow && roles.contains(UserRole.Role.Coordinator))
-      brandService.isCoordinator(event.brandId, account.personId)
+      services.brandService.isCoordinator(event.brandId, account.personId)
     else if (account.isFacilitatorNow && roles.contains(UserRole.Role.Facilitator))
-      Future.successful(event.isFacilitator(account.personId))
+      Future.successful(event.isFacilitator(account.personId, services))
     else
       Future.successful(false)
   }

@@ -24,11 +24,7 @@
 
 package models.brand
 
-import models.service.BrandService
-import models.{Activity, ActivityRecorder, Brand}
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import models.{Activity, ActivityRecorder}
 
 case class EventType(id: Option[Long],
     brandId: Long,
@@ -53,9 +49,4 @@ case class EventType(id: Option[Long],
    * Returns type of this object
    */
   def objectType: String = Activity.Type.EventType
-
-  /**
-   * @deprecated
-   */
-  def brand: Brand = Await.result(BrandService.get.get(this.brandId), 3.seconds)
 }

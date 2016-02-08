@@ -30,6 +30,7 @@ import models.JodaMoney.jodaMoney
 import models.UserRole.Role._
 import models._
 import models.event.Attendee
+import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{MessagesApi, I18nSupport, Messages}
@@ -44,8 +45,9 @@ import scala.concurrent.Future
  */
 class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                        override val messagesApi: MessagesApi,
+                                       val services: Services,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with PasswordIdentities
   with Activities
   with I18nSupport {
@@ -97,8 +99,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   def addForAttendee(attendeeId: Long, eventId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        attendee <- attendeeService.find(attendeeId, eventId)
-        event <- eventService.find(eventId)
+        attendee <- services.attendeeService.find(attendeeId, eventId)
+        event <- services.eventService.find(eventId)
         brands <- coordinatedBrands(user.account.personId)
       } yield (attendee, event, brands)) flatMap {
         case (None, _, _) => notFound("Attendee not found")
@@ -118,7 +120,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   def create(personId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        person <- personService.find(personId)
+        person <- services.personService.find(personId)
         brands <- coordinatedBrands(user.account.personId)
       } yield (person, brands)) flatMap {
         case (None, _) => notFound("Person not found")
@@ -130,12 +132,12 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
               brands.find(_._1 == license.brandId) map { brand =>
                 checkOtherAccountEmail(person) flatMap { result =>
                   if (!result) {
-                    licenseService.add(license.copy(licenseeId = personId)) flatMap { addedLicense =>
+                    services.licenseService.add(license.copy(licenseeId = personId)) flatMap { addedLicense =>
                       val query = for {
-                        strength <- profileStrengthService.find(personId, org = false) if strength.isDefined
+                        strength <- services.profileStrengthService.find(personId, org = false) if strength.isDefined
                       } yield strength.get
                       query.map { strength =>
-                        profileStrengthService.update(ProfileStrength.forFacilitator(strength))
+                        services.profileStrengthService.update(ProfileStrength.forFacilitator(strength))
                       }
                       createFacilitatorAccount(person, brand._2)
                       val route: String = routes.People.details(personId).url + "#facilitation"
@@ -164,8 +166,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   def createFromAttendee(attendeeId: Long, eventId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        a <- attendeeService.find(attendeeId, eventId)
-        e <- eventService.get(eventId)
+        a <- services.attendeeService.find(attendeeId, eventId)
+        e <- services.eventService.get(eventId)
         b <- coordinatedBrands(user.account.personId)
       } yield (a, e, b)) flatMap {
         case (None, _, _) => notFound("Attendee not found")
@@ -176,7 +178,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
             formWithErrors ⇒ badRequest(views.html.v2.license.attendeeForm(user, formWithErrors, brands, attendee)),
             license ⇒ {
               brands.find(_._1 == license.brandId) map { brand =>
-                identityService.findByEmail(attendee.email) flatMap {
+                services.identityService.findByEmail(attendee.email) flatMap {
                   case Some(_) =>
                     val msg = "The email of this facilitator is used in another account. This facilitator won't be able to login" +
                       " by email. Please update the email first and then proceed."
@@ -185,14 +187,14 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                   case None =>
                     val actions = for {
                       person <- createPersonFromAttendee(attendee)
-                      license <- licenseService.add(license.copy(licenseeId = person.identifier))
+                      license <- services.licenseService.add(license.copy(licenseeId = person.identifier))
                     } yield (person, license)
                     actions flatMap { case (person, license) =>
-                      profileStrengthService.find(person.identifier, org = false).filter(_.isDefined) map { x ⇒
-                        profileStrengthService.update(ProfileStrength.forFacilitator(x.get))
+                      services.profileStrengthService.find(person.identifier, org = false).filter(_.isDefined) map { x ⇒
+                        services.profileStrengthService.update(ProfileStrength.forFacilitator(x.get))
                       }
                       createFacilitatorAccount(person, brand._2)
-                      activity(license, user.person).created.insert()
+                      activity(license, user.person).created.insert(services)
                       val route: String = routes.People.details(person.identifier).url + "#facilitation"
                       redirect(route, "success" -> "License for brand %s was added".format(brand._2))
                     }
@@ -213,20 +215,20 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    */
   def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      licenseService.findWithBrandAndLicensee(id) flatMap {
+      services.licenseService.findWithBrandAndLicensee(id) flatMap {
         case None => notFound("License not found")
         case Some(view) =>
           val licenseeId = view.licensee.identifier
-          licenseService.delete(id)
-          licenseService.licenses(licenseeId) map { licenses =>
+          services.licenseService.delete(id)
+          services.licenseService.licenses(licenseeId) map { licenses =>
             if (licenses.isEmpty) {
-              userAccountService.findByPerson(licenseeId).filter(_.isDefined).map(_.get) map { account =>
-                userAccountService.update(account.copy(facilitator = false, activeRole = true))
+              services.userAccountService.findByPerson(licenseeId).filter(_.isDefined).map(_.get) map { account =>
+                services.userAccountService.update(account.copy(facilitator = false, activeRole = true))
               }
 
             }
           }
-          activity(view.license, user.person).deleted.insert()
+          activity(view.license, user.person).deleted.insert(services)
           val route: String = routes.People.details(view.licensee.identifier).url + "#facilitation"
           redirect(route, "success" -> "License for brand %s was deleted".format(view.brand.name))
       }
@@ -239,7 +241,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   def edit(id: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      license <- licenseService.find(id)
+      license <- services.licenseService.find(id)
       brands <- coordinatedBrands(user.account.personId)
     } yield (license, brands)) flatMap {
       case (None, _) => notFound("License not found")
@@ -259,7 +261,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    */
   def update(id: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      l <- licenseService.findWithBrandAndLicensee(id)
+      l <- services.licenseService.findWithBrandAndLicensee(id)
       b <- coordinatedBrands(user.account.personId)
     } yield (l, b)) flatMap {
       case (None, _) => redirect(routes.Dashboard.index(), "error" -> Messages("error.notFound", Messages("models.License")))
@@ -271,9 +273,9 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           license ⇒ {
             brands.find(_._1 == license.brandId) map { brand =>
               val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
-              licenseService.update(editedLicense)
+              services.licenseService.update(editedLicense)
 
-              activity(license, user.person).updated.insert()
+              activity(license, user.person).updated.insert(services)
               val route: String = routes.People.details(view.license.licenseeId).url + "#facilitation"
               redirect(route, "success" -> "License was updated")
             } getOrElse {
@@ -290,7 +292,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * @param coordinatorId Coordinator identifier
     */
   protected def coordinatedBrands(coordinatorId: Long): Future[List[(Long, String)]] =
-    brandService.findByCoordinator(coordinatorId) map { brands =>
+    services.brandService.findByCoordinator(coordinatorId) map { brands =>
       brands.map(x => (x.brand.identifier, x.brand.name))
     }
 
@@ -300,7 +302,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * @param person User
     */
   protected def checkOtherAccountEmail(person: Person): Future[Boolean] =
-    identityService.findByEmail(person.email).map(_.exists(_.userId != person.id))
+    services.identityService.findByEmail(person.email).map(_.exists(_.userId != person.id))
 
   /**
     * Returns person object for the given attendee
@@ -312,8 +314,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     person.address_=(Address(None, attendee.street_1, attendee.street_2, attendee.city, attendee.province,
       attendee.postcode, attendee.countryCode.getOrElse("XX")))
     person.socialProfile_=(SocialProfile(objectType = ProfileType.Person))
-    personService.insert(person) map { inserted =>
-      attendeeService.update(attendee.copy(personId = inserted.id))
+    services.personService.insert(person) map { inserted =>
+      services.attendeeService.update(attendee.copy(personId = inserted.id))
       inserted
     }
   }
@@ -327,19 +329,19 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   protected def createFacilitatorAccount(person: Person, brand: String)(implicit request: RequestHeader): Unit = {
     createToken(person.email, isSignUp = false).map { token =>
-      userAccountService.findByPerson(person.identifier) map {
+      services.userAccountService.findByPerson(person.identifier) map {
         case None =>
           val account = UserAccount.empty(person.identifier).copy(byEmail = true, facilitator = true, registered = true)
-          userAccountService.insert(account)
+          services.userAccountService.insert(account)
           setupLoginByEmailEnvironment(person, token)
           sendFacilitatorWelcomeEmail(person, brand, token.uuid)
         case Some(account) =>
           if (!account.byEmail) {
-            userAccountService.update(account.copy(byEmail = true, facilitator = true, registered = true))
+            services.userAccountService.update(account.copy(byEmail = true, facilitator = true, registered = true))
             setupLoginByEmailEnvironment(person, token)
             sendFacilitatorWelcomeEmail(person, brand, token.uuid)
           } else {
-            userAccountService.update(account.copy(facilitator = true, registered = true))
+            services.userAccountService.update(account.copy(facilitator = true, registered = true))
           }
       }
     }

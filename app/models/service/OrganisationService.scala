@@ -26,23 +26,21 @@ package models.service
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database._
-import models.{Account, Member, OrgView, Organisation, Person, ProfileType}
-import play.api.Play
+import models.{Member, OrgView, Organisation, Person, ProfileType}
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class OrganisationService extends HasDatabaseConfig[JdbcProfile]
-  with AccountTable
+class OrganisationService(app: Application, services: Services) extends HasDatabaseConfig[JdbcProfile]
   with MemberTable
   with OrganisationTable
   with OrganisationMembershipTable
-  with SocialProfileTable
-  with Services {
+  with SocialProfileTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val orgs = TableQuery[Organisations]
@@ -62,9 +60,8 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
    * @param id Organisation identifier
    */
   def delete(id: Long): Future[Int] = {
-    db.run(TableQuery[Accounts].filter(_.organisationId === id).delete)
-    memberService.delete(id, person = false)
-    socialProfileService.delete(id, ProfileType.Organisation)
+    services.memberService.delete(id, person = false)
+    services.socialProfileService.delete(id, ProfileType.Organisation)
     db.run(orgs.filter(_.id === id).delete)
   }
 
@@ -146,8 +143,7 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
   def insert(view: OrgView): Future[OrgView] = {
     val query = orgs returning orgs.map(_.id) into ((value, id) => value.copy(id = Some(id)))
     db.run(query += view.org).map { org =>
-      db.run(TableQuery[Accounts] += Account(organisationId = org.id))
-      socialProfileService.insert(view.profile.copy(objectId = org.identifier))
+      services.socialProfileService.insert(view.profile.copy(objectId = org.identifier))
       OrgView(org, view.profile)
     }
   }
@@ -167,7 +163,7 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
    */
   def update(view: OrgView): Future[OrgView] = {
     assert(view.org.id.isDefined, "Can only update Organisations that have an id")
-    socialProfileService.update(view.profile, view.profile.objectType)
+    services.socialProfileService.update(view.profile, view.profile.objectType)
     update(view.org).map { value =>
       OrgView(value, view.profile)
     }
@@ -226,10 +222,4 @@ class OrganisationService extends HasDatabaseConfig[JdbcProfile]
   def updateLogo(id: Long, logo: Boolean): Unit =
     db.run(orgs.filter(_.id === id).map(_.logo).update(logo))
 
-}
-
-object OrganisationService {
-  private val instance = new OrganisationService
-
-  def get: OrganisationService = instance
 }

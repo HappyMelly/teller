@@ -24,7 +24,7 @@
 
 package controllers
 
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Action
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import securesocial.controllers.{BasePasswordReset, BaseRegistration}

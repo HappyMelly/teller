@@ -49,7 +49,7 @@ class BrandFeesApiSpec extends Specification {
       val brandFeeService = mock[BrandFeeService]
       (brandFeeService.findByBrand _).expects(1L).returning(fees)
       val brandService = mock[BrandService]
-      (brandService.find(_: String)).expects("TEST").returning(Some(BrandHelper.one))
+      (services.brandService.find(_: String)).expects("TEST").returning(Some(BrandHelper.one))
       val controller = new TestBrandFeesApi
       controller.feeService_=(brandFeeService)
       controller.brandService_=(brandService)

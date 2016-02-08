@@ -6,33 +6,12 @@ GET           /apiv2                                                         con
 GET           /profile                                                       controllers.Dashboard.profile
 GET           /overview/:id                                                  controllers.Dashboard.overview(id: Long)
 
-GET           /accounts                                                      controllers.Accounts.index
-GET           /accounts/balance                                              controllers.Accounts.previewBalance
-POST          /accounts/balance                                              controllers.Accounts.balanceAccounts
-
-GET           /account/:id                                                   controllers.Accounts.details(id: Long)
-GET           /account/:id/bookings                                          controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
-POST          /account/:id/activate                                          controllers.Accounts.activate(id: Long)
-POST          /account/:id/deactivate                                        controllers.Accounts.deactivate(id: Long)
-
 GET           /admin/settings                                                controllers.admin.Administration.settings
 POST          /admin/transactiontype/new                                     controllers.admin.Administration.createTransactionType
 POST          /admin/transactiontype/:id/delete                              controllers.admin.Administration.deleteTransactionType(id: Long)
 
 GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
 POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
-
-GET           /bookings                                                      controllers.BookingEntries.index
-GET           /booking/new                                                   controllers.BookingEntries.add
-POST          /booking/new                                                   controllers.BookingEntries.create
-GET           /booking/:bookingNumber                                        controllers.BookingEntries.details(bookingNumber: Int)
-POST          /booking/:bookingNumber                                        controllers.BookingEntries.update(bookingNumber: Int)
-GET           /booking/:bookingNumber/edit                                   controllers.BookingEntries.edit(bookingNumber: Int)
-POST          /booking/:bookingNumber/delete                                 controllers.BookingEntries.delete(bookingNumber: Int)
-
-GET           /booking/:bookingNumber/attachment                             controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
-GET           /booking/:bookingNumber/attachment                             controllers.BookingEntries.s3Callback(bookingNumber: Int)
-POST          /booking/:bookingNumber/attachment/delete                      controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
 
 GET           /badge/:hash/picture                                           controllers.brand.Badges.picture(hash: String, size: String ?= "")
 
@@ -146,10 +125,6 @@ DELETE        /event/:id/attendee/:attendeeId                              contr
 GET           /event/:id/attendees                                         controllers.event.Attendees.listByEvent(id: Long)
 
 GET           /eventrequest/:id/unsubscribe                                controllers.EventRequests.unsubscribe(id: String)
-
-GET           /exchangerate                                                controllers.ExchangeRates.rate
-GET           /exchangerate/:target/:amount                                controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
-GET           /exchangerates/:base                                         controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
 
 GET           /member/:id/experiment                                       controllers.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.Experiments.create(id: Long)

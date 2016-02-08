@@ -1,11 +1,9 @@
 package controllers.apiv2.json
 
-import javax.inject.Singleton
-
 import controllers.apiv2.OrganisationsApi
-import models.{Address, LicenseView, Person}
+import models._
 import play.api.i18n.Messages
-import play.api.libs.json.{Json, JsValue, Writes}
+import play.api.libs.json.{JsValue, Json, Writes}
 
 /**
   * Converts a person to JSON
@@ -46,8 +44,8 @@ class PersonConverter(implicit val messages: Messages) {
       "country" -> address.countryCode)
   }
 
-  val personDetailsWrites = new Writes[(Person, List[LicenseView])] {
-    def writes(view: (Person, List[LicenseView])) = {
+  val personDetailsWrites = new Writes[(Person, List[LicenseView], List[ContributionView], List[Organisation])] {
+    def writes(view: (Person, List[LicenseView], List[ContributionView], List[Organisation])) = {
       Json.obj(
         "id" -> view._1.id.get,
         "unique_name" -> view._1.uniqueName,
@@ -65,9 +63,9 @@ class PersonConverter(implicit val messages: Messages) {
         "website" -> view._1.webSite,
         "blog" -> view._1.blog,
         "active" -> view._1.active,
-        "organizations" -> view._1.organisations,
+        "organizations" -> view._4,
         "licenses" -> view._2,
-        "contributions" -> view._1.contributions)
+        "contributions" -> view._3)
     }
   }
 }

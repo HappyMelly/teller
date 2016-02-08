@@ -25,17 +25,17 @@ package models.service
 
 import models.ProfileStrength
 import models.database.ProfileStrengthTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ProfileStrengthService extends HasDatabaseConfig[JdbcProfile]
+class ProfileStrengthService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with ProfileStrengthTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val profiles = TableQuery[ProfileStrengths]
 
@@ -77,10 +77,4 @@ class ProfileStrengthService extends HasDatabaseConfig[JdbcProfile]
     val query = profiles returning profiles.map(_.id) into ((value, id) => value.copy(id = Some(id)))
     db.run(query += strength)
   }
-}
-
-object ProfileStrengthService {
-  private val _instance = new ProfileStrengthService
-
-  def get: ProfileStrengthService = _instance
 }

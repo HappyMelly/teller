@@ -98,7 +98,7 @@ class EmailActor @Inject()(mailerClient: MailerClient) extends Actor {
   import EmailActor._
 
   def receive = {
-    case message: EmailMessage ⇒ {
+    case message: EmailMessage ⇒
 
       import java.io.File
 
@@ -119,5 +119,4 @@ class EmailActor @Inject()(mailerClient: MailerClient) extends Actor {
       Logger.debug(s"Sending e-mail with subject: ${message.subject}")
       mailerClient.send(withBody)
     }
-  }
 }

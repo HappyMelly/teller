@@ -9,16 +9,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Contains methods for notifying Teller users about brand-related events
   */
-class BrandReminder @Inject() (val email: Email) extends Services with Integrations {
+class BrandReminder @Inject() (val email: Email, val services: Services) extends Integrations {
 
   def sendLicenseExpirationReminder(): Unit = {
     (for {
-      brands <- brandService.findAllWithSettings
-      licenses <- licenseService.findAll
+      brands <- services.brandService.findAllWithSettings
+      licenses <- services.licenseService.findAll
     } yield (brands, licenses)) map { case (brands, licenses) =>
       brands.filter(_.settings.licenseExpirationEmail).foreach { view =>
         val facilitatorIds = licenses.filter(_.expiring).map(_.licenseeId).distinct
-        personService.find(facilitatorIds) map { people =>
+        services.personService.find(facilitatorIds) map { people =>
           people.foreach { person =>
             val subject = s"Your ${view.brand.name} License Expires This Month"
             email.send(Set(person), None, None, subject,

@@ -21,39 +21,26 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package models.actors
 
-package models.service.brand
+import javax.inject.Inject
 
-import models.brand.BrandFee
-import models.database.brand.BrandFeeTable
-import play.api.Application
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
-import slick.driver.JdbcProfile
-
+import akka.actor.Actor
+import models.service.Services
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
-class BrandFeeService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
-  with BrandFeeTable {
+/**
+  * This actor recalculates the rating for the given event
+  */
+class EventRatingCalculator @Inject() (val services: Services) extends Actor {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
-  import driver.api._
-
-  private val fees = TableQuery[BrandFees]
-
-  /**
-   * Returns a list of fees belonged to the given brand
-   * @param brandId Brand id
-   */
-  def findByBrand(brandId: Long): Future[List[BrandFee]] =
-    db.run(fees.filter(_.brandId === brandId).result).map(_.toList)
-
-  /**
-   * Inserts the given fee into database and returns the updated fee with ID
-   * @param fee Fee
-   */
-  def insert(fee: BrandFee): Future[BrandFee] = {
-    val query = fees returning fees.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += fee)
+  def receive = {
+    case eventId: Long ⇒
+      services.evaluationService.findByEvent(eventId) map { unfilteredEvaluations =>
+        val evaluations = unfilteredEvaluations.filter(_.approved)
+        val rating = evaluations.foldLeft(0.0f)(_ + _.facilitatorImpression.toFloat / evaluations.length)
+        services.eventService.updateRating(eventId, rating)
+      }
   }
+
 }

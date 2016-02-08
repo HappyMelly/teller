@@ -112,7 +112,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
     val m4 = MemberHelper.make(Some(4L), 2L, person = false, funder = true,
       money = Some(eur(40)))
     m4.memberObj_=(OrganisationHelper.two)
-    (memberService.findAll _) expects () returning List(m1, m2, m3, m4)
+    (services.memberService.findAll _) expects () returning List(m1, m2, m3, m4)
     val result = controller.index().apply(fakeGetRequest("/members"))
     status(result) must equalTo(OK)
     contentAsString(result) must contain("Members")
@@ -281,7 +281,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
             countryCode = country)
       }
     val orgService = mock[OrganisationService]
-    (orgService.findNonMembers _) expects () returning orgs
+    (services.orgService.findNonMembers _) expects () returning orgs
     controller.orgService_=(orgService)
 
     val req = fakeGetRequest("/member/existing/organisation")
@@ -355,7 +355,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
           PersonHelper.make(id = id, firstName = firstName, lastName = lastName)
       }
     val personService = mock[PersonService]
-    (personService.findNonMembers _) expects () returning people
+    (services.personService.findNonMembers _) expects () returning people
     controller.personService_=(personService)
     val result = controller.addExistingPerson().apply(fakeGetRequest())
 
@@ -412,7 +412,7 @@ class MembersSpec extends PlayAppSpec with DataTables {
       existingObject = Some(true))
     member.memberObj_=(PersonHelper.one)
     val memberService = mock[MemberService]
-    (memberService.find(_: Long)) expects 1L returning Some(member)
+    (services.memberService.find(_: Long)) expects 1L returning Some(member)
     controller.memberService_=(memberService)
 
     val result = controller.edit(1L).apply(fakeGetRequest())
@@ -438,8 +438,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
       since = Some(LocalDate.parse("2015-01-15")),
       existingObject = Some(true))
     val memberService = mock[MemberService]
-    (memberService.find(_: Long)) expects 1L returning Some(member)
-    (memberService.update _) expects (where {
+    (services.memberService.find(_: Long)) expects 1L returning Some(member)
+    (services.memberService.update _) expects (where {
       (m: Member) ⇒
         m.objectId == 1 && m.person == true && m.funder == false &&
           m.fee == Money.parse("EUR 100") && m.since == LocalDate.parse("2015-01-31")
@@ -456,8 +456,8 @@ class MembersSpec extends PlayAppSpec with DataTables {
   def e27 = new MockContext {
     val memberService = mock[MemberService]
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = false)
-    (memberService.find(_: Long)).expects(1L).returning(Some(member))
-    (memberService.delete(_, _)).expects(2L, true)
+    (services.memberService.find(_: Long)).expects(1L).returning(Some(member))
+    (services.memberService.delete(_, _)).expects(2L, true)
     controller.memberService_=(memberService)
     val result = controller.delete(1L).apply(fakePostRequest())
 

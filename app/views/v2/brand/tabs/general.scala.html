@@ -1,4 +1,5 @@
 @(brand: Brand,
+    profile: SocialProfile,
     coordinator: Option[Person],
     links: List[models.brand.BrandLink])(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
@@ -42,13 +43,13 @@
             @brand.blog.map { url =>
                 <p><i class="fa fa-rss-square fa-fw fa-lg"></i> <a href="@url" target="_blank">@url</a></p>
             }
-            @brand.socialProfile.skype.map { skype =>
+            @profile.skype.map { skype =>
                 <p><i class="fa fa-skype fa-fw fa-lg"></i>  <a href="skype:@skype" target="_blank">skype</a>
             }
-            @brand.socialProfile.contactForm.map { url =>
+            @profile.contactForm.map { url =>
                 <p><i class="fa fa-globe fa-fw fa-lg"></i> <a href="@url" target="_blank">Contact form</a>
             }
-            @brand.socialProfile.phone.map { phone =>
+            @profile.phone.map { phone =>
                 <p><i class="fa fa-phone fa-fw fa-lg"></i> @phone</p>
             }
         </dl>

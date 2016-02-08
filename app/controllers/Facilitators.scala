@@ -32,6 +32,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
 import models._
+import models.service.Services
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
@@ -46,9 +47,10 @@ import scala.concurrent.Future
  */
 class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironment,
                               override val messagesApi: MessagesApi,
+                              val services: Services,
                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
-  with Utilities {
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware {
 
   implicit val organizationWrites = new Writes[Organisation] {
     def writes(data: Organisation): JsValue = {
@@ -64,7 +66,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
         "first_name" -> data.firstName,
         "last_name" -> data.lastName,
         "id" -> data.id.get,
-        "memberships" -> data.organisations)
+        "memberships" -> data.organisations(services))
     }
   }
 
@@ -80,13 +82,13 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       errors ⇒ badRequest("Country is not chosen"),
       country ⇒
         (for {
-          person <- personService.find(id)
-          countries <- facilitatorService.countries(id)
+          person <- services.personService.find(id)
+          countries <- services.facilitatorService.countries(id)
         } yield (person, countries)) flatMap {
           case (None, _) => notFound("Person not found")
           case (Some(person), countries) =>
             if (!countries.exists(_.country == country)) {
-              facilitatorService.insertCountry(FacilitatorCountry(id, country))
+              services.facilitatorService.insertCountry(FacilitatorCountry(id, country))
             }
             val msg ="New country for facilitator was added"
             val url: String = routes.People.details(id).url + "#facilitation"
@@ -107,18 +109,18 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       errors ⇒ badRequest("Language is not chosen"),
       language ⇒
         (for {
-          person <- personService.find(id)
-          languages <- facilitatorService.languages(id)
+          person <- services.personService.find(id)
+          languages <- services.facilitatorService.languages(id)
         } yield (person, languages)) flatMap {
           case (None, _) => notFound("Person not found")
           case (Some(person), languages) ⇒
             if (!languages.exists(_.language == language)) {
-              facilitatorService.insertLanguage(FacilitatorLanguage(id, language))
+              services.facilitatorService.insertLanguage(FacilitatorLanguage(id, language))
               val query = for {
-                profile <- profileStrengthService.find(id, false) if profile.isDefined
+                profile <- services.profileStrengthService.find(id, false) if profile.isDefined
               } yield profile.get
               query map { profile =>
-                profileStrengthService.update(profile.markComplete("language"))
+                services.profileStrengthService.update(profile.markComplete("language"))
               }
             }
             val msg = "New language for facilitator was added"
@@ -130,14 +132,15 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
     * Retrieves badges for the given facilitator
+    *
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
     */
   def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
       (for {
-        f <- facilitatorService.find(brandId, personId)
-        b <- brandBadgeService.findByBrand(brandId)
+        f <- services.facilitatorService.find(brandId, personId)
+        b <- services.brandBadgeService.findByBrand(brandId)
       } yield (f, b)) flatMap {
         case (None, _) => notFound("Facilitator not found")
         case (Some(facilitator), badges) =>
@@ -154,7 +157,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     */
   def deleteCountry(id: Long, country: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      facilitatorService.deleteCountry(id, country) flatMap { _ =>
+      services.facilitatorService.deleteCountry(id, country) flatMap { _ =>
         val url: String = routes.People.details(id).url + "#facilitation"
         redirect(url, "success" -> "Country was deleted from facilitator")
       }
@@ -168,11 +171,11 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
    */
   def deleteLanguage(id: Long, language: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      facilitatorService.deleteLanguage(id, language) flatMap { _ =>
-        profileStrengthService.find(id, org = false) map {
+      services.facilitatorService.deleteLanguage(id, language) flatMap { _ =>
+        services.profileStrengthService.find(id, org = false) map {
           case None => Future.successful(None)
           case Some(profile) =>
-            profileStrengthService.update(profile.markIncomplete("language"))
+            services.profileStrengthService.update(profile.markIncomplete("language"))
         }
         val url: String = routes.People.details(id).url + "#facilitation"
         redirect(url, "success" -> "Language was deleted from facilitator")
@@ -182,8 +185,8 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   def details(id: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        facilitator <- facilitatorService.find(brandId, id)
-        badges <- brandBadgeService.findByBrand(brandId)
+        facilitator <- services.facilitatorService.find(brandId, id)
+        badges <- services.brandBadgeService.findByBrand(brandId)
       } yield (facilitator, badges)) flatMap {
         case (None, _) => notFound("Facilitator not found")
         case (Some(facilitator), badges) =>
@@ -199,12 +202,12 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user =>
       (for {
-        licenses <- licenseService.findByBrand(brandId)
-        facilitators <- facilitatorService.findByBrand(brandId)
-        people <- personService.find(licenses.map(_.licenseeId))
-        badges <- brandBadgeService.findByBrand(brandId)
+        licenses <- services.licenseService.findByBrand(brandId)
+        facilitators <- services.facilitatorService.findByBrand(brandId)
+        people <- services.personService.find(licenses.map(_.licenseeId))
+        badges <- services.brandBadgeService.findByBrand(brandId)
       } yield (licenses, facilitators, people, badges)) flatMap { case (licenses, facilitatorData, people, badges) =>
-        personService.collection.addresses(people)
+        services.personService.collection.addresses(people)
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           val facilitators = licenses.map { license =>
             val person = people.find(_.identifier == license.licenseeId).get
@@ -246,9 +249,9 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       val ord = new Ordering[String] {
         def compare(x: String, y: String) = collator.compare(x, y)
       }
-      licenseService.licensees(brandId, LocalDate.now()) flatMap { facilitators =>
+      services.licenseService.licensees(brandId, LocalDate.now()) flatMap { facilitators =>
         if (facilitators.nonEmpty) {
-          personService.collection.organisations(facilitators)
+          services.personService.collection.organisations(facilitators)
         }
         ok(Json.toJson(facilitators.sortBy(_.fullName.toLowerCase)(ord)))
       }
@@ -256,6 +259,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
     * Updates badges for the given facilitator
+    *
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
     */
@@ -266,13 +270,13 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
         errors => jsonBadRequest("'badges' field doesn't exist"),
         badges =>
           (for {
-            f <- facilitatorService.find(brandId, personId)
-            b <- brandBadgeService.findByBrand(brandId)
+            f <- services.facilitatorService.find(brandId, personId)
+            b <- services.brandBadgeService.findByBrand(brandId)
           } yield (f, b.map(_.id.get))) flatMap {
             case (None, _) => jsonNotFound("Facilitator not found")
             case (Some(facilitator), brandBadges) =>
               val valueToUpdate = facilitator.copy(badges = badges.filter(x => brandBadges.contains(x)))
-              facilitatorService.update(valueToUpdate) flatMap { _ =>
+              services.facilitatorService.update(valueToUpdate) flatMap { _ =>
                 jsonSuccess("Badges were updated")
               }
 

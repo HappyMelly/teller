@@ -77,7 +77,7 @@ class MembershipSpec extends Specification {
       person.organisations_=(List())
       val org = OrganisationHelper.one
       val orgService = mock[OrganisationService]
-      (orgService.member _).expects(*).returning(None)
+      (services.orgService.member _).expects(*).returning(None)
       org.orgService_=(orgService)
 
       controller.call(data, person, Some(org)) must throwA[Membership.ValidationException]("error.person.notOrgMember")

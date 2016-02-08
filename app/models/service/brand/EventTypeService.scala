@@ -26,17 +26,17 @@ package models.service.brand
 
 import models.brand.EventType
 import models.database.brand.EventTypeTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EventTypeService extends HasDatabaseConfig[JdbcProfile]
+class EventTypeService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
   with EventTypeTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val types = TableQuery[EventTypes]
 
@@ -97,8 +97,3 @@ class EventTypeService extends HasDatabaseConfig[JdbcProfile]
   }
 }
 
-object EventTypeService {
-  private val instance = new EventTypeService
-
-  def get: EventTypeService = instance
-}

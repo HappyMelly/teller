@@ -30,6 +30,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.event.Attendee
+import models.service.Services
 import models.{Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.i18n.MessagesApi
@@ -46,9 +47,10 @@ import scala.util.Random
  */
 class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
+                            val services: Services,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
-  with Utilities {
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware {
 
   val TOP_LIMIT = 10
   val COLORS = Array(
@@ -88,8 +90,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
   def byFacilitators(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        licenses <- licenseService.findByBrand(brandId)
-        profiles <- profileStrengthService.find(licenses.map(_.licenseeId), false)
+        licenses <- services.licenseService.findByBrand(brandId)
+        profiles <- services.profileStrengthService.find(licenses.map(_.licenseeId), false)
       } yield (licenses, profiles)) flatMap { case (licenses, profiles) =>
         val (joined, left) = calculatedJoinedLeftNumbers(licenses)
         val goodProfiles = profiles.filter(_.progress >= 80)
@@ -124,7 +126,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
   def byEvents(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val actions = for {
-        events <- eventService.findByParameters(Some(brandId))
+        events <- services.eventService.findByParameters(Some(brandId))
         monthlyNumbers <- calculateLastMonthNumbers(events)
         cancelledEvents <- calculatedCanceledEventsNumbers(brandId)
       } yield (events, monthlyNumbers, cancelledEvents)
@@ -183,7 +185,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def byCountries(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      eventService.findByParameters(Some(brandId), confirmed = Some(true), future = Some(false)) flatMap { events =>
+      services.eventService.findByParameters(Some(brandId), confirmed = Some(true), future = Some(false)) flatMap { events =>
         val perCountry = filterLastSixMonths(events).
           groupBy(_.location.countryCode).
           map(x ⇒ (Countries.name(x._1), x._2.length)).
@@ -211,7 +213,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def byParticipants(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      attendeeService.findByBrand(Some(brandId)) flatMap { results =>
+      services.attendeeService.findByBrand(Some(brandId)) flatMap { results =>
         val attendees = results.map(x => (x.attendee, x.event.schedule.start))
         val statsByRoles = attendees.
           filter(_._1.role.exists(_.nonEmpty)).
@@ -264,7 +266,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param brandId Brand identifier
    */
   protected def calculatedCanceledEventsNumbers(brandId: Long): Future[(Int, Int)] = {
-    eventCancellationService.findByBrands(List(brandId)) map { results =>
+    services.eventCancellationService.findByBrands(List(brandId)) map { results =>
       val cancellations = results.filter(x => lastMonth.contains(x.start.toDate.getTime) ||
         lastMonth.contains(x.end.toDate.getTime))
       (cancellations.count(!_.free), cancellations.count(_.free))
@@ -290,8 +292,8 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def activityRangeNumbers(events: List[Event]): (Int, List[(Long, String, Int)], Int) = {
     val filtered = filterByActivityRange(events)
     val organizers = filtered.map(_.organizer.id).distinct.length
-    eventService.applyFacilitators(filtered)
-    val activeFacilitators = filtered.map(_.facilitators.map(_.id.get)).distinct.length
+    services.eventService.applyFacilitators(filtered)
+    val activeFacilitators = filtered.map(_.facilitators(services).map(_.id.get)).distinct.length
     (activeFacilitators, findTopFacilitators(filtered), organizers)
   }
 
@@ -318,7 +320,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   protected def findTopFacilitators(events: List[Event]): List[(Long, String, Int)] = {
     events.filter(_.schedule.end.isBefore(LocalDate.now)).
-      flatMap(_.facilitators).
+      flatMap(_.facilitators(services)).
       groupBy(_.id.get).map(y => (y._1, y._2.head.fullName, y._2.length)).toList.
       sortBy(_._3).takeRight(TOP_LIMIT).reverse
   }
@@ -342,7 +344,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param events List of events
    */
   protected def calculateNPS(events: List[Event]): Future[Float] = {
-    evaluationService.findByEvents(events.map(_.id.get)) map { evaluations =>
+    services.evaluationService.findByEvents(events.map(_.id.get)) map { evaluations =>
       if (evaluations.nonEmpty) {
         val promoters = evaluations.count(_.impression >= 9)
         val detractors = evaluations.count(_.impression <= 6)

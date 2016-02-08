@@ -1,9 +1,8 @@
 package models.service.admin
 
 import models.admin.TransactionType
-import models.database.BookingEntryTable
 import models.database.admin.TransactionTypeTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -13,11 +12,10 @@ import scala.concurrent.Future
 /**
   * Contains a set of methods for working with transaction types
   */
-class TransactionTypeService extends HasDatabaseConfig[JdbcProfile]
-  with BookingEntryTable
+class TransactionTypeService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with TransactionTypeTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val transactionTypes = TableQuery[TransactionTypes]
 
@@ -27,7 +25,6 @@ class TransactionTypeService extends HasDatabaseConfig[JdbcProfile]
     */
   def delete(id: Long): Future[Unit] = {
     val actions = (for {
-      _ <- TableQuery[BookingEntries].filter(_.transactionTypeId === id).map(_.transactionTypeId).update(None)
       _ <- transactionTypes.filter(_.id === id).delete
     } yield ()).transactionally
     db.run(actions)
@@ -50,10 +47,4 @@ class TransactionTypeService extends HasDatabaseConfig[JdbcProfile]
     */
   def insert(value: String): Future[Int] =
     db.run(transactionTypes += TransactionType(None, value))
-}
-
-object TransactionTypeService {
-  private val _instance = new TransactionTypeService
-
-  def get: TransactionTypeService = _instance
 }

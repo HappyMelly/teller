@@ -1,7 +1,7 @@
 @(user: ActiveUser,
     id: Option[Long],
     people: List[Person],
-    form: Form[Brand])(implicit flash: Flash,
+    form: Form[BrandProfileView])(implicit flash: Flash,
         request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,

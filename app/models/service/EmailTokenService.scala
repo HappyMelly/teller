@@ -28,7 +28,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.EmailToken
 import models.database.EmailTokenTable
 import org.joda.time.DateTime
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -38,10 +38,10 @@ import scala.concurrent.Future
 /**
   * Contains methods for managing EmailToken records in database
   */
-class EmailTokenService extends HasDatabaseConfig[JdbcProfile]
+class EmailTokenService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with EmailTokenTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val tokens = TableQuery[EmailTokens]
 
@@ -68,10 +68,4 @@ class EmailTokenService extends HasDatabaseConfig[JdbcProfile]
     * @param token Token
     */
   def insert(token: EmailToken): Future[EmailToken] = db.run(tokens += token).map(_ => token)
-}
-
-object EmailTokenService {
-  private val _instance = new EmailTokenService
-
-  def get: EmailTokenService = _instance
 }

@@ -26,7 +26,7 @@ package models.service.brand
 
 import models.brand.CertificateTemplate
 import models.database.brand.CertificateTemplateTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -36,10 +36,10 @@ import scala.concurrent.Future
 /**
  * Contains a set of functions for managing templates in database
  */
-class CertificateTemplateService extends HasDatabaseConfig[JdbcProfile]
+class CertificateTemplateService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
   with CertificateTemplateTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val templates = TableQuery[CertificateTemplates]
 
@@ -75,10 +75,4 @@ class CertificateTemplateService extends HasDatabaseConfig[JdbcProfile]
     db.run(query += template)
   }
 
-}
-
-object CertificateTemplateService {
-  private val instance = new CertificateTemplateService
-
-  def get: CertificateTemplateService = instance
 }

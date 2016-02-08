@@ -26,7 +26,7 @@ package models.service
 
 import models._
 import models.database._
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers._
 import slick.driver.JdbcProfile
@@ -34,7 +34,7 @@ import slick.driver.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class IdentityService extends HasDatabaseConfig[JdbcProfile]
+class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with MemberTable
   with PasswordIdentityTable
   with PersonTable
@@ -42,7 +42,7 @@ class IdentityService extends HasDatabaseConfig[JdbcProfile]
   with SocialIdentityTable
   with UserAccountTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val identities = TableQuery[SocialIdentities]
@@ -236,10 +236,4 @@ class IdentityService extends HasDatabaseConfig[JdbcProfile]
     db.run(identities.filter(_.uid === existing.uid).update(identity)).map(_ => identity)
   }
 
-}
-
-object IdentityService {
-  private val instance = new IdentityService
-
-  def get: IdentityService = instance
 }

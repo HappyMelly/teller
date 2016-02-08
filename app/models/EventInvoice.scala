@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,25 +21,15 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
-import models.service.{Services, OrganisationService}
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
+case class InvoiceView(invoice: EventInvoice, invoiceTo: String, invoiceBy: Option[String])
 
 case class EventInvoice(id: Option[Long],
     eventId: Option[Long],
     invoiceTo: Long,
     invoiceBy: Option[Long],
-    number: Option[String]) extends Services {
-
-  lazy val invoiceToOrg: Option[Organisation] = Await.result(orgService.find(invoiceTo), 3.seconds)
-  lazy val invoiceByOrg: Option[Organisation] = invoiceBy flatMap { value =>
-    Await.result(orgService.find(value), 3.seconds)
-  }
-}
+    number: Option[String])
 
 object EventInvoice {
 

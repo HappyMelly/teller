@@ -2,8 +2,9 @@ package controllers.apiv2
 
 import javax.inject.Inject
 
-import controllers.{Experiments, Utilities}
+import controllers.Experiments
 import models.Experiment
+import models.service.Services
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
@@ -12,7 +13,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Experiments API
  */
-class ExperimentsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Utilities {
+class ExperimentsApi @Inject() (val services: Services,
+                                override val messagesApi: MessagesApi)
+  extends ApiAuthentication(services, messagesApi) {
 
   implicit val experimentWrites = new Writes[Experiment] {
     def writes(experiment: Experiment): JsValue = {
@@ -30,10 +33,10 @@ class ExperimentsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthent
    */
   def experiments() = TokenSecuredAction(readWrite = false) { implicit request =>  implicit token =>
     (for {
-      experiments <- experimentService.findAll()
-      members <- memberService.find(experiments.map(_.memberId).distinct)
-      people <- personService.find(members.filter(_.person).map(_.objectId))
-      orgs <- orgService.find(members.filterNot(_.person).map(_.objectId))
+      experiments <- services.experimentService.findAll()
+      members <- services.memberService.find(experiments.map(_.memberId).distinct)
+      people <- services.personService.find(members.filter(_.person).map(_.objectId))
+      orgs <- services.orgService.find(members.filterNot(_.person).map(_.objectId))
     } yield (experiments, members, people, orgs)) flatMap { case (experiments, members, people, orgs) =>
       val filteredExperiments = experiments.sortBy(_.recordInfo.updated.toString).reverse
       jsonOk(JsArray(Json.toJson(filteredExperiments).as[List[JsObject]].map { experiment =>

@@ -63,7 +63,7 @@ class ProductConverter(implicit val messages: Messages) {
         "brands" -> obj.brands,
         "category" -> category(obj.product.category),
         "parent" -> obj.product.parentId,
-        "contributors" -> obj.product.contributors)
+        "contributors" -> obj.contributors)
     }
   }
 

@@ -4,7 +4,9 @@
     otherPeople: List[Person],
     contributions: List[ContributionView],
     products: List[Product],
-    payments: List[payment.Record])(implicit request: Request[Any],
+    member: Option[Member],
+    payments: List[payment.Record],
+    deletable: Boolean)(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
@@ -18,26 +20,26 @@
 
 @v2.main(view.org.name + " - Organization", "orgs", user) {
   <div class="row profile-header
-    @if(view.org.member.nonEmpty) { @if(view.org.member.get.funder) { funder } else { supporter }}">
+    @if(member.nonEmpty) { @if(member.get.funder) { funder } else { supporter }}">
     <div class="container">
       <div class="content-block">
         <h2>@view.org.name
-        @view.org.member.map { member =>
+        @member.map { member =>
           <div class="membership-type">
             @if(member.funder) { Funder } else { Supporter }
           </div>
         }
         </h2>
-        @views.html.element.profiles(view.profile, view.org.member)
+        @views.html.element.profiles(view.profile, member)
         <div class="actions pull-right">
           @restrict(handler, List(as(Role.Admin.toString))) {
             <div class="button">
               <form class="delete form-inline" method="post" text="organisation"
                 action="@CSRF(routes.Organisations.delete(view.org.id.getOrElse(0)))">
                 <div data-toggle="tooltip" data-placement="bottom"
-                  @if(!view.org.deletable) { title="@Messages("error.view.org.nonDeletable")" }>
+                  @if(!deletable) { title="@Messages("error.view.org.nonDeletable")" }>
                     <button class="btn btn-default" type="submit"
-                      @if(!view.org.deletable) { disabled="disabled" }>Delete
+                      @if(!deletable) { disabled="disabled" }>Delete
                     </button>
                 </div>
               </form>
@@ -72,7 +74,7 @@
     <div class="container">
       <div class="left">
         @views.html.v2.organisation.blocks.logo(view.org, "199")
-        @views.html.v2.organisation.blocks.navigation(view)
+        @views.html.v2.organisation.blocks.navigation(view, member)
       </div>
       <div class="center tab-content">
         @if(!view.org.active) {
@@ -87,10 +89,10 @@
         <div class="tab-pane" id="contributions">
           @v2.element.contributions("organisation", contributions)
         </div>
-        @view.org.member.map { member =>
+        @member.map { member =>
           <div class="tab-pane" id="experiments"></div>
           <div class="tab-pane" id="membership">
-            @views.html.v2.organisation.tabs.membership(user, view.org, payments)
+            @views.html.v2.organisation.tabs.membership(user, view.org, member, payments)
           </div>
         }
       </div>

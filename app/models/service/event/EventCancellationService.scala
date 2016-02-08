@@ -26,7 +26,7 @@ package models.service.event
 
 import models.database.event.EventCancellationTable
 import models.event.EventCancellation
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -34,10 +34,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
 
-class EventCancellationService extends HasDatabaseConfig[JdbcProfile]
+class EventCancellationService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
   with EventCancellationTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val cancellations = TableQuery[EventCancellations]
@@ -60,12 +60,5 @@ class EventCancellationService extends HasDatabaseConfig[JdbcProfile]
     val query = cancellations returning cancellations.map(_.id) into ((value, id) => value.copy(id = Some(id)))
     db.run(query += cancellation)
   }
-
-}
-
-object EventCancellationService {
-  private val instance = new EventCancellationService()
-
-  def get: EventCancellationService = instance
 
 }

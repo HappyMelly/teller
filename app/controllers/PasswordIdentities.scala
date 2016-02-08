@@ -11,7 +11,9 @@ import scala.util.Random
 /**
   * Contains a set of methods for setting up new user account with access by email
   */
-trait PasswordIdentities extends BasePasswordReset with Services with AsyncController {
+trait PasswordIdentities extends BasePasswordReset with AsyncController {
+
+  val services: Services
 
   /**
     * Creates dummy password and adds all required records to resetting password for newly created account
@@ -25,7 +27,7 @@ trait PasswordIdentities extends BasePasswordReset with Services with AsyncContr
       dummyPassword.password,
       Some(person.firstName),
       Some(person.lastName), dummyPassword.hasher)
-    identityService.insert(identity)
+    services.identityService.insert(identity)
     env.userService.saveToken(token)
   }
 

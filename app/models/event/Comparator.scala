@@ -36,12 +36,9 @@ import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.concurrent.duration._
 
-object Comparator extends Services {
+class Comparator(services: Services) {
 
-  abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
-    def changed() = oldValue != newValue
-    def printable(): (String, String, String) = (label, newValue.toString, oldValue.toString)
-  }
+  import Comparator._
 
   class SimpleFieldChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
     def toStr = s"$label: $newValue (was: $oldValue)"
@@ -59,8 +56,8 @@ object Comparator extends Services {
 
     protected def names: Future[(String, String)] = {
       (for {
-        o <- brandService.get(oldValue)
-        n <- brandService.get(newValue)
+        o <- services.brandService.get(oldValue)
+        n <- services.brandService.get(newValue)
       } yield (o, n)) map { case (oldBrand, newBrand) =>
         (oldBrand.name, newBrand.name)
       }
@@ -79,8 +76,8 @@ object Comparator extends Services {
 
     protected def names: Future[(String, String)] = {
       (for {
-        o <- eventTypeService.get(oldValue)
-        n <- eventTypeService.get(newValue)
+        o <- services.eventTypeService.get(oldValue)
+        n <- services.eventTypeService.get(newValue)
       } yield (o, n)) map { case (oldEventType, newEventType) =>
         (oldEventType.name, newEventType.name)
       }
@@ -99,8 +96,8 @@ object Comparator extends Services {
 
     protected def names: Future[(String, String)] = {
       (for {
-        o <- orgService.get(oldValue)
-        n <- orgService.get(newValue)
+        o <- services.orgService.get(oldValue)
+        n <- services.orgService.get(newValue)
       } yield (o, n)) map { case (oldEventType, newEventType) =>
         (oldEventType.name, newEventType.name)
       }
@@ -119,8 +116,8 @@ object Comparator extends Services {
 
     protected def facilitators: Future[(String, String)] = {
       (for {
-        o <- personService.find(oldValue.diff(newValue))
-        n <- personService.find(newValue.diff(oldValue))
+        o <- services.personService.find(oldValue.diff(newValue))
+        n <- services.personService.find(newValue.diff(oldValue))
       } yield (o, n)) map { case (removed, added) =>
         (added.map(_.fullName).mkString(", "), removed.map(_.fullName).mkString(", "))
       }
@@ -161,10 +158,18 @@ object Comparator extends Services {
       new SimpleFieldChange("Private Event", was.event.notPublic.toString, now.event.notPublic.toString),
       new SimpleFieldChange("Achived Event", was.event.archived.toString, now.event.archived.toString),
       new SimpleFieldChange("Follow Up Emails", was.event.followUp.toString, now.event.followUp.toString),
-      new FacilitatorChange("Facilitators", was.event.facilitatorIds, now.event.facilitatorIds),
+      new FacilitatorChange("Facilitators", was.event.facilitatorIds(services), now.event.facilitatorIds(services)),
       new InvoiceChange("Invoice To", was.invoice.invoiceTo, now.invoice.invoiceTo))
 
     changes.filter(change ⇒ change.changed())
   }
 
+}
+
+object Comparator {
+
+  abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
+    def changed() = oldValue != newValue
+    def printable(): (String, String, String) = (label, newValue.toString, oldValue.toString)
+  }
 }

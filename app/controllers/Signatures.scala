@@ -29,6 +29,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Person
+import models.service.Services
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -36,8 +37,9 @@ import scala.concurrent.Future
 
 class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
+                            val services: Services,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Files
   with Activities {
 
@@ -48,12 +50,12 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def delete(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      personService.find(personId) flatMap {
+      services.personService.find(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
           val result = if (person.signature) {
             Person.signature(personId).remove()
-            personService.update(person.copy(signature = false))
+            services.personService.update(person.copy(signature = false))
           } else {
             Future.successful(None)
           }
@@ -78,12 +80,12 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def upload(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      personService.find(personId) flatMap {
+      services.personService.find(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
           val route: String = routes.People.details(personId).url + "#facilitation"
           uploadFile(Person.signature(personId), "signature") map { _ ⇒
-            personService.update(person.copy(signature = true))
+            services.personService.update(person.copy(signature = true))
             Redirect(route).flashing("success" -> "Signature was uploaded")
           } recover {
             case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)

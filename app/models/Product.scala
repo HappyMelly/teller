@@ -43,7 +43,7 @@ object ProductCategory extends Enumeration {
   val Course = Value("course")
 }
 
-case class ProductView(product: Product, brands: List[Brand])
+case class ProductView(product: Product, brands: List[Brand], contributors: List[ContributorView])
 
 /**
  * A thing such as a book, a game or a piece of software
@@ -64,18 +64,6 @@ case class Product(
     createdBy: String,
     updated: DateTime,
     updatedBy: String) {
-
-  def contributors: List[ContributorView] = Await.result(ContributionService.get.contributors(this.id.get), 3.seconds)
-
-  /**
-   * Assign this product to a brand
-   */
-  def addBrand(brandId: Long) = ProductService.get.addBrand(this.id.get, brandId)
-
-  /**
-   * Unassign this product to a brand
-   */
-  def deleteBrand(brandId: Long) = ProductService.get.deleteBrand(this.id.get, brandId)
 
 }
 

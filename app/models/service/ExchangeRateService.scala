@@ -1,13 +1,36 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
 package models.service
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.JodaMoney._
 import models.ExchangeRate
+import models.JodaMoney._
 import models.database.ExchangeRateTable
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTimeZone._
 import org.joda.time.LocalDate
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -17,10 +40,10 @@ import scala.concurrent.Future
 /**
   * Set of methods for managing exchange rate records
   */
-class ExchangeRateService extends HasDatabaseConfig[JdbcProfile]
+class ExchangeRateService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with ExchangeRateTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   val rates = TableQuery[ExchangeRates]
 
@@ -70,10 +93,4 @@ class ExchangeRateService extends HasDatabaseConfig[JdbcProfile]
       case rate ⇒ rate
     })
   }
-}
-
-object ExchangeRateService {
-  private val _instance = new ExchangeRateService
-
-  def get: ExchangeRateService = _instance
 }

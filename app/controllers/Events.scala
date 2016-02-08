@@ -31,6 +31,7 @@ import mail.reminder.EvaluationReminder
 import models.UserRole.Role
 import models.event.{Attendee, Comparator}
 import models.event.Comparator.FieldChange
+import models.service.Services
 import models.{Location, Schedule, _}
 import org.joda.time.LocalDate
 import play.api.data.Forms._
@@ -47,14 +48,15 @@ import scala.concurrent.Future
 
 class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                      override val messagesApi: MessagesApi,
+                                     val services: Services,
                                      val email: Email,
                                      deadbolt: DeadboltActions,
                                      handlers: HandlerCache,
                                      actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware
   with Integrations
   with Activities
-  with Utilities
   with I18nSupport {
 
   val dateRangeFormatter = new Formatter[LocalDate] {
@@ -143,7 +145,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
           view.event.details, view.event.organizer, view.event.schedule,
           view.event.notPublic, view.event.archived, view.event.confirmed,
           view.event.free, view.event.followUp, view.invoice.invoiceTo,
-          view.event.facilitatorIds))
+          view.event.facilitatorIds(services)))
 
       }))
 
@@ -152,7 +154,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def add = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.findByUser(user.account) flatMap { brands =>
+      services.brandService.findByUser(user.account) flatMap { brands =>
         val defaultDetails = Details(Some(""), Some(""))
         val organizer = Organizer(0, Some(""), Some(""))
         val defaultSchedule = Schedule(LocalDate.now(), LocalDate.now().plusDays(1), 8, 0)
@@ -176,8 +178,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   def duplicate(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler => implicit user ⇒ implicit event =>
       (for {
-        e <- eventService.findWithInvoice(id)
-        b <- brandService.findByUser(user.account)
+        e <- services.eventService.findWithInvoice(id)
+        b <- services.brandService.findByUser(user.account)
       } yield (e, b)) flatMap {
         case (None, _) => notFound("Event not found")
         case (Some(view), brands) =>
@@ -199,8 +201,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             case Some(errors) =>
               formError(user, form.withError("facilitatorIds", Messages("error.event.invalidLicense")), None)
             case None =>
-              eventService.insert(view) flatMap { inserted =>
-                val log = activity(inserted.event, user.person).created.insert()
+              services.eventService.insert(view) flatMap { inserted =>
+                val log = activity(inserted.event, user.person).created.insert(services)
                 sendEmailNotification(view.event, List.empty, log)
                 redirect(routes.Events.index(inserted.event.brandId), "success" -> "Event was added")
               }
@@ -225,12 +227,12 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
           "participantNumber" -> optional(number),
           "details" -> optional(text))(CancellationData.apply)(CancellationData.unapply))
 
-      if (event.deletable) {
+      if (event.deletable(services)) {
         cancelForm.bindFromRequest.fold(
           failure ⇒ redirect(routes.Dashboard.index(), "error" -> "Something goes wrong :("),
           data ⇒ {
-            event.cancel(user.person.id.get, data.reason, data.participants, data.details)
-            val log = activity(event, user.person).deleted.insert()
+            event.cancel(user.person.id.get, data.reason, data.participants, data.details, services)
+            val log = activity(event, user.person).deleted.insert(services)
             sendEmailNotification(event, List.empty, log)
             redirect(routes.Dashboard.index(), "success" -> "Event was cancelled")
           })
@@ -246,8 +248,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
-      eventService.confirm(id) flatMap { _ =>
-        val log = activity(event, user.person).confirmed.insert()
+      services.eventService.confirm(id) flatMap { _ =>
+        val log = activity(event, user.person).confirmed.insert(services)
         success(id, log.toString)
       }
   }
@@ -260,19 +262,19 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def invoice(id: Long) = AsyncSecuredEventAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      eventService.findWithInvoice(id) flatMap {
+      services.eventService.findWithInvoice(id) flatMap {
         case None => notFound("")
         case Some(view) =>
           invoiceForm.bindFromRequest.fold(
             formWithErrors ⇒ error(id, "Invoice data are wrong. Please try again"),
             invoiceData ⇒ {
               val (invoiceBy, number) = invoiceData
-              orgService.find(invoiceBy) flatMap {
+              services.orgService.find(invoiceBy) flatMap {
                 case None => notFound("Organisation not found")
                 case Some(_) =>
                   val invoice = view.invoice.copy(invoiceBy = Some(invoiceBy), number = number)
-                  eventInvoiceService.update(invoice)
-                  activity(view.event, user.person).updated.insert()
+                  services.eventInvoiceService.update(invoice)
+                  activity(view.event, user.person).updated.insert(services)
                   success(id, "Invoice data was successfully updated")
               }
             })
@@ -286,32 +288,31 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def details(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      eventService.findWithInvoice(id) flatMap {
-        case None => notFound("")
+      services.eventService.findWithInvoice(id) flatMap {
+        case None => notFound("Event not found")
         case Some(x) =>
-          (for {
-            eventType <- eventTypeService.find(x.event.eventTypeId) if eventType.isDefined
-            fees <- feeService.findByBrand(x.event.brandId)
-          } yield (eventType.get, fees)) flatMap { case (eventType, fees) =>
+          val query = for {
+            eventType <- services.eventTypeService.get(x.event.eventTypeId)
+            fees <- services.feeService.findByBrand(x.event.brandId)
+            invoiceOrgs <- services.orgService.find(List(x.invoice.invoiceTo, x.invoice.invoiceBy.getOrElse(0L)))
+            attendees <- services.attendeeService.findByEvents(List(id))
+          } yield (eventType, fees, invoiceOrgs, attendees.isEmpty)
+          query flatMap { case (eventType, fees, invoiceOrgs, deletable) =>
+            val printableFees = fees.map(x ⇒ (Countries.name(x.country), x.fee.toString)).sortBy(_._1)
+            val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
+              Event.withFee(x.event, y.fee, eventType.maxHours)
+            } getOrElse x.event
+            val invoiceView = invoice(x.invoice, invoiceOrgs)
+
+            implicit val service: Services = services
             roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
-              val orgs = user.person.organisations
-              val printableFees = fees.
-                map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-                sortBy(_._1)
-              val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
-                Event.withFee(x.event, y.fee, eventType.maxHours)
-              } getOrElse x.event
-              ok(views.html.v2.event.details(user, view.brand, brands, orgs,
-                EventView(event, x.invoice), eventType.name, printableFees))
+              services.personService.memberships(user.person.identifier) flatMap { orgs =>
+                ok(views.html.v2.event.details(user, view.brand, brands, orgs, event,
+                  invoiceView, eventType.name, printableFees, deletable))
+              }
             } { (view, brands) =>
-              val printableFees = fees.
-                map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-                sortBy(_._1)
-              val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
-                Event.withFee(x.event, y.fee, eventType.maxHours)
-              } getOrElse x.event
-              ok(views.html.v2.event.details(user, view.get.brand, brands, List(),
-                EventView(event, x.invoice), eventType.name, printableFees))
+              ok(views.html.v2.event.details(user, view.get.brand, brands, List(), event,
+                invoiceView, eventType.name, printableFees, deletable))
             } {
               redirect(routes.Dashboard.index())
             }
@@ -320,9 +321,23 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       }
   }
 
+  /**
+    * Returns invoice view object ready for the representation
+    * @param invoice Invoice
+    * @param orgs List of organisations related to the invoice
+    */
+  protected def invoice(invoice: EventInvoice, orgs: List[Organisation]): InvoiceView = {
+    val invoiceTo = orgs.filter(_.identifier == invoice.invoiceTo).map(_.name).head
+    val invoiceBy = orgs.filter(_.id == invoice.invoiceBy).map(_.name).headOption
+    InvoiceView(invoice, invoiceTo, invoiceBy)
+  }
+
   def detailsButtons(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
-      ok(views.html.v2.event.detailsButtons(event))
+      services.attendeeService.findByEvents(List(id)) flatMap { attendees =>
+        ok(views.html.v2.event.detailsButtons(event, attendees.isEmpty))
+      }
+
   }
 
   /**
@@ -333,8 +348,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   def edit(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       (for {
-        e <- eventService.findWithInvoice(id)
-        b <- brandService.findByUser(user.account)
+        e <- services.eventService.findWithInvoice(id)
+        b <- services.brandService.findByUser(user.account)
       } yield (e, b)) flatMap {
         case (None, _) => notFound("Event not found")
         case (Some(view), brands) =>
@@ -350,7 +365,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
-        licenseService.allLicensees(brandId) flatMap { facilitators =>
+        services.licenseService.allLicensees(brandId) flatMap { facilitators =>
           val names = facilitators.map(l ⇒ (l.identifier, l.fullName)).sortBy(_._2)
           ok(views.html.v2.event.index(user, view.brand, brands, names))
         }
@@ -394,7 +409,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
               "country" -> data.event.location.countryCode.toLowerCase,
               "countryName" -> data.event.location.countryName,
               "city" -> data.event.location.city),
-            "facilitators" -> data.event.facilitators,
+            "facilitators" -> data.event.facilitators(services),
             "schedule" -> Json.obj(
               "start" -> data.event.schedule.start.toString,
               "end" -> data.event.schedule.end.toString,
@@ -418,20 +433,20 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
 
       roleDiffirentiator(user.account, Some(brandId)) { (brand, brands) =>
         val result = facilitator map {
-          eventService.findByFacilitator(_, Some(brandId), future, public, archived)
+          services.eventService.findByFacilitator(_, Some(brandId), future, public, archived)
         } getOrElse {
-          eventService.findByParameters(Some(brandId), future, public, archived)
+          services.eventService.findByParameters(Some(brandId), future, public, archived)
         }
         result flatMap { events =>
-          eventService.applyFacilitators(events)
-          eventService.withInvoices(events) flatMap { views =>
+          services.eventService.applyFacilitators(events)
+          services.eventService.withInvoices(events) flatMap { views =>
             ok(Json.toJson(views))
           }
         }
       } { (brand, brands) =>
-        eventService.findByFacilitator(user.person.identifier, Some(brandId), future, public, archived) flatMap { events =>
-          eventService.applyFacilitators(events)
-          eventService.withInvoices(events) flatMap { views =>
+        services.eventService.findByFacilitator(user.person.identifier, Some(brandId), future, public, archived) flatMap { events =>
+          services.eventService.applyFacilitators(events)
+          services.eventService.withInvoices(events) flatMap { views =>
             ok(Json.toJson(views))
           }
         }
@@ -466,20 +481,20 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             case Some(errors) ⇒
               formError(user, form.withError("facilitatorIds", Messages("error.event.invalidLicense")), Some(id))
             case None =>
-              eventService.findWithInvoice(id) flatMap {
+              services.eventService.findWithInvoice(id) flatMap {
                 case None => notFound("Event not found")
                 case Some(view) =>
                   val updated = received.copy(event = received.event.copy(id = Some(id)),
                     invoice = received.invoice.copy(id = view.invoice.id))
-                  updated.event.facilitatorIds_=(received.event.facilitatorIds)
+                  updated.event.facilitatorIds_=(received.event.facilitatorIds(services))
 
                   // it's important to compare before updating as with lazy
                   // initialization invoice and facilitators data
                   // for an old event will be destroyed
-                  val changes = Comparator.compare(view, updated)
-                  eventService.update(updated)
+                  val changes = (new Comparator(services)).compare(view, updated)
+                  services.eventService.update(updated)
 
-                  val log = activity(updated.event, user.person).updated.insert()
+                  val log = activity(updated.event, user.person).updated.insert(services)
                   sendEmailNotification(updated.event, changes, log)
 
                   redirect(routes.Events.details(id), "success" -> "Event was updated")
@@ -510,20 +525,20 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
           redirect(routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
         requestData ⇒ {
           (for {
-            a <- attendeeService.findByEvents(List(event.identifier))
-            b <- brandService.get(event.brandId)
+            a <- services.attendeeService.findByEvents(List(event.identifier))
+            b <- services.brandService.get(event.brandId)
           } yield (a, b)) flatMap { case (unfilteredAttendees, brand) =>
             val attendees = unfilteredAttendees.map(_._2).filter(a => requestData.attendeeIds.contains(a.identifier))
             if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {
               import scala.util.matching.Regex
               val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
-              val reminder = new EvaluationReminder(email)
+              val reminder = new EvaluationReminder(email, services)
               attendees.foreach { attendee ⇒
                 val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
                 reminder.sendEvaluationRequest(attendee, brand, body)
               }
 
-              Activity.insert(user.name, Activity.Predicate.Sent, event.title)
+              Activity.insert(user.name, Activity.Predicate.Sent, event.title)(services)
               redirect(routes.Events.details(id), "success" -> requestMessage(attendees))
             } else {
                 redirect(routes.Events.details(id), "error" -> "Some people are not the attendees of the event")
@@ -565,8 +580,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    * @param event Event object
    */
   protected def validateLicenses(event: Event): Future[Option[(String, String)]] = {
-    licenseService.licensees(event.brandId) map { licenses =>
-      if (event.facilitatorIds.forall(id ⇒ licenses.exists(_.id.get == id))) {
+    services.licenseService.licensees(event.brandId) map { licenses =>
+      if (event.facilitatorIds(services).forall(id ⇒ licenses.exists(_.id.get == id))) {
         None
       } else {
         Some(("facilitatorIds", "error.event.invalidLicense"))
@@ -580,7 +595,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    * @param event Event object
    */
   protected def validateEventType(event: Event): Future[Option[(String, String)]] = {
-    eventTypeService.find(event.eventTypeId) map {
+    services.eventTypeService.find(event.eventTypeId) map {
       case None => Some(("eventTypeId", "error.eventType.notFound"))
       case Some(x) =>
         if (x.brandId != event.brandId)
@@ -602,7 +617,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     eventId: Option[Long])(implicit request: Request[Any],
       handler: be.objectify.deadbolt.scala.DeadboltHandler,
       token: play.filters.csrf.CSRF.Token) = {
-    brandService.findByUser(user.account) flatMap { brands =>
+    services.brandService.findByUser(user.account) flatMap { brands =>
       badRequest(views.html.v2.event.form(user, eventId, brands, false, form))
     }
   }
@@ -620,8 +635,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     activity: BaseActivity)(implicit request: RequestHeader): Future[Unit] = {
 
     (for {
-      b <- brandService.findWithCoordinators(event.brandId) if b.isDefined
-      e <- eventTypeService.get(event.eventTypeId)
+      b <- services.brandService.findWithCoordinators(event.brandId) if b.isDefined
+      e <- services.eventTypeService.get(event.eventTypeId)
     } yield (b.get, e)) map { case (x, eventType) =>
       val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
       val subject = s"${activity.description} event"

@@ -1,4 +1,4 @@
-@(person: Person)(implicit request: Request[Any],
+@(personId: Long, countries: List[FacilitatorCountry])(implicit request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token,
@@ -13,21 +13,21 @@
   <table class="table">
     <thead><th>Countries</th></thead>
     <tbody>
-    @for(country <- person.countries) {
+    @for(country <- countries) {
       <tr><td>
         @Messages("country." + country.country)&nbsp;
-        @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
-          <a class="pull-right" href="@routes.Facilitators.deleteCountry(person.id.get, country.country)">Delete</a>
+        @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
+          <a class="pull-right" href="@routes.Facilitators.deleteCountry(personId, country.country)">Delete</a>
         }
       </td></tr>
     }
     </tbody>
   </table>
-  @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
-    <form method="POST" action="@CSRF(routes.Facilitators.addCountry(person.id.get))">
+  @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
+    <form method="POST" action="@CSRF(routes.Facilitators.addCountry(personId))">
       <div class="form-group">
         <select name="country" class="form-control input-sm">
-        @for(country <- Countries.all.toList.filterNot(c => person.countries.exists(_.country == c._1))) {
+        @for(country <- Countries.all.toList.filterNot(c => countries.exists(_.country == c._1))) {
           <option value="@country._1">@country._2</option>
         }
         </select>

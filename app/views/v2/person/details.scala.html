@@ -2,8 +2,9 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-    showFacilitationTab: Boolean,
-    badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
+    conf: PeopleDetailConfig,
+    badges: List[(models.brand.Badge, String)],
+    member: Option[Member])(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
@@ -16,17 +17,18 @@
 
 @v2.main(person.fullName + " - Person", "people", user) {
   <div class="row profile-header
-    @if(person.member.nonEmpty) { @if(person.member.get.funder) { funder } else { supporter }}">
+    @if(conf.member) { @if(member.get.funder) { funder } else { supporter }}">
     <div class="container">
       <div class="content-block">
         <h2>@person.fullName
-        @person.member.map { member =>
-          <div class="membership-type">
-            @if(member.funder) { Funder } else { Supporter }
-          </div>
-        }
+            @if(conf.member) {
+                <div class="membership-type">
+                    @if(member.get.funder) { Funder } else { Supporter }
+                </div>
+
+            }
         </h2>
-        @views.html.v2.element.profiles(person.socialProfile, person.member)
+        @views.html.v2.element.profiles(person.socialProfile, member)
 
         <div class="actions pull-right">
           @restrict(handler, List(as(Role.Admin.toString))) {
@@ -34,10 +36,10 @@
               <form class="delete form-inline" method="post" text="person"
               action="@CSRF(routes.People.delete(person.id.getOrElse(0)))">
                 <div data-toggle="tooltip" data-placement="bottom"
-                  @if(!person.deletable) {
+                  @if(!conf.deletable) {
                     title="@Messages("error.person.nonDeletable")" }>
                   <button class="btn btn-default" type="submit"
-                    @if(!person.deletable) {
+                    @if(!conf.deletable) {
                       disabled="disabled" } >Delete
                   </button>
                 </div>
@@ -77,9 +79,9 @@
     <div class="container">
       <div class="left">
         @views.html.v2.person.blocks.photo(person, "199")
-        @views.html.v2.person.blocks.navigation(person, showFacilitationTab)
+        @views.html.v2.person.blocks.navigation(person, member, conf)
 
-        @if(!showFacilitationTab && user.account.isCoordinatorNow) {
+        @if(!conf.facilitator && user.account.isCoordinatorNow) {
           <a href="@routes.Licenses.add(person.id.getOrElse(0))"
             class="btn btn-upload btn-block">
             Make a Facilitator
@@ -100,11 +102,11 @@
           @views.html.v2.person.tabs.details(person, organisations, otherOrganisations, badges)
         </div>
         <div class="tab-pane" id="contributions"></div>
-        @if(showFacilitationTab) {
+        @if(conf.facilitator) {
           <div class="tab-pane" id="facilitation"></div>
           <div class="tab-pane" id="experience"></div>
         }
-        @person.member.map { member =>
+        @if(conf.member) {
           <div class="tab-pane" id="experiments"></div>
           <div class="tab-pane" id="membership"></div>
         }

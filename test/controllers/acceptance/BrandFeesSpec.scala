@@ -58,17 +58,17 @@ class BrandFeesSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.brandService_=(brandService)
 
   def e1 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     val result = controller.index(1L).apply(fakeGetRequest())
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e2 = {
-    (brandService.find(_: Long)) expects 1L returning Some(BrandHelper.one)
+    (services.brandService.find(_: Long)) expects 1L returning Some(BrandHelper.one)
     val fees = List(
       BrandFee(None, 1L, "DE", Money.parse("EUR 100")),
       BrandFee(None, 1L, "RU", Money.parse("EUR 50")))
-    (feeService.findByBrand _) expects 1L returning fees
+    (services.feeService.findByBrand _) expects 1L returning fees
     val result = controller.index(1L).apply(fakeGetRequest())
     contentAsString(result) must contain("Germany")
     contentAsString(result) must contain("Russia")

@@ -39,13 +39,7 @@ case class Record(id: Option[Long],
     person: Boolean,
     description: String,
     fee: Money,
-    created: DateTime) extends Services {
-
-  /**
-   * Adds this payment record to database
-   */
-  def insert: Future[Record] = paymentRecordService.insert(this)
-}
+    created: DateTime)
 
 object Record {
 

@@ -1,3 +1,26 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
 package controllers.admin
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
@@ -18,9 +41,11 @@ import scala.concurrent.Future
   */
 class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                     override val messagesApi: MessagesApi,
-                                    deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
-  with Services {
+                                    val services: Services,
+                                    deadbolt: DeadboltActions,
+                                    handlers: HandlerCache,
+                                    actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   case class StatByCountry(stat: Map[String, List[(LocalDate, Int)]])
   case class Item(brand: Long, month: LocalDate, fee: Float)
@@ -30,7 +55,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     */
   def index() = AsyncSecuredRestrictedAction(Role.Admin) { implicit request => implicit handler => implicit user =>
     val result = for {
-      brands <- brandService.findAll
+      brands <- services.brandService.findAll
       licenses <- licensesInChargeablePeriod() flatMap { licenses =>
         licenseStatsByCountry(licenses) map { stats =>
           licenseUsageByMonth(stats)
@@ -117,7 +142,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     * Returns events valid in a chargeable period with tweaked start date
     */
   protected def eventsInChargeablePeriod(): Future[List[Event]] =
-    eventService.findAll map { events =>
+    services.eventService.findAll map { events =>
       filterEventsByDate(events).map { event =>
         val start = event.schedule.start.withDayOfMonth(1)
         event.copy(schedule = event.schedule.copy(start = start))
@@ -169,7 +194,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     * Returns licenses valid in a chargeable period with tweaked start/end dates
     */
   protected def licensesInChargeablePeriod(): Future[List[License]] =
-    licenseService.findAll map { licenses =>
+    services.licenseService.findAll map { licenses =>
       filterLicensesByDate(licenses).sortBy(_.start.toString).map { license =>
         val start = license.start.withDayOfMonth(1)
         license.copy(start = start, end = start.plusMonths(1).minusDays(1))
@@ -183,8 +208,8 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     */
   protected def licenseStatsByCountry(licenses: List[License]) = {
     val (start, _) = chargeablePeriod()
-    personService.find(licenses.map(_.licenseeId).distinct) map { facilitators =>
-      personService.collection.addresses(facilitators)
+    services.personService.find(licenses.map(_.licenseeId).distinct) map { facilitators =>
+      services.personService.collection.addresses(facilitators)
       licenses.map { license =>
         (license, facilitators.find(_.identifier == license.licenseeId).map(_.address.countryCode).get)
       }.groupBy(_._1.brandId).map { byBrand =>

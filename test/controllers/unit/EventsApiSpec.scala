@@ -61,7 +61,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
 
   "Event details API call" should {
     "return event details in JSON format" in {
-      (eventService.find _) expects 1L returning Some(EventHelper.one)
+      (services.eventService.find _) expects 1L returning Some(EventHelper.one)
       val result: Future[Result] = controller.event(1).apply(FakeRequest())
       status(result) must equalTo(OK)
       contentType(result) must beSome("text/plain")
@@ -93,7 +93,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
         "online" -> false)
     }
     "return 404 error with error message when an event doesn't exist" in {
-      (eventService.find _) expects 101L returning None
+      (services.eventService.find _) expects 101L returning None
 
       val result: Future[Result] = controller.event(101).apply(FakeRequest())
       status(result) must equalTo(NOT_FOUND)
@@ -105,12 +105,12 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
   "Events API call" should {
     "pass all parameters to findByFacilitator in a right order" in {
       inSequence {
-        (brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
-        (eventTypeService.findByBrand _) expects 1L returning List()
-        (eventService.findByFacilitator _)
+        (services.brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
+        (services.eventTypeService.findByBrand _) expects 1L returning List()
+        (services.eventService.findByFacilitator _)
           .expects(1, Some(1L), None, Some(true), Some(false))
           .returning(List[Event]())
-        (eventService.applyFacilitators _).expects(*)
+        (services.eventService.applyFacilitators _).expects(*)
       }
       controller.events(
         "TEST",
@@ -126,12 +126,12 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
 
     "pass all parameters to findByParameters in a right order" in {
       inSequence {
-        (brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
-        (eventTypeService.findByBrand _) expects 1L returning List()
-        (eventService.findByParameters _)
+        (services.brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
+        (services.eventTypeService.findByBrand _) expects 1L returning List()
+        (services.eventService.findByParameters _)
           .expects(Some(1L), None, Some(true), Some(false), None, Some("UK"), Some(1L))
           .returning(List[Event]())
-        (eventService.applyFacilitators _).expects(*)
+        (services.eventService.applyFacilitators _).expects(*)
       }
       controller.events(
         "TEST",
@@ -147,12 +147,12 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
 
     "return events in JSON format" in {
       inSequence {
-        (brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
-        (eventTypeService.findByBrand _) expects 1L returning List()
-        (eventService.findByFacilitator _)
+        (services.brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
+        (services.eventTypeService.findByBrand _) expects 1L returning List()
+        (services.eventService.findByFacilitator _)
           .expects(*, *, *, *, *)
           .returning(List[Event](EventHelper.one, EventHelper.two))
-        (eventService.applyFacilitators _) expects *
+        (services.eventService.applyFacilitators _) expects *
       }
       val result: Future[Result] = controller.events(
         "TEST",

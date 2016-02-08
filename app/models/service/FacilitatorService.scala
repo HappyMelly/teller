@@ -24,9 +24,9 @@
 
 package models.service
 
-import models.database.{ProfileStrengthTable, FacilitatorCountryTable, FacilitatorLanguageTable, FacilitatorTable}
+import models.database.{FacilitatorCountryTable, FacilitatorLanguageTable, FacilitatorTable, ProfileStrengthTable}
 import models.{Facilitator, FacilitatorCountry, FacilitatorLanguage}
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -36,13 +36,13 @@ import scala.concurrent.Future
 /**
  * Contains all database-related operations
  */
-class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
+class FacilitatorService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with FacilitatorTable
   with FacilitatorCountryTable
   with FacilitatorLanguageTable
   with ProfileStrengthTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val countries = TableQuery[FacilitatorCountries]
   private val facilitators = TableQuery[Facilitators]
@@ -53,6 +53,12 @@ class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
     */
   def countries(personId: Long): Future[List[FacilitatorCountry]] =
     db.run(countries.filter(_.personId === personId).result).map(_.toList)
+
+  /**
+    * Finds all countries for the set of facilitators
+    */
+  def countries(ids: List[Long]): Future[List[FacilitatorCountry]] =
+    db.run(countries.filter(_.personId inSet ids).result).map(_.toList)
 
   /**
     * Deletes the given country from the given person
@@ -127,6 +133,22 @@ class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
     db.run(facilitators.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
+    * Returns list of languages the given facilitator talks
+    *
+    * @param personId Person identifier
+    */
+  def languages(personId: Long): Future[List[FacilitatorLanguage]] =
+    db.run(languages.filter(_.personId === personId).result).map(_.toList)
+
+  /**
+    * Returns list of languages for the set of facilitators
+    *
+    * @param ids Facilitator identifiers
+    */
+  def languages(ids: List[Long]): Future[List[FacilitatorLanguage]] =
+    db.run(languages.filter(_.personId inSet ids).result).map(_.toList)
+
+  /**
    * Updates the given facilitator in database
     *
     * @param facilitator Facilitator
@@ -159,18 +181,5 @@ class FacilitatorService extends HasDatabaseConfig[JdbcProfile]
       update((facilitator.numberOfEvents, facilitator.yearsOfExperience))
     db.run(action)
   }
-
-  /**
-   * Returns list of languages the given facilitator talks
-   *
-   * @param personId Person identifier
-   */
-  def languages(personId: Long): Future[List[FacilitatorLanguage]] =
-    db.run(languages.filter(_.personId === personId).result).map(_.toList)
 }
 
-object FacilitatorService {
-  private val instance = new FacilitatorService
-
-  def get: FacilitatorService = instance
-}

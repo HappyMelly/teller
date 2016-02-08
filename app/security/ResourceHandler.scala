@@ -37,12 +37,12 @@ import scala.concurrent.Future
  *
  * The system supports three roles - Viewer, Editor and Admin.
  */
-class ResourceHandler(user: ActiveUser) extends DynamicResourceHandler with Services {
+class ResourceHandler(user: ActiveUser, services: Services) extends DynamicResourceHandler {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong
     UserRole.forName(name).role match {
-      case Coordinator => brandService.isCoordinator(objectId, user.account.personId)
+      case Coordinator => services.brandService.isCoordinator(objectId, user.account.personId)
       case Member ⇒ checkMemberPermission(user, objectId)
       case Funder => Future.successful(user.account.admin || user.member.exists(_.funder))
       case ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)
@@ -62,10 +62,10 @@ class ResourceHandler(user: ActiveUser) extends DynamicResourceHandler with Serv
     * @param memberId Member id to check
    */
   protected def checkMemberPermission(user: ActiveUser, memberId: Long): Future[Boolean] = {
-    if (user.account.admin || user.person.member.exists(_.identifier == memberId))
+    if (user.account.admin || user.member.exists(_.identifier == memberId))
       Future.successful(true)
     else
-      memberService.find(memberId) flatMap {
+      services.memberService.find(memberId) flatMap {
         case None => Future.successful(false)
         case Some(member) =>
           if (member.person)
@@ -82,7 +82,7 @@ class ResourceHandler(user: ActiveUser) extends DynamicResourceHandler with Serv
     * @param personId Person identifier
     */
   private def orgMember(orgId: Long, personId: Long): Future[Boolean] =
-    orgService.people(orgId) map { people =>
+    services.orgService.people(orgId) map { people =>
       people.exists(_.identifier == personId)
     }
 }

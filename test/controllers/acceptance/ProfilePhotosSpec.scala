@@ -58,7 +58,7 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
   val person = PersonHelper.one()
 
   trait DefaultPerson extends MockContext {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
   }
 
   def e3 = new DefaultPerson {
@@ -74,7 +74,7 @@ class ProfilePhotosSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e5 = new DefaultPerson {
-    (personService.update _) expects personWithGravatar returning personWithGravatar
+    (services.personService.update _) expects personWithGravatar returning personWithGravatar
 
     val result = controller.update(1L).apply(gravatarRequest)
     status(result) must equalTo(OK)

@@ -24,20 +24,19 @@
  */
 package models.service
 
-import models.JodaMoney._
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.JodaMoney._
 import models._
 import models.database._
 import models.database.event.AttendeeTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class PersonService extends HasDatabaseConfig[JdbcProfile]
-  with AccountTable
+class PersonService(app: Application, services: Services) extends HasDatabaseConfig[JdbcProfile]
   with AddressTable
   with AttendeeTable
   with EndorsementTable
@@ -50,10 +49,9 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
   with PersonTable
   with ProfileStrengthTable
   with SocialProfileTable
-  with UserAccountTable
-  with Services {
+  with UserAccountTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val people = TableQuery[People]
 
@@ -79,12 +77,11 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
    * @param person Person
    */
   def delete(person: Person): Unit = {
-    memberService.delete(person.identifier, person = true)
-    paymentRecordService.delete(person.identifier, person = true)
-    userAccountService.delete(person.identifier)
-    socialProfileService.delete(person.identifier, ProfileType.Person)
+    services.memberService.delete(person.identifier, person = true)
+    services.paymentRecordService.delete(person.identifier, person = true)
+    services.userAccountService.delete(person.identifier)
+    services.socialProfileService.delete(person.identifier, ProfileType.Person)
     val actions = (for {
-      _ <- TableQuery[Accounts].filter(_.personId === person.identifier).delete
       _ <- TableQuery[Attendees].filter(_.personId === person.identifier).delete
       _ <- TableQuery[People].filter(_.id === person.identifier).delete
       _ <- TableQuery[Addresses].filter(_.id === person.addressId).delete
@@ -147,13 +144,12 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
    * @return Returns saved person
    */
   def insert(person: Person): Future[Person] = {
-    addressService.insert(person.address).flatMap { address =>
+    services.addressService.insert(person.address).flatMap { address =>
       val query = people returning people.map(_.id) into ((value, id) => value.copy(id = Some(id)))
       val futureInserted = db.run(query += person.copy(addressId = address.id.get))
       futureInserted.map { inserted =>
-        socialProfileService.insert(person.socialProfile.copy(objectId = inserted.identifier))
-        db.run(TableQuery[Accounts] += Account(personId = Some(inserted.identifier)))
-        profileStrengthService.insert(ProfileStrength.empty(inserted.identifier, false))
+        services.socialProfileService.insert(person.socialProfile.copy(objectId = inserted.identifier))
+        services.profileStrengthService.insert(ProfileStrength.empty(inserted.identifier, false))
         inserted.address_=(address)
         inserted
       }
@@ -209,27 +205,6 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
    * @param ids List of people identifiers
    */
   def find(ids: List[Long]): Future[List[Person]] = db.run(people.filter(_.id inSet ids).result).map(_.toList)
-
-  /**
-    * Finds the active `Account`s that this `Person` has access rights to.
-    *
-    * Currently, ‘having access rights to an account’ means that:
-    * - This person is the account‘s holder
-    * - This person is a member of the organisation that is the account’s holder
-    *
-    * @return The list of accounts that this person has access to
-    */
-  def findAccessibleAccounts(personId: Option[Long]): Future[List[AccountSummary]] = {
-    val query = for {
-      account ← TableQuery[Accounts] if account.active
-      organisation ← TableQuery[Organisations] if account.organisationId === organisation.id
-      membership ← TableQuery[OrganisationMemberships] if membership.organisationId === organisation.id
-      if membership.personId === personId
-    } yield (account.id, organisation.name, account.currency, account.active)
-
-    db.run(query.result).map(_.toList.map(AccountSummary.tupled))
-    //account.summary :: query.list.map(AccountSummary.tupled)
-  }
 
   /**
    * Returns a list of active people
@@ -395,7 +370,7 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
     val updateQuery = people.filter(_.id === person.id).map(_.forUpdate)
     db.run(updateQuery.update(personUpdateTuple))
 
-    userAccountService.updateSocialNetworkProfiles(person)
+    services.userAccountService.updateSocialNetworkProfiles(person)
     updateProfileStrength(person)
 
     Future.successful(person)
@@ -444,42 +419,6 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
     }
 
     /**
-      * Fill person objects with languages (using only one query to database)
-      *
-      * @param people List of people
-      * @return
-      */
-    def languages(people: List[Person]): Unit = {
-      val ids = people.map(_.id.get).distinct
-      val query = for {
-        language ← TableQuery[FacilitatorLanguages] if language.personId inSet ids
-      } yield language
-      db.run(query.result).map(_.toList.groupBy(_.personId)).map { languages =>
-        people.foreach(p ⇒ p.languages_=(languages.getOrElse(p.id.get, List())))
-      }
-    }
-
-    /**
-      * Fill person objects with countries (using only one query to database)
-      *
-      * @param people List of people
-      * @return
-      */
-    def countries(people: List[Person]): Unit = {
-      val ids = people.map(_.id.get).distinct
-      val query = for {
-        country ← TableQuery[FacilitatorCountries] if country.personId inSet ids
-      } yield country
-      db.run(query.result).map(_.toList.groupBy(_.personId)).map { countries =>
-        people.foreach(p ⇒ {
-          val countryOfResidence = FacilitatorCountry(p.id.get, p.address.countryCode)
-          val c = countries.getOrElse(p.id.get, List()) ::: List(countryOfResidence)
-          p.countries_=(c)
-        })
-      }
-    }
-
-    /**
       * Fill person objects with organisations data (using only one query to database)
       *
       * @param people List of people
@@ -503,14 +442,8 @@ class PersonService extends HasDatabaseConfig[JdbcProfile]
    * @param person Person object to update profile strength for
    */
   protected def updateProfileStrength(person: Person): Unit = {
-    profileStrengthService.find(person.id.get, false).filter(_.isDefined) map { strength ⇒
-      profileStrengthService.update(ProfileStrength.forPerson(strength.get, person))
+    services.profileStrengthService.find(person.id.get, false).filter(_.isDefined) map { strength ⇒
+      services.profileStrengthService.update(ProfileStrength.forPerson(strength.get, person))
     }
   }
-}
-
-object PersonService {
-  private val instance = new PersonService()
-
-  def get: PersonService = instance
 }

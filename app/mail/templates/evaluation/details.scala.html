@@ -1,4 +1,4 @@
-@(evaluation: Evaluation, attendee: models.event.Attendee, brand: Brand)(implicit messages: Messages)
+@(evaluation: Evaluation, event: Event, attendee: models.event.Attendee, brand: Brand)(implicit messages: Messages)
 
 @import play.api.Play
 @import play.api.Play.current
@@ -18,7 +18,7 @@
         <tbody>
           <tr>
             <td width="150">Title</td>
-            <td>@evaluation.event.title <br> @evaluation.event.schedule.start / @evaluation.event.schedule.end</td>
+            <td>@event.title <br> @event.schedule.start / @event.schedule.end</td>
           </tr>
         </tbody>
       </table>

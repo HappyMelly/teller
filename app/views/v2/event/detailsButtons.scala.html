@@ -1,4 +1,4 @@
-@(event: Event)
+@(event: Event, deletable: Boolean)
 <div class="buttons">
   <div class="buttons-block">
     @if(!event.confirmed) {
@@ -17,7 +17,7 @@
       Duplicate
     </a>
     <a data-id="@event.identifier" class="btn btn-default event-cancel"
-      id="cancelButton" @if(!event.deletable) {disabled="disabled"} >Cancel</a>
+      id="cancelButton" @if(!deletable) {disabled="disabled"} >Cancel</a>
   </div>
 </div>
 <script src="@routes.Assets.at("element/events.js")" type="text/javascript"></script>

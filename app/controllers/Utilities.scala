@@ -23,50 +23,12 @@
  */
 package controllers
 
-import models.{BrandWithSettings, Brand, UserAccount}
-import models.service.Services
 import play.api.Play
 import play.api.Play.current
-import play.api.mvc._
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+trait Utilities extends AsyncController {
 
-trait Utilities extends AsyncController with Services {
 
-  protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
-                                  (coordinator: (BrandWithSettings, List[Brand]) => Future[Result])
-                                  (facilitator: (Option[BrandWithSettings], List[Brand]) => Future[Result])
-                                  (ordinaryUser: Future[Result]): Future[Result] = {
-    if (account.isCoordinatorNow) {
-      brandService.findByCoordinator(account.personId) flatMap { brands =>
-        val sorted = brands.sortBy(_.brand.name)
-        brandId map { identifier =>
-          sorted.find(_.brand.identifier == identifier) map { view =>
-            coordinator(view, sorted.map(_.brand))
-          } getOrElse redirect(routes.Dashboard.index())
-        } getOrElse {
-          if (sorted.nonEmpty) {
-            coordinator(sorted.head, sorted.map(_.brand))
-          } else redirect(routes.Dashboard.index())
-        }
-      }
-    } else if (account.isFacilitatorNow) {
-      brandService.findByLicense(account.personId) flatMap { brands =>
-        brandId map { identifier =>
-          brands.find(_.brand.identifier == identifier) map { view =>
-            facilitator(Some(view), brands.map(_.brand))
-          } getOrElse redirect(routes.Dashboard.index())
-        } getOrElse {
-          brands.length match {
-            case 1 => facilitator(Some(brands.head), brands.map(_.brand))
-            case 0 => redirect(routes.Dashboard.index())
-            case _ => facilitator(None, brands.map(_.brand))
-          }
-        }
-      }
-    } else ordinaryUser
-  }
 }
 
 object Utilities {

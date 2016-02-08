@@ -26,17 +26,17 @@ package models.service
 
 import models.database.SocialProfileTable
 import models.{ProfileType, SocialProfile}
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class SocialProfileService extends HasDatabaseConfig[JdbcProfile]
+class SocialProfileService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with SocialProfileTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val profiles = TableQuery[SocialProfiles]
 
@@ -138,10 +138,4 @@ class SocialProfileService extends HasDatabaseConfig[JdbcProfile]
     profiles += profile
     profile
   }
-}
-
-object SocialProfileService {
-  private val _instance = new SocialProfileService
-
-  def get: SocialProfileService = _instance
 }

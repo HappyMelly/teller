@@ -21,7 +21,6 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
 import javax.inject.Inject
@@ -31,6 +30,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.payment.{Payment, PaymentException, RequestException}
+import models.service.Services
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Play.current
@@ -45,9 +45,10 @@ import scala.concurrent.Future
 
 class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
+                            val services: Services,
                             val email: Email,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Enrollment
   with Activities
   with I18nSupport {
@@ -57,8 +58,11 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * Become a funder and Become a supporter
    */
   def welcome = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    personService.memberships(user.person.identifier) flatMap { orgs =>
-      ok(views.html.membership.welcome(user, orgs.filter(_.member.isEmpty)))
+    (for {
+      o <- services.personService.memberships(user.person.identifier)
+      m <- services.memberService.findByObjects(o.map(_.identifier))
+    } yield (o, m.filterNot(_.person))) flatMap { case (orgs, members) =>
+      ok(views.html.membership.welcome(user, orgs.filterNot(x => members.exists(_.objectId == x.identifier))))
     }
   }
 
@@ -84,10 +88,10 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       val welcomeCall: Call = routes.Membership.welcome()
       val publicKey = Play.configuration.getString("stripe.public_key").get
       orgId map { id ⇒
-        orgService.find(id) flatMap {
+        services.orgService.find(id) flatMap {
           case None => redirect(welcomeCall, "error" -> Messages("error.organisation.notExist"))
           case Some(org) ⇒
-            personService.memberships(user.person.identifier) flatMap { orgs =>
+            services.personService.memberships(user.person.identifier) flatMap { orgs =>
               if (orgs.exists(_.id == org.id)) {
                 val fee = Payment.countryBasedFees(org.countryCode)
                 ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
@@ -112,7 +116,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       data ⇒ {
         try {
           data.orgId map { orgId =>
-            orgService.find(orgId) flatMap {
+            services.orgService.find(orgId) flatMap {
               case None => badRequest(Json.obj("message" -> "Organisation not found"))
               case Some(org) => processOrganisationMember(data, user, org) flatMap { _ =>
                 ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
@@ -138,18 +142,18 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param org Organisation
     */
   protected def processOrganisationMember(data: PaymentData, user: ActiveUser, org: Organisation): Future[Boolean] = {
-    validatePaymentData(data, user.person, Some(org))
+    validatePaymentData(data, user.person, user.member, Some(org))
 
     val customerId = subscribe(user.person, Some(org), data)
     val fee = Money.of(EUR, data.fee)
     (for {
-      _ <- orgService.update(org.copy(customerId = Some(customerId)))
-      m <- org.becomeMember(funder = false, fee, user.person.identifier)
+      _ <- services.orgService.update(org.copy(customerId = Some(customerId)))
+      m <- org.becomeMember(funder = false, fee, user.person.identifier, services)
     } yield m) map { member =>
       notify(user.person, Some(org), member)
       subscribe(user.person, member)
 
-      activity(member, user.person).becameSupporter.insert()
+      activity(member, user.person).becameSupporter.insert(services)
       true
     }
   }
@@ -163,13 +167,13 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def processPersonMember(data: PaymentData, user: ActiveUser)(
       implicit request: Request[AnyContent]): Future[Boolean] = {
     val person = user.person
-    validatePaymentData(data, person, None)
+    validatePaymentData(data, person, user.member, None)
 
     val customerId = subscribe(person, None, data)
     val fee = Money.of(EUR, data.fee)
     (for {
-      _ <- person.copy(customerId = Some(customerId)).update
-      m <- person.becomeMember(funder = false, fee)
+      _ <- services.personService.update(person.copy(customerId = Some(customerId)))
+      m <- person.becomeMember(funder = false, fee, services)
     } yield m) map { member =>
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
         _.updateUser(ActiveUser(user.id, user.providerId, user.account, user.person, Some(member)))
@@ -177,7 +181,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       notify(person, None, member)
       subscribe(person, member)
 
-      activity(member, user.person).becameSupporter.insert()
+      activity(member, user.person).becameSupporter.insert(services)
       true
     }
   }
@@ -208,6 +212,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   protected def validatePaymentData(data: PaymentData,
     person: Person,
+    member: Option[Member],
     organisation: Option[Organisation]) = {
     data.orgId foreach { orgId ⇒
       if (organisation.isEmpty) {
@@ -216,10 +221,10 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       if (data.fee < Payment.countryBasedFees(organisation.get.countryCode)._1) {
         throw new Membership.ValidationException("error.payment.minimum_fee")
       }
-      if (organisation.get.member.nonEmpty) {
+      if (member.nonEmpty) {
         throw new Membership.ValidationException("error.organisation.member")
       }
-      if (!person.organisations.exists(_.id == Some(orgId))) {
+      if (!person.organisations(services).exists(_.id == Some(orgId))) {
         throw new Membership.ValidationException("error.person.notOrgMember")
       }
     }
@@ -227,7 +232,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
         throw new Membership.ValidationException("error.payment.minimum_fee")
       }
-      if (person.member.nonEmpty) {
+      if (member.nonEmpty) {
         throw new Membership.ValidationException("error.person.member")
       }
     }

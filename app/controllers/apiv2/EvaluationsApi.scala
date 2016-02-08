@@ -26,6 +26,7 @@ package controllers.apiv2
 import javax.inject.Inject
 
 import models._
+import models.service.Services
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.data.Form
@@ -39,8 +40,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Evaluations API
  */
-class EvaluationsApi @Inject() (val messagesApi: MessagesApi,
-                                val email: EmailComponent) extends ApiAuthentication {
+class EvaluationsApi @Inject() (val services: Services,
+                                override val messagesApi: MessagesApi,
+                                val email: EmailComponent) extends ApiAuthentication(services, messagesApi) {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
@@ -117,8 +119,8 @@ class EvaluationsApi @Inject() (val messagesApi: MessagesApi,
       },
       evaluation ⇒ {
         (for {
-          mayBeEvaluation <- evaluationService.findByAttendee(evaluation.attendeeId)
-          attendee <- attendeeService.find(evaluation.attendeeId, evaluation.eventId)
+          mayBeEvaluation <- services.evaluationService.findByAttendee(evaluation.attendeeId)
+          attendee <- services.attendeeService.find(evaluation.attendeeId, evaluation.eventId)
         } yield (mayBeEvaluation, attendee)) flatMap {
           case (Some(existingEvaluation), _) =>
             val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
@@ -130,9 +132,9 @@ class EvaluationsApi @Inject() (val messagesApi: MessagesApi,
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
             val url = request.host + controllers.routes.Evaluations.confirm("").url
-            evaluation.add(url, withConfirmation = true, email) flatMap { createdEvaluation =>
+            evaluation.add(url, withConfirmation = true, email, services) flatMap { createdEvaluation =>
               val message = "new evaluation for " + attendee.fullName
-              Activity.insert(name, Activity.Predicate.Created, message)
+              Activity.insert(name, Activity.Predicate.Created, message)(services)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
             }
         }
@@ -145,12 +147,12 @@ class EvaluationsApi @Inject() (val messagesApi: MessagesApi,
     * @param confirmationId Confirmation unique id
    */
   def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
-    evaluationService.findByConfirmationId(confirmationId) flatMap {
+    services.evaluationService.findByConfirmationId(confirmationId) flatMap {
       case None => jsonNotFound("Unknown evaluation")
       case Some(x) =>
-        x.confirm(email)
+        x.confirm(email, services)
         val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
-        Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)
+        Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)(services)
 
         jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
     }

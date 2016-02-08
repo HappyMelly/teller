@@ -28,6 +28,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
 import models.DateStamp
 import models.brand.Badge
+import models.service.Services
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
@@ -38,10 +39,10 @@ import services.TellerRuntimeEnvironment
 
 class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                      override val messagesApi: MessagesApi,
+                                     val services: Services,
                                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
-  with Files
-  with Utilities {
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Files {
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -76,7 +77,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       badge ⇒ {
         val hash = generatedName
         uploadImage(Badge.picture(hash), "file") flatMap { _ ⇒
-          brandBadgeService.insert(badge.copy(brandId = brandId, file = hash)) map { badge =>
+          services.brandBadgeService.insert(badge.copy(brandId = brandId, file = hash)) map { badge =>
             Redirect(controllers.routes.Brands.details(brandId).url + "#badges")
           }
         } recover {
@@ -95,7 +96,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      brandBadgeService.delete(brandId, id) flatMap { _ =>
+      services.brandBadgeService.delete(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }
@@ -109,7 +110,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def edit(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandBadgeService.find(id) flatMap {
+      services.brandBadgeService.find(id) flatMap {
         case None => notFound(Html("Badge not found"))
         case Some(badge) => ok(views.html.v2.badge.form(user, brandId, form(user.name).fill(badge), Some(id)))
       }
@@ -134,19 +135,19 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       formWithData.fold(
         error ⇒ badRequest(views.html.v2.badge.form(user, brandId, error)),
         badge ⇒
-          brandBadgeService.find(id) flatMap {
+          services.brandBadgeService.find(id) flatMap {
             case None => notFound(Html("Badge not found"))
             case Some(existing) ⇒
               if (existing.brandId == brandId) {
                 val hash = generatedName
                 uploadImage(Badge.picture(hash), "file") flatMap { _ ⇒
-                  brandBadgeService.update(badge.copy(id = Some(id), file = hash)) map { _ =>
+                  services.brandBadgeService.update(badge.copy(id = Some(id), file = hash)) map { _ =>
                     Badge.picture(existing.file).remove()
                     Redirect(controllers.routes.Brands.details(brandId) + "#badges")
                   }
                 } recover {
                   case e: RuntimeException ⇒
-                    brandBadgeService.update(badge.copy(id = Some(id), file = existing.file))
+                    services.brandBadgeService.update(badge.copy(id = Some(id), file = existing.file))
                     Redirect(controllers.routes.Brands.details(brandId) + "#badges")
                 }
               } else {

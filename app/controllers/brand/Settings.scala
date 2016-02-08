@@ -26,6 +26,7 @@ package controllers.brand
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
+import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
@@ -36,8 +37,9 @@ import services.TellerRuntimeEnvironment
   */
 class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                        override val messagesApi: MessagesApi,
+                                       val services: Services,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
     * Turns off license expiration reminder for the given brand
@@ -46,11 +48,11 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   def turnLicenseExpirationReminderOff(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
-      brandService.findWithSettings(brandId) flatMap {
+      services.brandService.findWithSettings(brandId) flatMap {
         case None => jsonNotFound("Brand not found")
         case Some(view) =>
           if (view.settings.licenseExpirationEmail) {
-            brandService.updateSettings(view.settings.copy(licenseExpirationEmail = false))
+            services.brandService.updateSettings(view.settings.copy(licenseExpirationEmail = false))
           }
           jsonSuccess("Reminder is turned off")
       }
@@ -66,16 +68,16 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       Form(single("content" -> nonEmptyText)).bindFromRequest().fold(
         errors => jsonBadRequest("Email body is empty"),
         content => {
-          brandService.findWithSettings(brandId) flatMap {
+          services.brandService.findWithSettings(brandId) flatMap {
             case None => jsonNotFound("Brand not found")
             case Some(view) =>
               if (view.settings.licenseExpirationEmail) {
-                brandService.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
+                services.brandService.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
                 jsonSuccess("Reminder email is updated")
               } else {
                 val settings = view.settings.copy(licenseExpirationEmailBody = Some(content),
                   licenseExpirationEmail = true)
-                brandService.updateSettings(settings)
+                services.brandService.updateSettings(settings)
                 jsonSuccess("Reminder is turned on")
               }
           }

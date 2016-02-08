@@ -29,6 +29,7 @@ import models.admin.ApiToken
 import models.service.Services
 import play.api.Play.current
 import play.api.cache.Cache
+import play.api.i18n.MessagesApi
 import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,12 +38,14 @@ import scala.concurrent.Future
 /**
  * Provides token-based authentication for API actions.
  */
-trait ApiAuthentication extends AsyncController with Services {
+class ApiAuthentication(services: Services,
+                        val messagesApi: MessagesApi) extends AsyncController {
 
   val ApiTokenParam = "api_token"
 
   /**
    * Checks token authorization
+ *
    * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
    * @param f Function to run
    */
@@ -52,7 +55,7 @@ trait ApiAuthentication extends AsyncController with Services {
         Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
           authorize(readWrite, token)(f)
         } getOrElse {
-          apiTokenService.find(value) flatMap {
+          services.apiTokenService.find(value) flatMap {
             case None => jsonUnauthorized
             case Some(token) => authorize(readWrite, token)(f)
           }
@@ -63,6 +66,7 @@ trait ApiAuthentication extends AsyncController with Services {
   /**
    * Checks if token is authorized to run the given function and runs it
    *  if the check is successful
+ *
    * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
    * @param token Token of interest
    * @param f Function to run

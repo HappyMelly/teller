@@ -25,11 +25,12 @@
 package models.service
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import controllers.BrandProfileView
+import models._
 import models.brand._
 import models.database._
 import models.database.brand._
-import models._
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -39,9 +40,7 @@ import scala.concurrent.Future
 case class BrandWithCoordinators(brand: Brand,
   coordinators: List[(Person, BrandCoordinator)])
 
-class BrandService extends Services
-  with HasDatabaseConfig[JdbcProfile]
-  with BookingEntryTable
+class BrandService(app: Application, services: Services) extends HasDatabaseConfig[JdbcProfile]
   with BrandTable
   with BrandCoordinatorTable
   with BrandLinkTable
@@ -52,7 +51,7 @@ class BrandService extends Services
   with ProductBrandAssociationTable
   with SocialProfileTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val brands = TableQuery[Brands]
@@ -88,11 +87,10 @@ class BrandService extends Services
   def deletable(id: Long): Future[Boolean] = {
     val actions = for {
       l <- TableQuery[Licenses].filter(_.brandId === id).exists.result
-      b <- TableQuery[BookingEntries].filter(_.brandId === id).exists.result
       p <- TableQuery[ProductBrandAssociations].filter(_.brandId === id).exists.result
-    } yield (l, b, p)
-    db.run(actions) map { case (hasLicenses, hasEntries, hasProducts) =>
-        !hasLicenses && !hasEntries && !hasProducts
+    } yield (l, p)
+    db.run(actions) map { case (hasLicenses, hasProducts) =>
+      !hasLicenses && !hasProducts
     }
   }
 
@@ -103,7 +101,7 @@ class BrandService extends Services
     * @param brand Brand to delete
    */
   def delete(brand: Brand): Unit = {
-    socialProfileService.delete(brand.id.get, ProfileType.Brand)
+    services.socialProfileService.delete(brand.id.get, ProfileType.Brand)
     db.run(brands.filter(_.id === brand.id.get).delete)
   }
 
@@ -264,8 +262,8 @@ class BrandService extends Services
     */
   def findByUser(user: UserAccount): Future[List[Brand]] = {
     (for {
-      l <- licenseService.activeLicenses(user.personId)
-      b <- brandService.findByCoordinator(user.personId)
+      l <- services.licenseService.activeLicenses(user.personId)
+      b <- services.brandService.findByCoordinator(user.personId)
     } yield (l, b)) map { case (licenses, brands) =>
       licenses.map(_.brand).union(brands.map(_.brand)).distinct.sortBy(_.name)
     }
@@ -327,15 +325,15 @@ class BrandService extends Services
   /**
    * Adds brand and all related records to database
     *
-    * @param brand Brand object
+    * @param view Brand object
    * @return Updated brand object with ID
    */
-  def insert(brand: Brand): Future[Brand] = {
+  def insert(view: BrandProfileView): Future[Brand] = {
     val query = brands returning brands.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += brand).map { b =>
-      socialProfileService.insert(brand.socialProfile.copy(objectId = b.identifier))
-      val owner = BrandCoordinator(None, b.identifier, brand.ownerId, BrandNotifications(true, true, true))
-      brandCoordinatorService.save(owner)
+    db.run(query += view.brand).map { b =>
+      services.socialProfileService.insert(view.profile.copy(objectId = b.identifier))
+      val owner = BrandCoordinator(None, b.identifier, view.brand.ownerId, BrandNotifications(true, true, true))
+      services.brandCoordinatorService.save(owner)
       db.run(settings += Settings(b.identifier))
       b
     }
@@ -383,31 +381,32 @@ class BrandService extends Services
    * Update brand
     *
     * @param old Brand data before update
-   * @param updated Brand data including updated fields from the from
+   * @param view Brand data including updated fields from the from
    * @param picture New brand picture
    * @return Updated brand object
    */
-  def update(old: Brand, updated: Brand, picture: Option[String]): Brand = {
+  def update(old: Brand, view: BrandProfileView, picture: Option[String]): Brand = {
 
-    val u = updated.copy(id = old.id).copy(picture = picture)
-    u.socialProfile_=(updated.socialProfile)
+    val u = view.brand.copy(id = old.id, picture = picture)
 
-    import SocialProfilesStatic.profileTypeMapper
-
-    val socialQuery = for {
-      p ← TableQuery[SocialProfiles] if p.objectId === u.id.get && p.objectType === u.socialProfile.objectType
-    } yield p
-    db.run(socialQuery.update(u.socialProfile.copy(objectId = u.id.get)))
-
+    services.socialProfileService.update(view.profile.copy(objectId = old.identifier), ProfileType.Brand)
     val updateTuple = (u.code, u.uniqueName, u.name, u.ownerId,
       u.description, u.picture, u.tagLine, u.webSite, u.blog, u.contactEmail,
       u.evaluationUrl, u.evaluationHookUrl, u.recordInfo.updated, u.recordInfo.updatedBy)
     db.run(brands.filter(_.id === u.id).map(_.forUpdate).update(updateTuple))
 
-    updateOwnerRecord(old.identifier, updated.ownerId, old.ownerId)
-
+    updateOwnerRecord(old.identifier, view.brand.ownerId, old.ownerId)
     u
   }
+
+  /**
+    * Updates the Picture field for the given brand
+    * @param brandId Brand identifier
+    * @param picture Picture url
+    * @return
+    */
+  def updatePicture(brandId: Long, picture: Option[String]): Future[Int] =
+    db.run(brands.filter(_.id === brandId).map(_.picture).update(picture))
 
   /**
     * Update brand settings in database
@@ -432,17 +431,18 @@ class BrandService extends Services
 
   /**
     * Adds new brand coordinator record for a new owner
+ *
     * @param brandId Brand identifier
     * @param newOwner New owner identifier
     * @param oldOwner Old owner identifier
     */
   protected def updateOwnerRecord(brandId: Long, newOwner: Long, oldOwner: Long): Future[Unit] = {
     (for {
-      value <- brandService.isCoordinator(brandId, newOwner) if value
+      value <- services.brandService.isCoordinator(brandId, newOwner) if value
     } yield ()) map { _ =>
       if (oldOwner != newOwner) {
         val owner = BrandCoordinator(None, brandId, newOwner, BrandNotifications(true, true, true))
-        brandCoordinatorService.save(owner)
+        services.brandCoordinatorService.save(owner)
       }
     }
   }
@@ -456,10 +456,4 @@ class BrandService extends Services
   private def switchState(id: Long, active: Boolean): Unit =
     db.run(brands.filter(_.id === id).map(_.active).update(active))
 
-}
-
-object BrandService {
-  private val instance = new BrandService
-
-  def get: BrandService = instance
 }

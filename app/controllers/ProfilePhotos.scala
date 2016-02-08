@@ -21,13 +21,13 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import models.service.Services
 import models.{Person, Photo}
 import play.api.data.Form
 import play.api.data.Forms._
@@ -37,10 +37,10 @@ import services.TellerRuntimeEnvironment
 
 class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
+                               val services: Services,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
-  with Files
-  with Utilities {
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Files {
 
   /**
    * Renders a screen for selecting a profile's photo
@@ -48,7 +48,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param id Person identifier
    */
   def choose(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    personService.find(id) flatMap {
+    services.personService.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
         val active = person.photo.id getOrElse "nophoto"
@@ -63,11 +63,11 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param id Person identifier
    */
   def delete(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    personService.find(id) flatMap {
+    services.personService.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
         Person.photo(id).remove()
-        personService.update(person.copy(photo = Photo.empty)) flatMap { _ =>
+        services.personService.update(person.copy(photo = Photo.empty)) flatMap { _ =>
           val route = routes.People.details(id).url
           jsonOk(Json.obj("link" -> routes.Assets.at("images/add-photo.png").url))
         }
@@ -91,7 +91,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     form.fold(
       withError ⇒ jsonBadRequest("No option is provided"),
       photoType ⇒
-        personService.find(id) flatMap {
+        services.personService.find(id) flatMap {
           case None => notFound("Person not found")
           case Some(person) =>
             val photo = photoType match {
@@ -99,7 +99,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
               case "gravatar" ⇒ Photo(photoType, person.email)
               case _ ⇒ Photo(Some(photoType), photoUrl(id))
             }
-            personService.update(person.copy(photo = photo)) flatMap { _ =>
+            services.personService.update(person.copy(photo = photo)) flatMap { _ =>
               jsonSuccess("ok")
             }
         })

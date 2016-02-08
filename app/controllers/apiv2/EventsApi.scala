@@ -37,7 +37,8 @@ import scala.concurrent.Future
 /**
  * Events API
  */
-class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication with Services {
+class EventsApi @Inject() (val services: Services,
+                           override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
   implicit val personWrites = (new PersonConverter).personWrites
 
@@ -55,7 +56,7 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
         "end" -> event.schedule.end,
         "hoursPerDay" -> event.schedule.hoursPerDay,
         "totalHours" -> event.schedule.totalHours,
-        "facilitators" -> event.facilitators,
+        "facilitators" -> event.facilitators(services),
         "city" -> event.location.city,
         "country" -> event.location.countryCode,
         "website" -> event.organizer.webSite,
@@ -75,7 +76,7 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
    * @param id Event identifier
    */
   def event(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    eventService.find(id) flatMap {
+    services.eventService.find(id) flatMap {
       case None => jsonNotFound("Event not found")
       case Some(event) => jsonOk(Json.toJson(event)(eventDetailsWrites))
     }
@@ -99,11 +100,11 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
     facilitatorId: Option[Long],
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-      brandService.find(code) flatMap {
+      services.brandService.find(code) flatMap {
         case None => jsonNotFound("Brand not found")
         case Some(brand) =>
           (for {
-            types <- eventTypeService.findByBrand(brand.identifier)
+            types <- services.eventTypeService.findByBrand(brand.identifier)
             events <- facilitatorId map { value ⇒
               eventsByFacilitator(value, brand.identifier, future, public)
             } getOrElse {
@@ -111,7 +112,7 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
             }
           } yield (types, events)) flatMap { case (types, events) =>
             val typeNames = types.map(eventType => eventType.identifier -> eventType.name).toMap
-            eventService.applyFacilitators(events)
+            services.eventService.applyFacilitators(events)
             jsonOk(eventsToJson(events, typeNames))
           }
       }
@@ -140,7 +141,7 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
           "end" -> event.schedule.end,
           "hoursPerDay" -> event.schedule.hoursPerDay,
           "totalHours" -> event.schedule.totalHours,
-          "facilitators" -> event.facilitators,
+          "facilitators" -> event.facilitators(services),
           "city" -> event.location.city,
           "country" -> event.location.countryCode,
           "website" -> event.organizer.webSite,
@@ -166,7 +167,7 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
     brandId: Long,
     future: Option[Boolean],
     public: Option[Boolean]): Future[List[Event]] = {
-    eventService.findByFacilitator(facilitatorId, Some(brandId), future, public, archived = Some(false))
+    services.eventService.findByFacilitator(facilitatorId, Some(brandId), future, public, archived = Some(false))
   }
 
   /**
@@ -185,7 +186,7 @@ class EventsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthenticati
     archived: Option[Boolean],
     countryCode: Option[String],
     eventType: Option[Long]): Future[List[Event]] = {
-    eventService.findByParameters(Some(brandId), future, public, archived, None, countryCode, eventType)
+    services.eventService.findByParameters(Some(brandId), future, public, archived, None, countryCode, eventType)
   }
 }
 

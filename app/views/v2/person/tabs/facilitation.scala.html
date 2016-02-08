@@ -1,5 +1,7 @@
 @(person: Person,
-    facilitationData: List[(LicenseView, Float)])(implicit request: Request[Any],
+    facilitationData: List[(LicenseView, Float)],
+    languages: List[FacilitatorLanguage],
+    countries: List[FacilitatorCountry])(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
@@ -21,7 +23,7 @@
     and country. These data are taken from the settings below.
   </p>
   <div class="row">
-    @views.html.v2.person.blocks.languages(person)
-    @views.html.v2.person.blocks.countries(person)
+    @views.html.v2.person.blocks.languages(person.identifier, languages)
+    @views.html.v2.person.blocks.countries(person.identifier, countries)
   </div>
 </div>

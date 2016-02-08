@@ -27,7 +27,7 @@ package models.service
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.PaymentRecordTable
 import models.payment.Record
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -35,10 +35,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /** Provides operations with database related to payment records */
-class PaymentRecordService extends HasDatabaseConfig[JdbcProfile]
+class PaymentRecordService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with PaymentRecordTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val records = TableQuery[PaymentRecords]
@@ -77,10 +77,4 @@ class PaymentRecordService extends HasDatabaseConfig[JdbcProfile]
    */
   def findByOrganisation(orgId: Long): Future[List[Record]] =
     db.run(records.filter(_.objectId === orgId).filter(_.person === false).sortBy(_.created).result).map(_.toList)
-}
-
-object PaymentRecordService {
-  private val instance: PaymentRecordService = new PaymentRecordService
-
-  def get: PaymentRecordService = instance
 }

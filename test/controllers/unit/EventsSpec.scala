@@ -60,7 +60,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
 
   "Event validation should fail" >> {
     "if no facilitator has a valid license" in {
-      (licenseService.licensees _) expects (1L, LocalDate.now()) returning List()
+      (services.licenseService.licensees _) expects (1L, LocalDate.now()) returning List()
       val event = EventHelper.one
       val res = controller.callValidateLicenses(event)
       res.nonEmpty must_== true
@@ -69,7 +69,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
     }
     "if the event type doesn't belong to the brand" in {
       val eventType = EventType(None, 2L, "test", None, 16, false)
-      (eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.eventTypeService.find _) expects 1L returning Some(eventType)
       val event = EventHelper.one
       val res = controller.callValidateEventType(event)
       res.nonEmpty must_== true
@@ -77,7 +77,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       res.get._2 must_== "error.eventType.wrongBrand"
     }
     "if the event type doesn't exist" in {
-      (eventTypeService.find _) expects 1L returning None
+      (services.eventTypeService.find _) expects 1L returning None
       val event = EventHelper.one
       val res = controller.callValidateEventType(event)
       res.nonEmpty must_== true

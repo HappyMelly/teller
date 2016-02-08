@@ -1,4 +1,4 @@
-@(person: Person)(implicit request: Request[Any],
+@(personId: Long, languages: List[FacilitatorLanguage])(implicit request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
@@ -12,22 +12,22 @@
   <table class="table">
     <thead><th>Languages</th></thead>
     <tbody>
-      @for(language <- person.languages) {
+      @for(language <- languages) {
         <tr><td>
           @Languages.all.get(language.language)&nbsp;
-          @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
-            <a class="pull-right" href="@routes.Facilitators.deleteLanguage(person.id.get, language.language)">Delete</a>
+          @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
+            <a class="pull-right" href="@routes.Facilitators.deleteLanguage(personId, language.language)">Delete</a>
           }
         </td></tr>
       }
     </tbody>
   </table>
-  @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
-    <form method="POST" action="@CSRF(routes.Facilitators.addLanguage(person.id.get))">
+  @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
+    <form method="POST" action="@CSRF(routes.Facilitators.addLanguage(personId))">
       <div class="form-group">
         <select name="language" class="form-control input-sm">
           @for(language <- Languages.all.toList.filterNot(
-            l => person.languages.exists(_.language == l._1)).sortBy(_._2)) {
+            l => languages.exists(_.language == l._1)).sortBy(_._2)) {
               <option value="@language._1">@language._2</option>
           }
         </select>

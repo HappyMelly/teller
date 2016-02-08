@@ -27,7 +27,7 @@ package models.service
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.PasswordTokenTable
 import org.joda.time.DateTime
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers.MailToken
 import slick.driver.JdbcProfile
@@ -38,10 +38,10 @@ import scala.concurrent.Future
 /**
   * Contains methods for managing PasswordToken records in database
   */
-class PasswordTokenService extends HasDatabaseConfig[JdbcProfile]
+class PasswordTokenService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with PasswordTokenTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val tokens = TableQuery[PasswordTokens]
@@ -69,10 +69,4 @@ class PasswordTokenService extends HasDatabaseConfig[JdbcProfile]
     * @param token Token
     */
   def insert(token: MailToken): Future[MailToken] = db.run(tokens += token).map(_ => token)
-}
-
-object PasswordTokenService {
-  private val _instance = new PasswordTokenService
-
-  def get: PasswordTokenService = _instance
 }

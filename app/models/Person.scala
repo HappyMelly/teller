@@ -52,17 +52,11 @@ case class Person(
   customerId: Option[String] = None,
   virtual: Boolean = false,
   active: Boolean = true,
-  dateStamp: DateStamp) extends Recipient
-    with AccountHolder
-    with ActivityRecorder
-    with Services {
+  dateStamp: DateStamp) extends Recipient with ActivityRecorder {
 
   private var _socialProfile: Option[SocialProfile] = None
   private var _address: Option[Address] = None
-  private var _languages: Option[List[FacilitatorLanguage]] = None
-  private var _countries: Option[List[FacilitatorCountry]] = None
   private var _organisations: Option[List[Organisation]] = None
-  private var _member: Option[Member] = None
 
   def copy(id: Option[Long] = id,
     firstName: String = firstName,
@@ -80,77 +74,38 @@ case class Person(
     virtual: Boolean = virtual,
     active: Boolean = active,
     dateStamp: DateStamp = dateStamp): Person = {
+
     val person = Person(id, firstName, lastName, email, birthday, photo,
       signature, addressId, bio, interests, webSite, blog,
       customerId, virtual, active, dateStamp)
+
     this._socialProfile foreach { p ⇒
       person.socialProfile_=(this.socialProfile)
     }
+
     this._address foreach { a ⇒
       person.address_=(a)
     }
     person
   }
 
-  def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
-    val profile = Await.result(socialProfileService.find(id.getOrElse(0), ProfileType.Person), 3.seconds)
-    socialProfile_=(profile)
-    _socialProfile.get
-  } else {
-    _socialProfile.get
-  }
+  def socialProfile: SocialProfile = _socialProfile.get
 
   def socialProfile_=(socialProfile: SocialProfile): Unit = {
     _socialProfile = Some(socialProfile)
   }
 
-  def address: Address = if (_address.isEmpty) {
-    import scala.concurrent.duration._
-    address_=(Await.result(addressService.get(addressId), 3.seconds))
-    _address.get
-  } else {
-    _address.get
-  }
+  def address: Address = _address.get
 
   def address_=(address: Address): Unit = {
     _address = Some(address)
   }
 
   /**
-   * A list of languages a facilitator speaks
-   */
-  def languages: List[FacilitatorLanguage] = if (_languages.isEmpty) {
-    val langs = Await.result(facilitatorService.languages(identifier), 3.seconds)
-    languages_=(langs)
-    _languages.get
-  } else {
-    _languages.get
-  }
-
-  def languages_=(languages: List[FacilitatorLanguage]): Unit = {
-    _languages = Some(languages)
-  }
-
-  /**
-   * A list of countries a facilitator speaks
-   */
-  def countries: List[FacilitatorCountry] = if (_countries.isEmpty) {
-    val result = Await.result(facilitatorService.countries(identifier), 3.seconds)
-    countries_=(result)
-    _countries.get
-  } else {
-    _countries.get
-  }
-
-  def countries_=(countries: List[FacilitatorCountry]): Unit = {
-    _countries = Some(countries)
-  }
-
-  /**
    * Returns a list of organisations this person is a member of
    */
-  def organisations: List[Organisation] = if (_organisations.isEmpty) {
-    val orgs = Await.result(personService.memberships(identifier), 3.seconds)
+  def organisations(implicit services: Services): List[Organisation] = if (_organisations.isEmpty) {
+    val orgs = Await.result(services.personService.memberships(identifier), 3.seconds)
     organisations_=(orgs)
     _organisations.get
   } else {
@@ -170,28 +125,10 @@ case class Person(
   def fullNamePossessive = if (lastName.endsWith("s")) s"$fullName’" else s"$fullName’s"
 
   /**
-   * Sets member data
-   * @param member Member data
-   */
-  def member_=(member: Member): Unit = _member = Some(member)
-
-  /** Returns member data if person is a member, false None */
-  def member: Option[Member] = _member map { Some(_) } getOrElse {
-    id map { i ⇒
-      val result = Await.result(personService.member(i), 3.seconds)
-      _member = result
-      _member
-    } getOrElse None
-  }
-
-  /** Returns true if a person is a member */
-  def isMember: Boolean = _member.isDefined
-
-  /**
    * Associates this person with given organisation.
    */
-  def addRelation(organisationId: Long): Unit =
-    personService.addRelation(this.id.get, organisationId)
+  def addRelation(organisationId: Long, services: Services): Unit =
+    services.personService.addRelation(this.id.get, organisationId)
 
   /**
    * Returns true if it is possible to grant log in access to this user.
@@ -199,32 +136,12 @@ case class Person(
   def canHaveUserAccount: Boolean = socialProfile.defined
 
   /**
-   * Returns true if this person may be deleted.
-   */
-  lazy val deletable: Boolean = account.deletable &&
-    contributions.isEmpty &&
-    organisations.isEmpty &&
-    licenses.isEmpty
-
-  /**
    * Deletes a relationship between this person and the given organisation
    *
    * @param organisationId Organisation identifier
    */
-  def deleteRelation(organisationId: Long): Unit =
-    personService.deleteRelation(this.id.get, organisationId)
-
-  /**
-   * Returns a list of this person’s content licenses.
-   */
-  lazy val licenses: List[LicenseView] =
-    Await.result(licenseService.licensesWithBrands(identifier), 3.seconds)
-
-  /**
-   * Returns a list of this person's contributions.
-   */
-  lazy val contributions: List[ContributionView] =
-    Await.result(contributionService.contributions(this.id.get, isPerson = true), 3.seconds)
+  def deleteRelation(organisationId: Long, services: Services): Unit =
+    services.personService.deleteRelation(this.id.get, organisationId)
 
   /**
    * Returns identifier of the object
@@ -243,16 +160,6 @@ case class Person(
    */
   def objectType: String = Activity.Type.Person
 
-  /**
-   * Inserts this person into the database and returns the saved Person,
-   * with the ID added
-   */
-  def insert: Future[Person] = personService.insert(this)
-
-  /**
-   * Updates related info about this person in database
-   */
-  def update: Future[Person] = personService.update(this)
 
   def summary: PersonSummary = PersonSummary(id.get, firstName, lastName, active, address.countryCode)
 
@@ -262,10 +169,10 @@ case class Person(
    * @param fee Amount of membership fee this person paid
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money): Future[Member] = {
-    val m = memberService.insert(membership(funder, fee))
-    profileStrengthService.find(id.get, false).filter(_.isDefined) foreach { x ⇒
-      profileStrengthService.update(ProfileStrength.forMember(x.get))
+  def becomeMember(funder: Boolean, fee: Money, services: Services): Future[Member] = {
+    val m = services.memberService.insert(membership(funder, fee))
+    services.profileStrengthService.find(id.get, false).filter(_.isDefined) foreach { x ⇒
+      services.profileStrengthService.update(ProfileStrength.forMember(x.get))
     }
     m
   }
@@ -299,6 +206,13 @@ object Person {
   }
 
   def cacheId(id: Long): String = s"signatures.$id"
+
+  def deletable(id: Long, services: Services): Future[Boolean] = for {
+    c <- services.contributionService.contributions(id, isPerson = true)
+    l <- services.licenseService.licensesWithBrands(id)
+    o <- services.personService.memberships(id)
+  } yield c.isEmpty && l.isEmpty && o.isEmpty
+
 
   def fullFileName(id: Long): String = s"signatures/$id"
 

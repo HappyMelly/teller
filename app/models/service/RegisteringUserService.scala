@@ -1,7 +1,7 @@
 package models.service
 
 import models.database.RegisteringUserTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -11,10 +11,10 @@ import scala.concurrent.Future
 /**
   *
   */
-class RegisteringUserService extends HasDatabaseConfig[JdbcProfile]
+class RegisteringUserService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with RegisteringUserTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val users = TableQuery[RegisteringUsers]
 
@@ -42,10 +42,4 @@ class RegisteringUserService extends HasDatabaseConfig[JdbcProfile]
   def insert(userId: String, providerId: String): Future[(String, String)] =
     db.run(users += (userId, providerId)).map(_ => (userId, providerId))
 
-}
-
-object RegisteringUserService {
-  private val _instance = new RegisteringUserService
-
-  def get: RegisteringUserService = _instance
 }

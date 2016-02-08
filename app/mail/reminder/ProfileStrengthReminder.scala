@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * Contains methods for notifying Teller users about the quality of their
  * profile
  */
-class ProfileStrengthReminder @Inject() (val email: Email) extends Services with Integrations {
+class ProfileStrengthReminder @Inject() (val email: Email, val services: Services) extends Integrations {
 
   /**
    * Sends profile strength reminders to all facilitators with profile strength
@@ -22,8 +22,8 @@ class ProfileStrengthReminder @Inject() (val email: Email) extends Services with
    */
   def sendToFacilitators() = {
     val queries = for {
-      l <- licenseService.findActive
-      p <- profileStrengthService.find(l.map(_.licenseeId).distinct, org = false)
+      l <- services.licenseService.findActive
+      p <- services.profileStrengthService.find(l.map(_.licenseeId).distinct, org = false)
     } yield p
     val withRanks = queries map { profiles =>
       ProfileStrength.calculateRanks(profiles).
@@ -33,7 +33,7 @@ class ProfileStrengthReminder @Inject() (val email: Email) extends Services with
     }
     val peopleWithRanks = for {
       r <- withRanks
-      p <- personService.find(r.map(_._1.objectId))
+      p <- services.personService.find(r.map(_._1.objectId))
     } yield p.sortBy(_.identifier).zip(r)
     peopleWithRanks map { people =>
       for ((person, (strength, rank)) <- people) {
@@ -44,7 +44,7 @@ class ProfileStrengthReminder @Inject() (val email: Email) extends Services with
         val msg = "profile strength reminder email for facilitator %s (id = %s)".format(
           person.fullName,
           person.id.get.toString)
-        Activity.insert("Teller", Activity.Predicate.Sent, msg)
+        Activity.insert("Teller", Activity.Predicate.Sent, msg)(services)
       }
     }
   }

@@ -26,17 +26,17 @@ package models.service.brand
 
 import models.brand.Badge
 import models.database.brand.BadgeTable
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class BadgeService extends HasDatabaseConfig[JdbcProfile]
+class BadgeService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
   with BadgeTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val badges = TableQuery[Badges]
 
@@ -90,10 +90,5 @@ class BadgeService extends HasDatabaseConfig[JdbcProfile]
 
 }
 
-object BadgeService {
-  private val _instance = new BadgeService
-
-  def get: BadgeService = _instance
-}
 
 

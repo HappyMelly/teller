@@ -29,20 +29,19 @@ import models._
 import models.database.event.AttendeeTable
 import models.database.{EvaluationTable, OldEvaluationTable}
 import models.event.AttendeeView
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EvaluationService extends HasDatabaseConfig[JdbcProfile]
+class EvaluationService(app: Application, services: Services) extends HasDatabaseConfig[JdbcProfile]
   with AttendeeTable
   with EvaluationTable
-  with OldEvaluationTable
-  with Services {
+  with OldEvaluationTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val evaluations = TableQuery[Evaluations]
 
@@ -55,7 +54,7 @@ class EvaluationService extends HasDatabaseConfig[JdbcProfile]
     val query = evaluations returning evaluations.map(_.id) into ((value, id) => value.copy(id = Some(id)))
     val actions = (for {
       evaluation <- query += eval
-      _ <- attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, evaluation.id)
+      _ <- services.attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, evaluation.id)
     } yield evaluation).transactionally
     db.run(actions)
   }
@@ -66,7 +65,7 @@ class EvaluationService extends HasDatabaseConfig[JdbcProfile]
     */
   def delete(evaluation: Evaluation): Future[Unit] = {
     val actions = (for {
-      _ <- attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, None)
+      _ <- services.attendeeService.updateEvaluationIdQuery(evaluation.attendeeId, None)
       _ <- evaluations.filter(_.id === evaluation.id).delete
     } yield ()).transactionally
     db.run(actions)
@@ -227,10 +226,4 @@ class EvaluationService extends HasDatabaseConfig[JdbcProfile]
     db.run(evaluations.filter(_.id === eval.id).map(_.forUpdate).update(updateTuple)).map(_ => eval)
   }
 
-}
-
-object EvaluationService {
-  private val instance = new EvaluationService
-
-  def get: EvaluationService = instance
 }

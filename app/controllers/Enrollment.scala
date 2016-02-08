@@ -43,10 +43,10 @@ case class PaymentData(token: String,
  * Defines an interface for enrollment classes
  */
 trait Enrollment extends AsyncController
-    with Services
     with Integrations
-    with Utilities
     with MemberNotifications {
+
+  val services: Services
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -89,7 +89,7 @@ trait Enrollment extends AsyncController
   protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): String = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
-    payment.subscribe(person, org, data.token, data.fee)
+    payment.subscribe(person, org, data.token, data.fee)(services)
   }
 
   private def notifyAboutPerson(person: Person, member: Member) = {

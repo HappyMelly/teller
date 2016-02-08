@@ -69,7 +69,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   val person = PersonHelper.one
 
   def e3 = {
-    (personService.memberships _) expects 1L returning List()
+    (services.personService.memberships _) expects 1L returning List()
     val result = controller.welcome().apply(fakeGetRequest())
 
     contentAsString(result) must contain("Become a Supporter")
@@ -77,7 +77,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    (personService.memberships _) expects 1L returning List()
+    (services.personService.memberships _) expects 1L returning List()
     person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = false))
     controller.activeUser_=(person)
     val result = controller.welcome().apply(fakeGetRequest())
@@ -87,7 +87,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e5 = {
-    (personService.memberships _) expects 1L returning List()
+    (services.personService.memberships _) expects 1L returning List()
     person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
     controller.activeUser_=(person)
     val result = controller.welcome().apply(fakeGetRequest())
@@ -121,7 +121,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     val org2 = OrganisationHelper.two
     val org3 = OrganisationHelper.make(id = Some(3L), name = "Three")
     org3.member_=(MemberHelper.make(objectId = 3L, person = false, funder = false))
-    (personService.memberships _) expects 1L returning List(org1, org2, org3)
+    (services.personService.memberships _) expects 1L returning List(org1, org2, org3)
     person.member_=(MemberHelper.make(objectId = 1L, person = true, funder = true))
     controller.activeUser_=(person)
     val result = controller.welcome().apply(fakeGetRequest())
@@ -139,7 +139,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     org1.member_=(MemberHelper.make(objectId = 1L, person = false, funder = false))
     val org2 = OrganisationHelper.two
     org2.member_=(MemberHelper.make(objectId = 2L, person = false, funder = false))
-    (personService.memberships _) expects 1L returning List(org1, org2)
+    (services.personService.memberships _) expects 1L returning List(org1, org2)
 
     val result = controller.welcome().apply(fakeGetRequest())
     contentAsString(result) must not contain ">Select organisation<"
@@ -148,7 +148,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e10 = {
     val org = OrganisationHelper.make(Some(4L), "One")
-    (personService.memberships _) expects 1L returning List(org)
+    (services.personService.memberships _) expects 1L returning List(org)
     val result = controller.welcome().apply(fakeGetRequest())
 
     contentAsString(result) must contain(">Select organisation<")
@@ -157,7 +157,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e11 = {
-    (orgService.find(_: Long)).expects(1L).returning(None)
+    (services.orgService.find(_: Long)).expects(1L).returning(None)
     val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
     header("Location", result) must beSome.which(_.contains("membership/welcome"))
@@ -165,8 +165,8 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e12 = {
     val org = OrganisationHelper.one
-    (orgService.find(_: Long)).expects(1L).returning(Some(org))
-    (personService.memberships _) expects 1L returning List()
+    (services.orgService.find(_: Long)).expects(1L).returning(Some(org))
+    (services.personService.memberships _) expects 1L returning List()
 
     val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
@@ -175,8 +175,8 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e13 = {
     val org = OrganisationHelper.one
-    (orgService.find(_: Long)).expects(1L).returning(Some(org))
-    (personService.memberships _) expects 1L returning List(org)
+    (services.orgService.find(_: Long)).expects(1L).returning(Some(org))
+    (services.personService.memberships _) expects 1L returning List(org)
 
     val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 
@@ -185,9 +185,9 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e14 = {
     val org = OrganisationHelper.one.copy(countryCode = "NL")
-    (orgService.find(_: Long)).expects(1L).returning(Some(org))
+    (services.orgService.find(_: Long)).expects(1L).returning(Some(org))
     // default person is from United Kingdom
-    (personService.memberships _) expects 1L returning List(org)
+    (services.personService.memberships _) expects 1L returning List(org)
 
     val result = controller.payment(Some(1L)).apply(fakeGetRequest())
 

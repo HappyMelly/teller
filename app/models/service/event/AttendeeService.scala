@@ -4,7 +4,7 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.event.AttendeeTable
 import models.database.{EvaluationTable, EventTable}
 import models.event.{Attendee, AttendeeView}
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
@@ -14,12 +14,12 @@ import scala.concurrent.Future
 /**
   * Created by sery0ga on 04/01/16.
   */
-class AttendeeService extends HasDatabaseConfig[JdbcProfile]
+class AttendeeService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
   with AttendeeTable
   with EvaluationTable
   with EventTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val attendees = TableQuery[Attendees]
 
@@ -112,10 +112,4 @@ class AttendeeService extends HasDatabaseConfig[JdbcProfile]
     */
   def updateEvaluationIdQuery(attendeeId: Long, evaluationId: Option[Long]) =
     attendees.filter(_.id === attendeeId).map(_.evaluationId).update(evaluationId)
-}
-
-object AttendeeService {
-  private val _instance = new AttendeeService
-
-  def get: AttendeeService = _instance
 }

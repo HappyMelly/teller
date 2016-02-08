@@ -29,6 +29,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
+import models.service.Services
 import models.{ActivityRecorder, Contribution}
 import play.api.data.Forms._
 import play.api.data._
@@ -39,8 +40,9 @@ import scala.concurrent.Future
 
 class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
+                               val services: Services,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Activities {
 
   /** HTML form mapping for creating and editing. */
@@ -73,13 +75,13 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
         formWithErrors ⇒ redirect(route, "error" -> "A role for a contributor cannot be empty"),
         success ⇒ {
           val contributor: Future[Option[ActivityRecorder]] = if (success.isPerson)
-            personService.find(success.contributorId)
+            services.personService.find(success.contributorId)
           else
-            orgService.find(success.contributorId)
+            services.orgService.find(success.contributorId)
           contributor flatMap {
             case None => redirect(route, "error" -> "Contributor not found")
             case Some(c) =>
-              contributionService.insert(success) flatMap { _ =>
+              services.contributionService.insert(success) flatMap { _ =>
                 redirect(route, "success" -> "Contributor was added")
               }
           }
@@ -95,10 +97,10 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
    */
   def delete(id: Long, page: String) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      contributionService.find(id) flatMap {
+      services.contributionService.find(id) flatMap {
         case None => notFound("Contribution not found")
         case Some(contribution) =>
-          contributionService.delete(id) flatMap { _ =>
+          services.contributionService.delete(id) flatMap { _ =>
             val route: String = if (page == "organisation") {
               routes.Organisations.details(contribution.contributorId).url
             } else if (page == "product") {

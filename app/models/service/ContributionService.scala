@@ -24,21 +24,21 @@
  */
 package models.service
 
-import models.{ContributorView, Contribution, ContributionView}
-import models.database.{OrganisationTable, PersonTable, ContributionTable}
-import play.api.Play
+import models.database.{ContributionTable, OrganisationTable, PersonTable}
+import models.{Contribution, ContributionView, ContributorView}
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ContributionService extends HasDatabaseConfig[JdbcProfile]
+class ContributionService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with ContributionTable
   with OrganisationTable
   with PersonTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val contributions = TableQuery[Contributions]
 
@@ -113,10 +113,4 @@ class ContributionService extends HasDatabaseConfig[JdbcProfile]
     */
   def find(id: Long): Future[Option[Contribution]] =
     db.run(contributions.filter(_.id === id).result).map(_.headOption)
-}
-
-object ContributionService {
-  private val instance = new ContributionService
-
-  def get: ContributionService = instance
 }

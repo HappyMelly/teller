@@ -26,22 +26,21 @@ package models.service
 
 import models._
 import models.database._
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
-import slick.dbio.SuccessAction
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /** Provides operations with database related to members */
-class MemberService extends HasDatabaseConfig[JdbcProfile]
+class MemberService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with AddressTable
   with MemberTable
   with OrganisationTable
   with PersonTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val members = TableQuery[Members]
@@ -165,10 +164,4 @@ class MemberService extends HasDatabaseConfig[JdbcProfile]
    */
   def delete(objectId: Long, person: Boolean): Future[Int] =
     db.run(members.filter(_.objectId === objectId).filter(_.person === person).delete)
-}
-
-object MemberService {
-  private val instance = new MemberService
-
-  def get: MemberService = instance
 }

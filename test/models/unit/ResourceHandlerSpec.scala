@@ -72,20 +72,20 @@ class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
       handler.callCheckMemberPermission(activeUser, 1L) must_== true
     }
     "and the user is not a member then permission should not be granted" in {
-      (memberService.find(_: Long)) expects 3L returning None
+      (services.memberService.find(_: Long)) expects 3L returning None
       handler.callCheckMemberPermission(activeUser, 3L) must_== false
     }
     "and the user is a member but she checks the profile of other member then permission should not be granted" in {
       val member = MemberHelper.make(Some(1L), 3L, person = true, funder = true)
-      (memberService.find(_: Long)) expects 3L returning Some(member)
+      (services.memberService.find(_: Long)) expects 3L returning Some(member)
       handler.callCheckMemberPermission(activeUser, 3L) must_== false
     }
     "and the user is an employee of an organisation which is a member and checks the profile of this organisation then permission should be granted" in {
       val member = MemberHelper.make(Some(1L), 3L, person = false, funder = true)
-      (memberService.find(_: Long)) expects 3L returning Some(member)
+      (services.memberService.find(_: Long)) expects 3L returning Some(member)
       val orgService = mock[OrganisationService]
       handler.orgService_=(orgService)
-      (orgService.people _) expects 3L returning List(person)
+      (services.orgService.people _) expects 3L returning List(person)
       handler.callCheckMemberPermission(activeUser, 3L) must_== true
     }
   }

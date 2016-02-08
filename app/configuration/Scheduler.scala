@@ -24,18 +24,19 @@
 package configuration
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 
 import mail.reminder._
 import models.Facilitator
-import org.joda.time.{Seconds, LocalTime, LocalDate, LocalDateTime}
-import play.libs.Akka
+import models.service.Services
+import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment
-import services.integrations.Email
+import play.libs.Akka
 import services.cleaners.ExpiredEventRequestCleaner
+import services.integrations.Email
 
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 trait IScheduler
 
@@ -43,11 +44,11 @@ trait IScheduler
   * Schedules a set of actions to run on the application start
   */
 @Singleton
-class Scheduler @Inject() (val env: Environment, val email: Email) extends IScheduler {
+class Scheduler @Inject() (val env: Environment, val email: Email, val services: Services) extends IScheduler {
   start
 
   private def start = {
-    (new EventReminder(email)).sendPostFactumConfirmation()
+    (new EventReminder(email, services)).sendPostFactumConfirmation()
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleMonthlyAlerts
@@ -65,10 +66,10 @@ class Scheduler @Inject() (val env: Environment, val email: Email) extends ISche
     Akka.system.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
-      (new EventReminder(email)).sendPostFactumConfirmation()
-      (new EvaluationReminder(email)).sendToAttendees()
-      Facilitator.updateFacilitatorExperience()
-      ExpiredEventRequestCleaner.clean()
+      (new EventReminder(email, services)).sendPostFactumConfirmation()
+      (new EvaluationReminder(email, services)).sendToAttendees()
+      Facilitator.updateFacilitatorExperience(services)
+      (new ExpiredEventRequestCleaner(services)).clean()
     }
   }
 
@@ -84,10 +85,10 @@ class Scheduler @Inject() (val env: Environment, val email: Email) extends ISche
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
       if (now.getDayOfMonth == 1) {
-        (new ProfileStrengthReminder(email)).sendToFacilitators()
-        (new ExperimentReminder(email)).sendStatus()
-        (new BrandReminder(email)).sendLicenseExpirationReminder()
-        (new EventReminder(email)).sendUpcomingEventsNotification()
+        (new ProfileStrengthReminder(email, services)).sendToFacilitators()
+        (new ExperimentReminder(email, services)).sendStatus()
+        (new BrandReminder(email, services)).sendLicenseExpirationReminder()
+//        (new EventReminder(email, app)).sendUpcomingEventsNotification()
       }
     }
   }

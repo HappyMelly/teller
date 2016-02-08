@@ -58,7 +58,7 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.brandService_=(brandService)
 
   def e1 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     // val req = prepareSecuredPostRequest(FakeUserIdentity.editor, "")
     val res = controller.activation(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
@@ -68,8 +68,8 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e2 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (brandService.activate _) expects 1L
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.activate _) expects 1L
     val req = fakePostRequest().withFormUrlEncodedBody("active" -> "true")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
@@ -77,9 +77,9 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (brandService.deactivate _) expects 1L
-    (productService.findByBrand _) expects 1L returning List()
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.deactivate _) expects 1L
+    (services.productService.findByBrand _) expects 1L returning List()
     val req = fakePostRequest().withFormUrlEncodedBody("active" -> "false")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
@@ -87,13 +87,13 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e4 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
-    (brandService.deactivate _) expects 1L
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.deactivate _) expects 1L
     val products = List(ProductHelper.make("One", Some(1L)),
       ProductHelper.make("Two", Some(2L)))
-    (productService.findByBrand _) expects 1L returning products
-    (productService.deactivate _) expects 1L
-    (productService.deactivate _) expects 2L
+    (services.productService.findByBrand _) expects 1L returning products
+    (services.productService.deactivate _) expects 1L
+    (services.productService.deactivate _) expects 2L
     val req = fakePostRequest().withFormUrlEncodedBody("active" -> "false")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)

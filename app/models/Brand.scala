@@ -51,9 +51,7 @@ case class Brand(id: Option[Long],
     evaluationUrl: Option[String] = None,
     evaluationHookUrl: Option[String] = None,
     active: Boolean = true,
-    recordInfo: DateStamp) extends ActivityRecorder with Services {
-
-  private var _socialProfile: Option[SocialProfile] = None
+    recordInfo: DateStamp) extends ActivityRecorder {
 
   /**
    * Returns identifier of the object
@@ -71,28 +69,6 @@ case class Brand(id: Option[Long],
    * Returns type of this object
    */
   def objectType: String = Activity.Type.Brand
-
-  def socialProfile: SocialProfile = if (_socialProfile.isEmpty) {
-    Await.result(socialProfileService.find(id.getOrElse(0), ProfileType.Brand), 3.seconds)
-  } else {
-    _socialProfile.get
-  }
-
-  def socialProfile_=(socialProfile: SocialProfile): Unit = {
-    _socialProfile = Some(socialProfile)
-  }
-
-  /**
-   * Returns true if this brand may be deleted.
-   */
-  lazy val deletable: Boolean = Await.result(brandService.deletable(identifier), 3.seconds)
-
-  /**
-   * Adds this brand to database and returns an updated object with ID
-   */
-  def insert(): Future[Brand] = brandService.insert(this)
-
-  def delete(): Unit = brandService.delete(this)
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])

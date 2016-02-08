@@ -37,9 +37,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Products API.
  */
-class ProductsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentication
-  with I18nSupport
-  with Services {
+class ProductsApi @Inject() (val services: Services,
+                             override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi)
+  with I18nSupport {
 
   private val converter = new ProductConverter
   implicit val productWrites = converter.productWithBrandsWrites
@@ -52,12 +52,13 @@ class ProductsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentica
    */
   def product(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      p <- productService.find(id)
-      b <- productService.brands(id)
-    } yield (p, b)) flatMap {
-      case (None, _) => jsonNotFound("Product not found")
-      case (Some(product), brands) =>
-        val withBrands = ProductView(product, brands)
+      p <- services.productService.find(id)
+      b <- services.productService.brands(id)
+      c <- services.contributionService.contributors(id)
+    } yield (p, b, c)) flatMap {
+      case (None, _, _) => jsonNotFound("Product not found")
+      case (Some(product), brands, contributors) =>
+        val withBrands = ProductView(product, brands, contributors)
         jsonOk(Json.toJson(withBrands)(converter.productDetailsWrites))
     }
   }
@@ -67,8 +68,8 @@ class ProductsApi @Inject() (val messagesApi: MessagesApi) extends ApiAuthentica
    */
   def products = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      products <- productService.findAll
-      withBrands <- productService.collection.brands(products)
+      products <- services.productService.findAll
+      withBrands <- services.productService.collection.brands(products)
     } yield withBrands) flatMap { products =>
       jsonOk(Json.toJson(products))
     }

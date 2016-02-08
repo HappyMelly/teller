@@ -28,23 +28,21 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
 import models.database._
 import org.joda.time.LocalDate
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
-import services.integrations.Integrations
 import slick.driver.JdbcProfile
 
-import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.language.postfixOps
 
-class EventService extends Services
-  with HasDatabaseConfig[JdbcProfile]
+class EventService(app: Application, services: Services) extends HasDatabaseConfig[JdbcProfile]
   with EvaluationTable
   with EventTable
   with EventFacilitatorTable
   with EventInvoiceTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
   private val events = TableQuery[Events]
@@ -225,7 +223,7 @@ class EventService extends Services
     val query = events.map(_.forInsert) returning events.map(_.id) into ((value, id) => id)
     val actions = (for {
       eventId <- query += insertTuple
-      _ <- DBIO.sequence(view.event.facilitatorIds.distinct.map { facilitatorId ⇒
+      _ <- DBIO.sequence(view.event.facilitatorIds(services).distinct.map { facilitatorId ⇒
         TableQuery[EventFacilitators] += (eventId, facilitatorId) })
       _ <- TableQuery[EventInvoices] += view.invoice.copy(eventId = Some(eventId))
     } yield eventId).transactionally
@@ -248,7 +246,7 @@ class EventService extends Services
     val futureData = db.run(query.result).map(_.toList)
     futureData map { facilitationData =>
       val facilitators = facilitationData.map(_._2).distinct
-      personService.collection.addresses(facilitators)
+      services.personService.collection.addresses(facilitators)
       facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
       val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
       events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
@@ -297,12 +295,12 @@ class EventService extends Services
     val actions = (for {
       _ <- events.filter(_.id === view.event.id).map(_.forUpdate).update(updateTuple)
       _ <- facilitators.filter(_.eventId === view.event.id).delete
-      _ <- DBIO.sequence(view.event.facilitatorIds.distinct.map(facilitatorId ⇒
+      _ <- DBIO.sequence(view.event.facilitatorIds(services).distinct.map(facilitatorId ⇒
         facilitators += (view.event.id.get, facilitatorId)
       ))
     } yield ()).transactionally
     db.run(actions)
-    eventInvoiceService.update(view.invoice)
+    services.eventInvoiceService.update(view.invoice)
 
     view
   }
@@ -368,11 +366,4 @@ class EventService extends Services
       parentQuery.filter(_.archived === value)
     } getOrElse parentQuery
   }
-}
-
-object EventService {
-  private val instance = new EventService()
-
-  def get: EventService = instance
-
 }

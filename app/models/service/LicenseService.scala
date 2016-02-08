@@ -28,20 +28,20 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
 import models.database._
 import org.joda.time.LocalDate
-import play.api.Play
+import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class LicenseService extends HasDatabaseConfig[JdbcProfile]
+class LicenseService(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with BrandTable
   with FacilitatorTable
   with LicenseTable
   with PersonTable {
 
-  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
   private val licenses = TableQuery[Licenses]
 
@@ -215,10 +215,4 @@ class LicenseService extends HasDatabaseConfig[JdbcProfile]
    */
   def update(license: License): Future[Int] = db.run(licenses.filter(_.id === license.id).update(license))
 
-}
-
-object LicenseService {
-  private val instance = new LicenseService
-
-  def get: LicenseService = instance
 }

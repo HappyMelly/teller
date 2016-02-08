@@ -28,10 +28,8 @@ import mail.reminder.EvaluationReminder
 import models.event.Attendee
 import models.service._
 import org.joda.time.LocalDate
-import services.integrations.{EmailComponent, Integrations}
-
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
+import play.api.i18n.Messages
+import services.integrations.EmailComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -73,8 +71,7 @@ case class EvaluationAttendeeView(evaluation: Evaluation, attendee: Attendee)
 /**
  * An evaluation which a participant gives to an event
  */
-case class  Evaluation(
-                       id: Option[Long],
+case class  Evaluation(id: Option[Long],
                        eventId: Long,
                        attendeeId: Long,
                        reasonToRegister: String,
@@ -90,11 +87,9 @@ case class  Evaluation(
                        status: EvaluationStatus.Value,
                        handled: Option[LocalDate],
                        confirmationId: Option[String],
-                       recordInfo: DateStamp) extends ActivityRecorder with Services {
+                       recordInfo: DateStamp) extends ActivityRecorder {
 
   val impression: Int = facilitatorImpression
-
-  lazy val event: Event = Await.result(eventService.get(eventId), 3.seconds)
 
   /**
    * Returns identifier of the object
@@ -134,45 +129,45 @@ case class  Evaluation(
    * @param withConfirmation If true, the evaluation should be confirmed first by the participant
    * @return Returns an updated evaluation with id
    */
-  def add(defaultHook: String, withConfirmation: Boolean = false, email: EmailComponent): Future[Evaluation] =
+  def add(defaultHook: String, withConfirmation: Boolean = false, email: EmailComponent, services: Services)(implicit messages: Messages): Future[Evaluation] =
     if (withConfirmation) {
       val hash = Random.alphanumeric.take(64).mkString
       val confirmed = this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))
-      evaluationService.add(confirmed) flatMap { evaluation =>
-        evaluation.sendConfirmationRequest(defaultHook, email)
+      services.evaluationService.add(confirmed) flatMap { evaluation =>
+        evaluation.sendConfirmationRequest(defaultHook, email, services)
       }
     } else {
-      evaluationService.add(this.copy(status = EvaluationStatus.Pending)) flatMap { evaluation =>
-        evaluation.sendNewEvaluationNotification(email)
+      services.evaluationService.add(this.copy(status = EvaluationStatus.Pending)) flatMap { evaluation =>
+        evaluation.sendNewEvaluationNotification(email, services, messages)
       }
     }
 
   /**
    * Updates the evaluation
    */
-  def update(): Future[Evaluation] = evaluationService.update(this)
+  def update(services: Services): Future[Evaluation] = services.evaluationService.update(this)
 
-  def approve: Future[Evaluation] = {
+  def approve(services: Services): Future[Evaluation] = {
     this.
       copy(status = EvaluationStatus.Approved).
-      copy(handled = Some(LocalDate.now)).update()
+      copy(handled = Some(LocalDate.now)).update(services)
   }
 
   /**
    * Sets the evaluation to a Rejected state
    */
-  def reject(): Future[Evaluation] = {
+  def reject(services: Services): Future[Evaluation] = {
     this
       .copy(status = EvaluationStatus.Rejected)
-      .copy(handled = Some(LocalDate.now)).update()
+      .copy(handled = Some(LocalDate.now)).update(services)
   }
 
   /**
    * Returns approved/rejected evaluation with the same impression and
    * a participant of the same name
    */
-  def identical(): Future[Option[Evaluation]] = {
-    evaluationService.findByEventsWithAttendees(List(this.eventId)) map { evaluations =>
+  def identical(services: Services): Future[Option[Evaluation]] = {
+    services.evaluationService.findByEventsWithAttendees(List(this.eventId)) map { evaluations =>
       evaluations.find(_._3.identifier == this.identifier).map { view =>
         evaluations.
           filter(x => x._3.approved || x._3.rejected).
@@ -187,9 +182,9 @@ case class  Evaluation(
   /**
    * Sets the evaluation to Pending state and returns the updated evaluation
    */
-  def confirm(email: EmailComponent): Future[Evaluation] = {
-    this.copy(status = EvaluationStatus.Pending).update() flatMap { evaluation =>
-      evaluation.sendNewEvaluationNotification(email)
+  def confirm(email: EmailComponent, services: Services)(implicit messages: Messages): Future[Evaluation] = {
+    this.copy(status = EvaluationStatus.Pending).update(services) flatMap { evaluation =>
+      evaluation.sendNewEvaluationNotification(email, services, messages)
     }
   }
 
@@ -199,32 +194,35 @@ case class  Evaluation(
     * @param defaultHook Link to a default confirmation page
    * @return Returns the evaluation
    */
-  def sendConfirmationRequest(defaultHook: String, email: EmailComponent): Future[Evaluation] = {
+  def sendConfirmationRequest(defaultHook: String, email: EmailComponent, services: Services): Future[Evaluation] = {
     (for {
-      brand <- brandService.get(event.brandId)
-      attendee <- attendeeService.find(this.attendeeId, this.eventId)
+      event <- services.eventService.get(eventId)
+      brand <- services.brandService.get(event.brandId)
+      attendee <- services.attendeeService.find(this.attendeeId, this.eventId)
     } yield (brand, attendee)) map {
       case (_, None) => this
       case (brand, Some(attendee)) =>
         val token = this.confirmationId getOrElse ""
-        (new EvaluationReminder(email)).sendConfirmRequest(attendee, brand, defaultHook, token)
+        (new EvaluationReminder(email, services)).sendConfirmRequest(attendee, brand, defaultHook, token)
         this
     }
   }
 
-  protected def sendNewEvaluationNotification(email: EmailComponent) = {
+  protected def sendNewEvaluationNotification(email: EmailComponent, services: Services, messages: Messages) = {
     (for {
-      brand <- brandService.get(event.brandId)
-      attendee <- attendeeService.find(this.attendeeId, this.eventId)
-      coordinators <- brandService.coordinators(event.brandId)
-    } yield (brand, attendee, coordinators)) map {
-      case (_, None, _) => this
-      case (brand, Some(attendee), coordinators) =>
+      event <- services.eventService.get(eventId)
+      brand <- services.brandService.get(event.brandId)
+      attendee <- services.attendeeService.find(this.attendeeId, this.eventId)
+      coordinators <- services.brandService.coordinators(event.brandId)
+    } yield (event, brand, attendee, coordinators)) map {
+      case (event, _, None, _) => this
+      case (event, brand, Some(attendee), coordinators) =>
         val impression = views.Evaluations.impression(facilitatorImpression)
         val subject = s"New evaluation (General impression: $impression)"
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-        email.send(event.facilitators.toSet, Some(cc.toSet), None, subject,
-          mail.templates.evaluation.html.details(this, attendee, brand).toString(), richMessage = true)
+        val body = mail.templates.evaluation.html.details(this, event, attendee, brand)(messages)
+        email.send(event.facilitators(services).toSet, Some(cc.toSet), None, subject,
+          body.toString(), richMessage = true)
 
         this
     }
@@ -232,7 +230,7 @@ case class  Evaluation(
 
 }
 
-object Evaluation extends Services {
+object Evaluation {
 
   /**
    * Returns true if the evaluation can be approved
