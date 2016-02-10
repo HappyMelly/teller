@@ -237,19 +237,24 @@ class EventService(app: Application, services: Services) extends HasDatabaseConf
     * @param events List of events
    * @return
    */
-  def applyFacilitators(events: List[Event]): Unit = {
+  def applyFacilitators(events: List[Event]): Future[Unit] = {
     val ids = events.map(_.id.get).distinct
     val query = for {
       facilitation ← TableQuery[EventFacilitators] if facilitation.eventId inSet ids
       person ← facilitation.facilitator
     } yield (facilitation.eventId, person)
     val futureData = db.run(query.result).map(_.toList)
-    futureData map { facilitationData =>
+    futureData flatMap { facilitationData =>
       val facilitators = facilitationData.map(_._2).distinct
-      services.personService.collection.addresses(facilitators)
-      facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
-      val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-      events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
+      services.personService.collection.addresses(facilitators) map { _ =>
+        facilitationData.foreach(f ⇒ {
+          f._2.address_=(facilitators.find(_.id == f._2.id).get.address)
+        })
+        val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+        events.foreach(e ⇒ {
+          e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List()))
+        })
+      }
     }
   }
 

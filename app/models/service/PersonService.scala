@@ -193,10 +193,19 @@ class PersonService(app: Application, services: Services) extends HasDatabaseCon
    */
   def find(name: String): Future[Option[Person]] = {
     val transformed = name.replace(".", " ").replace("_", ".")
+
+    import SocialProfilesStatic._
+
     val query = for {
-      person ← people if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
-    } yield person
-    db.run(query.result).map(_.headOption)
+      person <- people if person.firstName ++ " " ++ person.lastName.toLowerCase like "%" + transformed + "%"
+      social <- TableQuery[SocialProfiles] if social.objectType === ProfileType.Person && social.objectId === person.id
+      address <- TableQuery[Addresses] if address.id === person.addressId
+    } yield (person, social, address)
+    db.run(query.result).map(_.headOption.map { result =>
+      result._1.socialProfile_=(result._2)
+      result._1.address_=(result._3)
+      result._1
+    })
   }
 
   /**
@@ -408,7 +417,7 @@ class PersonService(app: Application, services: Services) extends HasDatabaseCon
       * @param people List of people
       * @return
       */
-    def addresses(people: List[Person]): Unit = {
+    def addresses(people: List[Person]): Future[Unit] = {
       val ids = people.map(_.addressId).distinct
       val query = for {
         address ← TableQuery[Addresses] if address.id inSet ids

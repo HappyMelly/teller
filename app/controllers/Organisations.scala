@@ -186,6 +186,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
       (for {
         o <- services.orgService.findWithProfile(id)
         m <- services.orgService.people(id)
+        _ <- services.personService.collection.addresses(m)
         p <- services.personService.findActive
         c <- services.contributionService.contributions(id, isPerson = false)
         pr <- services.productService.findAll

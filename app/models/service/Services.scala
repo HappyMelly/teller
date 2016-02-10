@@ -31,7 +31,41 @@ import models.service.brand._
 import models.service.event._
 import play.api.Application
 
-trait IServices
+trait IServices {
+  val addressService: AddressService
+  val activityService: ActivityService
+  val apiTokenService: ApiTokenService
+  val attendeeService: AttendeeService
+  val brandService: BrandService
+  val brandBadgeService: BadgeService
+  val brandCoordinatorService: BrandCoordinatorService
+  val certificateService: CertificateTemplateService
+  val contributionService: ContributionService
+  val emailToken: EmailTokenService
+  val evaluationService: EvaluationService
+  val eventService: EventService
+  val eventInvoiceService: EventInvoiceService
+  val eventCancellationService: EventCancellationService
+  val eventRequestService: EventRequestService
+  val eventTypeService: EventTypeService
+  val exchangeService: ExchangeRateService
+  val experimentService: ExperimentService
+  val facilitatorService: FacilitatorService
+  val feeService: BrandFeeService
+  val mailTokenService: PasswordTokenService
+  val memberService: MemberService
+  val licenseService: LicenseService
+  val orgService: OrganisationService
+  val paymentRecordService: PaymentRecordService
+  val personService: PersonService
+  val productService: ProductService
+  val profileStrengthService: ProfileStrengthService
+  val registeringUserService: RegisteringUserService
+  val socialProfileService: SocialProfileService
+  val userAccountService: UserAccountService
+  val identityService: IdentityService
+  val transactionTypeService: TransactionTypeService
+}
 
 /** Contains references to all services so we can stub them in tests */
 @Singleton

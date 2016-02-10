@@ -48,7 +48,8 @@ class FacilitatorsApi @Inject() (val services: Services,
                                  override val messagesApi: MessagesApi)
   extends ApiAuthentication(services, messagesApi) {
 
-  case class FacilitatorSummary(person: Person, 
+  case class FacilitatorSummary(person: Person,
+                                address: Address,
                                 languages: List[FacilitatorLanguage],
                                 countries: List[FacilitatorCountry],
                                 rating: Float)
@@ -61,7 +62,7 @@ class FacilitatorsApi @Inject() (val services: Services,
         "last_name" -> value.person.lastName,
         "unique_name" -> value.person.uniqueName,
         "photo" -> value.person.photo.url,
-        "country" -> value.person.address.countryCode,
+        "country" -> value.address.countryCode,
         "languages" -> value.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
         "countries" -> value.countries.map(_.country).distinct.toList,
         "rating" -> value.rating)
@@ -82,7 +83,7 @@ class FacilitatorsApi @Inject() (val services: Services,
           data <- services.facilitatorService.findByBrand(brand.identifier)
           c <- services.facilitatorService.countries(f.map(_.identifier))
           l <- services.facilitatorService.languages(f.map(_.identifier))
-          a <- services.addressService.find(f.map(_.identifier))
+          a <- services.addressService.find(f.map(_.addressId))
         } yield facilitatorsSummary(f, c, l, a, data)) flatMap { summaries =>
           val collator = Collator.getInstance(Locale.ENGLISH)
           val ord = new Ordering[String] {
@@ -185,7 +186,7 @@ class FacilitatorsApi @Inject() (val services: Services,
     implicit request ⇒ implicit token ⇒
       val mayBePerson = try {
         val id = identifier.toLong
-        services.personService.find(id)
+        services.personService.findComplete(id)
       } catch {
         case e: NumberFormatException ⇒ services.personService.find(URLDecoder.decode(identifier, "ASCII"))
       }
@@ -224,7 +225,7 @@ class FacilitatorsApi @Inject() (val services: Services,
     val language = languages.getOrElse(person.identifier, List())
     val countryOfResidence = List(FacilitatorCountry(person.identifier, Countries.name(address.countryCode)))
     val country = countries.get(person.identifier).map(_ ::: countryOfResidence).getOrElse(countryOfResidence).distinct
-    FacilitatorSummary(person, language, country, rating)
+    FacilitatorSummary(person, address, language, country, rating)
   }
 
   /**

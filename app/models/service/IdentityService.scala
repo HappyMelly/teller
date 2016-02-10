@@ -118,30 +118,35 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.twitterHandle === identity.profileUrl
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m)
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
 
         case FacebookProvider.Facebook ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.facebookUrl === identity.profileUrl
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m)
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
 
         case GoogleProvider.Google ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.googlePlusUrl === identity.profileUrl
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m)
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
 
         case LinkedInProvider.LinkedIn ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.linkedInUrl === identity.profileUrl
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m)
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
       }
       db.run(q.result).map(_.headOption.map { result =>
+        result._3.address_=(result._5)
         ActiveUser(userId, providerId, result._2, result._3, result._4)
       })
     }
@@ -161,8 +166,10 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
         identity ← passwordIdentities if identity.email === email
         a ← accounts if a.personId === identity.userId
         (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-      } yield (identity, a, p, m)
+        address <- TableQuery[Addresses] if address.id === p.addressId
+      } yield (identity, a, p, m, address)
       db.run(query.result).map(_.headOption.map { result =>
+        result._3.address_=(result._5)
         ActiveUser(email, UsernamePasswordProvider.UsernamePassword, result._2, result._3, result._4)
       })
     }

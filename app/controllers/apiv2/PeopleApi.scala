@@ -49,8 +49,10 @@ class PeopleApi @Inject() (val services: Services,
    */
   def people(active: Option[Boolean], query: Option[String]) = TokenSecuredAction(readWrite = false) { 
     implicit request ⇒ implicit token ⇒
-      services.personService.findByParameters(active, query) flatMap { people =>
-        services.personService.collection.addresses(people)
+      (for {
+        p <- services.personService.findByParameters(active, query)
+        _ <- services.personService.collection.addresses(p)
+      } yield p) flatMap { people =>
         ok(Json.prettyPrint(Json.toJson(people)))
       }
   }
@@ -64,7 +66,7 @@ class PeopleApi @Inject() (val services: Services,
   def person(identifier: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     val mayBePerson = try {
       val id = identifier.toLong
-      services.personService.find(id)
+      services.personService.findComplete(id)
     } catch {
       case e: NumberFormatException ⇒ services.personService.find(URLDecoder.decode(identifier, "ASCII"))
     }

@@ -21,17 +21,30 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package configuration
+package configuration.filters
 
-import javax.inject.Inject
-
-import configuration.filters._
-import play.api.http.HttpFilters
+import play.api.mvc._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Play framework enabled filters
+  * Redirects any request to its secured alternative
   */
-class Filters @Inject() (csrf: CSRFFilter, https: HttpsFilter) extends HttpFilters {
+class HttpsFilter extends Filter {
 
-  val filters = Seq(csrf, https)
+  def apply(nextFilter: (RequestHeader) => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
+    //play uses lower case headers.
+    requestHeader.headers.get("x-forwarded-proto") match {
+      case Some(header) => {
+        if ("https" == header) {
+          nextFilter(requestHeader).map { result =>
+            result.withHeaders(("Strict-Transport-Security", "max-age=31536000"))
+          }
+        } else {
+          Future.successful(Results.Redirect("https://" + requestHeader.host + requestHeader.uri, 301))
+        }
+      }
+      case None => nextFilter(requestHeader)
+    }
+  }
 }

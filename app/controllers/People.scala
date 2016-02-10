@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -192,7 +192,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      p <- services.personService.find(id)
+      p <- services.personService.findComplete(id)
       f <- services.facilitatorService.findByPerson(id)
       m <- services.personService.memberships(id)
       o <- services.orgService.findActive
@@ -229,7 +229,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def edit(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.find(id) flatMap {
+      services.personService.findComplete(id) flatMap {
         case None => notFound("Person not found")
         case Some(person) ⇒
           ok(views.html.v2.person.form(user, Some(id), People.personForm(user.name, None, services).fill(person)))
@@ -243,7 +243,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def update(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.find(id) flatMap {
+      services.personService.findComplete(id) flatMap {
         case None => notFound("Person not found")
         case Some(oldPerson) ⇒
           People.personForm(user.name, Some(id), services).bindFromRequest.fold(

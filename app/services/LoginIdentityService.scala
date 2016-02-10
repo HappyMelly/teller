@@ -26,7 +26,7 @@ package services
 import _root_.java.util.concurrent.TimeUnit
 
 import models._
-import models.service.Services
+import models.service.{IServices, Services}
 import play.api.Logger
 import play.api.libs.json.JsObject
 import securesocial.core._
@@ -40,7 +40,7 @@ import scala.concurrent.{Future, Await}
 /**
  * Used by SecureSocial to look up and save authentication data.
  */
-class LoginIdentityService(services: Services) extends UserService[ActiveUser] {
+class LoginIdentityService(services: IServices) extends UserService[ActiveUser] {
 
   /**
    * Returns login identity if it exists, otherwise - None

@@ -168,7 +168,7 @@ class BrandsApi @Inject() (val services: Services,
   protected def fullView(brand: Brand): Future[Option[BrandFullView]] = {
     val id = brand.identifier
     (for {
-      owner <- services.personService.find(brand.ownerId)
+      owner <- services.personService.findComplete(brand.ownerId)
       member <- services.memberService.findByObject(brand.ownerId, person = true)
       events <- services.eventService.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
       links <- services.brandService.links(id)

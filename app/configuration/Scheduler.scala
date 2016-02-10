@@ -48,7 +48,6 @@ class Scheduler @Inject() (val env: Environment, val email: Email, val services:
   start
 
   private def start = {
-    (new EventReminder(email, services)).sendPostFactumConfirmation()
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleMonthlyAlerts
@@ -66,10 +65,12 @@ class Scheduler @Inject() (val env: Environment, val email: Email, val services:
     Akka.system.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
+      println("INFO: Start of daily routines")
       (new EventReminder(email, services)).sendPostFactumConfirmation()
       (new EvaluationReminder(email, services)).sendToAttendees()
       Facilitator.updateFacilitatorExperience(services)
       (new ExpiredEventRequestCleaner(services)).clean()
+      println("INFO: End of daily routines")
     }
   }
 
@@ -85,10 +86,12 @@ class Scheduler @Inject() (val env: Environment, val email: Email, val services:
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
       if (now.getDayOfMonth == 1) {
+        println("INFO: Start of monthly routines")
         (new ProfileStrengthReminder(email, services)).sendToFacilitators()
         (new ExperimentReminder(email, services)).sendStatus()
         (new BrandReminder(email, services)).sendLicenseExpirationReminder()
 //        (new EventReminder(email, app)).sendUpcomingEventsNotification()
+        println("INFO: End of monthly routines")
       }
     }
   }

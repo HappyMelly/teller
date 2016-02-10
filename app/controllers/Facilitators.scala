@@ -205,9 +205,9 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
         licenses <- services.licenseService.findByBrand(brandId)
         facilitators <- services.facilitatorService.findByBrand(brandId)
         people <- services.personService.find(licenses.map(_.licenseeId))
+        _ <- services.personService.collection.addresses(people)
         badges <- services.brandBadgeService.findByBrand(brandId)
       } yield (licenses, facilitators, people, badges)) flatMap { case (licenses, facilitatorData, people, badges) =>
-        services.personService.collection.addresses(people)
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           val facilitators = licenses.map { license =>
             val person = people.find(_.identifier == license.licenseeId).get

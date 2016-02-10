@@ -26,7 +26,7 @@ package security
 import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
 import models.{UserRole, ActiveUser}
 import models.UserRole.Role._
-import models.service.Services
+import models.service.{IServices, Services}
 import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,7 +37,7 @@ import scala.concurrent.Future
  *
  * The system supports three roles - Viewer, Editor and Admin.
  */
-class ResourceHandler(user: ActiveUser, services: Services) extends DynamicResourceHandler {
+class ResourceHandler(user: ActiveUser, services: IServices) extends DynamicResourceHandler {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong

@@ -26,7 +26,7 @@ package controllers.apiv2
 import javax.inject.Inject
 
 import controllers.apiv2.json.PersonConverter
-import models.Event
+import models.{Person, Event}
 import models.service.Services
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -42,31 +42,31 @@ class EventsApi @Inject() (val services: Services,
 
   implicit val personWrites = (new PersonConverter).personWrites
 
-  val eventDetailsWrites = new Writes[Event] {
-    def writes(event: Event): JsValue = {
+  val eventDetailsWrites = new Writes[(Event, List[Person])] {
+    def writes(view: (Event, List[Person])): JsValue = {
       Json.obj(
-        "brand" -> event.brandId,
-        "type" -> event.eventTypeId,
-        "title" -> event.title,
-        "description" -> event.details.description,
-        "spokenLanguages" -> event.spokenLanguages,
-        "materialsLanguage" -> event.materialsLanguage,
-        "specialAttention" -> event.details.specialAttention,
-        "start" -> event.schedule.start,
-        "end" -> event.schedule.end,
-        "hoursPerDay" -> event.schedule.hoursPerDay,
-        "totalHours" -> event.schedule.totalHours,
-        "facilitators" -> event.facilitators(services),
-        "city" -> event.location.city,
-        "country" -> event.location.countryCode,
-        "website" -> event.organizer.webSite,
-        "registrationPage" -> event.organizer.registrationPage,
-        "rating" -> event.rating,
-        "public" -> !event.notPublic,
-        "archived" -> event.archived,
-        "confirmed" -> event.confirmed,
-        "free" -> event.free,
-        "online" -> event.location.online)
+        "brand" -> view._1.brandId,
+        "type" -> view._1.eventTypeId,
+        "title" -> view._1.title,
+        "description" -> view._1.details.description,
+        "spokenLanguages" -> view._1.spokenLanguages,
+        "materialsLanguage" -> view._1.materialsLanguage,
+        "specialAttention" -> view._1.details.specialAttention,
+        "start" -> view._1.schedule.start,
+        "end" -> view._1.schedule.end,
+        "hoursPerDay" -> view._1.schedule.hoursPerDay,
+        "totalHours" -> view._1.schedule.totalHours,
+        "facilitators" -> view._2,
+        "city" -> view._1.location.city,
+        "country" -> view._1.location.countryCode,
+        "website" -> view._1.organizer.webSite,
+        "registrationPage" -> view._1.organizer.registrationPage,
+        "rating" -> view._1.rating,
+        "public" -> !view._1.notPublic,
+        "archived" -> view._1.archived,
+        "confirmed" -> view._1.confirmed,
+        "free" -> view._1.free,
+        "online" -> view._1.location.online)
     }
   }
 
@@ -78,7 +78,14 @@ class EventsApi @Inject() (val services: Services,
   def event(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     services.eventService.find(id) flatMap {
       case None => jsonNotFound("Event not found")
-      case Some(event) => jsonOk(Json.toJson(event)(eventDetailsWrites))
+      case Some(event) =>
+        val futureFacilitators = for {
+          f <- services.eventService.facilitators(id)
+          _ <- services.personService.collection.addresses(f)
+        } yield f
+        futureFacilitators flatMap { facilitators =>
+          jsonOk(Json.toJson((event, facilitators))(eventDetailsWrites))
+        }
     }
   }
 
@@ -112,8 +119,9 @@ class EventsApi @Inject() (val services: Services,
             }
           } yield (types, events)) flatMap { case (types, events) =>
             val typeNames = types.map(eventType => eventType.identifier -> eventType.name).toMap
-            services.eventService.applyFacilitators(events)
-            jsonOk(eventsToJson(events, typeNames))
+            services.eventService.applyFacilitators(events) flatMap { _ =>
+              jsonOk(eventsToJson(events, typeNames))
+            }
           }
       }
   }

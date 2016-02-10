@@ -26,7 +26,7 @@ package services
 
 import javax.inject.Inject
 
-import models.service.Services
+import models.service.{IServices, Services}
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
 import play.twirl.api.{Html, Txt}
@@ -35,7 +35,7 @@ import securesocial.core.RuntimeEnvironment
 import securesocial.core.providers._
 import securesocial.core.providers.utils.Mailer
 import securesocial.core.services.RoutesService
-import services.integrations.Email
+import services.integrations.{EmailComponent, Email}
 import templates.{MailTemplates, SecureSocialTemplates}
 
 import scala.collection.immutable.ListMap
@@ -44,8 +44,8 @@ import scala.collection.immutable.ListMap
   * Runtime environment for SecureSocial library to work
   */
 class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
-                                          val email: Email,
-                                          val services: Services) extends RuntimeEnvironment.Default {
+                                          val email: EmailComponent,
+                                          val services: IServices) extends RuntimeEnvironment.Default {
   type U = ActiveUser
 
   override lazy val routes: RoutesService = new TellerRoutesService()
@@ -62,7 +62,7 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
   )
 }
 
-class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: Email) extends Mailer.Default(mailTemplates) {
+class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: EmailComponent) extends Mailer.Default(mailTemplates) {
   private val logger = play.api.Logger("securesocial.core.providers.utils.Mailer.Default")
 
   override def sendEmail(subject: String, emailAddress: String, body: (Option[Txt], Option[Html])) {

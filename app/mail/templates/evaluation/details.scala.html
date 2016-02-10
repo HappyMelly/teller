@@ -4,12 +4,12 @@
 @import play.api.Play.current
 @import views.Evaluations
 
-@mail.templates.html.tmpl("New evaluation (Impression: @Evaluations.impression(evaluation.facilitatorImpression))",
+@mail.templates.html.tmpl(s"New evaluation with ${Evaluations.impression(evaluation.facilitatorImpression)} impression",
     controllers.Brands.pictureUrl(brand)) {
   <tr>
     <td valign="top">
       <h3>Hi there</h3>
-      <p>Here is an evaluation of one of your events. Please check if all is well, and <a href="@Play.configuration.getString("application.baseUrl")@routes.Evaluations.details(evaluation.id.getOrElse(0)).url" target="_blank">accept or reject</a> this evaluation on our website. When you accept the evaluation, we send the certificate directly to the participant. When you reject it, we ask the participant to contact you to learn the reason.</p>
+      <p>Here is an evaluation of one of your events. Please check if all is well, and <a href="${Play.configuration.getString("application.baseUrl")}${routes.Evaluations.details(evaluation.id.getOrElse(0)).url}" target="_blank">accept or reject</a> this evaluation on our website. When you accept the evaluation, we send the certificate directly to the participant. When you reject it, we ask the participant to contact you to learn the reason.</p>
 
       <p>When the participant is waiting for courseware materials, we expect you to make those available in the format and method you prefer.</p>
       <h3>Course details</h3>

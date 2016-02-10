@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,7 +21,6 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers.apiv2
 
 import java.net.URLDecoder
@@ -178,15 +177,16 @@ class MembersApi @Inject() (val services: Services,
       p <- services.personService.findByNames(names.toList)
       m <- services.memberService.findByObjects(p.map(_.identifier))
     } yield (p, m)) flatMap { case (people, members) =>
-      services.personService.collection.addresses(people)
-      val filteredMembers = members.filter(_.person)
-      val views = filteredMembers.map { member =>
-        people.find(_.identifier == member.objectId) map { person =>
-          member.memberObj_=(person)
-          MemberView(member, Countries.name(person.address.countryCode))
-        } getOrElse MemberView(member, "")
+      services.personService.collection.addresses(people) flatMap { _ =>
+        val filteredMembers = members.filter(_.person)
+        val views = filteredMembers.map { member =>
+          people.find(_.identifier == member.objectId) map { person =>
+            member.memberObj_=(person)
+            MemberView(member, Countries.name(person.address.countryCode))
+          } getOrElse MemberView(member, "")
+        }
+        jsonOk(Json.toJson(views.sortBy(_.member.name)))
       }
-      jsonOk(Json.toJson(views.sortBy(_.member.name)))
     }
   }
 
@@ -204,7 +204,7 @@ class MembersApi @Inject() (val services: Services,
           services.experimentService.findByMember(member.identifier) flatMap { experiments =>
             if (member.person) {
               (for {
-                p <- services.personService.find(member.objectId)
+                p <- services.personService.findComplete(member.objectId)
                 o <- services.personService.memberships(member.objectId)
                 c <- services.contributionService.contributions(member.objectId, isPerson = true)
               } yield (p, o, c)) flatMap {

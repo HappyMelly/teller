@@ -30,7 +30,6 @@ import models.Activity
 import models.event.EventRequest
 import models.service.Services
 import org.joda.time.{Duration, LocalDate}
-import play.api.Application
 import play.api.Play
 import play.api.Play.current
 import services.integrations.{Email, Integrations}
