@@ -38,31 +38,31 @@
     Social Profiles
   </label>
   <div class="col-md-10">
-    <div class="b-connect ">
-      <div class="b-connect-i type-tw">
+    <div class="b-connect js-social-connect">
+      <div class="b-connect-i type-tw" data-social="twitter">
         <i class="b-connect-i__img"></i>
-        <a href="#" class="btn b-connect-i__btn">
+        <a href="#" class="btn b-connect-i__btn" data-social-connect>
           <span class="text">Connect</span>
           <span class="complete">Connected</span>
         </a>
       </div>
-      <div class="b-connect-i type-fb">
+      <div class="b-connect-i type-fb"  data-social="facebook">
         <i class="b-connect-i__img type-fb"></i>
-        <a href="#" class="btn b-connect-i__btn">
+        <a href="#" class="btn b-connect-i__btn" data-social-connect>
           <span class="text">Connect</span>
           <span class="complete">Connected</span>
         </a>
       </div>
-      <div class="b-connect-i type-linkedin">
+      <div class="b-connect-i type-linkedin"  data-social="linkedin">
         <i class="b-connect-i__img "></i>
-        <a href="#" class="btn b-connect-i__btn">
+        <a href="#" class="btn b-connect-i__btn" data-social-connect>
           <span class="text">Connect</span>
           <span class="complete">Connected</span>
         </a>
       </div>
-      <div class="b-connect-i type-gp">
+      <div class="b-connect-i type-gp"  data-social="googleplus">
         <i class="b-connect-i__img "></i>
-        <a href="#" class="btn b-connect-i__btn">
+        <a href="#" class="btn b-connect-i__btn" data-social-connect>
           <span class="text">Connect</span>
           <span class="complete">Connected</span>
         </a>
@@ -79,3 +79,8 @@
   @v2.html.text(form("blog"), '_label -> "Blog",
     'placeholder -> "http://", '_help -> "")
 }
+
+
+  <script src='@routes.Assets.at("person/widgets/social-connect.js")' type="text/javascript"></script>
+  <script src='@routes.Assets.at("person/edit.js")' type="text/javascript"></script>
+
