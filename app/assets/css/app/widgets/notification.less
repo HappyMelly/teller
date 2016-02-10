@@ -25,6 +25,7 @@
 
 
 .b-notification{
+  display: none;
   height: 90px;
   background: #e4e3e3;
   background: -moz-linear-gradient(left,  #e4e3e3 0%, #e4e3e3 75%, #dadada 76%, #dadada 100%);
@@ -34,6 +35,10 @@
   background-size: 4px auto;
   position: relative;
   overflow: hidden;
+
+  &.state_show{
+    display: block;
+  }
 }
 
 .b-notification__img{
