@@ -3,7 +3,7 @@ env:
  - secure: WtwzEkCQG1HZaGDZ6fF3vXYuz+9azTSu2YRwX/DptGvL1r73vOkXsBY9dPGncXvBPicR1xdbU53z0+vkvOvwOC8jubV1GL4ijHY2+V6z4UIa24k8UB8cbqc0OYu5KcpCdEb1SUO1O7Jqgnd+SNI7QrfJ5BRcUkcp90Q5xvZMSZP9W9p4lNrOtn5AHx51P2T7RgCL3QFEAyfI6bibMruNbefza5wLDVfFuWjxQSmyAiPv7eCNAiYEubOCL6871I6JUjaS8LqgjKK630Qwcj26T/FrMsGFvRs4O92Xaw1d4EdqOlRwY6XgP+doM18eml7Rdl9rUGXfE+5YT55VChFKdQ==
 
 scala:
-    - 2.10.4
+    - 2.11.7
 
 script:
   - export SBT_OPTS="-XX:+CMSClassUnloadingEnabled -XX:PermSize=256M -XX:MaxPermSize=512M"
