@@ -1,5 +1,5 @@
 @(evaluations: List[((Event, models.event.Attendee, Evaluation), Option[Brand])],
-    withBrand: Boolean)
+    withBrand: Boolean)(implicit messages: Messages)
 
 @import views.Evaluations
 @import views.ViewHelpers.dateInterval

@@ -1,4 +1,4 @@
-@(people: List[PersonSummary])(actions: (PersonSummary) => Html)
+@(people: List[PersonSummary])(actions: (PersonSummary) => Html)(implicit messages: Messages)
 
 @if(!people.isEmpty) {
 

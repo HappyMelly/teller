@@ -10,7 +10,7 @@
 * @param args Set of extra HTML attributes ('''id''', '''label''', '''desc''' are 3 special arguments).
 * @param handler The field constructor.
 *@
-@(field: Field, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, lang: Lang)
+@(field: Field, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
 @boxValue = @{ args.toMap.get('value).getOrElse("true") }
 

@@ -72,12 +72,12 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
   trait DefaultMockContext extends MockContext {
     truncateTables()
-    (personService.find(_: Long)) expects id returning Some(person)
-    orgService.findActive _ expects () returning List()
+    (services.personService.find(_: Long)) expects id returning Some(person)
+    services.orgService.findActive _ expects () returning List()
   }
 
   trait ExtendedMockContext extends DefaultMockContext {
-    licenseService.licenses _ expects (id) returning List()
+    services.licenseService.licenses _ expects (id) returning List()
   }
 
   def e3 = new ExtendedMockContext {
@@ -132,7 +132,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val license = new License(Some(1L), id, 1L, "1",
       LocalDate.now(), LocalDate.now(), LocalDate.now().plusYears(1), true,
       Money.parse("EUR 10"), None)
-    licenseService.licenses _ expects id returning List(license)
+    services.licenseService.licenses _ expects id returning List(license)
     controller.identity_=(FakeSocialIdentity.editor)
     val result = controller.details(person.id.get).apply(fakeGetRequest())
 
@@ -152,7 +152,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e16 = new MockContext {
     truncateTables()
-    (personService.find(_: Long)) expects id returning None
+    (services.personService.find(_: Long)) expects id returning None
     val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(NOT_FOUND)
@@ -161,7 +161,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   def e17 = new MockContext {
     truncateTables()
     val person = PersonHelper.one()
-    (personService.find(_: Long)) expects id returning Some(person)
+    (services.personService.find(_: Long)) expects id returning Some(person)
     val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)
@@ -174,7 +174,7 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = true, funder = true,
       renewal = false)
     person.member_=(member)
-    (personService.find(_: Long)) expects id returning Some(person)
+    (services.personService.find(_: Long)) expects id returning Some(person)
     val result = controller.cancel(person.id.get).apply(fakeGetRequest())
 
     status(result) must equalTo(SEE_OTHER)

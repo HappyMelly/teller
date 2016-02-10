@@ -1,6 +1,6 @@
 @(user: ActiveUser,
     orgId: Option[Long])(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     flash: Flash)
 
 @main("Congratulations", "membership", user, false) {

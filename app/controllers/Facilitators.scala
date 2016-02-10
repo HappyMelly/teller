@@ -24,30 +24,33 @@
 
 package controllers
 
+import java.text.Collator
+import java.util.Locale
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import models.UserRole.Role
 import models._
 import models.service.Services
-import models.UserRole.Role
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
-import play.api.mvc.Controller
-import scala.concurrent.Future
-import securesocial.core.RuntimeEnvironment
-import views.Languages
+import services.TellerRuntimeEnvironment
 
+import scala.concurrent.Future
 
 /**
  * Facilitators pages
  */
-class Facilitators(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                              override val messagesApi: MessagesApi,
+                              val services: Services,
+                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware {
 
   implicit val organizationWrites = new Writes[Organisation] {
     def writes(data: Organisation): JsValue = {
@@ -63,7 +66,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
         "first_name" -> data.firstName,
         "last_name" -> data.lastName,
         "id" -> data.id.get,
-        "memberships" -> data.organisations)
+        "memberships" -> data.organisations(services))
     }
   }
 
@@ -72,31 +75,26 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
     *
     * @param id Person identifier
     */
-  def addCountry(id: Long) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
+  def addCountry(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val membershipForm = Form(single("country" -> nonEmptyText))
 
-        val membershipForm = Form(single("country" -> nonEmptyText))
-
-        membershipForm.bindFromRequest.fold(
-          errors ⇒ BadRequest("Country is not chosen"),
-          {
-            case (country) ⇒
-              personService.find(id).map { person ⇒
-                if (!FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
-                  FacilitatorCountry(id, country).insert
-                }
-                val desc = Messages("activity.relationship.create",
-                  Messages("country." + country),
-                  person.fullName)
-                val activity = Activity.insert(user.person,
-                  Activity.Predicate.Created,
-                  desc)
-
-                Redirect(routes.People.details(id).url + "#facilitation").
-                  flashing("success" -> activity.toString)
-              }.getOrElse(NotFound)
-          })
+    membershipForm.bindFromRequest.fold(
+      errors ⇒ badRequest("Country is not chosen"),
+      country ⇒
+        (for {
+          person <- services.personService.find(id)
+          countries <- services.facilitatorService.countries(id)
+        } yield (person, countries)) flatMap {
+          case (None, _) => notFound("Person not found")
+          case (Some(person), countries) =>
+            if (!countries.exists(_.country == country)) {
+              services.facilitatorService.insertCountry(FacilitatorCountry(id, country))
+            }
+            val msg ="New country for facilitator was added"
+            val url: String = routes.People.details(id).url + "#facilitation"
+            redirect(url, "success" -> msg)
+        }
+      )
   }
 
   /**
@@ -104,45 +102,51 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def addLanguage(id: Long) = SecuredProfileAction(id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def addLanguage(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
 
-      val membershipForm = Form(single("language" -> nonEmptyText))
-
-      membershipForm.bindFromRequest.fold(
-        errors ⇒ BadRequest("Language is not chosen"),
-        {
-          case (language) ⇒
-            personService.find(id).map { person ⇒
-              if (!facilitatorService.languages(id).exists(_.language == language)) {
-                FacilitatorLanguage(id, language).insert
-                profileStrengthService.find(id, false) map { x ⇒
-                  profileStrengthService.update(x.markComplete("language"))
-                }
+    val membershipForm = Form(single("language" -> nonEmptyText))
+    membershipForm.bindFromRequest.fold(
+      errors ⇒ badRequest("Language is not chosen"),
+      language ⇒
+        (for {
+          person <- services.personService.find(id)
+          languages <- services.facilitatorService.languages(id)
+        } yield (person, languages)) flatMap {
+          case (None, _) => notFound("Person not found")
+          case (Some(person), languages) ⇒
+            if (!languages.exists(_.language == language)) {
+              services.facilitatorService.insertLanguage(FacilitatorLanguage(id, language))
+              val query = for {
+                profile <- services.profileStrengthService.find(id, false) if profile.isDefined
+              } yield profile.get
+              query map { profile =>
+                services.profileStrengthService.update(profile.markComplete("language"))
               }
-              val languageName = Languages.all.getOrElse(language, "")
-              val desc = Messages("activity.relationship.create",
-                languageName,
-                person.fullName)
-              val activity = Activity.insert(user.person, Activity.Predicate.Created, desc)
-
-              Redirect(routes.People.details(id).url + "#facilitation").
-                flashing("success" -> activity.toString)
-            }.getOrElse(NotFound)
-        })
+            }
+            val msg = "New language for facilitator was added"
+            val url: String = routes.People.details(id).url + "#facilitation"
+            redirect(url, "success" -> msg)
+        }
+      )
   }
 
   /**
     * Retrieves badges for the given facilitator
+    *
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
     */
   def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
-      facilitatorService.find(brandId, personId) map { facilitator =>
-        val badges = brandBadgeService.findByBrand(brandId).filter(badge => facilitator.badges.contains(badge.id.get))
-        Future.successful(Ok(views.html.v2.facilitator.badges(badges)))
-      } getOrElse Future.successful(NotFound("Facilitator not found"))
+      (for {
+        f <- services.facilitatorService.find(brandId, personId)
+        b <- services.brandBadgeService.findByBrand(brandId)
+      } yield (f, b)) flatMap {
+        case (None, _) => notFound("Facilitator not found")
+        case (Some(facilitator), badges) =>
+          val filteredBadges = badges.filter(badge => facilitator.badges.contains(badge.id.get))
+          ok(views.html.v2.facilitator.badges(filteredBadges))
+      }
   }
 
   /**
@@ -151,62 +155,43 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
     * @param id Person identifier
     * @param country Two-letters country identifier
     */
-  def deleteCountry(id: Long, country: String) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        personService.find(id).map { person ⇒
-          if (FacilitatorCountry.findByFacilitator(id).exists(_.country == country)) {
-            FacilitatorCountry(id, country).delete()
-          }
-          val desc = Messages("activity.relationship.delete",
-            Messages("country." + country),
-            person.fullName)
-          val activity = Activity.insert(user.person,
-            Activity.Predicate.Deleted,
-            desc)
-
-          Redirect(routes.People.details(id).url + "#facilitation").
-            flashing("success" -> activity.toString)
-        }.getOrElse(NotFound)
+  def deleteCountry(id: Long, country: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.facilitatorService.deleteCountry(id, country) flatMap { _ =>
+        val url: String = routes.People.details(id).url + "#facilitation"
+        redirect(url, "success" -> "Country was deleted from facilitator")
+      }
   }
 
   /**
-   * Remove a language from a facilitator
+   * Remove the given language from the given facilitator
    *
    * @param id Person identifier
    * @param language Two-letters language identifier
    */
-  def deleteLanguage(id: Long, language: String) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(id).map { person ⇒
-          val languages = facilitatorService.languages(id)
-          if (languages.exists(_.language == language)) {
-            FacilitatorLanguage(id, language).delete()
-            if (languages.length == 1) {
-              profileStrengthService.find(id, false) map { x ⇒
-                profileStrengthService.update(x.markIncomplete("language"))
-              }
-            }
-          }
-          val languageName = Languages.all.getOrElse(language, "")
-
-          val desc = Messages("activity.relationship.delete", languageName, person.fullName)
-          val activity = Activity.insert(user.person, Activity.Predicate.Deleted, desc)
-
-          Redirect(routes.People.details(id).url + "#facilitation").
-            flashing("success" -> activity.toString)
-        }.getOrElse(NotFound)
+  def deleteLanguage(id: Long, language: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.facilitatorService.deleteLanguage(id, language) flatMap { _ =>
+        services.profileStrengthService.find(id, org = false) map {
+          case None => Future.successful(None)
+          case Some(profile) =>
+            services.profileStrengthService.update(profile.markIncomplete("language"))
+        }
+        val url: String = routes.People.details(id).url + "#facilitation"
+        redirect(url, "success" -> "Language was deleted from facilitator")
+      }
   }
 
   def details(id: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Coordinator) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒ Future.successful {
-      facilitatorService.find(brandId, id) map { facilitator =>
-        val badges = brandBadgeService.findByBrand(brandId)
-        Ok(views.html.v2.facilitator.details(badges, facilitator))
-      } getOrElse BadRequest("Unknown facilitator")
-    }
+    implicit handler ⇒ implicit user ⇒
+      (for {
+        facilitator <- services.facilitatorService.find(brandId, id)
+        badges <- services.brandBadgeService.findByBrand(brandId)
+      } yield (facilitator, badges)) flatMap {
+        case (None, _) => notFound("Facilitator not found")
+        case (Some(facilitator), badges) =>
+          ok(views.html.v2.facilitator.details(badges, facilitator))
+      }
   }
 
   /**
@@ -216,12 +201,13 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
     */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user =>
-      val licenses = licenseService.findByBrand(brandId)
-      val facilitatorData = facilitatorService.findByBrand(brandId)
-      val people = personService.find(licenses.map(_.licenseeId))
-      val badges = brandBadgeService.findByBrand(brandId)
-      PeopleCollection.addresses(people)
-      Future.successful {
+      (for {
+        licenses <- services.licenseService.findByBrand(brandId)
+        facilitators <- services.facilitatorService.findByBrand(brandId)
+        people <- services.personService.find(licenses.map(_.licenseeId))
+        _ <- services.personService.collection.addresses(people)
+        badges <- services.brandBadgeService.findByBrand(brandId)
+      } yield (licenses, facilitators, people, badges)) flatMap { case (licenses, facilitatorData, people, badges) =>
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           val facilitators = licenses.map { license =>
             val person = people.find(_.identifier == license.licenseeId).get
@@ -234,7 +220,7 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
             (license, person, data, joinedLastMonth, leftLastMonth, facilitatorBadges)
           }
-          Ok(views.html.v2.facilitator.forBrandCoordinators(user, view.brand, brands, facilitators))
+          ok(views.html.v2.facilitator.forBrandCoordinators(user, view.brand, brands, facilitators))
         } { (view, brands) =>
           val facilitators = licenses.map { license =>
             val person = people.find(_.identifier == license.licenseeId).get
@@ -246,9 +232,9 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
             val facilitatorBadges = badges.filter(x => data.badges.contains(x.id.get))
             (license, person, data, sameCountry, isNew, facilitatorBadges)
           }
-          Ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
+          ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
         } {
-          Redirect(routes.Dashboard.index())
+          redirect(routes.Dashboard.index())
         }
       }
   }
@@ -257,17 +243,23 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
     * Returns a list of facilitators for the given brand on today,
     * including the coordinator of the brand
     */
-  def list(brandId: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def list(brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val facilitators = Brand.findFacilitators(brandId)
-      if (facilitators.nonEmpty) {
-        PeopleCollection.organisations(facilitators)
+      val collator = Collator.getInstance(Locale.ENGLISH)
+      val ord = new Ordering[String] {
+        def compare(x: String, y: String) = collator.compare(x, y)
       }
-      Ok(Json.toJson(facilitators))
+      services.licenseService.licensees(brandId, LocalDate.now()) flatMap { facilitators =>
+        if (facilitators.nonEmpty) {
+          services.personService.collection.organisations(facilitators)
+        }
+        ok(Json.toJson(facilitators.sortBy(_.fullName.toLowerCase)(ord)))
+      }
   }
 
   /**
     * Updates badges for the given facilitator
+    *
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
     */
@@ -275,13 +267,20 @@ class Facilitators(environment: RuntimeEnvironment[ActiveUser])
     implicit handler => implicit user =>
       val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
       form.bindFromRequest.fold(
-        errors => Future.successful(jsonBadRequest("'badges' field doesn't exist")),
+        errors => jsonBadRequest("'badges' field doesn't exist"),
         badges =>
-          facilitatorService.find(brandId, personId) map { facilitator =>
-            val brandBadges = brandBadgeService.findByBrand(brandId).map(_.id.get)
-            facilitatorService.update(facilitator.copy(badges = badges.filter(x => brandBadges.contains(x))))
-            Future.successful(jsonSuccess("Badges were updated"))
-          } getOrElse Future.successful(jsonNotFound("Facilitator not found"))
+          (for {
+            f <- services.facilitatorService.find(brandId, personId)
+            b <- services.brandBadgeService.findByBrand(brandId)
+          } yield (f, b.map(_.id.get))) flatMap {
+            case (None, _) => jsonNotFound("Facilitator not found")
+            case (Some(facilitator), brandBadges) =>
+              val valueToUpdate = facilitator.copy(badges = badges.filter(x => brandBadges.contains(x)))
+              services.facilitatorService.update(valueToUpdate) flatMap { _ =>
+                jsonSuccess("Badges were updated")
+              }
+
+          }
       )
   }
 

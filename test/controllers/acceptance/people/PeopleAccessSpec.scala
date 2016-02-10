@@ -82,7 +82,7 @@ class PeopleAccessSpec extends PlayAppSpec {
     "have ProfileEditor access rights" in {
       controller.edit(3L).apply(fakeGetRequest())
       controller.checkedRole must_== None
-      controller.checkedDynamicRole must_== Some(DynamicRole.ProfileEditor)
+      controller.checkedDynamicRole must_== Some(ProfileEditor)
       controller.checkedObjectId must_== Some(3L)
     }
   }
@@ -96,7 +96,7 @@ class PeopleAccessSpec extends PlayAppSpec {
     "have ProfileEditor access rights" in {
       controller.update(3L).apply(fakeGetRequest())
       controller.checkedRole must_== None
-      controller.checkedDynamicRole must_== Some(DynamicRole.ProfileEditor)
+      controller.checkedDynamicRole must_== Some(ProfileEditor)
       controller.checkedObjectId must_== Some(3L)
     }
   }

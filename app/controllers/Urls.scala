@@ -23,34 +23,43 @@
  */
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
+import models.service.Services
 import play.api.Play.current
-import play.api.libs.ws.WS
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import play.api.libs.ws.WS
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Try
 
-class Urls(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                      override val messagesApi: MessagesApi,
+                      val services: Services,
+                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
    * Validates the given url points to an existing page
    *
    * @param url Url to check
    */
-  def validate(url: String) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def validate(url: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val result = Try(Await.result(WS.url(url).head(), 1 second)).isSuccess
-      if (result)
-        jsonOk(Json.obj("result" -> "valid"))
-      else
-        jsonOk(Json.obj("result" -> "invalid"))
+      WS.url(url).head().flatMap { response =>
+        if (response.status >= 200 && response.status < 300)
+          jsonOk(Json.obj("result" -> "valid"))
+        else
+          jsonOk(Json.obj("result" -> "invalid"))
+      }.recover { case _ =>
+        Ok(Json.prettyPrint(Json.obj("result" -> "invalid")))
+      }
   }
 }

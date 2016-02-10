@@ -24,17 +24,26 @@
  */
 package models.service
 
-import models.database.PortableJodaSupport._
-import models.JodaMoney._
 import models._
 import models.database._
-import org.joda.time.DateTime
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers._
+import slick.driver.JdbcProfile
 
-class IdentityService {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with MemberTable
+  with PasswordIdentityTable
+  with PersonTable
+  with RegisteringUserTable
+  with SocialIdentityTable
+  with UserAccountTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
 
   private val identities = TableQuery[SocialIdentities]
   private val passwordIdentities = TableQuery[PasswordIdentities]
@@ -44,73 +53,62 @@ class IdentityService {
     * @param email Email to check
     * @param userId User identifier we exclude from an email check
     */
-  def checkEmail(email: String, userId: Option[Long] = None): Boolean = DB.withSession { implicit session =>
+  def checkEmail(email: String, userId: Option[Long] = None): Future[Boolean] = {
     val query = if (userId.nonEmpty) {
       for {
-        (identity, registering) <- passwordIdentities leftJoin TableQuery[RegisteringUsers] on ((p, u) =>
+        (identity, registering) <- passwordIdentities joinLeft TableQuery[RegisteringUsers] on ((p, u) =>
           p.email === u.userId && u.providerId === UsernamePasswordProvider.UsernamePassword) if identity.email === email && identity.userId =!= userId
-      } yield (identity, registering.userId.?)
+      } yield (identity, registering)
     } else {
       for {
-        (identity, registering) <- passwordIdentities leftJoin TableQuery[RegisteringUsers] on ((p, u) =>
+        (identity, registering) <- passwordIdentities joinLeft TableQuery[RegisteringUsers] on ((p, u) =>
           p.email === u.userId && u.providerId === UsernamePasswordProvider.UsernamePassword) if identity.email === email
-      } yield (identity, registering.userId.?)
+      } yield (identity, registering)
     }
-    query.firstOption.map { result =>
-      result._2.isDefined
-    } getOrElse true
+    db.run(query.result).map(_.headOption.map(_._2.isDefined).getOrElse(true))
   }
 
   /**
     * Deletes a password identity for the given email
     * @param email Email
     */
-  def delete(email: String): Unit = DB.withSession { implicit session =>
-    passwordIdentities.filter(_.email === email).delete
-  }
+  def delete(email: String): Unit =
+    db.run(passwordIdentities.filter(_.email === email).delete)
 
   /**
     * Returns a password identify for the given email if exists
     * @param email Email address
     */
-  def findByEmail(email: String): Option[PasswordIdentity] = DB.withSession { implicit session ⇒
-    passwordIdentities.filter(_.email === email).firstOption
-  }
+  def findByEmail(email: String): Future[Option[PasswordIdentity]] =
+    db.run(passwordIdentities.filter(_.email === email).result).map(_.headOption)
 
   /**
    * @param token
-   * @return
    */
-  def findBytoken(token: String): Option[SocialIdentity] = DB.withSession {
-    implicit session ⇒
-      identities.filter(_.apiToken === token).list.headOption
-  }
+  def findBytoken(token: String): Future[Option[SocialIdentity]] =
+    db.run(identities.filter(_.apiToken === token).result).map(_.headOption)
 
   /**
     * Returns a password identity for the given user if exists
     * @param userId User identifier
     */
-  def findByUserId(userId: Long): Option[PasswordIdentity] = DB.withSession { implicit session =>
-    passwordIdentities.filter(_.userId === userId).firstOption
+  def findByUserId(userId: Long): Future[Option[PasswordIdentity]] =
+    db.run(passwordIdentities.filter(_.userId === userId).result).map(_.headOption)
+
+  def findByUserId(userId: String, providerId: String): Future[Option[SocialIdentity]] = {
+    val query = identities.filter(_.userId === userId).filter(_.providerId === providerId)
+    db.run(query.result).map(_.headOption)
   }
 
-  def findByUserId(userId: String, providerId: String): Option[SocialIdentity] =
-    DB.withSession { implicit session ⇒
-      identities.
-        filter(_.userId === userId).
-        filter(_.providerId === providerId).firstOption
-    }
-
-  /**
-   * Returns user identity filled with account and person data if identity exists,
-   * otherwise - None
-   *
-   * @param userId User identifier from a social network
-   * @param providerId Provider type
-   * @return
-   */
-  def findActiveUser(userId: String, providerId: String): Option[ActiveUser] = DB.withSession {
-    implicit session: Session ⇒
+    /**
+      * Returns user identity filled with account and person data if identity exists,
+      * otherwise - None
+      *
+      * @param userId User identifier from a social network
+      * @param providerId Provider type
+      * @return
+      */
+  def findActiveUser(userId: String, providerId: String): Future[Option[ActiveUser]] = {
       val accounts = TableQuery[UserAccounts]
       val people = TableQuery[People]
       val members = TableQuery[Members]
@@ -119,128 +117,105 @@ class IdentityService {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.twitterHandle === identity.profileUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
+          (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
 
         case FacebookProvider.Facebook ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.facebookUrl === identity.profileUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
+          (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
 
         case GoogleProvider.Google ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.googlePlusUrl === identity.profileUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
+          (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
 
         case LinkedInProvider.LinkedIn ⇒ for {
           identity ← identities
           if (identity.userId === userId) && (identity.providerId === providerId)
           a ← accounts if a.linkedInUrl === identity.profileUrl
-          (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-        } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
+          (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+          address <- TableQuery[Addresses] if address.id === p.addressId
+        } yield (identity, a, p, m, address)
       }
-      q.firstOption map { d ⇒
-        val person: Person = d._3
-        val member = if (d._4.nonEmpty)
-          Some(Member(d._4, person.id.get, person = true,
-            funder = d._5.get, "EUR" -> d._6.get, d._7.get,
-            d._8.get, d._9.get, existingObject = true, reason = None,
-            DateTime.now(), 0L, DateTime.now(), 0L))
-        else
-          None
-        Some(ActiveUser(userId, providerId, d._2, person, member))
-      } getOrElse None
-  }
+      db.run(q.result).map(_.headOption.map { result =>
+        result._3.address_=(result._5)
+        ActiveUser(userId, providerId, result._2, result._3, result._4)
+      })
+    }
 
-  /**
-    * Returns active user filled with account and person data if identity exists,
-    * otherwise - None
-    *
-    * @param email Email
-    * @return
-    */
-  def findActiveUserByEmail(email: String): Option[ActiveUser] = DB.withSession {
-    implicit session: Session ⇒
+    /**
+      * Returns active user filled with account and person data if identity exists,
+      * otherwise - None
+      *
+      * @param email Email
+      * @return
+      */
+  def findActiveUserByEmail(email: String): Future[Option[ActiveUser]] = {
       val accounts = TableQuery[UserAccounts]
       val people = TableQuery[People]
       val members = TableQuery[Members]
       val query = for {
         identity ← passwordIdentities if identity.email === email
         a ← accounts if a.personId === identity.userId
-        (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-      } yield (identity, a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
-      query.firstOption map { d ⇒
-        val person: Person = d._3
-        val member = if (d._4.nonEmpty)
-          Some(Member(d._4, person.id.get, person = true,
-            funder = d._5.get, "EUR" -> d._6.get, d._7.get,
-            d._8.get, d._9.get, existingObject = true, reason = None,
-            DateTime.now(), 0L, DateTime.now(), 0L))
-        else
-          None
-        Some(ActiveUser(email, UsernamePasswordProvider.UsernamePassword, d._2, person, member))
-      } getOrElse None
-  }
-
-  /**
-   * Returns account and person data for the given identity
-   *
-   * @todo cover with tests
-   * @param identity Identity
-   */
-  def findActiveUserData(identity: SocialIdentity): Option[(UserAccount, Person, Option[Member])] =
-    DB.withSession {
-      implicit session ⇒
-        val accounts = TableQuery[UserAccounts]
-        val people = TableQuery[People]
-        val members = TableQuery[Members]
-        val q = identity.profile.providerId match {
-          case TwitterProvider.Twitter ⇒ for {
-            a ← accounts if a.twitterHandle === identity.profileUrl
-            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
-
-          case FacebookProvider.Facebook ⇒ for {
-            a ← accounts if a.facebookUrl === identity.profileUrl
-            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
-
-          case GoogleProvider.Google ⇒ for {
-            a ← accounts if a.googlePlusUrl === identity.profileUrl
-            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
-
-          case LinkedInProvider.LinkedIn ⇒ for {
-            a ← accounts if a.linkedInUrl === identity.profileUrl
-            (p, m) ← people leftJoin members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
-          } yield (a, p, m.id.?, m.funder.?, m.fee.?, m.renewal.?, m.since.?, m.until.?)
-        }
-        q.firstOption map { d ⇒
-          val person: Person = d._2
-          val member = if (d._3.nonEmpty)
-            Some(Member(d._3, person.id.get, person = true,
-              funder = d._4.get, "EUR" -> d._5.get, d._6.get,
-              d._7.get, d._8.get, existingObject = true, reason = None,
-              DateTime.now(), 0L, DateTime.now(), 0L))
-          else
-            None
-          Some((d._1, person, member))
-        } getOrElse None
+        (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+        address <- TableQuery[Addresses] if address.id === p.addressId
+      } yield (identity, a, p, m, address)
+      db.run(query.result).map(_.headOption.map { result =>
+        result._3.address_=(result._5)
+        ActiveUser(email, UsernamePasswordProvider.UsernamePassword, result._2, result._3, result._4)
+      })
     }
+
+    /**
+      * Returns account and person data for the given identity
+      *
+      * @todo cover with tests
+      * @param identity Identity
+      */
+  def findActiveUserData(identity: SocialIdentity): Future[Option[(UserAccount, Person, Option[Member])]] = {
+    val accounts = TableQuery[UserAccounts]
+    val people = TableQuery[People]
+    val members = TableQuery[Members]
+    val q = identity.profile.providerId match {
+      case TwitterProvider.Twitter ⇒ for {
+        a ← accounts if a.twitterHandle === identity.profileUrl
+        (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+      } yield (a, p, m)
+
+      case FacebookProvider.Facebook ⇒ for {
+        a ← accounts if a.facebookUrl === identity.profileUrl
+        (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+      } yield (a, p, m)
+
+      case GoogleProvider.Google ⇒ for {
+        a ← accounts if a.googlePlusUrl === identity.profileUrl
+        (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+      } yield (a, p, m)
+
+      case LinkedInProvider.LinkedIn ⇒ for {
+        a ← accounts if a.linkedInUrl === identity.profileUrl
+        (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
+      } yield (a, p, m)
+    }
+    db.run(q.result).map(_.headOption)
+  }
 
   /**
    * Inserts the given identity to database
    * @param identity Identity object
    * @return The given identity with updated id
    */
-  def insert(identity: SocialIdentity): SocialIdentity = DB.withSession {
-    implicit session ⇒
-      val id = (identities returning identities.map(_.uid)) += identity
-      identity.copy(uid = Some(id))
+  def insert(identity: SocialIdentity): Future[SocialIdentity] = {
+    val query = identities returning identities.map(_.uid) into ((value, id) => value.copy(uid = Some(id)))
+    db.run(query += identity)
   }
 
   /**
@@ -248,37 +223,24 @@ class IdentityService {
     * @param identity Identity object
     * @return The given identity with updated id
     */
-  def insert(identity: PasswordIdentity): PasswordIdentity = DB.withSession { implicit session ⇒
-    TableQuery[PasswordIdentities].insert(identity)
-    identity
-  }
+  def insert(identity: PasswordIdentity): Future[PasswordIdentity] =
+    db.run(passwordIdentities += identity).map(_ => identity)
 
   /**
     * Updates the given identity in the database
     * @param identity Identity object
     */
-  def update(identity: PasswordIdentity): PasswordIdentity = DB.withSession { implicit session =>
-    TableQuery[PasswordIdentities].filter(_.email === identity.email).update(identity)
-    identity
-  }
+  def update(identity: PasswordIdentity): Future[PasswordIdentity] =
+    db.run(passwordIdentities.filter(_.email === identity.email).update(identity)).map(_ => identity)
 
   /**
    * Updates the given idenitity
    * @param updated Updated identity
    * @param existing Existing identity
    */
-  def update(updated: SocialIdentity, existing: SocialIdentity): SocialIdentity =
-    DB.withSession {
-      implicit session ⇒
-        val identity = updated.copy(uid = existing.uid, apiToken = existing.apiToken)
-        identities.filter(_.uid === existing.uid).update(identity)
-        identity
-    }
+  def update(updated: SocialIdentity, existing: SocialIdentity): Future[SocialIdentity] = {
+    val identity = updated.copy(uid = existing.uid, apiToken = existing.apiToken)
+    db.run(identities.filter(_.uid === existing.uid).update(identity)).map(_ => identity)
+  }
 
-}
-
-object IdentityService {
-  private val instance = new IdentityService
-
-  def get: IdentityService = instance
 }

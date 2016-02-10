@@ -3,8 +3,9 @@
     apiKey: String,
     fee: (Int, Int, Int),
     org: Option[Organisation] = None)(implicit request: Request[Any],
-    handler: AuthorisationHandler,
-    flash: Flash)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        flash: Flash,
+        messages: Messages)
 
 @import models.payment.Payment
 @import views.Countries

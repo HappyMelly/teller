@@ -24,13 +24,9 @@
 
 package models
 
-import models.database.PortableJodaSupport._
-import models.database.Licenses
-import org.joda.money.{ CurrencyUnit, Money }
-import org.joda.time.{Months, Duration, Interval, LocalDate}
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import org.joda.money.{CurrencyUnit, Money}
+import org.joda.time.{Duration, Interval, LocalDate, Months}
+
 import scala.language.postfixOps
 
 /**
@@ -95,58 +91,6 @@ object License {
   def blank(personId: Long) = {
     License(None, 0, personId, "", LocalDate.now, LocalDate.now, LocalDate.now.plusYears(1), false,
       Money.zero(CurrencyUnit.EUR), Some(Money.zero(CurrencyUnit.EUR)))
-  }
-
-  /**
-   * Finds a license by ID.
-   *
-   */
-  def find(id: Long): Option[License] = DB.withSession { implicit session ⇒
-    TableQuery[Licenses].filter(_.id === id).firstOption
-  }
-
-  /**
-   * Returns the start date for a current license for the given licensee and brand.
-   * If there are multiple current licenses, the earliest start date is returned.
-   *
-   * Start dates for previous licenses that join up with current licenses are not found. For example, if there is a
-   * license for 1 January to 31 December every year, this function returns 1 January of this year, not the first year.
-   * @TEST
-   */
-  def licensedSince(licenseeId: Long, brandId: Long): Option[LocalDate] = DB.withSession {
-    implicit session ⇒
-      val today = LocalDate.now()
-      val query = for {
-        license ← TableQuery[Licenses] if license.start <= today && license.end >= today && license.brandId === brandId
-        licensee ← license.licensee if licensee.id === licenseeId
-      } yield license.start
-
-      query.min.run
-  }
-
-  /**
-   * Finds a licensee by license ID
-   * @TEST
-   */
-  def licensee(licenseId: Long): Option[Person] = DB.withSession { implicit session ⇒
-    val query = for {
-      license ← TableQuery[Licenses] if license.id === licenseId
-      licensee ← license.licensee
-    } yield licensee
-    query.firstOption
-  }
-
-  /**
-   * Returns a list of all people who have ever been licensed for the given brand
-   * @TEST
-   */
-  def allLicensees(brandId: Long): List[Person] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        license ← TableQuery[Licenses] if license.brandId === brandId
-        licensee ← license.licensee
-      } yield licensee
-      query.sortBy(_.lastName.toLowerCase).list
   }
 
   /**

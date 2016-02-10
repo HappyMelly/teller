@@ -2,7 +2,7 @@
     brand: Brand,
     brands: List[Brand])(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 
 @v2.main("Statistics", "statistics", user) {

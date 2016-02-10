@@ -23,9 +23,12 @@
  */
 package models
 
-import models.service.ActivityService
+import models.service.Services
 import org.joda.time.DateTime
 import play.api.i18n.Messages
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class InvalidActivityPredicate extends RuntimeException
 
@@ -52,8 +55,8 @@ abstract class BaseActivity {
   def made: BaseActivity
   def becameSupporter: BaseActivity
 
-  def description: String
-  def insert(): BaseActivity
+  def description()(implicit messages: Messages): String
+  def insert(services: Services): BaseActivity
 }
 /**
  * An activity stream entry, with is essentially a triple of (subject, predicate, object), in the grammatical sense of the words,
@@ -77,7 +80,7 @@ case class Activity(id: Option[Long],
     timestamp: DateTime = DateTime.now()) extends BaseActivity {
 
   // Full description including subject (current user’s name).
-  override def description: String = {
+  override def description()(implicit messages: Messages): String = {
     val who = subject + " (id = %s)".format(subjectId)
     val what = activityObject map { a ⇒
       "%s (id = %s) %s".format(objectType, objectId, a)
@@ -94,7 +97,7 @@ case class Activity(id: Option[Long],
   }
 
   // Short description for use in Flash messages.
-  override def toString = {
+  def string()(implicit messages: Messages) = {
     val what = objectType + " " + activityObject.getOrElse("")
     supportiveObject map { obj ⇒
       val whom = supportiveObjectType.getOrElse("") + " " + obj
@@ -123,10 +126,10 @@ case class Activity(id: Option[Long],
   override def made: Activity = this.copy(predicate = Activity.Predicate.Made)
   override def becameSupporter: Activity = this.copy(predicate = Activity.Predicate.BecameSupporter)
 
-  override def insert(): Activity = if (predicate == Activity.Predicate.None)
+  override def insert(services: Services): Activity = if (predicate == Activity.Predicate.None)
     throw new InvalidActivityPredicate
   else
-    ActivityService.get.insert(this)
+    Await.result(services.activityService.insert(this), 3.seconds)
 }
 
 /**
@@ -203,47 +206,38 @@ object Activity {
     val Translation = "translation"
   }
 
-  def insert(subject: String, predicate: String): Activity = {
+  def insert(subject: String, predicate: String)(implicit services: Services): Activity = {
     insert(0L, subject, predicate, None)
   }
 
   /**
    * Inserts new activity record to database
+ *
    * @param subject User
    * @param predicate Action name
    * @param activityObject Action description
    */
-  def insert(subject: Person,
-    predicate: String,
-    activityObject: String): Activity = {
+  def insert(subject: Person, predicate: String, activityObject: String)(implicit services: Services): Activity = {
     insert(subject.id.get, subject.fullName, predicate, Some(activityObject))
   }
 
-  def insert(subject: String, predicate: String, activityObject: String): Activity = {
+  def insert(subject: String, predicate: String, activityObject: String)(implicit services: Services): Activity = {
     insert(0L, subject, predicate, Some(activityObject))
   }
 
   /** Returns new activity record */
-  def create(
-    subject: String,
-    predicate: String,
-    activityObject: String): Activity = {
+  def create(subject: String, predicate: String, activityObject: String)(implicit services: Services): Activity = {
     new Activity(None, 0L, subject, predicate, "null", 0L, Some(activityObject))
   }
 
   /**
    * Inserts a new activity stream entry.
    */
-  private def insert(subjectId: Long,
-    subject: String,
-    predicate: String,
-    activityObject: Option[String]): Activity = {
-    val activity = Activity(None, subjectId, subject,
-      predicate,
-      "null",
-      0L,
-      activityObject)
-    ActivityService.get.insert(activity)
+  private def insert(subjectId: Long, subject: String, predicate: String, activityObject: Option[String])(
+    implicit services: Services): Activity = {
+
+    val activity = Activity(None, subjectId, subject, predicate, "null", 0L, activityObject)
+    Await.result(services.activityService.insert(activity), 3.seconds)
   }
 }
 

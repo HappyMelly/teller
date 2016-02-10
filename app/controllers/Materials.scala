@@ -23,22 +23,24 @@
  */
 package controllers
 
-import models.ActiveUser
-import models.UserRole.DynamicRole
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Material
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Writes, Json }
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.libs.json.{JsValue, Json, Writes}
+import services.TellerRuntimeEnvironment
 
-class Materials(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Services
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                           override val messagesApi: MessagesApi,
+                           val services: Services,
+                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with I18nSupport {
 
   implicit val MaterialWrites = new Writes[Material] {
     def writes(link: Material): JsValue = {
@@ -56,24 +58,21 @@ class Materials(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
+  def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.personService.find(personId) flatMap {
+        case None => jsonNotFound(Messages("error.person.notFound"))
+        case Some(person) =>
           val form = Form(tuple("brandId" -> longNumber, "type" -> nonEmptyText, "url" -> nonEmptyText))
           form.bindFromRequest.fold(
             error ⇒ jsonBadRequest("Link cannot be empty"),
             materialData ⇒ {
-              val material = Material(None,
-                personId,
-                materialData._1,
-                materialData._2,
-                materialData._3)
-              val insertedLink = personService.insertMaterial(
-                Material.updateType(material))
-              jsonOk(Json.toJson(insertedLink))
+              val material = Material(None, personId, materialData._1, materialData._2, materialData._3)
+              services.personService.insertMaterial(Material.updateType(material)) flatMap { link =>
+                jsonOk(Json.toJson(link))
+              }
             })
-        } getOrElse jsonNotFound(Messages("error.person.notFound"))
+      }
   }
 
   /**
@@ -85,10 +84,11 @@ class Materials(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id Material identifier
    */
-  def remove(personId: Long, id: Long) = SecuredProfileAction(personId) {
+  def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      personService.deleteMaterial(personId, id)
-      jsonSuccess("ok")
+      services.personService.deleteMaterial(personId, id) flatMap { _ =>
+        jsonSuccess("ok")
+      }
   }
 
 }

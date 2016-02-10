@@ -1,7 +1,7 @@
 @(recipient: String,
     mailToken: String,
     brand: String)(implicit request: RequestHeader,
-        env: securesocial.core.RuntimeEnvironment[_])
+        env: securesocial.core.RuntimeEnvironment)
 
 @mail.templates.html.hmTmpl(s"Your Facilitator Account for $brand") {
     <h2>Hi @recipient,</h2>

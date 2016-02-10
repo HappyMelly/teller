@@ -24,11 +24,7 @@
 
 package models
 
-import models.database.{ Contributions, People, Organisations }
 import models.service.ProductService
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
 
 /**
  * A contribution - an impact made by a person or an organisation to
@@ -57,59 +53,8 @@ case class Contribution(
    * Returns type of this object
    */
   def objectType: String = Activity.Type.Contribution
-
-  def product: Product = ProductService.get.find(this.productId).get
-
-  def insert: Contribution = DB.withSession { implicit session ⇒
-    val contributions = TableQuery[Contributions]
-    val id = (contributions returning contributions.map(_.id)) += this
-    this.copy(id = Some(id))
-  }
-
 }
 
 case class ContributorView(name: String, uniqueName: String, id: Long, photo: Option[String], contribution: Contribution)
 
 case class ContributionView(product: Product, contribution: Contribution)
-
-object Contribution {
-
-  /**
-   * Returns a list of contributors for the given product
-   */
-  def contributors(productId: Long): List[ContributorView] = DB.withSession { implicit session ⇒
-    val contributions = TableQuery[Contributions]
-    val peopleQuery = for {
-      contribution ← contributions if contribution.productId === productId && contribution.isPerson === true
-      person ← TableQuery[People] if person.id === contribution.contributorId
-    } yield (contribution, person)
-
-    val people = peopleQuery.list.map {
-      case (contribution, person) ⇒
-        ContributorView(person.firstName + " " + person.lastName, person.uniqueName, person.id.get, person.photo.url, contribution)
-    }
-
-    val orgQuery = for {
-      contribution ← contributions if contribution.productId === productId && contribution.isPerson === false
-      organisation ← TableQuery[Organisations] if organisation.id === contribution.contributorId
-    } yield (contribution, organisation)
-
-    val organisations = orgQuery.list.map {
-      case (contribution, organisation) ⇒ ContributorView(organisation.name, "", organisation.id.get, Some(""), contribution)
-    }
-
-    List.concat(people, organisations).sortBy(_.name)
-  }
-
-  /**
-   * Finds a contribution by ID.
-   */
-  def find(id: Long): Option[Contribution] = DB.withSession { implicit session ⇒
-    TableQuery[Contributions].filter(_.id === id).firstOption
-  }
-
-  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
-    TableQuery[Contributions].filter(_.id === id).delete
-  }
-
-}

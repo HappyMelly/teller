@@ -73,7 +73,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
         Some((BAD_REQUEST, "error.eventType.notFound"))
     }
     val controller = new AnotherTestEventTypes
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
     controller.brandService_=(brandService)
 
     val req = withPostData(editorPostRequest)
@@ -89,7 +89,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
       override def validateUpdatedEventType(id: Long, value: EventType): Option[(Int, String)] =
         Some((BAD_REQUEST, "error.eventType.nameExists"))
     }
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
+    (services.brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
     val req = withPostData(editorPostRequest)
     val controller = new AnotherTestEventTypes
@@ -103,10 +103,10 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e5 = {
     val req = withPostData(editorPostRequest)
-    (eventTypeService.find _).expects(1L).returning(Some(eventType))
-    (eventTypeService.findByBrand _).expects(1L).returning(List(eventType))
-    (eventTypeService.update _).expects(*)
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
+    (services.eventTypeService.find _).expects(1L).returning(Some(eventType))
+    (services.eventTypeService.findByBrand _).expects(1L).returning(List(eventType))
+    (services.eventTypeService.update _).expects(*)
+    (services.brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
     val res = controller.update(1L, 1L).apply(req)
     status(res) must equalTo(OK)
@@ -115,7 +115,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e8 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
 
     val req = withPostData(editorPostRequest)
 
@@ -126,7 +126,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e9 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     val req = withPostData(editorPostRequest)
 
     val res = controller.create(1L).apply(req)
@@ -140,7 +140,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
         value: EventType): Option[(String, String)] =
         Some(("name", "error.eventType.nameExists"))
     }
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
+    (services.brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
     val req = withPostData(editorPostRequest)
     val controller = new AnotherTestEventTypes
@@ -152,7 +152,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e13 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     val res = controller.add(1L).apply(fakeGetRequest())
 
     flash(res).get("error") must_== Some("Brand is not found")
@@ -163,7 +163,7 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
       override def validateUpdatedEventType(id: Long, value: EventType): Option[(Int, String)] =
         Some((BAD_REQUEST, "error.eventType.wrongBrand"))
     }
-    (brandService.find(_: Long)).expects(1L).returning(Some(brand))
+    (services.brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
     val req = withPostData(editorPostRequest)
     val controller = new AnotherTestEventTypes

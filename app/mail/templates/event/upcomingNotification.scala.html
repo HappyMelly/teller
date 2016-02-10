@@ -1,7 +1,8 @@
-@(events: List[Event], brand: Brand, request: models.event.EventRequest, unsubscribeLink: String)
+@import models.service.Services
+@(events: List[Event], brand: Brand, request: models.event.EventRequest, unsubscribeLink: String)(implicit services: Services)
 
-@import views.{Countries, Languages}
 @import views.ViewHelpersV2._
+@import views.{Countries, Languages}
 
 @defining(s"Upcoming ${brand.name} events in ${Countries.name(request.countryCode)}") { title =>
     @mail.templates.html.tmpl(title, controllers.Brands.pictureUrl(brand)) {
@@ -41,7 +42,7 @@
                     @dateInterval(event.schedule.start, event.schedule.end) in @event.location.city,
                     @Countries.name(event.location.countryCode) <br/>
                     Language: @Languages.all.get(event.language.spoken) <br/>
-                    Facilitators: @event.facilitators.tail.foldRight("")(_.fullName + ", " + _) @event.facilitators.head.fullName
+                    Facilitators: @event.facilitators(services).tail.foldRight("")(_.fullName + ", " + _) @event.facilitators(services).head.fullName
                 </td>
             </tr>
             <tr>

@@ -23,26 +23,27 @@
  */
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.brand.BrandTestimonial
 import models.service.Services
-import models.UserRole.DynamicRole
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
-import play.api.libs.json.{ JsValue, Writes, Json }
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.libs.json.{JsValue, Json, Writes}
+import services.TellerRuntimeEnvironment
 
 case class TestimonialFormData(content: String,
   name: String,
   company: Option[String])
 
-class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Services
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                   override val messagesApi: MessagesApi,
+                                   val services: Services,
+                                   deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   implicit val brandTestimonialWrites = new Writes[BrandTestimonial] {
     def writes(testimonial: BrandTestimonial): JsValue = {
@@ -60,24 +61,25 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
     "name" -> nonEmptyText,
     "company" -> optional(nonEmptyText))(TestimonialFormData.apply)(TestimonialFormData.unapply))
 
-  def add(brandId: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(brandId) map { brand ⇒
-          Ok(views.html.v2.testimonial.form(user, brandId, form))
-        } getOrElse NotFound(Messages("error.brand.notFound"))
+  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.brandService.find(brandId) flatMap {
+      case None => notFound(Messages("error.brand.notFound"))
+      case Some(brand) ⇒ ok(views.html.v2.testimonial.form(user, brandId, form))
+    }
   }
 
-  def edit(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(brandId) map { brand ⇒
-          brandService.findTestimonial(id) map { testimonial ⇒
-            val formData = TestimonialFormData(testimonial.content,
-              testimonial.name, testimonial.company)
-            Ok(views.html.v2.testimonial.form(user, brandId, form.fill(formData), Some(id)))
-          } getOrElse NotFound("Testimonial is not found")
-        } getOrElse NotFound(Messages("error.brand.notFound"))
+  def edit(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      (for {
+        brand <- services.brandService.find(brandId)
+        testimonial <- services.brandService.findTestimonial(id)
+      } yield (brand, testimonial)) flatMap {
+        case (None, _) => notFound(Messages("error.brand.notFound"))
+        case (_, None) => notFound("Testimonial not found")
+        case (Some(brand), Some(testimonial)) =>
+          val formData = TestimonialFormData(testimonial.content, testimonial.name, testimonial.company)
+          ok(views.html.v2.testimonial.form(user, brandId, form.fill(formData), Some(id)))
+      }
   }
 
   /**
@@ -85,21 +87,22 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(brandId) map { brand ⇒
+  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.brandService.find(brandId) flatMap {
+        case None => notFound(Messages("error.brand.notFound"))
+        case Some(brand) =>
           form.bindFromRequest.fold(
-            error ⇒ BadRequest(views.html.v2.testimonial.form(user, brandId, error)),
+            error ⇒ badRequest(views.html.v2.testimonial.form(user, brandId, error)),
             testimonialData ⇒ {
               val testimonial = BrandTestimonial(None, brandId,
                 testimonialData.content, testimonialData.name,
                 testimonialData.company)
-              val testimonialWithId = brandService.insertTestimonial(testimonial)
-              val url = routes.Brands.details(brandId).url + "#testimonials"
-              Redirect(url)
+              services.brandService.insertTestimonial(testimonial) flatMap { _ =>
+                redirect(routes.Brands.details(brandId).url + "#testimonials")
+              }
             })
-        } getOrElse NotFound(Messages("error.brand.notFound"))
+      }
   }
 
   /**
@@ -111,11 +114,11 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def remove(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.deleteTestimonial(brandId, id)
+  def remove(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.brandService.deleteTestimonial(brandId, id) flatMap { _ =>
         jsonSuccess("Testimonial was successfully removed")
+      }
   }
 
   /**
@@ -124,18 +127,16 @@ class BrandTestimonials(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def update(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.v2.testimonial.form(user, brandId, error)),
-          testimonialData ⇒ {
-            val testimonial = BrandTestimonial(Some(id), brandId,
-              testimonialData.content, testimonialData.name,
-              testimonialData.company)
-            brandService.updateTestimonial(testimonial)
-            val url = routes.Brands.details(brandId).url + "#testimonials"
-            Redirect(url)
-          })
+  def update(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      form.bindFromRequest.fold(
+        error ⇒ badRequest(views.html.v2.testimonial.form(user, brandId, error)),
+        testimonialData ⇒ {
+          val testimonial = BrandTestimonial(Some(id), brandId, testimonialData.content, testimonialData.name,
+            testimonialData.company)
+          services.brandService.updateTestimonial(testimonial) flatMap { _ =>
+            redirect(routes.Brands.details(brandId).url + "#testimonials")
+          }
+        })
   }
 }

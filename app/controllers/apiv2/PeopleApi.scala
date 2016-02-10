@@ -25,103 +25,61 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
+import javax.inject.Inject
 
-import models._
+import controllers.apiv2.json.PersonConverter
+import models.service.Services
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
-object PeopleApi extends ApiAuthentication {
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  implicit val personWrites = new Writes[Person] {
-    def writes(person: Person): JsValue = {
-      Json.obj(
-        "id" -> person.id,
-        "unique_name" -> person.uniqueName,
-        "first_name" -> person.firstName,
-        "last_name" -> person.lastName,
-        "photo" -> person.photo.url,
-        "country" -> person.address.countryCode)
-    }
-  }
+class PeopleApi @Inject() (val services: Services,
+                           override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
-  import OrganisationsApi.organisationWrites
-
-  implicit val licenseSummaryWrites = new Writes[LicenseView] {
-    def writes(license: LicenseView) = {
-      Json.obj(
-        "brand" -> license.brand.code,
-        "start" -> license.license.start,
-        "end" -> license.license.end)
-    }
-  }
-
-  implicit val addressWrites = new Writes[Address] {
-    def writes(address: Address) = Json.obj(
-      "street1" -> address.street1,
-      "street2" -> address.street2,
-      "city" -> address.city,
-      "post_code" -> address.postCode,
-      "province" -> address.province,
-      "country" -> address.countryCode)
-  }
-
-  import ContributionsApi.contributionWrites
-
-  val personDetailsWrites = new Writes[Person] {
-    def writes(person: Person) = {
-      Json.obj(
-        "id" -> person.id.get,
-        "unique_name" -> person.uniqueName,
-        "first_name" -> person.firstName,
-        "last_name" -> person.lastName,
-        "email_address" -> person.email,
-        "image" -> person.photo.url,
-        "address" -> person.address,
-        "bio" -> person.bio,
-        "interests" -> person.interests,
-        "twitter_handle" -> person.socialProfile.twitterHandle,
-        "facebook_url" -> person.socialProfile.facebookUrl,
-        "linkedin_url" -> person.socialProfile.linkedInUrl,
-        "google_plus_url" -> person.socialProfile.googlePlusUrl,
-        "website" -> person.webSite,
-        "blog" -> person.blog,
-        "active" -> person.active,
-        "organizations" -> person.organisations,
-        "licenses" -> person.licenses,
-        "contributions" -> person.contributions)
-    }
-  }
+  private val converter = new PersonConverter
+  implicit val personWrites = converter.personWrites
 
   /**
    * Get a list of people
-   * @param active If true only active members are retrieved
+    *
+    * @param active If true only active members are retrieved
    * @param query Retrieve only people whose name meets the pattern
    * @return
    */
-  def people(active: Option[Boolean],
-    query: Option[String]) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-
-        val people: List[Person] = Person.findByParameters(active, query)
-        PeopleCollection.addresses(people)
-        Ok(Json.prettyPrint(Json.toJson(people)))
+  def people(active: Option[Boolean], query: Option[String]) = TokenSecuredAction(readWrite = false) { 
+    implicit request ⇒ implicit token ⇒
+      (for {
+        p <- services.personService.findByParameters(active, query)
+        _ <- services.personService.collection.addresses(p)
+      } yield p) flatMap { people =>
+        ok(Json.prettyPrint(Json.toJson(people)))
+      }
   }
 
   /**
    * Get a person
-   * @param identifier Person identifier
+    *
+    * @param identifier Person identifier
    * @return
    */
-  def person(identifier: String) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        val person = try {
-          val id = identifier.toLong
-          personService.find(id)
-        } catch {
-          case e: NumberFormatException ⇒ personService.find(URLDecoder.decode(identifier, "ASCII"))
+  def person(identifier: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    val mayBePerson = try {
+      val id = identifier.toLong
+      services.personService.findComplete(id)
+    } catch {
+      case e: NumberFormatException ⇒ services.personService.find(URLDecoder.decode(identifier, "ASCII"))
+    }
+    mayBePerson flatMap {
+      case None => notFound("Person not found")
+      case Some(person) =>
+        (for {
+          l <- services.licenseService.activeLicenses(person.identifier)
+          c <- services.contributionService.contributions(person.identifier, isPerson = true)
+          o <- services.personService.memberships(person.identifier)
+        } yield (l, c, o)) flatMap { case (licenses, contributions, organisations) =>
+          ok(Json.prettyPrint(Json.toJson((person, licenses, contributions, organisations))(converter.personDetailsWrites)))
         }
-        person.map(person ⇒ Ok(Json.prettyPrint(Json.toJson(person)(personDetailsWrites)))).getOrElse(NotFound)
+    }
   }
 }
-

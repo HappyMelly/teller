@@ -1,4 +1,4 @@
-@(form: Form[License], brands: List[(Long, String)])
+@(form: Form[License], brands: List[(Long, String)])(implicit messages: Messages)
 
 @import views.ViewHelpersV2._
 
@@ -18,7 +18,7 @@
         @v2.html.block("") {
             <div class="errors">
             @for( error <- form.errors) {
-                @play.api.i18n.Messages(error.message) <br/>
+                @Messages(error.message) <br/>
             }
             </div>
         }

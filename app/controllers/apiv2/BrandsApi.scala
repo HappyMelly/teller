@@ -23,38 +23,39 @@
  */
 package controllers.apiv2
 
-import controllers.Brands
-import models.{ Brand, BrandView, Person, Event }
-import models.brand.{ BrandLink, BrandTestimonial }
+import javax.inject.Inject
+
+import controllers.apiv2.json.{PersonConverter, ProductConverter}
+import controllers.{Products, Brands}
+import models.brand.{BrandLink, BrandTestimonial}
+import models._
+import models.service.Services
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json._
-import play.mvc.Controller
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Brands API
  */
-trait BrandsApi extends Controller with ApiAuthentication {
+class BrandsApi @Inject() (val services: Services,
+                           override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
-  implicit val brandWrites = new Writes[Brand] {
-    def writes(brand: Brand): JsValue = {
+  implicit val brandWrites = new Writes[(Brand, Int)] {
+    def writes(view: (Brand, Int)): JsValue = {
       Json.obj(
-        "code" -> brand.code,
-        "unique_name" -> brand.uniqueName,
-        "name" -> brand.name)
+        "code" -> view._1.code,
+        "unique_name" -> view._1.uniqueName,
+        "name" -> view._1.name,
+        "image" -> Brands.pictureUrl(view._1),
+        "tagline" -> view._1.tagLine,
+        "products" -> view._2)
     }
   }
 
-  implicit val brandViewWrites = new Writes[BrandView] {
-    def writes(brandView: BrandView): JsValue = {
-      Json.obj(
-        "unique_name" -> brandView.brand.uniqueName,
-        "name" -> brandView.brand.name,
-        "image" -> Brands.pictureUrl(brandView.brand),
-        "tagline" -> brandView.brand.tagLine,
-        "products" -> brandView.brand.products.length)
-    }
-  }
-  import PeopleApi.personWrites
-  import ProductsApi.productWrites
+  implicit val personWrites = (new PersonConverter).personWrites
+  implicit val productWrites = (new ProductConverter).productWrites
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
@@ -92,10 +93,12 @@ trait BrandsApi extends Controller with ApiAuthentication {
   }
 
   case class BrandFullView(brand: Brand,
-    coordinator: Person,
-    links: List[BrandLink],
-    testimonials: List[BrandTestimonial],
-    events: List[Event])
+                           profile: SocialProfile,
+                          coordinator: Person,
+                          links: List[BrandLink],
+                          testimonials: List[BrandTestimonial],
+                          events: List[Event],
+                           products: List[Product])
 
   val detailsWrites = new Writes[BrandFullView] {
     def writes(view: BrandFullView): JsValue = {
@@ -109,15 +112,15 @@ trait BrandsApi extends Controller with ApiAuthentication {
         "coordinator" -> view.coordinator,
         "contact_info" -> Json.obj(
           "email" -> view.brand.contactEmail,
-          "skype" -> view.brand.socialProfile.skype,
-          "phone" -> view.brand.socialProfile.phone,
-          "form" -> view.brand.socialProfile.contactForm),
+          "skype" -> view.profile.skype,
+          "phone" -> view.profile.phone,
+          "form" -> view.profile.contactForm),
         "social_profile" -> Json.obj(
-          "facebook" -> view.brand.socialProfile.facebookUrl,
-          "twitter" -> view.brand.socialProfile.twitterHandle,
-          "google_plus" -> view.brand.socialProfile.googlePlusUrl,
-          "linkedin" -> view.brand.socialProfile.linkedInUrl),
-        "products" -> view.brand.products,
+          "facebook" -> view.profile.facebookUrl,
+          "twitter" -> view.profile.twitterHandle,
+          "google_plus" -> view.profile.googlePlusUrl,
+          "linkedin" -> view.profile.linkedInUrl),
+        "products" -> view.products,
         "links" -> view.links,
         "testimonials" -> view.testimonials,
         "events" -> view.events)
@@ -126,44 +129,58 @@ trait BrandsApi extends Controller with ApiAuthentication {
 
   /**
    * Returns brand in JSON format if the brand exists, otherwise - Not Found
-   * @param code Brand code
+    *
+    * @param code Brand code
    */
-  def brand(code: String) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        Brand.find(code) map { view ⇒
-          jsonOk(Json.toJson(fullView(view))(detailsWrites))
-        } getOrElse {
-          Brand.findByName(code) map { view ⇒
-            jsonOk(Json.toJson(fullView(view))(detailsWrites))
-          } getOrElse jsonNotFound("Unknown brand")
+  def brand(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    val view = services.brandService.find(code) flatMap {
+      case Some(brand) => fullView(brand)
+      case None =>
+        services.brandService.findByName(code) flatMap {
+          case None => Future.successful(None)
+          case Some(brand) => fullView(brand)
         }
+    }
+    view flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(brandView) => jsonOk(Json.toJson(brandView)(detailsWrites))
+    }
   }
 
   /**
    * Returns a list of brands in JSON format
    */
-  def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    implicit token ⇒
-      val views = Brand.findAllWithCoordinator.filter(_.brand.active)
-      jsonOk(Json.toJson(views))
+  def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    (for {
+      brands <- services.brandService.findAll
+      products <- services.productService.findNumberPerBrand
+    } yield (brands, products)) flatMap { case (brands, products) =>
+      val brandsWithProducts = brands.filter(_.active).map(brand => (brand, products.getOrElse(brand.identifier, 0)))
+      jsonOk(Json.toJson(brandsWithProducts))
+    }
   }
 
   /**
-   * Returns brand data with links, testimonials and related events
+   * Returns brand data with links, testimonials, products and related events
    *
-   * @param view Brand of interest
+   * @param brand Brand of interest
    */
-  protected def fullView(view: BrandView): BrandFullView = {
-    val id = view.brand.id.get
-    val events = eventService.findByParameters(Some(id),
-      future = Some(true), public = Some(true), archived = Some(false)).take(3)
-    val person = personService.member(view.coordinator.id.get) map { x ⇒
-      view.coordinator.copy(id = x.id)
-    } getOrElse view.coordinator.copy(id = None)
-    BrandFullView(view.brand, person,
-      brandService.links(id), brandService.testimonials(id), events)
+  protected def fullView(brand: Brand): Future[Option[BrandFullView]] = {
+    val id = brand.identifier
+    (for {
+      owner <- services.personService.findComplete(brand.ownerId)
+      member <- services.memberService.findByObject(brand.ownerId, person = true)
+      events <- services.eventService.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
+      links <- services.brandService.links(id)
+      testimonials <- services.brandService.testimonials(id)
+      products <- services.productService.findByBrand(id)
+      profile <- services.socialProfileService.find(id, ProfileType.Brand)
+    } yield (owner, member, events, links, testimonials, products, profile)) map {
+      case (None, _, _, _, _, _, _) => None
+      case (Some(owner), None, events, links, testimonials, products, profile) =>
+        Some(BrandFullView(brand, profile, owner.copy(id = None), links, testimonials, events.take(3), products))
+      case (Some(owner), Some(member), events, links, testimonials, products, profile) =>
+        Some(BrandFullView(brand, profile, owner.copy(id = member.id), links, testimonials, events.take(3), products))
+    }
   }
 }
-
-object BrandsApi extends BrandsApi

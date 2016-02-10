@@ -45,5 +45,6 @@ case class EventRequest(id: Option[Long],
     case 4 => "2-4"
     case 9 => "5-9"
     case 10 => "10+"
+    case value => value.toString
   }
 }

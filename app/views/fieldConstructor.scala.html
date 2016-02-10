@@ -2,14 +2,14 @@
 
 <div class="form-group @elements.args.get('_class) @if(elements.hasErrors) {has-error}"
   id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
-  <label for="@elements.id" class="control-label col-sm-3">@elements.label(elements.lang)</label>
+  <label for="@elements.id" class="control-label col-sm-3">@elements.label</label>
   <div class="col-sm-9">
     @elements.input
     <span class="help-block">
       @if(elements.hasErrors) {
-        @elements.errors(elements.lang).mkString(", ")
+        @elements.errors.mkString(", ")
       } else {
-        @Html(elements.infos(elements.lang).mkString(", "))
+        @play.twirl.api.Html(elements.infos.mkString(", "))
       }
     </span>
   </div>

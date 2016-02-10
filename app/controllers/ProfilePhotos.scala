@@ -21,38 +21,40 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
-import models.{ ActiveUser, Photo, Person }
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.service.Services
+import models.{Person, Photo}
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Files
-    with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               override val messagesApi: MessagesApi,
+                               val services: Services,
+                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Files {
 
   /**
    * Renders a screen for selecting a profile's photo
    *
    * @param id Person identifier
    */
-  def choose(id: Long) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(id) map { person ⇒
-          val active = person.photo.id getOrElse "nophoto"
-          Ok(views.html.v2.person.photoSelection(id, Photo.gravatarUrl(person.email),
-            routes.ProfilePhotos.photo(id).url, active))
-        } getOrElse NotFound
+  def choose(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.personService.find(id) flatMap {
+      case None => notFound("Person not found")
+      case Some(person) =>
+        val active = person.photo.id getOrElse "nophoto"
+        ok(views.html.v2.person.photoSelection(id, Photo.gravatarUrl(person.email),
+          routes.ProfilePhotos.photo(id).url, active))
+    }
   }
 
   /**
@@ -60,15 +62,16 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(id) map { person ⇒
-          Person.photo(id).remove()
-          personService.update(person.copy(photo = Photo.empty))
+  def delete(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.personService.find(id) flatMap {
+      case None => notFound("Person not found")
+      case Some(person) =>
+        Person.photo(id).remove()
+        services.personService.update(person.copy(photo = Photo.empty)) flatMap { _ =>
+          val route = routes.People.details(id).url
+          jsonOk(Json.obj("link" -> routes.Assets.at("images/add-photo.png").url))
         }
-        val route = routes.People.details(id).url
-        jsonOk(Json.obj("link" -> routes.Assets.at("images/add-photo.png").url))
+    }
   }
 
   /**
@@ -83,24 +86,23 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def update(id: Long) = SecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val form = Form(single("type" -> nonEmptyText)).bindFromRequest
-        form.fold(
-          withError ⇒ jsonBadRequest("No option is provided"),
-          {
-            case photoType ⇒
-              personService.find(id) map { person ⇒
-                val photo = photoType match {
-                  case "nophoto" ⇒ Photo.empty
-                  case "gravatar" ⇒ Photo(photoType, person.email)
-                  case _ ⇒ Photo(Some(photoType), photoUrl(id))
-                }
-                personService.update(person.copy(photo = photo))
-                jsonSuccess("ok")
-              } getOrElse NotFound
-          })
+  def update(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val form = Form(single("type" -> nonEmptyText)).bindFromRequest
+    form.fold(
+      withError ⇒ jsonBadRequest("No option is provided"),
+      photoType ⇒
+        services.personService.find(id) flatMap {
+          case None => notFound("Person not found")
+          case Some(person) =>
+            val photo = photoType match {
+              case "nophoto" ⇒ Photo.empty
+              case "gravatar" ⇒ Photo(photoType, person.email)
+              case _ ⇒ Photo(Some(photoType), photoUrl(id))
+            }
+            services.personService.update(person.copy(photo = photo)) flatMap { _ =>
+              jsonSuccess("ok")
+            }
+        })
   }
 
   /**
@@ -108,23 +110,22 @@ class ProfilePhotos(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def upload(id: Long) = AsyncSecuredProfileAction(id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        uploadFile(Person.photo(id), "photo") map { _ ⇒
-          val route = routes.People.details(id).url
-          jsonOk(Json.obj("link" -> routes.ProfilePhotos.photo(id).url))
-        } recover {
-          case e ⇒ jsonBadRequest(e.getMessage)
-        }
+  def upload(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    uploadFile(Person.photo(id), "photo") flatMap { _ ⇒
+      val route = routes.People.details(id).url
+      jsonOk(Json.obj("link" -> routes.ProfilePhotos.photo(id).url))
+    } recover {
+      case e ⇒ BadRequest(Json.obj("message" -> e.getMessage))
+    }
   }
 
   /**
     * Returns url to a person's photo
+    *
     * @param id Person identifier
     */
   protected def photoUrl(id: Long): Option[String] = {
     val photo = Person.photo(id)
-    cdnUrl(photo.name).orElse(Some(fullUrl(routes.ProfilePhotos.photo(id).url)))
+    Utilities.cdnUrl(photo.name).orElse(Some(Utilities.fullUrl(routes.ProfilePhotos.photo(id).url)))
   }
 }

@@ -30,13 +30,13 @@ import com.itextpdf.text._
 import com.itextpdf.text.pdf.{BaseFont, ColumnText, PdfWriter}
 import fly.play.s3.{BucketFile, S3Exception}
 import models.event.Attendee
-import models.service.BrandWithCoordinators
+import models.service.{Services, BrandWithCoordinators}
 import models.service.brand.CertificateTemplateService
 import org.joda.time.LocalDate
 import play.api.i18n.Messages
 import play.api.libs.concurrent.Execution.Implicits._
 import services.S3Bucket
-import services.integrations.Integrations
+import services.integrations.{EmailComponent, Integrations}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -45,42 +45,41 @@ import scala.language.postfixOps
 /**
  * An certificate which a participant gets after an event
  */
-case class Certificate(issued: Option[LocalDate],
-                       event: Event,
-                       attendee: Attendee,
-                       renew: Boolean = false) extends Integrations {
+case class Certificate(issued: Option[LocalDate], event: Event, attendee: Attendee,
+   renew: Boolean = false)(implicit messages: Messages) {
 
   val id = issued.map(_.toString("yyMM")).getOrElse("") + f"${attendee.id.get}%03d"
 
   /**
    * Creates and sends new certificate to a participant
-   * @param brand Brand data
+    *
+    * @param brand Brand data
    * @param approver Person who generates the certificate
    */
-  def generateAndSend(brand: BrandWithCoordinators, approver: Person) {
+  def generateAndSend(brand: BrandWithCoordinators, approver: Person, email: EmailComponent, services: Services) {
     val contentType = "application/pdf"
     val pdf = if (brand.brand.code == "LCM")
-      lcmCertificate(brand.brand.id.get, event, attendee)
+      lcmCertificate(brand.brand.id.get, event, attendee, services)
     else
-      m30Certificate(issued, brand.brand.id.get, event, attendee)
+      m30Certificate(issued, brand.brand.id.get, event, attendee, services)
     if (renew) {
       Certificate.file(id).remove()
     }
     S3Bucket.add(BucketFile(Certificate.fullFileName(id), contentType, pdf)).map { unit ⇒
-      sendEmail(brand, approver, pdf)
+      sendEmail(brand, approver, pdf, email, services)
     }.recover {
       case S3Exception(status, code, message, originalXml) ⇒ {}
     }
   }
 
-  def send(brand: BrandWithCoordinators, approver: Person) {
+  def send(brand: BrandWithCoordinators, approver: Person, email: EmailComponent, services: Services) {
     val pdf = Certificate.file(id).uploadToCache()
     pdf.foreach { value ⇒
-      sendEmail(brand, approver, value)
+      sendEmail(brand, approver, value, email, services)
     }
   }
 
-  private def sendEmail(brand: BrandWithCoordinators, approver: Person, data: Array[Byte]) {
+  private def sendEmail(brand: BrandWithCoordinators, approver: Person, data: Array[Byte], email: EmailComponent, services: Services) {
     val file = java.io.File.createTempFile("cert", ".pdf")
     (new java.io.FileOutputStream(file)).write(data)
     val brandName = brand.brand.code match {
@@ -93,7 +92,7 @@ case class Certificate(issued: Option[LocalDate],
     val subject = s"Your ${brand.brand.name} certificate"
     val bcc = brand.coordinators.filter(_._2.notification.certificate).map(_._1)
     email.send(Set(attendee),
-      Some(event.facilitators.toSet),
+      Some(event.facilitators(services).toSet),
       Some(bcc.toSet),
       subject,
       body,
@@ -109,7 +108,7 @@ case class Certificate(issued: Option[LocalDate],
    * @param event Event
    * @param attendee Attendee
    */
-  private def lcmCertificate(brandId: Long, event: Event, attendee: Attendee): Array[Byte] = {
+  private def lcmCertificate(brandId: Long, event: Event, attendee: Attendee, services: Services): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/SourceSansPro-ExtraLight.ttf",
@@ -120,9 +119,9 @@ case class Certificate(issued: Option[LocalDate],
     val output = new ByteArrayOutputStream()
     val writer = PdfWriter.getInstance(document, output)
     document.open()
-    val facilitators = event.facilitators
+    val facilitators = event.facilitators(services)
     val cofacilitator = if (facilitators.length > 1) true else false
-    val img = template(brandId, event, cofacilitator)
+    val img = template(brandId, event, cofacilitator, services: Services)
     img.setAbsolutePosition(28, 0)
     img.scalePercent(24)
     document.add(img)
@@ -217,7 +216,7 @@ case class Certificate(issued: Option[LocalDate],
    * @param attendee Attendee
    */
   private def m30Certificate(handledDate: Option[LocalDate], brandId: Long, event: Event,
-                             attendee: Attendee): Array[Byte] = {
+                             attendee: Attendee, services: Services): Array[Byte] = {
 
     val document = new Document(PageSize.A4.rotate)
     val baseFont = BaseFont.createFont("reports/fonts/DejaVuSerif.ttf",
@@ -226,9 +225,9 @@ case class Certificate(issued: Option[LocalDate],
     val output = new ByteArrayOutputStream()
     val writer = PdfWriter.getInstance(document, output)
     document.open()
-    val facilitators = event.facilitators
+    val facilitators = event.facilitators(services)
     val cofacilitator = if (facilitators.length > 1) true else false
-    val img = template(brandId, event, cofacilitator)
+    val img = template(brandId, event, cofacilitator, services: Services)
     img.setAbsolutePosition(7, 2)
     img.scalePercent(48)
     document.add(img)
@@ -323,8 +322,8 @@ case class Certificate(issued: Option[LocalDate],
    * @param twoFacilitators Shows if the event was facilitated by one or more facilitators
    * @return
    */
-  private def template(brandId: Long, event: Event, twoFacilitators: Boolean): com.itextpdf.text.Image = {
-    val templates = CertificateTemplateService.get.findByBrand(brandId)
+  private def template(brandId: Long, event: Event, twoFacilitators: Boolean, services: Services): com.itextpdf.text.Image = {
+    val templates = Await.result(services.certificateService.findByBrand(brandId), 3.seconds)
     val data = templates.find(_.language == event.language.spoken) map { tpl ⇒
       if (twoFacilitators) tpl.twoFacilitators else tpl.oneFacilitator
     } getOrElse {

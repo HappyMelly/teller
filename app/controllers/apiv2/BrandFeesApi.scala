@@ -24,15 +24,20 @@
 
 package controllers.apiv2
 
+import javax.inject.Inject
+
 import models.brand.BrandFee
 import models.service.Services
-import play.api.mvc.Controller
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Provides API for working with event fees
  */
-trait BrandFeesApi extends Controller with ApiAuthentication with Services {
+class BrandFeesApi @Inject() (override val messagesApi: MessagesApi,
+                              val services: Services) extends ApiAuthentication(services, messagesApi) {
 
   /**
    * EventFee to JSON converter
@@ -48,16 +53,16 @@ trait BrandFeesApi extends Controller with ApiAuthentication with Services {
 
   /**
    * Returns list of fees for the given brand in JSON format
-   * @param brand Brand code
+    *
+    * @param brand Brand code
    */
-  def fees(brand: String) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        brandService.find(brand) map { x ⇒
-          val fees = feeService.findByBrand(x.id.get)
+  def fees(brand: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    services.brandService.find(brand) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(x) =>
+        services.feeService.findByBrand(x.id.get) flatMap { fees =>
           jsonOk(Json.toJson(fees))
-        } getOrElse jsonNotFound("Unknown brand")
+        }
+    }
   }
 }
-
-object BrandFeesApi extends BrandFeesApi with ApiAuthentication with Services

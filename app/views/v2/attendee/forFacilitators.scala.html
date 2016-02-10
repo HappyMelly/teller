@@ -3,7 +3,7 @@
     brands: List[Brand],
     facilitator: Boolean = false)(implicit request: Request[Any],
     request2flash: Flash,
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.main("Attendees", "attendees", user) {
     @v2.element.brandHeader(brand, brands, "attendees", facilitator = true) {

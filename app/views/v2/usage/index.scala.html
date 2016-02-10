@@ -1,7 +1,7 @@
 @(user: ActiveUser,
         brands: Iterable[(Long, String, List[(String, Float, Float)])])(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.main("Usage", "", user) {
     <div class="row fees">

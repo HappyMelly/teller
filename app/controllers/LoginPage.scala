@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
 import play.api.Play
 import play.api.Play.current
 import securesocial.controllers.BaseLoginPage
@@ -38,7 +38,7 @@ import scala.concurrent.Future
  *
  * Its logout method allows to pass error message to login page
  */
-class LoginPage(override implicit val env: RuntimeEnvironment[ActiveUser]) extends BaseLoginPage[ActiveUser] {
+class LoginPage @Inject() (override implicit val env: RuntimeEnvironment) extends BaseLoginPage {
 
   /**
    * Logs out the user by clearing the credentials from the session.

@@ -1,5 +1,5 @@
 @(m: Member)(implicit request: Request[Any],
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 <div class="memberPanel">
   @if(m.funder) {

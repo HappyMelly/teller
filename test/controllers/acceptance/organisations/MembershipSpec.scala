@@ -81,10 +81,10 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   trait DefaultMockContext extends MockContext {
     truncateTables()
-    (contributionService.contributions(_, _)).expects(id, false).returning(List())
-    (orgService.findWithProfile _) expects id returning Some(OrgView(org, profile))
-    (productService.findAll _).expects().returning(List())
-    (personService.findActive _).expects().returning(List())
+    (services.contributionService.contributions(_, _)).expects(id, false).returning(List())
+    (services.orgService.findWithProfile _) expects id returning Some(OrgView(org, profile))
+    (services.productService.findAll _).expects().returning(List())
+    (services.personService.findActive _).expects().returning(List())
   }
 
   trait ExtendedMemberMockContext extends DefaultMockContext {
@@ -222,7 +222,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e13 = new MockContext {
     truncateTables()
-    (orgService.find(_: Long)) expects id returning None
+    (services.orgService.find(_: Long)) expects id returning None
     val controller = fakedController()
     controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
@@ -233,7 +233,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
   def e14 = new MockContext {
     truncateTables()
     val org = OrganisationHelper.one
-    (orgService.find(_: Long)) expects id returning Some(org)
+    (services.orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
     controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())
@@ -248,7 +248,7 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), id, person = false, funder = true,
       renewal = false)
     org.member_=(member)
-    (orgService.find(_: Long)) expects id returning Some(org)
+    (services.orgService.find(_: Long)) expects id returning Some(org)
     val controller = fakedController()
     controller.identity_=(FakeSocialIdentity.admin)
     val result = controller.cancel(org.id.get).apply(fakeGetRequest())

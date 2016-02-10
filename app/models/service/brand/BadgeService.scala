@@ -25,13 +25,19 @@
 package models.service.brand
 
 import models.brand.Badge
-import models.database.brand.Badges
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.brand.BadgeTable
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class BadgeService {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
+class BadgeService(app: Application)  extends HasDatabaseConfig[JdbcProfile]
+  with BadgeTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
   private val badges = TableQuery[Badges]
 
   /**
@@ -39,61 +45,50 @@ class BadgeService {
     * @param brandId Brand identifier
     * @param id Badge identifier
     */
-  def delete(brandId: Long, id: Long): Unit = DB.withSession { implicit session =>
-    badges.filter(_.id === id).filter(_.brandId === brandId).delete
-  }
+  def delete(brandId: Long, id: Long): Future[Int] =
+    db.run(badges.filter(_.id === id).filter(_.brandId === brandId).delete)
 
   /**
     * Returns badge for the given id if exists
     * @param id Identifier
     */
-  def find(id: Long): Option[Badge] = DB.withSession { implicit session ⇒
-    badges.filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[Badge]] = db.run(badges.filter(_.id === id).result).map(_.headOption)
 
   /**
     * Returns list of badges for the given ids
     * @param ids List of identifiers
     */
-  def find(ids: List[Long]): List[Badge] = DB.withSession { implicit session =>
-    if (ids.isEmpty)
-      List()
+  def find(ids: List[Long]): Future[List[Badge]] = if (ids.isEmpty)
+      Future.successful(List())
     else
-      badges.filter(_.id inSet ids).list
-  }
+      db.run(badges.filter(_.id inSet ids).result).map(_.toList)
 
   /**
    * Returns a list of fees belonged to the given brand
    * @param brandId Brand id
    */
-  def findByBrand(brandId: Long): List[Badge] = DB.withSession { implicit session ⇒
-    badges.filter(_.brandId === brandId).list
-  }
+  def findByBrand(brandId: Long): Future[List[Badge]] =
+    db.run(badges.filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Inserts the given badge into database and returns the updated fee with ID
    * @param badge Fee
    */
-  def insert(badge: Badge): Badge = DB.withSession { implicit session ⇒
-    val id = (badges returning badges.map(_.id)) += badge
-    badge.copy(id = id)
+  def insert(badge: Badge): Future[Badge] = {
+    val query = badges returning badges.map(_.id) into ((value, id) => value.copy(id = id))
+    db.run(query += badge)
   }
 
   /**
     * Updates the given badge in the database
     * @param badge Badge
     */
-  def update(badge: Badge): Badge = DB.withSession { implicit session =>
-    badges.filter(_.id === badge.id).map(_.forUpdate).update((badge.name, badge.file, badge.recordInfo.updatedBy))
-    badge
+  def update(badge: Badge): Future[Badge] = {
+    val query = badges.filter(_.id === badge.id).map(_.forUpdate)
+    db.run(query.update((badge.name, badge.file, badge.recordInfo.updatedBy))).map(_ => badge)
   }
 
 }
 
-object BadgeService {
-  private val _instance = new BadgeService
-
-  def get: BadgeService = _instance
-}
 
 

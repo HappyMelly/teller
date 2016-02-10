@@ -24,19 +24,9 @@
 package controllers
 
 import controllers.Forms._
-import models.{ ActiveUser, SocialProfile, ProfileType }
-import models.service.Services
+import models.{ProfileType, SocialProfile}
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
-import securesocial.core.RuntimeEnvironment
-
-class SocialProfiles(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
-}
 
 object SocialProfiles {
 

@@ -1,4 +1,4 @@
-@(user: ActiveUser, brands: List[BrandView])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+@(user: ActiveUser, brands: List[BrandView])(implicit request: Request[Any], flash: Flash, handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._

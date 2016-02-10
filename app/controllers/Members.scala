@@ -23,30 +23,40 @@
  */
 package controllers
 
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.JodaMoney._
 import models.UserRole.Role._
-import models.{UserAccount, ActiveUser, Member}
+import models.service.Services
+import models.{ActiveUser, Member, UserAccount}
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
+import org.joda.time.{DateTime, LocalDate}
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
+import services.integrations.Email
 import templates.Formatters._
 
-/** Renders pages and contains actions related to members */
-class Members(environment: RuntimeEnvironment[ActiveUser])
-    extends Enrollment
-    with JsonController
-    with Security
-    with Activities
-    with Utilities
-    with MemberNotifications {
+import scala.concurrent.Future
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+/** Renders pages and contains actions related to members */
+class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                         override val messagesApi: MessagesApi,
+                         val services: Services,
+                         val email: Email,
+                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware
+  with Enrollment
+  with Activities
+  with I18nSupport
+  with MemberNotifications {
 
   def form(modifierId: Long) = {
     val MEMBERSHIP_EARLIEST_DATE = LocalDate.parse("2015-01-01")
@@ -87,80 +97,72 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
     single("id" -> longNumber))
 
   /** Renders a list of all members */
-  def index() = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val members = memberService.findAll.filter(_.active)
-      val fee = members.find(m ⇒
-        m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
+  def index() = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.memberService.findAll flatMap { results =>
+      val members = results.filter(_.active)
+      val fee = members.find(m ⇒ m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
       members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
-      Ok(views.html.v2.member.index(user, members, fee, totalFee))
+      ok(views.html.v2.member.index(user, members, fee, totalFee))
+    }
   }
 
   /** Renders Add form */
-  def add() = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.form(user, None, form(user.person.id.get)))
+  def add() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.member.form(user, None, form(user.person.identifier)))
   }
 
   /**
    * Records a first block of data about member to database and redirects
    * users to the next step
    */
-  def create() = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      form(user.person.id.get).bindFromRequest.fold(
-        formWithErrors ⇒ BadRequest(views.html.member.form(user,
-          None,
-          formWithErrors)),
-        member ⇒ {
-          val m = member.
-            copy(id = None).
-            copy(objectId = 0).
-            copy(until = member.since.plusYears(1))
-          Cache.set(Members.cacheId(user.person.id.get), m, 1800)
-          (member.person, member.existingObject) match {
-            case (true, false) ⇒ Redirect(routes.Members.addPerson())
-            case (false, false) ⇒ Redirect(routes.Members.addOrganisation())
-            case (false, true) ⇒ Redirect(routes.Members.addExistingOrganisation())
-            case (true, true) ⇒ Redirect(routes.Members.addExistingPerson())
-          }
-        })
+  def create() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    form(user.person.identifier).bindFromRequest.fold(
+      formWithErrors ⇒ badRequest(views.html.member.form(user, None, formWithErrors)),
+      member ⇒ {
+        val m = member.copy(id = None).copy(objectId = 0).copy(until = member.since.plusYears(1))
+        Cache.set(Members.cacheId(user.person.id.get), m, 1800)
+        (member.person, member.existingObject) match {
+          case (true, false) ⇒ redirect(routes.Members.addPerson())
+          case (false, false) ⇒ redirect(routes.Members.addOrganisation())
+          case (false, true) ⇒ redirect(routes.Members.addExistingOrganisation())
+          case (true, true) ⇒ redirect(routes.Members.addExistingPerson())
+        }
+      })
   }
 
   /** Renders Edit form */
-  def edit(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      memberService.find(id) map { m ⇒
-        val formWithData = form(user.person.id.get).fill(m)
-        Ok(views.html.member.form(user, Some(m), formWithData))
-      } getOrElse NotFound
+  def edit(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.memberService.find(id) flatMap {
+      case None => notFound("Member not found")
+      case Some(member) =>
+        val formWithData = form(user.person.id.get).fill(member)
+        ok(views.html.member.form(user, Some(member), formWithData))
+    }
   }
 
   /**
    * Updates membership data
-   * @param id Member identifier
+    *
+    * @param id Member identifier
    */
-  def update(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      memberService.find(id) map { existing ⇒
+  def update(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.memberService.find(id) flatMap {
+      case None => notFound("Member not found")
+      case Some(existing) =>
         form(user.person.id.get).bindFromRequest.fold(
-          formWithErrors ⇒ BadRequest(views.html.member.form(user,
-            Some(existing),
-            formWithErrors)),
+          errors ⇒ badRequest(views.html.member.form(user, Some(existing), errors)),
           data ⇒ {
             val updated = data.copy(id = existing.id).
               copy(person = existing.person, objectId = existing.objectId).
               copy(until = existing.until, reason = existing.reason)
-            memberService.update(updated)
-            val log = activity(updated, user.person).updated.insert()
-            val url = profileUrl(updated)
-            updatedMemberMsg(existing, updated, url) map { msg ⇒
-              slack.send(msg)
+            services.memberService.update(updated) flatMap { _ =>
+              val url: String = profileUrl(updated)
+              updatedMemberMsg(existing, updated, url) map { msg ⇒ slack.send(msg) }
+              redirect(url, "success" -> "Member was updated")
             }
-            Redirect(url).flashing("success" -> log.toString)
           })
-      } getOrElse NotFound
+    }
   }
 
   /**
@@ -168,221 +170,235 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def updateReason(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.member(personId) map { member ⇒
+  def updateReason(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.personService.member(personId) flatMap {
+        case None => jsonNotFound("Member not found")
+        case Some(member) =>
           val form = Form(single("reason" -> optional(text)))
           form.bindFromRequest.fold(
             error ⇒ jsonBadRequest("Reason does not exist"),
             reason ⇒ {
-              memberService.update(member.copy(reason = reason))
-              profileStrengthService.find(personId, false) map { strength ⇒
+              services.memberService.update(member.copy(reason = reason))
+              services.profileStrengthService.find(personId, false).filter(_.isDefined).map(_.get) flatMap { strength ⇒
                 if (reason.isDefined && reason.get.length > 0) {
-                  profileStrengthService.update(strength.markComplete("reason"))
+                  services.profileStrengthService.update(strength.markComplete("reason"))
                 } else {
-                  profileStrengthService.update(strength.markIncomplete("reason"))
+                  services.profileStrengthService.update(strength.markIncomplete("reason"))
                 }
               }
               jsonSuccess((reason getOrElse "").markdown.toString)
             })
-        } getOrElse jsonNotFound("Person is not a member")
+      }
   }
 
   /**
    * Removes a membership of the given member
-   * @param id Member id
+    *
+    * @param id Member id
    */
-  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      memberService.find(id) map { m ⇒
-        memberService.delete(m.objectId, m.person)
-        val log = activity(m, user.person).deleted.insert()
-        val url = profileUrl(m)
-        val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(
-          m.name, fullUrl(url))
-        slack.send(msg)
-        Redirect(url).flashing("success" -> log.toString)
-      } getOrElse NotFound
+  def delete(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.memberService.find(id) flatMap {
+      case None => notFound("Member not found")
+      case Some(member) =>
+        services.memberService.delete(member.objectId, member.person) flatMap { _ =>
+          val url = profileUrl(member)
+          val msg = "Hey @channel, %s is not a member anymore. <%s|View profile>".format(member.name, Utilities.fullUrl(url))
+          slack.send(msg)
+          redirect(url, "success" -> "Membership was cancelled")
+        }
+    }
   }
 
   /** Renders Add new person page */
-  def addPerson() = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.newPerson(user, None, People.personForm(user.name)))
+  def addPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.member.newPerson(user, None, People.personForm(user.name, None, services)))
   }
 
   /** Renders Add new organisation page */
-  def addOrganisation() = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.newOrg(user, None, Organisations.organisationForm))
+  def addOrganisation() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.member.newOrg(user, None, Organisations.organisationForm))
   }
 
   /** Renders Add existing organisation page */
-  def addExistingOrganisation() = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def addExistingOrganisation() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.existingOrg(user, orgsNonMembers, existingOrgForm))
+      orgsNonMembers flatMap { orgs =>
+        ok(views.html.member.existingOrg(user, orgs, existingOrgForm))
+      }
   }
 
   /** Renders Add existing person page */
-  def addExistingPerson() = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def addExistingPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      Ok(views.html.member.existingPerson(user, peopleNonMembers, existingPersonForm))
+      peopleNonMembers flatMap { people =>
+        ok(views.html.member.existingPerson(user, people, existingPersonForm))
+      }
   }
 
   /** Records a new member-organisation to database */
-  def createNewOrganisation() = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val orgForm = Organisations.organisationForm.bindFromRequest
-        orgForm.fold(
-          hasErrors ⇒
-            BadRequest(views.html.member.newOrg(user, None, hasErrors)),
-          view ⇒ {
-            val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-            cached map { m ⇒
-              val org = orgService.insert(view).org
-              activity(org, user.person).created.insert()
-              // rewrite 'person' attribute in case if incomplete object was
-              //  created for different type of member
-              val member = memberService.insert(m.copy(objectId = org.id.get,
-                person = false))
+  def createNewOrganisation() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val orgForm = Organisations.organisationForm.bindFromRequest
+      orgForm.fold(
+        hasErrors ⇒ badRequest(views.html.member.newOrg(user, None, hasErrors)),
+        view ⇒ {
+          val cached = Cache.getAs[Member](Members.cacheId(user.person.identifier))
+          cached map { m ⇒
+            val actions = for {
+              v <- services.orgService.insert(view)
+              member <- services.memberService.insert(m.copy(objectId = v.org.identifier, person = false))
+            } yield (v.org, member)
+            actions flatMap { case (org, member) =>
               Cache.remove(Members.cacheId(user.person.id.get))
-              val log = activity(member, user.person, Some(org)).made.insert()
-              val profileUrl = routes.Organisations.details(org.id.get).url
+              val profileUrl: String = routes.Organisations.details(org.identifier).url
               val text = newMemberMsg(member, org.name, profileUrl)
               slack.send(text)
-              Redirect(profileUrl).flashing("success" -> log.toString)
-            } getOrElse {
-              val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
-              BadRequest(views.html.member.newOrg(user, None, formWithError))
+              redirect(profileUrl, "success" -> "Member was added")
             }
-          })
+          } getOrElse {
+            val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
+            badRequest(views.html.member.newOrg(user, None, formWithError))
+          }
+        })
   }
 
   /** Records a new member-person to database */
-  def createNewPerson() = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def createNewPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val personForm = People.personForm(user.name).bindFromRequest
+      val personForm = People.personForm(user.name, None, services).bindFromRequest
       personForm.fold(
         hasErrors ⇒
-          BadRequest(views.html.member.newPerson(user, None, hasErrors)),
+          badRequest(views.html.member.newPerson(user, None, hasErrors)),
         success ⇒ {
           val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
           cached map { m ⇒
-            val person = personService.insert(success)
-            val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
-            userAccountService.findByPerson(person.identifier) map { account =>
-              userAccountService.update(account.copy(member = true))
-            } getOrElse {
-              val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
-              userAccountService.insert(account)
-            }
-            Cache.remove(Members.cacheId(user.person.id.get))
-            activity(person, user.person).created.insert()
-            val log = activity(member, user.person).made.insert()
-            notify(person, None, member)
-            subscribe(person, member)
+            val actions = for {
+              person <- services.personService.insert(success)
+              member <- services.memberService.insert(m.copy(objectId = person.identifier, person = true))
+            } yield (person, member)
+            actions flatMap { case (person, member) =>
+              services.userAccountService.findByPerson(person.identifier) map {
+                case None =>
+                  val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
+                  services.userAccountService.insert(account)
+                case Some(account) =>
+                  services.userAccountService.update(account.copy(member = true))
+              }
+              Cache.remove(Members.cacheId(user.person.id.get))
+              activity(person, user.person).created.insert(services)
+              val log = activity(member, user.person).made.insert(services)
+              notify(person, None, member)
+              subscribe(person, member)
 
-            val profileUrl = routes.People.details(person.id.get).url
-            Redirect(profileUrl).flashing("success" -> log.toString)
+              val profileUrl: String = routes.People.details(person.id.get).url
+              redirect(profileUrl, "success" -> log.toString)
+            }
           } getOrElse {
             val formWithError = personForm.withGlobalError(Messages("error.membership.wrongStep"))
-            BadRequest(views.html.member.newPerson(user, None, formWithError))
+            badRequest(views.html.member.newPerson(user, None, formWithError))
           }
         })
   }
 
   /** Records an existing member-person to database */
-  def updateExistingPerson() = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val personForm = existingPersonForm.bindFromRequest
-        personForm.fold(
-          hasErrors ⇒
-            BadRequest(views.html.member.existingPerson(user,
-              peopleNonMembers,
-              hasErrors)),
-          id ⇒ {
-            val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-            cached map { m ⇒
-              personService.find(id) map { person ⇒
-                if (person.member.nonEmpty) {
-                  val formWithError = personForm.withGlobalError(Messages("error.person.member"))
-                  BadRequest(views.html.member.existingPerson(user,
-                    peopleNonMembers, formWithError))
-                } else {
-                  val member = memberService.insert(m.copy(objectId = person.id.get, person = true))
-                  userAccountService.findByPerson(person.identifier) map { account =>
-                    userAccountService.update(account.copy(member = true))
-                  } getOrElse {
-                    val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
-                    userAccountService.insert(account)
+  def updateExistingPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      val personForm = existingPersonForm.bindFromRequest
+      personForm.fold(
+        hasErrors ⇒ personUpdateError(user, hasErrors),
+        id ⇒ {
+          val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
+          cached map { m ⇒
+            (for {
+              p <- services.personService.find(id)
+              m <- services.personService.member(id)
+            } yield (p, m)) flatMap {
+              case (None, _) =>
+                val formWithError = personForm.withGlobalError(Messages("error.person.notExist"))
+                personUpdateError(user, formWithError)
+              case (_, None) =>
+                val formWithError = personForm.withGlobalError(Messages("error.person.member"))
+                personUpdateError(user, formWithError)
+              case (Some(person), Some(member)) =>
+                services.memberService.insert(member.copy(objectId = person.id.get, person = true)) flatMap { m =>
+                  services.userAccountService.findByPerson(person.identifier) map {
+                    case None =>
+                      val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
+                      services.userAccountService.insert(account)
+                    case Some(account) =>
+                      services.userAccountService.update(account.copy(member = true))
                   }
                   Cache.remove(Members.cacheId(user.person.id.get))
-                  val log = activity(member, user.person).made.insert()
-                  notify(person, None, member)
-                  subscribe(person, member)
+                  val log = activity(m, user.person).made.insert(services)
+                  notify(person, None, m)
+                  subscribe(person, m)
 
-                  val profileUrl = routes.People.details(person.id.get).url
-                  Redirect(profileUrl).flashing("success" -> log.toString)
+                  val profileUrl: String = routes.People.details(person.id.get).url
+                  redirect(profileUrl, "success" -> log.toString)
                 }
-              } getOrElse {
-                val formWithError = personForm.withGlobalError(Messages("error.person.notExist"))
-                BadRequest(views.html.member.existingPerson(user,
-                  peopleNonMembers, formWithError))
-              }
-            } getOrElse {
-              val formWithError = personForm.withGlobalError(Messages("error.membership.wrongStep"))
-              BadRequest(views.html.member.existingPerson(user,
-                peopleNonMembers, formWithError))
             }
-          })
+          } getOrElse {
+            val formWithError = personForm.withGlobalError(Messages("error.membership.wrongStep"))
+            personUpdateError(user, formWithError)
+          }
+        })
+  }
+
+  protected def personUpdateError(user: ActiveUser, form: Form[Long])(
+      implicit request: Request[AnyContent], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
+    peopleNonMembers flatMap { people =>
+      badRequest(views.html.member.existingPerson(user, people, form))
+    }
   }
 
   /** Records an existing organisation-person to database */
-  def updateExistingOrg() = SecuredRestrictedAction(Admin) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        val orgForm = existingOrgForm.bindFromRequest
-        orgForm.fold(
-          hasErrors ⇒ {
-            BadRequest(views.html.member.existingOrg(user,
-              orgsNonMembers,
-              hasErrors))
-          },
-          id ⇒ {
-            val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-            cached map { m ⇒
-              orgService.find(id) map { org ⇒
-                if (org.member.nonEmpty) {
-                  val formWithError = orgForm.withGlobalError(Messages("error.organisation.member"))
-                  BadRequest(views.html.member.existingOrg(user,
-                    orgsNonMembers, formWithError))
-                } else {
-                  val member = memberService.insert(m.copy(objectId = org.id.get, person = false))
-                  Cache.remove(Members.cacheId(user.person.id.get))
-                  val log = activity(member, user.person, Some(org)).made.insert()
-                  val profileUrl = routes.Organisations.details(org.id.get).url
-                  val text = newMemberMsg(member, org.name, profileUrl)
-                  slack.send(text)
-                  Redirect(profileUrl).flashing("success" -> log.toString)
-                }
-              } getOrElse {
-                val formWithError = orgForm.withGlobalError(Messages("error.organisation.notExist"))
-                BadRequest(views.html.member.existingOrg(user,
-                  orgsNonMembers, formWithError))
+  def updateExistingOrg() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val orgForm = existingOrgForm.bindFromRequest
+    orgForm.fold(
+      hasErrors ⇒ orgUpdateError(user, hasErrors),
+      id ⇒ {
+        val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
+        cached map { m ⇒
+          (for {
+            o <- services.orgService.find(id)
+            m <- services.orgService.member(id)
+          } yield (o, m)) flatMap {
+            case (None, _) =>
+              val formWithError = orgForm.withGlobalError(Messages("error.organisation.notExist"))
+              orgUpdateError(user, formWithError)
+            case (_, None) =>
+              val formWithError = orgForm.withGlobalError(Messages("error.organisation.member"))
+              orgUpdateError(user, formWithError)
+            case (Some(org), Some(member)) =>
+              services.memberService.insert(m.copy(objectId = org.id.get, person = false)) flatMap { member =>
+                Cache.remove(Members.cacheId(user.person.id.get))
+                val log = activity(member, user.person, Some(org)).made.insert(services)
+                val profileUrl: String = routes.Organisations.details(org.id.get).url
+                val text = newMemberMsg(member, org.name, profileUrl)
+                slack.send(text)
+                redirect(profileUrl, "success" -> log.toString)
               }
-            } getOrElse {
-              val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
-              BadRequest(views.html.member.existingOrg(user, orgsNonMembers, formWithError))
-            }
-          })
+          }
+        } getOrElse {
+          val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
+          orgUpdateError(user, formWithError)
+        }
+      })
+  }
+
+  protected def orgUpdateError(user: ActiveUser, form: Form[Long])(
+    implicit request: Request[AnyContent], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
+
+    orgsNonMembers flatMap { orgs =>
+      badRequest(views.html.member.existingOrg(user, orgs, form))
+    }
   }
 
   /**
    * Returns an update message
-   * @param before Initial member object
+    *
+    * @param before Initial member object
    * @param after Updated member object
    * @param url Profile url
    */
@@ -394,10 +410,10 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
         if (after.funder) "funder" else "supporter"),
       compareValues("Fee", before.fee.toString, after.fee.toString))
     val changedFields = fields.filter(_.nonEmpty)
-    if (changedFields.length > 0) {
+    if (changedFields.nonEmpty) {
       var msg = "Hey @channel, member %s was updated.".format(before.name)
       changedFields.foreach(v ⇒ msg += " %s.".format(v.get))
-      msg += " <%s|View profile>".format(fullUrl(url))
+      msg += " <%s|View profile>".format(Utilities.fullUrl(url))
       Some(msg)
     } else
       None
@@ -405,7 +421,8 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Return profile url based on what member is: person or organisation
-   * @param member Member object
+    *
+    * @param member Member object
    */
   protected def profileUrl(member: Member): String = {
     if (member.person)
@@ -416,32 +433,34 @@ class Members(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Returns a comparison message if fields are different, otherwise - None
-   * @param field Field name
+    *
+    * @param field Field name
    * @param before Initial field value
    * @param after Updated field value
    */
-  private def compareValues(field: String,
-    before: String,
-    after: String): Option[String] = {
+  private def compareValues(field: String, before: String, after: String): Option[String] = {
     if (before != after)
       Some("Field *%s* has changed from '%s' to '%s'".format(field, before, after))
     else None
   }
 
   /** Returns ids and names of organisations which are not members */
-  private def orgsNonMembers: List[(String, String)] = orgService.findNonMembers.
-    map(o ⇒ (o.id.get.toString, o.name))
+  private def orgsNonMembers: Future[List[(String, String)]] = services.orgService.findNonMembers map { orgs =>
+    orgs.map(o ⇒ (o.identifier.toString, o.name))
+  }
 
   /** Returns ids and names of people which are not members */
-  private def peopleNonMembers: List[(String, String)] = personService.findNonMembers.
-    map(p ⇒ (p.id.get.toString, p.fullName))
+  private def peopleNonMembers: Future[List[(String, String)]] = services.personService.findNonMembers map { people =>
+    people.map(p ⇒ (p.identifier.toString, p.fullName))
+  }
 }
 
 object Members {
 
   /**
    * Returns cache identifier to store incomplete member object
-   * @param id User id
+    *
+    * @param id User id
    * @return
    */
   def cacheId(id: Long): String = "incomplete.member." + id.toString

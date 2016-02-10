@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,11 +21,11 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import models.UserRole.{Role, DynamicRole}
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
@@ -35,106 +35,105 @@ import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
 import play.api.data.{Form, FormError}
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, Messages}
+import play.api.mvc._
 import play.api.{Logger, Play}
-import securesocial.core.RuntimeEnvironment
-import services.integrations.Integrations
+import services.TellerRuntimeEnvironment
+import services.integrations.{Email, Integrations}
 
 import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-class People(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Integrations
-    with Files
-    with Activities
-    with MemberNotifications {
+case class PeopleDetailConfig(facilitator: Boolean, deletable: Boolean, member: Boolean)
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment,
+                                    override val messagesApi: MessagesApi,
+                                    val services: Services,
+                                    val email: Email,
+                                    deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Integrations
+  with Files
+  with Activities
+  with MemberNotifications {
 
   val contentType = "image/jpeg"
+  val indexCall: Call = routes.People.index()
 
   /**
    * Form target for toggling whether a person is active
    *
    * @param id Person identifier
    */
-  def activation(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      personService.find(id).map { person ⇒
+  def activation(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.personService.find(id) flatMap {
+      case None => redirect(indexCall, "error" -> "Person not found")
+      case Some(person) =>
         Form("active" -> boolean).bindFromRequest.fold(
-          form ⇒ BadRequest("invalid form data"),
+          form ⇒ badRequest("invalid form data"),
           active ⇒ {
-            Person.activate(id, active)
+            services.personService.activate(id, active)
             val log = if (active)
-              activity(person, user.person).activated.insert()
+              activity(person, user.person).activated.insert(services)
             else
-              activity(person, user.person).deactivated.insert()
-            Redirect(routes.People.details(id)).flashing("success" -> log.toString)
+              activity(person, user.person).deactivated.insert(services)
+            redirect(routes.People.details(id), "success" -> log.toString)
           })
-      } getOrElse {
-        Redirect(routes.People.index()).flashing(
-          "error" -> Messages("error.notFound", Messages("models.Person")))
-      }
+    }
   }
 
   /**
    * Render a Create page
    */
-  def add = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.v2.person.form(user, None, People.personForm(user.name)))
+  def add = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.v2.person.form(user, None, People.personForm(user.name, None, services)))
   }
 
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = SecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
+  def addRelationship() = AsyncSecuredRestrictedAction(List(Admin, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
       val relationshipForm = Form(tuple("page" -> text,
         "personId" -> longNumber,
         "organisationId" -> longNumber))
 
       relationshipForm.bindFromRequest.fold(
-        errors ⇒ BadRequest("organisationId missing"),
-        {
-          case (page, personId, organisationId) ⇒
-            personService.find(personId).map { person ⇒
-              orgService.find(organisationId).map { organisation ⇒
-                person.addRelation(organisationId)
+        errors ⇒ badRequest("organisationId missing"),
+        { case (page, personId, organisationId) ⇒
+          (for {
+            p <- services.personService.find(personId)
+            o <- services.orgService.find(organisationId)
+          } yield (p, o)) flatMap {
+            case (None, _) => notFound("Person not found")
+            case (_, None) => notFound("Organisation not found")
+            case (Some(person), Some(organisation)) =>
+              person.addRelation(organisationId, services)
 
-                val log = activity(person, user.person,
-                  Some(organisation)).connected.insert()
-                // Redirect to the page we came from - either the person or organisation details page.
-                val action = if (page == "person")
-                  routes.People.details(personId).url
-                else
-                  routes.Organisations.details(organisationId).url
-                Redirect(action).flashing("success" -> log.toString)
-              }.getOrElse(NotFound)
-            }.getOrElse(NotFound)
+              val log = activity(person, user.person, Some(organisation)).connected.insert(services)
+              // Redirect to the page we came from - either the person or organisation details page.
+              val action: String = if (page == "person")
+                routes.People.details(personId).url
+              else
+                routes.Organisations.details(organisationId).url
+              redirect(action, "success" -> "Person is a member of the organisation now")
+          }
         })
   }
 
   /**
    * Create form submits to this action.
    */
-  def create = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      People.personForm(user.name).bindFromRequest.fold(
-        formWithErrors ⇒
-          BadRequest(views.html.v2.person.form(user, None, formWithErrors)),
-        person ⇒ {
-          val updatedPerson = person.insert
-          val log = activity(updatedPerson, user.person).created.insert()
-          Redirect(routes.People.index()).flashing("success" -> log.toString)
-        })
+  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    People.personForm(user.name, None, services).bindFromRequest.fold(
+      formWithErrors ⇒ badRequest(views.html.v2.person.form(user, None, formWithErrors)),
+      person ⇒ {
+        services.personService.insert(person) flatMap { updatedPerson =>
+          val log = activity(updatedPerson, user.person).created.insert(services)
+          redirect(indexCall, "success" -> "New person was added")
+        }
+      })
   }
 
   /**
@@ -142,18 +141,19 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      personService.find(id).map { person ⇒
-        if (!person.deletable) {
-          Redirect(routes.People.index()).flashing("error" -> Messages("error.person.nonDeletable"))
-        } else {
-          personService.delete(id)
-          val log = activity(person, user.person).deleted.insert()
-          Redirect(routes.People.index()).flashing("success" -> log.toString)
-        }
-      }.getOrElse(NotFound)
+  def delete(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      p <- services.personService.find(id)
+      flat <- Person.deletable(id, services)
+    } yield (p, flat)) flatMap {
+      case (None, _) => notFound("Person not found")
+      case (Some(person), false) =>
+        redirect(indexCall, "error" -> Messages("error.person.nonDeletable"))
+      case (Some(person), true) =>
+        services.personService.delete(person)
+        val log = activity(person, user.person).deleted.insert(services)
+        redirect(indexCall, "success" -> "Person was deleted")
+    }
   }
 
   /**
@@ -163,26 +163,26 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param organisationId Org identifier
    */
-  def deleteRelationship(page: String,
-                         personId: Long,
-                         organisationId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        personService.find(personId).map { person ⇒
-          orgService.find(organisationId).map { organisation ⇒
-            person.deleteRelation(organisationId)
-            val log = activity(person, user.person,
-              Some(organisation)).disconnected.insert()
-            // Redirect to the page we came from - either the person or
-            // organisation details page.
-            val action = if (page == "person")
-              routes.People.details(personId).url
-            else
-              routes.Organisations.details(organisationId).url
-            Redirect(action).flashing("success" -> log.toString)
-          }
-        }.flatten.getOrElse(NotFound)
+  def deleteRelationship(page: String, personId: Long, organisationId: Long) = AsyncSecuredProfileAction(personId) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      (for {
+        p <- services.personService.find(personId)
+        o <- services.orgService.find(organisationId)
+      } yield (p, o)) flatMap {
+        case (None, _) => notFound("Person not found")
+        case (_, None) => notFound("Organisation not found")
+        case (Some(person), Some(organisation))=>
+          person.deleteRelation(organisationId, services)
+          val log = activity(person, user.person,
+            Some(organisation)).disconnected.insert(services)
+          // Redirect to the page we came from - either the person or
+          // organisation details page.
+          val action: String = if (page == "person")
+            routes.People.details(personId).url
+          else
+            routes.Organisations.details(organisationId).url
+          redirect(action, "success" -> "Person is no longer a member of the organisation")
+      }
   }
 
   /**
@@ -190,30 +190,36 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      personService.find(id) map { person ⇒
-        val facilitators = facilitatorService.findByPerson(id)
-        val facilitator = facilitators.nonEmpty
-        val memberships = person.organisations
-        val badgesInfo = if (facilitator) {
-          val badges = brandBadgeService.find(facilitators.flatMap(_.badges))
-          val brands = brandService.find(badges.map(_.brandId).distinct)
-          badges.map { badge =>
-            (badge, brands.find(_.brand.identifier == badge.brandId).map(_.brand.name).getOrElse(""))
+  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    (for {
+      p <- services.personService.findComplete(id)
+      f <- services.facilitatorService.findByPerson(id)
+      m <- services.personService.memberships(id)
+      o <- services.orgService.findActive
+      deletable <- Person.deletable(id, services)
+      member <- services.personService.member(id)
+    } yield (p, f, m, o, deletable, member)) flatMap {
+      case (None, _, _, _, _, _) => redirect(indexCall, "error" -> "Person not found")
+      case (Some(person), facilitators, memberships, orgs, deletable, member) =>
+        val conf = PeopleDetailConfig(facilitators.nonEmpty, deletable, member.isDefined)
+        val otherOrganisations = orgs.filterNot(organisation ⇒ memberships.contains(organisation))
+        val badgesInfo = if (conf.facilitator) {
+          val query = for {
+            badges <- services.brandBadgeService.find(facilitators.flatMap(_.badges))
+            brands <- services.brandService.find(badges.map(_.brandId).distinct)
+          } yield (badges, brands)
+          query map { case (badges, brands) =>
+            badges.map { badge =>
+              (badge, brands.find(_.brand.identifier == badge.brandId).map(_.brand.name).getOrElse(""))
+            }
           }
         } else {
-          List()
+          Future.successful(List())
         }
-
-        val otherOrganisations = orgService.findActive.filterNot(organisation ⇒
-          memberships.contains(organisation))
-        Ok(views.html.v2.person.details(user, person,
-          memberships, otherOrganisations, facilitator, badgesInfo))
-      } getOrElse {
-        Redirect(routes.People.index()).flashing(
-          "error" -> Messages("error.notFound", Messages("models.Person")))
-      }
+        badgesInfo flatMap { info =>
+          ok(views.html.v2.person.details(user, person, memberships, otherOrganisations, conf, info, member))
+        }
+    }
   }
 
   /**
@@ -221,13 +227,13 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def edit(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) { implicit request ⇒
+  def edit(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      personService.find(id).map { person ⇒
-        Future.successful(
-          Ok(views.html.v2.person.form(user, Some(id), People.personForm(user.name).fill(person))))
-      } getOrElse Future.successful(NotFound)
+      services.personService.findComplete(id) flatMap {
+        case None => notFound("Person not found")
+        case Some(person) ⇒
+          ok(views.html.v2.person.form(user, Some(id), People.personForm(user.name, None, services).fill(person)))
+      }
   }
 
   /**
@@ -235,80 +241,96 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Person identifier
    */
-  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.ProfileEditor, id) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(id) map { oldPerson ⇒
-          People.personForm(user.name, Some(id)).bindFromRequest.fold(
-            formWithErrors ⇒
-              Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), formWithErrors))),
+  def update(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.personService.findComplete(id) flatMap {
+        case None => notFound("Person not found")
+        case Some(oldPerson) ⇒
+          People.personForm(user.name, Some(id), services).bindFromRequest.fold(
+            errors ⇒ badRequest(views.html.v2.person.form(user, Some(id), errors)),
             person ⇒ {
-              checkDuplication(person, id, user.name) map { form ⇒
-                Future.successful(BadRequest(views.html.v2.person.form(user, Some(id), form)))
-              } getOrElse {
-                val modified = resetReadOnlyAttributes(person, oldPerson)
+              checkDuplication(person, id, user.name) flatMap {
+                case Some(form) => badRequest(views.html.v2.person.form(user, Some(id), form))
+                case None =>
+                  val modified = resetReadOnlyAttributes(person, oldPerson)
 
-                personService.member(id) foreach { x ⇒
-                  val msg = connectMeMessage(oldPerson.socialProfile,
-                    modified.socialProfile)
-                  msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
-                }
-                modified.update
-                if (modified.email != oldPerson.email) {
-                  identityService.findByEmail(oldPerson.email) map { identity =>
-                    if (identity.userId.exists(_ == id)) {
-                      identityService.delete(oldPerson.email)
-                      identityService.insert(identity.copy(email = modified.email))
-                    }
+                  services.personService.member(id).filter(_.isDefined) map { _ =>
+                    val msg = connectMeMessage(oldPerson.socialProfile, modified.socialProfile)
+                    msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
                   }
-                }
-                val log = activity(modified, user.person).updated.insert()
-                Future.successful(
-                  Redirect(routes.People.details(id)).flashing("success" -> log.toString))
+                  services.personService.update(modified) flatMap { _ =>
+                    if (modified.email != oldPerson.email) {
+                      services.identityService.findByEmail(oldPerson.email).filter(_.isDefined) map { identity =>
+                        if (identity.get.userId.exists(_ == id)) {
+                          services.identityService.delete(oldPerson.email)
+                          services.identityService.insert(identity.get.copy(email = modified.email))
+                        }
+                      }
+                    }
+                    val log = activity(modified, user.person).updated.insert(services)
+                    val url: String = routes.People.details(id).url
+                    redirect(url, "success" -> log.toString)
+                  }
               }
             })
-        } getOrElse Future.successful(NotFound)
+      }
   }
 
   /**
    * Renders tab for the given person
-   * @param id Person or Member identifier
+    *
+    * @param id Person or Member identifier
    * @param tab Tab identifier
    */
-  def renderTabs(id: Long, tab: String) = SecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        tab match {
-          case "contributions" ⇒
-            val contributions = contributionService.contributions(id, isPerson = true)
-            Ok(views.html.v2.element.contributions("person", contributions))
-          case "experience" ⇒
-            personService.find(id) map { person ⇒
-              val experience = retrieveByBrandStatistics(id)
-              val endorsements = personService.endorsements(id).map {x =>
+  def renderTabs(id: Long, tab: String) = AsyncSecuredRestrictedAction(Viewer) {
+    implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      tab match {
+        case "contributions" ⇒
+          services.contributionService.contributions(id, isPerson = true) flatMap { contributions =>
+            ok(views.html.v2.element.contributions("person", contributions))
+          }
+        case "experience" ⇒
+          (for {
+            person <- services.personService.find(id)
+            experience <- retrieveByBrandStatistics(id)
+            endorsements <- services.personService.endorsements(id)
+            materials <- services.personService.materials(id)
+          } yield (person, experience, endorsements, materials)) flatMap {
+            case (None, _, _, _) => notFound("Person not found")
+            case (Some(person), experience, endorsements, materials) =>
+              val endorsementsWithExp = endorsements.map {x =>
                 (x, experience.find(_._1 == x.brandId).map(_._2).getOrElse(""))
               }
-              val materials = personService.materials(id).sortBy(_.linkType)
-              Ok(views.html.v2.person.tabs.experience(person, experience,
-                endorsements, materials))
-            } getOrElse NotFound("Person not found")
-          case "facilitation" ⇒
-            personService.find(id) map { person ⇒
-              val licenses = licenseService.licensesWithBrands(id)
-              val facilitation = facilitatorService.findByPerson(id)
+              val sortedMaterials = materials.sortBy(_.linkType)
+              ok(views.html.v2.person.tabs.experience(person, experience, endorsementsWithExp, sortedMaterials))
+          }
+        case "facilitation" ⇒
+          (for {
+            p <- services.personService.find(id)
+            l <- services.licenseService.licensesWithBrands(id)
+            f <- services.facilitatorService.findByPerson(id)
+            langs <- services.facilitatorService.languages(id)
+            c <- services.facilitatorService.countries(id)
+          } yield (p, l, f, langs, c)) flatMap {
+            case (None, _, _, _, _) => notFound("Person not found")
+            case (Some(person), licenses, facilitation, languages, countries) =>
               val facilitatorData = licenses
                 .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.publicRating))
-              Ok(views.html.v2.person.tabs.facilitation(person, facilitatorData))
-            } getOrElse NotFound("Person not found")
-          case "membership" ⇒
-            personService.find(id) map { person ⇒
-              person.member map { v ⇒
-                val payments = paymentRecordService.findByPerson(id)
-                Ok(views.html.v2.person.tabs.membership(user, person, payments))
-              } getOrElse Ok("Person is not a member")
-            } getOrElse NotFound("Person not found")
-          case _ ⇒ Ok("")
-        }
+              ok(views.html.v2.person.tabs.facilitation(person, facilitatorData, languages, countries))
+          }
+        case "membership" ⇒
+          (for {
+            person <- services.personService.find(id)
+            payments <- services.paymentRecordService.findByPerson(id)
+            member <- services.personService.member(id)
+          } yield (person, payments, member)) flatMap {
+            case (_, _, None) => ok("Person is not a member")
+            case (None, _, _) => notFound("Person not found")
+            case (Some(person), payments, Some(member)) =>
+              ok(views.html.v2.person.tabs.membership(user, person, member, payments))
+          }
+        case _ ⇒ ok("")
+      }
   }
 
 
@@ -317,45 +339,43 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    *
    * @return
    */
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val people = models.Person.findAll
-      Ok(views.html.v2.person.index(user, people))
+  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.personService.findAll flatMap { people =>
+      ok(views.html.v2.person.index(user, people))
+    }
   }
 
   /**
    * Cancels a subscription for yearly-renewing membership
-   * @param id Person id
+    *
+    * @param id Person id
    */
-  def cancel(id: Long) = SecuredProfileAction(id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val url = routes.People.details(id).url + "#membership"
-      personService.find(id) map { person ⇒
-        person.member map { m ⇒
-          if (m.renewal) {
-            val key = Play.configuration.getString("stripe.secret_key").get
-            val gateway = new GatewayWrapper(key)
-            try {
-              gateway.cancel(person.customerId.get)
-              m.copy(renewal = false).update
-            } catch {
-              case e: PaymentException ⇒
-                Redirect(url).flashing("error" -> Messages(e.msg))
-              case e: RequestException ⇒
-                e.log.foreach(Logger.error(_))
-                Redirect(url).flashing("error" -> Messages(e.getMessage))
-            }
-            Redirect(url).
-              flashing("success" -> "Subscription was successfully canceled")
-          } else {
-            Redirect(url).
-              flashing("error" -> Messages("error.membership.noSubscription"))
+  def cancel(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val url: String = routes.People.details(id).url + "#membership"
+    (for {
+      p <- services.personService.find(id)
+      m <- services.personService.member(id)
+    } yield (p, m)) flatMap {
+      case (None, _) => notFound("Person not found")
+      case (_, None) => redirect(url, "error" -> Messages("error.membership.noSubscription"))
+      case (Some(person), Some(member)) =>
+        if (member.renewal) {
+          val key = Play.configuration.getString("stripe.secret_key").get
+          val gateway = new GatewayWrapper(key)
+          try {
+            gateway.cancel(person.customerId.get)
+            services.memberService.update(member.copy(renewal = false))
+          } catch {
+            case e: PaymentException ⇒
+              Redirect(url).flashing("error" -> Messages(e.msg))
+            case e: RequestException ⇒
+              e.log.foreach(Logger.error(_))
+              Redirect(url).flashing("error" -> Messages(e.getMessage))
           }
-        } getOrElse {
-          Redirect(url).
-            flashing("error" -> Messages("error.membership.noSubscription"))
-        }
-      } getOrElse NotFound
+          redirect(url, "success" -> "Subscription was successfully canceled")
+        } else {
+          redirect(url, "error" -> Messages("error.membership.noSubscription"))
+        }    }
   }
 
   /**
@@ -365,23 +385,25 @@ class People(environment: RuntimeEnvironment[ActiveUser])
    * @param id Identifier of a person which is updated
    * @param editorName Name of a user who adds changes
    */
-  protected def checkDuplication(person: Person, id: Long, editorName: String)(implicit user: ActiveUser): Option[Form[Person]] = {
+  protected def checkDuplication(person: Person, id: Long, editorName: String)(
+    implicit user: ActiveUser): Future[Option[Form[Person]]] = {
     val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
-    socialProfileService.findDuplicate(base) map { duplicate ⇒
-      var form = People.personForm(editorName).fill(person)
-      compareSocialProfiles(duplicate, base).
-        foreach(err ⇒ form = form.withError(err))
-      Some(form)
-    } getOrElse None
+    services.socialProfileService.findDuplicate(base) map {
+      case None => None
+      case Some(duplicate) ⇒
+        var form = People.personForm(editorName, None, services).fill(person)
+        compareSocialProfiles(duplicate, base).foreach(err ⇒ form = form.withError(err))
+        Some(form)
+    }
   }
 
   /**
    * Compares social profiles and returns a list of errors for a form
-   * @param left Social profile object
+    *
+    * @param left Social profile object
    * @param right Social profile object
    */
-  protected def compareSocialProfiles(left: SocialProfile,
-    right: SocialProfile): List[FormError] = {
+  protected def compareSocialProfiles(left: SocialProfile, right: SocialProfile): List[FormError] = {
 
     val list = mutable.MutableList[FormError]()
     val msg = Messages("error.socialProfile.exist")
@@ -404,19 +426,24 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   /**
    * Retrieve facilitator statistics by brand, including years of experience,
    *  number of events and rating
-   * @param id Facilitator id
+    *
+    * @param id Facilitator id
    */
   protected def retrieveByBrandStatistics(id: Long) = {
-    val licenses = licenseService.licensesWithBrands(id).sortBy(_.brand.name)
-    val facilitation = facilitatorService.findByPerson(id)
-    licenses.map { view ⇒
-      val facilitator = facilitation.find(_.brandId == view.brand.identifier).get
-      (facilitator, view.brand.name)
+    (for {
+      l <- services.licenseService.licensesWithBrands(id)
+      f <- services.facilitatorService.findByPerson(id)
+    } yield (l, f)) map { case (licenses, facilitations) =>
+      licenses.sortBy(_.brand.name).map { view ⇒
+        val facilitator = facilitations.find(_.brandId == view.brand.identifier).get
+        (facilitator, view.brand.name)
+      }
     }
   }
 
   /**
     * Updates the attributes of a person that shouldn't be changed on update
+    *
     * @param updated Updated object
     * @param existing Existing object
     * @param user Current active user
@@ -438,7 +465,7 @@ class People(environment: RuntimeEnvironment[ActiveUser])
   }
 }
 
-object People extends Services {
+object People {
 
   /**
    * HTML form mapping for a person’s address.
@@ -471,14 +498,14 @@ object People extends Services {
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(editorName: String, userId: Option[Long] = None)(implicit user: ActiveUser) = {
+  def personForm(editorName: String, userId: Option[Long] = None, services: Services)(implicit user: ActiveUser) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "emailAddress" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(Future.successful(identityService.checkEmail(suppliedEmail, userId)), 10.seconds)
+        Await.result(services.identityService.checkEmail(suppliedEmail, userId), 10.seconds)
       }),
       "birthday" -> optional(jodaLocalDate),
       "signature" -> boolean,

@@ -24,14 +24,13 @@
 
 package controllers.apiv2
 
-import models.{ Address, Organisation, OrgView }
+import models.Organisation
 import play.api.libs.json._
-import play.api.mvc.Controller
 
 /**
  * Organisations API.
  */
-trait OrganisationsApi extends Controller {
+object OrganisationsApi  {
 
   implicit val organisationWrites = new Writes[Organisation] {
     def writes(organisation: Organisation): JsValue = {
@@ -43,5 +42,3 @@ trait OrganisationsApi extends Controller {
     }
   }
 }
-
-object OrganisationsApi extends OrganisationsApi

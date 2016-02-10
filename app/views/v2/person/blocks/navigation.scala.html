@@ -1,6 +1,7 @@
 @(person: Person,
-        showFacilitationTab: Boolean)(implicit request: Request[Any],
-        handler: AuthorisationHandler)
+    member: Option[Member],
+    conf: PeopleDetailConfig)(implicit request: Request[Any],
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 
 <div class="b-sidemenu js-person-menu" id="sidemenu">
@@ -19,7 +20,7 @@
         </a>
     </div>
 
-    @if(showFacilitationTab) {
+    @if(conf.facilitator) {
         <div class="b-sidemenu__group">
             <div class="b-sidemenu__head">
                 Facilitation
@@ -38,21 +39,21 @@
             </a>
         </div>
     }
-    @person.member.map { member =>
+    @if(conf.member) {
         <div class="b-sidemenu__group">
             <div class="b-sidemenu__head">
                 Membership
             </div>
             <a data-href="@routes.People.renderTabs(person.id.get, "membership")"
-                href="#membership"
-                class="b-sidemenu__link"
-                role="tab">
+            href="#membership"
+            class="b-sidemenu__link"
+            role="tab">
                 Membership
             </a>
-            <a  data-href="@routes.Experiments.experiments(member.id.get)"
-                href="#experiments"
-                class="b-sidemenu__link"
-                role="tab">
+            <a  data-href="@routes.Experiments.experiments(member.get.identifier)"
+            href="#experiments"
+            class="b-sidemenu__link"
+            role="tab">
                 Experiments
             </a>
         </div>

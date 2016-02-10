@@ -169,16 +169,16 @@ class EventSpec extends PlayAppSpec {
       val one = new EventTest(Some(1L), 1L, 1L, "Cancel", lang, location,
         details, organizer, schedule)
       val eventService = mock[EventService]
-      (eventService.delete _) expects 1L
+      (services.eventService.delete _) expects 1L
       val eventCancellationService = mock[EventCancellationService]
       val cancellation = EventCancellation(None, 1L, 3L, "Cancel", "Regular event",
         "Berlin", "DE", now, now.plusDays(1), false,
         Some("Small number of participants"),
         Some(2), Some("some data"))
-      (eventCancellationService.insert _) expects cancellation returning cancellation
+      (services.eventCancellationService.insert _) expects cancellation returning cancellation
       val eventTypeService = mock[EventTypeService]
       val eventType = EventType(Some(1L), 1L, "Regular event", None, 8, false)
-      (eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.eventTypeService.find _) expects 1L returning Some(eventType)
       one.eventService_=(eventService)
       one.eventCancellationService_=(eventCancellationService)
       one.eventTypeService_=(eventTypeService)

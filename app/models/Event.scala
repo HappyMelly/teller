@@ -21,21 +21,20 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
 import akka.actor.{Actor, Props}
-import models.database.EventFacilitators
 import models.event.{Attendee, EventCancellation}
 import models.service.Services
 import org.joda.money.Money
 import org.joda.time.{Days, LocalDate}
 import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
 import play.api.libs.concurrent.Akka
 import views.Languages
 
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 /**
@@ -113,7 +112,7 @@ case class Event(
     free: Boolean = false,
     followUp: Boolean = true,
     rating: Float = 0.0f,
-    fee: Option[Money] = None) extends ActivityRecorder with Services {
+    fee: Option[Money] = None) extends ActivityRecorder {
 
   private var _facilitators: Option[List[Person]] = None
   private var _facilitatorIds: Option[List[Long]] = None
@@ -136,14 +135,9 @@ case class Event(
   def objectType: String = Activity.Type.Event
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
-  def facilitators: List[Person] = if (_facilitators.isEmpty) {
-    val data = DB.withSession { implicit session ⇒
-      val query = for {
-        facilitation ← TableQuery[EventFacilitators] if facilitation.eventId === this.id
-        person ← facilitation.facilitator
-      } yield person
-      query.sortBy(_.lastName.toLowerCase).list
-    }
+  def facilitators(services: Services): List[Person] = if (_facilitators.isEmpty) {
+    println(identifier)
+    val data = Await.result(services.eventService.facilitators(identifier), 3.seconds)
     facilitators_=(data)
     data
   } else {
@@ -154,12 +148,8 @@ case class Event(
     _facilitators = Some(facilitators)
   }
 
-  def facilitatorIds: List[Long] = if (_facilitatorIds.isEmpty) {
-    val ids = DB.withSession { implicit session ⇒
-      (for {
-        e ← TableQuery[EventFacilitators] if e.eventId === id.getOrElse(0L)
-      } yield (e)).list.map(_._2)
-    }
+  def facilitatorIds(services: Services): List[Long] = if (_facilitatorIds.isEmpty) {
+    val ids = Await.result(services.eventService.facilitatorIds(identifier), 3.seconds)
     facilitatorIds_=(ids)
     _facilitatorIds.get
   } else {
@@ -192,11 +182,12 @@ case class Event(
     List(Languages.all.getOrElse(language.spoken, ""),
       Languages.all.getOrElse(language.secondSpoken.get, ""))
 
-  lazy val attendees: List[Attendee] = attendeeService.findByEvents(List(identifier)).map(_._2)
+  def attendees(services: Services): List[Attendee] =
+    Await.result(services.attendeeService.findByEvents(List(identifier)), 3.seconds).map(_._2).toList
 
-  lazy val deletable: Boolean = attendees.isEmpty
+  def deletable(services: Services): Boolean = attendees(services).isEmpty
 
-  def isFacilitator(personId: Long): Boolean = facilitatorIds.contains(personId)
+  def isFacilitator(personId: Long, services: Services): Boolean = facilitatorIds(services).contains(personId)
 
   /**
    * Cancels the event
@@ -207,21 +198,22 @@ case class Event(
    * @param details Details (emails, names) of registered participants
    */
   def cancel(facilitatorId: Long,
-    reason: Option[String],
-    participants: Option[Int],
-    details: Option[String]): Unit = {
-
-    val eventType = eventTypeService.find(this.eventTypeId).map(_.name).getOrElse("")
-    val cancellation = EventCancellation(None, this.brandId, facilitatorId,
-      this.title, eventType, this.location.city, this.location.countryCode,
-      this.schedule.start, this.schedule.end, this.free, reason, participants, details)
-    eventCancellationService.insert(cancellation)
-    eventService.delete(this.id.get)
+             reason: Option[String],
+             participants: Option[Int],
+             details: Option[String],
+             services: Services): Unit = {
+    services.eventTypeService.find(this.eventTypeId) map { types =>
+      val eventType = types.map(_.name).getOrElse("")
+      val cancellation = EventCancellation(None, this.brandId, facilitatorId,
+        this.title, eventType, this.location.city, this.location.countryCode,
+        this.schedule.start, this.schedule.end, this.free, reason, participants, details)
+      services.eventCancellationService.insert(cancellation)
+      services.eventService.delete(this.id.get)
+    }
   }
 }
 
 object Event {
-  val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
 
   /**
    * Returns new event with a fee calculated the given one and a number of hours
@@ -233,17 +225,5 @@ object Event {
     val hours = scala.math.min(maxHours, event.schedule.totalHours)
     val eventFee = fee.multipliedBy(hours)
     event.copy(fee = Some(eventFee))
-  }
-
-  /**
-   * Updates event rating
-   */
-  class RatingCalculatorActor extends Actor with Services {
-    def receive = {
-      case eventId: Long ⇒
-        val evaluations = evaluationService.findByEvent(eventId).filter(_.approved)
-        val rating = evaluations.foldLeft(0.0f)(_ + _.facilitatorImpression.toFloat / evaluations.length)
-        eventService.updateRating(eventId, rating)
-    }
   }
 }

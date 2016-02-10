@@ -24,22 +24,28 @@
 
 package controllers
 
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import models.Certificate
 import models.UserRole.Role
 import models.service.Services
-import models.{ActiveUser, Certificate}
 import org.joda.time.LocalDate
+import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
+import services.integrations.EmailComponent
 
 import scala.concurrent.Future
 
-class Certificates(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Files {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                              override val messagesApi: MessagesApi,
+                              val email: EmailComponent,
+                              val services: Services,
+                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Files {
 
   /**
    * Generate new certificate
@@ -53,14 +59,21 @@ class Certificates(environment: RuntimeEnvironment[ActiveUser])
       if (event.free) {
         Future.successful(NotFound)
       } else {
-        attendeeService.find(attendeeId, eventId) map { attendee ⇒
-          val brand = brandService.findWithCoordinators(event.brandId).get
-          val issued = attendee.issued getOrElse LocalDate.now()
-          val certificate = new Certificate(Some(issued), event, attendee, renew = true)
-          certificate.generateAndSend(brand, user.person)
-          attendeeService.updateCertificate(attendee.copy(certificate = Some(certificate.id), issued = Some(issued)))
-          Future.successful(jsonOk(Json.obj("certificate" -> certificate.id)))
-        } getOrElse Future.successful(NotFound)
+        (for {
+          attendee <- services.attendeeService.find(attendeeId, eventId)
+          brand <- services.brandService.findWithCoordinators(event.brandId)
+        } yield (attendee, brand)) flatMap {
+          case (None, _) => Future.successful(NotFound)
+          case (_, None) => notFound("Brand not found")
+          case (Some(attendee), Some(brand)) =>
+            val issued = attendee.issued getOrElse LocalDate.now()
+            val certificate = new Certificate(Some(issued), event, attendee, renew = true)
+            certificate.generateAndSend(brand, user.person, email, services)
+            val withCertificate = attendee.copy(certificate = Some(certificate.id), issued = Some(issued))
+            services.attendeeService.updateCertificate(withCertificate) flatMap { _ =>
+              jsonOk(Json.obj("certificate" -> certificate.id))
+            }
+        }
       }
   }
 

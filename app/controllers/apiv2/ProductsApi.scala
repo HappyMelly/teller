@@ -24,85 +24,54 @@
 
 package controllers.apiv2
 
-import controllers.Products
+import javax.inject.Inject
+
+import controllers.apiv2.json.ProductConverter
+import models.ProductView
 import models.service.Services
-import models.{ Product, ProductView }
-import models.service.ProductsCollection
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
-import play.api.mvc.Controller
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Products API.
  */
-trait ProductsApi extends Controller with ApiAuthentication with Services {
+class ProductsApi @Inject() (val services: Services,
+                             override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi)
+  with I18nSupport {
 
-  import BrandsApi.brandWrites
+  private val converter = new ProductConverter
+  implicit val productWrites = converter.productWithBrandsWrites
 
-  implicit val productWithBrandsWrites = new Writes[ProductView] {
-    def writes(obj: ProductView): JsValue = {
-      Json.obj(
-        "id" -> obj.product.id,
-        "title" -> obj.product.title,
-        "subtitle" -> obj.product.subtitle,
-        "image" -> Products.pictureUrl(obj.product),
-        "brands" -> obj.brands,
-        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
-    }
-  }
-
-  implicit val productWrites = new Writes[Product] {
-    def writes(obj: Product): JsValue = {
-      Json.obj(
-        "id" -> obj.id,
-        "title" -> obj.title,
-        "subtitle" -> obj.subtitle,
-        "image" -> Products.pictureUrl(obj),
-        "category" -> obj.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull)
-    }
-  }
-
-  import ContributionsApi.contributorWrites
-
-  val productDetailsWrites = new Writes[ProductView] {
-    def writes(obj: ProductView): JsValue = {
-      Json.obj(
-        "id" -> obj.product.id,
-        "title" -> obj.product.title,
-        "subtitle" -> obj.product.subtitle,
-        "url" -> obj.product.url,
-        "description" -> obj.product.description,
-        "cta_url" -> obj.product.callToActionUrl,
-        "cta_text" -> obj.product.callToActionText,
-        "image" -> Products.pictureUrl(obj.product),
-        "brands" -> obj.brands,
-        "category" -> obj.product.category.map(name ⇒ Messages(s"models.ProductCategory.$name")).orNull,
-        "parent" -> obj.product.parentId,
-        "contributors" -> obj.product.contributors)
-    }
-  }
 
   /**
    * Returns product in JSON format if exists
-   * @param id Product id
+    *
+    * @param id Product id
    */
-  def product(id: Long) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        productService.find(id) map { product ⇒
-          val withBrands = ProductView(product, productService.brands(id))
-          jsonOk(Json.toJson(withBrands)(productDetailsWrites))
-        } getOrElse jsonNotFound("Unknown product")
+  def product(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    (for {
+      p <- services.productService.find(id)
+      b <- services.productService.brands(id)
+      c <- services.contributionService.contributors(id)
+    } yield (p, b, c)) flatMap {
+      case (None, _, _) => jsonNotFound("Product not found")
+      case (Some(product), brands, contributors) =>
+        val withBrands = ProductView(product, brands, contributors)
+        jsonOk(Json.toJson(withBrands)(converter.productDetailsWrites))
+    }
   }
 
   /**
    * Returns list of products in JSON format
    */
-  def products = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    implicit token ⇒
-      val products = ProductsCollection.brands(productService.findActive)
+  def products = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    (for {
+      products <- services.productService.findAll
+      withBrands <- services.productService.collection.brands(products)
+    } yield withBrands) flatMap { products =>
       jsonOk(Json.toJson(products))
+    }
   }
 }
-
-object ProductsApi extends ProductsApi with ApiAuthentication with Services
