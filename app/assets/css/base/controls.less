@@ -95,3 +95,63 @@
 textarea.form-control{
   min-height: 114px;
 }
+
+// radio button
+.b-radio{
+  display: block;
+  position: relative;
+}
+
+.b-radio__input{
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: .0;
+
+  &:checked ~ .b-radio__icon{
+    border-color: #4A90E2;
+
+    &:after{
+      display: block;
+    }
+  }
+
+  &:checked ~ .b-radio__content{
+    display: block;
+  }
+}
+
+.b-radio__icon{
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #979797;
+  border-radius: 14px;
+  cursor: pointer;
+
+  &:after{
+    content: '';
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -5px 0 0 -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 10px;
+    background-color: #4A90E2;
+  }
+}
+
+.b-radio__text{
+  margin-left: 25px;
+  padding-top: 1px;
+  font-weight: 400;
+}
+
+.b-radio__content{
+  display: none;
+  margin-top: 8px;
+}

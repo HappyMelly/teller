@@ -21,41 +21,34 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+@import "../settings";
 
-@import "./../../settings";
+@import "widgets/info-widget";
+@import "widgets/tabs";
+@import "widgets/completion-widget";
+@import "widgets/popover";
+@import "widgets/photo-block";
+@import "widgets/file-upload";
+@import "widgets/sidemenu";
+@import "widgets/badges";
+@import "widgets/datatable";
+@import "widgets/event-block";
 
-.b-sidemenu{
-  margin-top: 42px;
+
+// other styles
+.notification-widget {
+  margin-left: 50px;
+  margin-bottom: 55px;
 }
 
-.b-sidemenu__group{
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #e7e7e7;
-}
+.grey-widget {
+  background-color: #eeeeee;
+  box-shadow: 0 7px 4px 10px #eeeeee;
 
-.b-sidemenu__head{
-  margin-bottom: 11px;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: #888;
-}
-
-.b-sidemenu__link{
-  display: block;
-  position: relative;
-  padding: 10px 15px;
-  color: @grey3;
-  .transition(all .15s ease);
-  text-decoration: none !important;
-
-  &:hover,
-  &:focus{
-    color: @dark-sky-blue;
-  }
-
-  &.active{
-    cursor: default;
-    color: @dark-sky-blue;
+  .strength-value {
+    font-size: 24px;
+    font-family: Days;
+    padding-bottom: 1em;
+    color: @pig-pink;
   }
 }

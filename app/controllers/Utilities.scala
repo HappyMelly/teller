@@ -26,11 +26,6 @@ package controllers
 import play.api.Play
 import play.api.Play.current
 
-trait Utilities extends AsyncController {
-
-
-}
-
 object Utilities {
 
   /**

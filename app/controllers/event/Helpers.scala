@@ -17,37 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-@import "../settings";
+package controllers.event
 
-@import "widgets/info-widget";
-@import "widgets/tabs";
-@import "widgets/completion-widget";
-@import "widgets/popover";
-@import "widgets/photo-block";
-@import "widgets/file-upload";
-@import "widgets/sidemenu";
-@import "widgets/badges";
-@import "widgets/datatable";
+import controllers.AsyncController
 
+/**
+  * Set of helpers for event module
+  */
+trait Helpers extends AsyncController {
 
-// other styles
-.notification-widget {
-  margin-left: 50px;
-  margin-bottom: 55px;
-}
+  /**
+    * Return redirect object with success message for the given event
+    *
+    * @param id Event identifier
+    * @param msg Message
+    */
+  protected def success(id: Long, msg: String) = redirect(controllers.routes.Events.details(id), "success" -> msg)
 
-.grey-widget {
-  background-color: #eeeeee;
-  box-shadow: 0 7px 4px 10px #eeeeee;
+  /**
+    * Return redirect object with error message for the given event
+    *
+    * @param id Event identifier
+    * @param msg Message
+    */
+  protected def error(id: Long, msg: String) = redirect(controllers.routes.Events.details(id), "error" -> msg)
 
-  .strength-value {
-    font-size: 24px;
-    font-family: Days;
-    padding-bottom: 1em;
-    color: @pig-pink;
-  }
 }

@@ -36,6 +36,7 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Random
 
 /**
  * Contains schedule-related data
@@ -112,6 +113,8 @@ case class Event(
     free: Boolean = false,
     followUp: Boolean = true,
     rating: Float = 0.0f,
+    hashedId : String = Random.alphanumeric.take(64).mkString,
+    publicPage: Boolean = false,
     fee: Option[Money] = None) extends ActivityRecorder {
 
   private var _facilitators: Option[List[Person]] = None
@@ -136,7 +139,6 @@ case class Event(
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
   def facilitators(services: Services): List[Person] = if (_facilitators.isEmpty) {
-    println(identifier)
     val data = Await.result(services.eventService.facilitators(identifier), 3.seconds)
     facilitators_=(data)
     data
@@ -211,13 +213,19 @@ case class Event(
       services.eventService.delete(this.id.get)
     }
   }
+
+  def pageUrl(relativeHashedUrl: String): Option[String] = if (publicPage)
+    Some(controllers.Utilities.fullUrl(relativeHashedUrl))
+  else
+    organizer.webSite
 }
 
 object Event {
 
   /**
    * Returns new event with a fee calculated the given one and a number of hours
-   * @param event Source event
+    *
+    * @param event Source event
    * @param fee Country Fee for 1 hour
    * @param maxHours Maximum number of chargeable hours
    */

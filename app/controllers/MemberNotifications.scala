@@ -28,7 +28,7 @@ import models.{Member, SocialProfile}
 /**
  * Contains methods for notifying members about changes of other members
  */
-trait MemberNotifications extends Utilities {
+trait MemberNotifications {
 
   /**
    * Returns a well-formed Slack notification message
