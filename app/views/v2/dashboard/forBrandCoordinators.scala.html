@@ -4,7 +4,7 @@
   licenses: List[LicenseLicenseeView],
   events: List[Event])(implicit flash: Flash,
     request: Request[Any],
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.main("Home", "", user) {
   @v2.element.brandHeader(brand, brands){

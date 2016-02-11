@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,14 +21,12 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
-import akka.actor.{ Actor, Props }
-import models.event.Attendee
 import models.service.Services
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Represents facilitator entity
@@ -48,129 +46,27 @@ case class Facilitator(id: Option[Long] = None,
   numberOfPrivateEvaluations: Int = 0,
   badges: List[Long] = List())
 
-object Facilitator extends Services {
-  val ratingActor = Akka.system.actorOf(Props[RatingCalculatorActor])
-
-  /**
-   * Updates facilitator rating
-   */
-  class RatingCalculatorActor extends Actor with Services {
-
-    private val MGT30_IDENTIFIER = 1
-
-    def receive = {
-      case "init" =>
-        initialCalculation()
-      case eventId: Long ⇒
-        eventService.find(eventId) foreach { x ⇒
-          x.facilitatorIds.foreach { id ⇒
-            val events = eventService.findByFacilitator(id, Some(x.brandId)).map(_.id.get)
-            val evaluations = evaluationService.findByEventsWithAttendees(events).filter(_._3.approved)
-            val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
-              OldEvaluation.findByFacilitator(id)
-            else 
-              List()
-            val facilitator = calculateRatings(evaluations, oldEvaluations)
-            facilitatorService.update(facilitator.copy(personId = id, brandId = x.brandId))
-          }
-        }
-    }
-
-    def initialCalculation() = {
-      facilitatorService.findAll.foreach { x =>
-        val events = eventService.findByFacilitator(x.personId, Some(x.brandId)).map(_.id.get)
-        val evaluations = evaluationService.findByEventsWithAttendees(events).filter(_._3.approved)
-        val oldEvaluations = if (x.brandId == MGT30_IDENTIFIER)
-          OldEvaluation.findByFacilitator(x.personId)
-        else
-          List()
-        val facilitator = calculateRatings(evaluations, oldEvaluations)
-        facilitatorService.update(facilitator.copy(personId = x.personId, brandId = x.brandId))
-      }
-    }
-
-    /**
-     * Calculates average rating from the given evaluations
-     * @param evaluations Evaluations added to Teller
-     * @param oldEvaluations Evaluations added to old Management 3.0 system
-     * @return Returns facilitator object with calculated ratings
-     */
-    protected def calculateRatings(evaluations: List[(Event, Attendee, Evaluation)],
-                                   oldEvaluations: List[OldEvaluation]): Facilitator = {
-      val publicImpressions = evaluations.filterNot(_._1.notPublic).map(_._3.impression) :::
-        oldEvaluations.filterNot(_.notPublic).map(_.impression)
-      val privateImpressions = evaluations.filter(_._1.notPublic).map(_._3.impression) :::
-        oldEvaluations.filter(_.notPublic).map(_.impression)
-      Facilitator(None, 0, 0,
-        publicRating = calculateAverage(publicImpressions),
-        privateRating = calculateAverage(privateImpressions),
-        publicMedian = calculateMedian(publicImpressions),
-        privateMedian = calculateMedian(privateImpressions),
-        publicNps = calculateNps(evaluations.filterNot(_._1.notPublic).map(_._3.recommendationScore)),
-        privateNps = calculateNps(evaluations.filter(_._1.notPublic).map(_._3.recommendationScore)),
-        numberOfPublicEvaluations = publicImpressions.length,
-        numberOfPrivateEvaluations = privateImpressions.length)
-    }
-
-    /**
-     * Returns median for the given list of impressions
-     * @param impressions List of impressions
-     */
-    protected def calculateMedian(impressions: List[Int]): Float = {
-      if (impressions.isEmpty) {
-        0.0f
-      } else {
-        val sorted = impressions.sorted.toArray
-        if (sorted.length % 2 == 0)
-          (sorted(sorted.length / 2 - 1) + sorted(sorted.length / 2)) / 2
-        else
-          sorted((sorted.length - 1) / 2)
-      }
-    }
-
-    /**
-     * Returns NPS value for the given list of recommendations
-     * @param recommendations Recommendations
-     */
-    protected def calculateNps(recommendations: List[Int]): Float = {
-      if (recommendations.isEmpty) {
-        0.0f
-      } else {
-        (recommendations.count(_ >= 9) - recommendations.count(_ <= 6)).toFloat / recommendations.length * 100
-      }
-    }
-
-    /**
-     * Returns average for the given sequence
-     * @param impressions Impressions
-     */
-    protected def calculateAverage(impressions: List[Int]): Float = {
-      if (impressions.isEmpty)
-        0.0f
-      else
-        impressions.foldLeft(0.0f)(_ + _.toFloat / impressions.length)
-    }
-  }
+object Facilitator {
 
   /**
    * Update number of events and years of experience for all facilitators
    */
-  def updateFacilitatorExperience(): Unit = {
-    licenseService.findAll.foreach { license =>
+  def updateFacilitatorExperience(services: Services): Unit = services.licenseService.findAll map { licenses =>
+    licenses.foreach { license =>
       val yearsOfExperience = license.length.getStandardDays / 365
-      val facilitator = Facilitator(None, license.licenseeId, license.brandId,
-        yearsOfExperience.toInt, calculateNumberOfEvents(license))
-      facilitatorService.updateExperience(facilitator)
+      calculateNumberOfEvents(license, services) map { number =>
+        val facilitator = Facilitator(None, license.licenseeId, license.brandId,
+          yearsOfExperience.toInt, number)
+        services.facilitatorService.updateExperience(facilitator)
+      }
     }
   }
 
   /**
    * Returns number of events for the given license holder
-   * @param license License
+    *
+    * @param license License
    */
-  protected def calculateNumberOfEvents(license: License): Int = {
-    eventService.
-      findByFacilitator(license.licenseeId, Some(license.brandId)).
-      count(_.confirmed)
-  }
+  protected def calculateNumberOfEvents(license: License, services: Services): Future[Int] =
+    services.eventService.findByFacilitator(license.licenseeId, Some(license.brandId)).map(_.count(_.confirmed))
 }

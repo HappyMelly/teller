@@ -23,21 +23,23 @@
  */
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.brand.BrandLink
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
-class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Services
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            override val messagesApi: MessagesApi,
+                            val services: Services,
+                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
@@ -54,19 +56,20 @@ class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.find(brandId) map { brand ⇒
-          val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
-          form.bindFromRequest.fold(
-            error ⇒ jsonBadRequest("Link cannot be empty"),
-            linkData ⇒ {
-              val link = BrandLink(None, brandId, linkData._1, linkData._2)
-              val insertedLink = brandService.insertLink(BrandLink.updateType(link))
+  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) {  implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.brandService.find(brandId) flatMap {
+      case None => jsonNotFound(Messages("error.brand.notFound"))
+      case Some(brand) =>
+        val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
+        form.bindFromRequest.fold(
+          error ⇒ jsonBadRequest("Link cannot be empty"),
+          linkData ⇒ {
+            val link = BrandLink(None, brandId, linkData._1, linkData._2)
+            services.brandService.insertLink(BrandLink.updateType(link)) flatMap { insertedLink =>
               jsonOk(Json.toJson(insertedLink))
-            })
-        } getOrElse jsonNotFound(Messages("error.brand.notFound"))
+            }
+          })
+    }
   }
 
   /**
@@ -78,11 +81,11 @@ class BrandLinks(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Link identifier
    */
-  def remove(brandId: Long, id: Long) = SecuredBrandAction(brandId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        brandService.deleteLink(brandId, id)
+  def remove(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.brandService.deleteLink(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
+      }
   }
 
 }

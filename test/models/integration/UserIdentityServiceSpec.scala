@@ -49,7 +49,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       val account = new UserAccount(None, 1L, false, Some("tester"), None, None, None)
       service.insert(user(userId, providerId, "tester"))
-      accountService.insert(account)
+      services.accountService.insert(account)
 
       val result = IdentityService.get.findActiveUser(userId, providerId)
       result must_== None
@@ -58,7 +58,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       truncateTables()
       val account = new UserAccount(None, 1L, false, Some("tester"), None, None, None)
       service.insert(user(userId, providerId, "tester"))
-      accountService.insert(account)
+      services.accountService.insert(account)
       PersonHelper.one().insert
 
       val result = IdentityService.get.findActiveUser(userId, providerId)
@@ -73,7 +73,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       val providerId = "facebook"
       val account = new UserAccount(None, 1L, false, None, Some("tester"), None, None)
       service.insert(user(userId, providerId, "tester"))
-      accountService.insert(account)
+      services.accountService.insert(account)
       PersonHelper.one().insert
 
       val result = IdentityService.get.findActiveUser(userId, providerId)
@@ -89,7 +89,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       val url = "https://plus.google.com/tester"
       val account = new UserAccount(None, 1L, false, None, None, None, Some(url))
       service.insert(user(userId, providerId, url))
-      accountService.insert(account)
+      services.accountService.insert(account)
       PersonHelper.one().insert
 
       val result = IdentityService.get.findActiveUser(userId, providerId)
@@ -104,7 +104,7 @@ class UserIdentityServiceSpec extends PlayAppSpec {
       val providerId = "linkedin"
       val account = new UserAccount(None, 1L, false, None, None, Some("tester"), None)
       service.insert(user(userId, providerId, "tester"))
-      accountService.insert(account)
+      services.accountService.insert(account)
       PersonHelper.one().insert
 
       val result = IdentityService.get.findActiveUser(userId, providerId)

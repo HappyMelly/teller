@@ -74,13 +74,13 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
   val person = PersonHelper.one
 
   def e1 = {
-    (personService.find(_: Long)) expects 1L returning None
+    (services.personService.find(_: Long)) expects 1L returning None
     val res = controller.create(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
   }
 
   def e2 = {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "", "name" -> "katja")
     val res = controller.create(1L).apply(req)
@@ -89,7 +89,7 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     val req = fakePostRequest().
       withFormUrlEncodedBody("content" -> "test", "name" -> "")
     val res = controller.create(1L).apply(req)
@@ -98,10 +98,10 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     val endorsement = Endorsement(None, 1L, 0L, "blabla", "katja", Some("test"))
-    (personService.insertEndorsement _) expects endorsement.copy(position = 1)
-    (personService.endorsements _) expects 1L returning List()
+    (services.personService.insertEndorsement _) expects endorsement.copy(position = 1)
+    (services.personService.endorsements _) expects 1L returning List()
     val req = fakePostRequest().
       withFormUrlEncodedBody("brandId" -> "0", "content" -> "blabla", "name" -> "katja", "company" -> "test")
     val res = controller.create(1L).apply(req)
@@ -109,7 +109,7 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e5 = {
-    (personService.deleteEndorsement _) expects (2L, 1L)
+    (services.personService.deleteEndorsement _) expects (2L, 1L)
     val res = controller.remove(2L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)
   }
@@ -132,7 +132,7 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e8 = {
     val endorsement = Endorsement(Some(2L), 1L, 0L, "blabla", "katja", Some("test"))
-    (personService.updateEndorsement _) expects endorsement
+    (services.personService.updateEndorsement _) expects endorsement
     val req = fakePostRequest().
       withFormUrlEncodedBody("brandId" -> "0", "content" -> "blabla", "name" -> "katja", "company" -> "test")
     val res = controller.update(1L, 2L).apply(req)

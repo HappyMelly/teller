@@ -2,11 +2,11 @@
   experiencePerBrand: List[(Facilitator, String)],
   endorsements: List[(Endorsement, String)],
   materials: List[Material])(implicit request: Request[Any],
-  handler: AuthorisationHandler)
+  handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 
 <div class="experience">
@@ -47,7 +47,7 @@
           <td>@material.linkType.capitalize</td>
           <td><a href="@material.link" target="_blank">@material.link</td>
           <td>
-          @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+          @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
             <a data-id="@material.id.get" href="#" class="remove font-sm"
             data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
           }
@@ -56,7 +56,7 @@
       }
       </tbody>
     </table>
-    @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+    @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
       <form class="form-inline material-form" method="POST"
       action="@CSRF(routes.Materials.create(person.id.get))">
         <input type="hidden" name="brandId" value="0"/>
@@ -87,7 +87,7 @@
             <td>@material.linkType.capitalize</td>
             <td><a href="@material.link" target="_blank">@material.link</td>
             <td>
-            @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+            @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
               <a data-id="@material.id.get" href="#" class="remove font-sm"
               data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
             }
@@ -96,7 +96,7 @@
         }
         </tbody>
       </table>
-      @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+      @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
         <form class="form-inline material-form" method="POST"
         action="@CSRF(routes.Materials.create(person.id.get))">
           <input type="hidden" name="brandId" value="@brandData._1.brandId"/>
@@ -114,7 +114,8 @@
   <div class="block">
     <h4>Endorsements</h4>
     <p>
-      If you collected endorsements about your work, add a few, so other people will know how good you are. @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+      If you collected endorsements about your work, add a few, so other people will know how good you are.
+        @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
       <a href="@routes.Endorsements.add(person.id.get)">+ Add endorsement</a>
     }
     </p>
@@ -127,7 +128,7 @@
               <span class="brand-name">@brandName</span>
             </div>
             <div class="content"><i>@endorsement.content</i></div>
-            @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+            @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
               <div class="actions font-sm">
                 @if(endorsement.editable) {
                   <a href="@routes.Endorsements.update(person.id.get, endorsement.id.get)">

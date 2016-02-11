@@ -24,17 +24,15 @@
 
 package models
 
-import models.database.{ Accounts, OrganisationMemberships, Organisations }
-import models.service.{ Services, OrganisationService, MemberService }
+import models.service.Services
 import org.joda.money.Money
-import org.joda.time.{ DateTime, LocalDate }
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import org.joda.time.{DateTime, LocalDate}
 
-import scala.slick.lifted.Query
+import scala.concurrent.Future
 
-case class OrgView(org: Organisation, profile: SocialProfile)
+case class OrgView(org: Organisation, profile: SocialProfile,
+                   members: List[Person] = List(),
+                   contributions: List[ContributionView] = List())
 
 /**
  * An organisation, usually a company, such as a Happy Melly legal entity.
@@ -57,68 +55,22 @@ case class Organisation(
     about: Option[String] = None,
     logo: Boolean = false,
     active: Boolean = true,
-    dateStamp: DateStamp) extends AccountHolder with ActivityRecorder with Services {
-
-  /** Contains a list of people working in this organisation */
-  private var _people: Option[List[Person]] = None
-  private var _member: Option[Member] = None
-
-  /**
-   * Returns true if this person may be deleted.
-   */
-  lazy val deletable: Boolean = account.deletable && contributions.isEmpty && people.isEmpty
-
-  /**
-   * Sets a new list of employees
-   * @param people New employees
-   */
-  def people_=(people: List[Person]) = {
-    _people = Some(people)
-  }
-
-  /**
-   * Returns a list of people working in this organisation
-   */
-  def people: List[Person] = _people getOrElse {
-    val people = orgService.people(this.id.get)
-    people_=(people)
-    people
-  }
-
-  /**
-   * Sets member data
-   * @param member Member data
-   */
-  def member_=(member: Member): Unit = _member = Some(member)
-
-  /** Returns member data if person is a member, false None */
-  def member: Option[Member] = _member map { Some(_) } getOrElse {
-    id map { i ⇒
-      _member = orgService.member(i)
-      _member
-    } getOrElse None
-  }
+    dateStamp: DateStamp) extends ActivityRecorder {
 
   /**
    * Adds member record to database
-   * @param funder Defines if this org becomes a funder
+    *
+    * @param funder Defines if this org becomes a funder
    * @param fee Amount of membership fee this org paid
    * @param userId Id of the user executing the action
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money, userId: Long): Member = {
+  def becomeMember(funder: Boolean, fee: Money, userId: Long, services: Services): Future[Member] = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       renewal = true, since = LocalDate.now(),
       until = LocalDate.now().plusYears(1), existingObject = true,
       reason = None, created = DateTime.now(), userId, DateTime.now(), userId)
-    memberService.insert(m)
-  }
-
-  /**
-   * Returns a list of this organisation's contributions.
-   */
-  lazy val contributions: List[ContributionView] = {
-    contributionService.contributions(this.id.get, isPerson = false)
+    services.memberService.insert(m)
   }
 
   /**
@@ -152,7 +104,8 @@ object Organisation {
 
   /**
    * Returns an organisation with only two required fields filled
-   * @param name Organisation name
+    *
+    * @param name Organisation name
    * @param countryCode Country of residence
    */
   def apply(name: String, countryCode: String): Organisation = {

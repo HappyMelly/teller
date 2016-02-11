@@ -59,7 +59,7 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.personService_=(personService)
 
   def e1 = {
-    (personService.find(_: Long)) expects 1L returning None
+    (services.personService.find(_: Long)) expects 1L returning None
     val res = controller.create(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
     val data = contentAsJson(res).as[JsObject]
@@ -68,7 +68,7 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e2 = {
     val person = PersonHelper.one()
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "video", "url" -> "")
     val res = controller.create(1L).apply(req)
@@ -79,9 +79,9 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val person = PersonHelper.one()
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     val material = Material(None, 1L, 1, "article", "http://test.com")
-    (personService.insertMaterial _) expects material returning material.copy(id = Some(1L))
+    (services.personService.insertMaterial _) expects material returning material.copy(id = Some(1L))
     val req = fakePostRequest().
       withFormUrlEncodedBody("brandId" -> "1", "type" -> "blabla", "url" -> "http://test.com")
     val res = controller.create(1L).apply(req)
@@ -89,7 +89,7 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    (personService.deleteMaterial _) expects (2L, 1L)
+    (services.personService.deleteMaterial _) expects (2L, 1L)
     val res = controller.remove(2L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)
   }

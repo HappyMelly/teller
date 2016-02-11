@@ -4,8 +4,9 @@
   emptyForm: Boolean,
   form: Form[EventView])(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
+    token: play.filters.csrf.CSRF.Token,
+    messages: Messages)
 
 @import helper.CSRF
 @import views.Countries
@@ -27,9 +28,9 @@
           @v2.html.select(form("brandId"), brands.map(v => v.id.get.toString -> v.name),
             '_label -> "Brand", '_help -> "", '_required -> true)
           @v2.html.twoInRow(form("eventTypeId"),
-            html.select(form("eventTypeId"), Seq(("", "Choose event type")))(asIs, implicitly[Lang]),
+            html.select(form("eventTypeId"), Seq(("", "Choose event type")))(asIs, messages),
             form("title"),
-            html.text(form("title"), '_label -> "", '_placeholder -> "Title")(asIs, implicitly[Lang]),
+            html.text(form("title"), '_label -> "", '_placeholder -> "Title")(asIs, messages),
             "Type & Title", help = ""
           )
           <div id="facilitatorIds_field" class="form-group @if(form.error("facilitatorIds").isDefined) {has-error} ">
@@ -49,17 +50,17 @@
         }
         @v2.html.block("Languages & Location", Some("grey")) {
           @v2.html.twoInRow(form("language.spoken"),
-            html.select(form("language.spoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
+            html.select(form("language.spoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, messages),
             form("language.secondSpoken"),
-            html.select(form("language.secondSpoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, implicitly[Lang]),
+            html.select(form("language.secondSpoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, messages),
             "Event in", help = "First language is required, second one is optional. Ex: English / Norwegian"
           )
           @v2.html.select(form("language.materials"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
             '_label -> "Materials in", '_help -> "")
           @v2.html.twoInRow(form("location.country"),
-            views.html.v2.event.countries(form("location.country"), Countries.all)(asIs, implicitly[Lang]),
+            views.html.v2.event.countries(form("location.country"), Countries.all)(asIs, messages),
             form("location.city"),
-            html.text(form("location.city"))(asIs, implicitly[Lang]),
+            html.text(form("location.city"))(asIs, messages),
             "Country & City", help = ""
           )
         }
@@ -71,15 +72,15 @@
         }
         @v2.html.block("Schedule") {
           @v2.html.twoInRow(form("schedule.start"),
-            html.date(form("schedule.start"))(asIs, implicitly[Lang]),
+            html.date(form("schedule.start"))(asIs, messages),
             form("schedule.end"),
-            html.date(form("schedule.end"))(asIs, implicitly[Lang]),
+            html.date(form("schedule.end"))(asIs, messages),
             "Start date/End date"
           )
           @v2.html.twoInRow(form("schedule.hoursPerDay"),
-            html.number(form("schedule.hoursPerDay"))(asIs, implicitly[Lang]),
+            html.number(form("schedule.hoursPerDay"))(asIs, messages),
             form("schedule.totalHours"),
-            html.number(form("schedule.totalHours"))(asIs, implicitly[Lang]),
+            html.number(form("schedule.totalHours"))(asIs, messages),
             "Hours per Day/Total Hours"
           )
           <div class="col-md-offset-2 alert alert-warning" id="totalHours-alert">
@@ -174,7 +175,7 @@
           @v2.html.block("") {
             <div class="errors">
             @for((error, index) <- form.errors.zipWithIndex) {
-              @{index + 1}. @play.api.i18n.Messages(error.message)<br/>
+              @{index + 1}. @Messages(error.message)<br/>
             }
             </div>
           }

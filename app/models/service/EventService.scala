@@ -24,19 +24,26 @@
  */
 package models.service
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
-import models.database.PortableJodaSupport._
-import models.database.{Evaluations, EventFacilitators, EventInvoices, Events}
+import models.database._
 import org.joda.time.LocalDate
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import services.integrations.Integrations
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.language.postfixOps
-import scala.slick.lifted.Query
 
-class EventService extends Integrations with Services {
+class EventService(app: Application, services: Services) extends HasDatabaseConfig[JdbcProfile]
+  with EvaluationTable
+  with EventTable
+  with EventFacilitatorTable
+  with EventInvoiceTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
 
   private val events = TableQuery[Events]
 
@@ -45,57 +52,64 @@ class EventService extends Integrations with Services {
    *
    * @param id Event identifier
    */
-  def confirm(id: Long): Unit = DB.withSession { implicit session ⇒
-    events.filter(_.id === id).map(_.confirmed).update(true)
-  }
+  def confirm(id: Long): Future[Int] = db.run(events.filter(_.id === id).map(_.confirmed).update(true))
 
   /**
    * Deletes the given event and all related data from database
    *
    * @param id Event identifier
    */
-  def delete(id: Long): Unit = DB.withTransaction {
-    implicit session ⇒
-      TableQuery[EventFacilitators].filter(_.eventId === id).delete
-      TableQuery[EventInvoices].filter(_.eventId === id).delete
-      events.filter(_.id === id).delete
+  def delete(id: Long): Unit = {
+    val actions = (for {
+      _ <- TableQuery[EventFacilitators].filter(_.eventId === id).delete
+      _ <- TableQuery[EventInvoices].filter(_.eventId === id).delete
+      _ <- events.filter(_.id === id).delete
+    } yield ()).transactionally
+    db.run(actions)
+  }
 
+  def facilitatorIds(eventId: Long): Future[List[Long]] =
+    db.run(TableQuery[EventFacilitators].filter(_.eventId === eventId).result).map(_.toList.map(_._2))
+
+  def facilitators(eventId: Long): Future[List[Person]] = {
+    val query = for {
+      facilitation ← TableQuery[EventFacilitators] if facilitation.eventId === eventId
+      person ← facilitation.facilitator
+    } yield person
+    db.run(query.sortBy(_.lastName.toLowerCase).result).map(_.toList)
   }
 
   /**
-   * Returns event if it exists, otherwise - None
+    * Returns event if it exists, otherwise - None
    *
    * @param id Event identifier
    */
-  def find(id: Long): Option[Event] = DB.withSession { implicit session ⇒
-    events.filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[Event]] = db.run(events.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns event with related invoice if it exists
    *
    * @param id Event identifier
    */
-  def findWithInvoice(id: Long): Option[EventView] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        event ← events if event.id === id
-        invoice ← TableQuery[EventInvoices] if invoice.eventId === id
-      } yield (event, invoice)
-      query.firstOption.map(x ⇒ EventView(x._1, x._2))
+  def findWithInvoice(id: Long): Future[Option[EventView]] = {
+    val query = for {
+      event ← events if event.id === id
+      invoice ← TableQuery[EventInvoices] if invoice.eventId === id
+    } yield (event, invoice)
+    db.run(query.result).map(_.headOption.map(x ⇒ EventView(x._1, x._2)))
   }
 
   /**
    * Return event if it exists related to the given evaluation
-   * @param evaluationId Evaluation id
+    *
+    * @param evaluationId Evaluation id
    */
-  def findByEvaluation(evaluationId: Long): Option[Event] = DB.withSession {
-    implicit session ⇒
-      val query = for {
-        x ← TableQuery[Evaluations] if x.id === evaluationId
-        y ← events if y.id === x.eventId
-      } yield y
-      query.firstOption
+  def findByEvaluation(evaluationId: Long): Future[Option[Event]] = {
+    val query = for {
+      x ← TableQuery[Evaluations] if x.id === evaluationId
+      y ← events if y.id === x.eventId
+    } yield y
+    db.run(query.result).map(_.headOption)
   }
 
   /**
@@ -116,29 +130,28 @@ class EventService extends Integrations with Services {
     archived: Option[Boolean] = None,
     confirmed: Option[Boolean] = None,
     country: Option[String] = None,
-    eventType: Option[Long] = None): List[Event] = DB.withSession {
-    implicit session ⇒
-      val brandQuery = brandId map {
-        v ⇒ events filter (_.brandId === v)
-      } getOrElse events
+    eventType: Option[Long] = None): Future[List[Event]] = {
+    val brandQuery = brandId map {
+      v ⇒ events filter (_.brandId === v)
+    } getOrElse events
 
-      val timeQuery = applyTimeFilter(future, brandQuery)
-      val publicityQuery = applyPublicityFilter(public, timeQuery)
-      val archivedQuery = applyArchivedFilter(archived, publicityQuery)
+    val timeQuery = applyTimeFilter(future, brandQuery)
+    val publicityQuery = applyPublicityFilter(public, timeQuery)
+    val archivedQuery = applyArchivedFilter(archived, publicityQuery)
 
-      val confirmedQuery = confirmed map { value ⇒
-        archivedQuery filter (_.confirmed === value)
-      } getOrElse archivedQuery
+    val confirmedQuery = confirmed map { value ⇒
+      archivedQuery filter (_.confirmed === value)
+    } getOrElse archivedQuery
 
-      val countryQuery = country map { value ⇒
-        confirmedQuery filter (_.countryCode === value)
-      } getOrElse confirmedQuery
+    val countryQuery = country map { value ⇒
+      confirmedQuery filter (_.countryCode === value)
+    } getOrElse confirmedQuery
 
-      val typeQuery = eventType map { value ⇒
-        countryQuery filter (_.eventTypeId === value)
-      } getOrElse countryQuery
+    val typeQuery = eventType map { value ⇒
+      countryQuery filter (_.eventTypeId === value)
+    } getOrElse countryQuery
 
-      typeQuery sortBy (_.start) list
+    db.run(typeQuery.sortBy(_.start).result).map(_.toList)
   }
 
   /**
@@ -155,8 +168,7 @@ class EventService extends Integrations with Services {
     brandId: Option[Long] = None,
     future: Option[Boolean] = None,
     public: Option[Boolean] = None,
-    archived: Option[Boolean] = None): List[Event] = DB.withSession {
-    implicit session ⇒
+    archived: Option[Boolean] = None): Future[List[Event]] = {
       val facilitators = TableQuery[EventFacilitators]
       val baseQuery = brandId map { value ⇒
         for {
@@ -174,19 +186,22 @@ class EventService extends Integrations with Services {
       val publicityQuery = applyPublicityFilter(public, timeQuery)
       val archivedQuery = applyArchivedFilter(archived, publicityQuery)
 
-      archivedQuery sortBy (_.start) list
+      db.run(archivedQuery.sortBy(_.start).result).map(_.toList)
   }
 
   /** Returns list with active events */
-  def findActive: List[Event] = DB.withSession { implicit session ⇒
-    findByParameters(brandId = None, archived = Some(false)).
-      sortBy(_.title.toLowerCase)
-  }
+  def findActive: Future[List[Event]] =
+    findByParameters(brandId = None, archived = Some(false)).map(_.sortBy(_.title.toLowerCase))
 
   /** Returns list with all events */
-  def findAll: List[Event] = DB.withSession { implicit session ⇒
-    findByParameters(brandId = None)
-  }
+  def findAll: Future[List[Event]] = findByParameters(brandId = None)
+
+  /**
+    * Returns the requested event
+    *
+    * @param id Event identifier
+    */
+  def get(id: Long): Future[Event] = db.run(events.filter(_.id === id).result).map(_.head)
 
   /**
    * Adds event and related objects to database
@@ -194,7 +209,7 @@ class EventService extends Integrations with Services {
    * @param view Event object
    * @return Updated event object with id
    */
-  def insert(view: EventView): EventView = DB.withTransaction { implicit session ⇒
+  def insert(view: EventView): Future[EventView] = {
     val insertTuple = (view.event.eventTypeId, view.event.brandId,
       view.event.title, view.event.language.spoken, view.event.language.secondSpoken,
       view.event.language.materials, view.event.location.city,
@@ -205,49 +220,61 @@ class EventService extends Integrations with Services {
       view.event.schedule.end, view.event.schedule.hoursPerDay,
       view.event.schedule.totalHours, view.event.notPublic,
       view.event.archived, view.event.confirmed, view.event.free, view.event.followUp)
-    val id = (events.map(_.forInsert) returning events.map(_.id)) += insertTuple
-    view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
-      TableQuery[EventFacilitators] += (id, facilitatorId))
-    TableQuery[EventInvoices] += view.invoice.copy(eventId = Some(id))
-    view.copy(event = view.event.copy(id = Some(id)))
+    val query = events.map(_.forInsert) returning events.map(_.id) into ((value, id) => id)
+    val actions = (for {
+      eventId <- query += insertTuple
+      _ <- DBIO.sequence(view.event.facilitatorIds(services).distinct.map { facilitatorId ⇒
+        TableQuery[EventFacilitators] += (eventId, facilitatorId) })
+      _ <- TableQuery[EventInvoices] += view.invoice.copy(eventId = Some(eventId))
+    } yield eventId).transactionally
+    db.run(actions).map(id => EventView(view.event.copy(id = Some(id)), view.invoice))
   }
 
   /**
    * Fill events with facilitators (using only one query to database)
    * TODO: Cover with tests
-   * @param events List of events
+    *
+    * @param events List of events
    * @return
    */
-  def applyFacilitators(events: List[Event]): Unit = DB.withSession { implicit session ⇒
+  def applyFacilitators(events: List[Event]): Future[Unit] = {
     val ids = events.map(_.id.get).distinct
     val query = for {
       facilitation ← TableQuery[EventFacilitators] if facilitation.eventId inSet ids
       person ← facilitation.facilitator
     } yield (facilitation.eventId, person)
-    val facilitationData = query.list
-    val facilitators = facilitationData.map(_._2).distinct
-    PeopleCollection.addresses(facilitators)
-    facilitationData.foreach(f ⇒ f._2.address_=(facilitators.find(_.id == f._2.id).get.address))
-    val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-    events.foreach(e ⇒ e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List())))
+    val futureData = db.run(query.result).map(_.toList)
+    futureData flatMap { facilitationData =>
+      val facilitators = facilitationData.map(_._2).distinct
+      services.personService.collection.addresses(facilitators) map { _ =>
+        facilitationData.foreach(f ⇒ {
+          f._2.address_=(facilitators.find(_.id == f._2.id).get.address)
+        })
+        val groupedFacilitators = facilitationData.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
+        events.foreach(e ⇒ {
+          e.facilitators_=(groupedFacilitators.getOrElse(e.id.get, List()))
+        })
+      }
+    }
   }
 
   /**
    * Fill events with invoices (using only one query to database)
-   * @todo test
+    *
+    * @todo test
    * @todo comment
    * @param events List of events
    */
-  def withInvoices(events: List[Event]): List[EventView] = DB.withSession {
-    implicit session ⇒
-      val ids = events.map(_.id.get).distinct
-      val query = for {
-        invoice ← TableQuery[EventInvoices] if invoice.eventId inSet ids
-      } yield invoice
-      val invoices = query.list
-      events.map { e ⇒
+  def withInvoices(events: List[Event]): Future[List[EventView]] = {
+    val ids = events.map(_.id.get).distinct
+    val query = for {
+      invoice ← TableQuery[EventInvoices] if invoice.eventId inSet ids
+    } yield invoice
+    db.run(query.result).map(_.toList).flatMap { invoices =>
+      Future.successful(events.map { e ⇒
         EventView(e, invoices.find(_.eventId == e.id).getOrElse(EventInvoice.empty))
-      }
+      })
+    }
   }
 
   /**
@@ -256,7 +283,7 @@ class EventService extends Integrations with Services {
    * @param view Event
    * @return Updated event object with id
    */
-  def update(view: EventView): EventView = DB.withSession { implicit session ⇒
+  def update(view: EventView): EventView = {
     val updateTuple = (view.event.eventTypeId, view.event.brandId,
       view.event.title, view.event.language.spoken,
       view.event.language.secondSpoken, view.event.language.materials,
@@ -269,26 +296,28 @@ class EventService extends Integrations with Services {
       view.event.notPublic, view.event.archived, view.event.confirmed,
       view.event.free, view.event.followUp)
 
-    events.filter(_.id === view.event.id).map(_.forUpdate).update(updateTuple)
-
     val facilitators = TableQuery[EventFacilitators]
-    facilitators.filter(_.eventId === view.event.id).delete
-    view.event.facilitatorIds.distinct.foreach(facilitatorId ⇒
-      facilitators += (view.event.id.get, facilitatorId))
-    EventInvoice._update(view.invoice)
+    val actions = (for {
+      _ <- events.filter(_.id === view.event.id).map(_.forUpdate).update(updateTuple)
+      _ <- facilitators.filter(_.eventId === view.event.id).delete
+      _ <- DBIO.sequence(view.event.facilitatorIds(services).distinct.map(facilitatorId ⇒
+        facilitators += (view.event.id.get, facilitatorId)
+      ))
+    } yield ()).transactionally
+    db.run(actions)
+    services.eventInvoiceService.update(view.invoice)
 
     view
   }
 
   /**
    * Updates rating for the given event
-   * @param eventId Event id
+    *
+    * @param eventId Event id
    * @param rating New rating
    */
-  def updateRating(eventId: Long, rating: Float): Unit = DB.withSession {
-    implicit session ⇒
-      events.filter(_.id === eventId).map(_.rating).update(rating)
-  }
+  def updateRating(eventId: Long, rating: Float): Unit =
+    db.run(events.filter(_.id === eventId).map(_.rating).update(rating))
 
   /**
    * Applies time filter on query
@@ -342,11 +371,4 @@ class EventService extends Integrations with Services {
       parentQuery.filter(_.archived === value)
     } getOrElse parentQuery
   }
-}
-
-object EventService {
-  private val instance = new EventService()
-
-  def get: EventService = instance
-
 }

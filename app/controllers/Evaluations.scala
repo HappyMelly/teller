@@ -24,30 +24,38 @@
 
 package controllers
 
+import javax.inject.{Named, Inject}
+
+import akka.actor.ActorRef
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole._
 import models._
 import models.event.Attendee
-import models.service.{BrandWithCoordinators, Services}
+import models.service.{Services, BrandWithCoordinators}
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
-import play.api.i18n.Messages
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.Action
-import securesocial.core.RuntimeEnvironment
-import services.integrations.Integrations
+import services.TellerRuntimeEnvironment
+import services.integrations.{EmailComponent, Integrations}
 
 import scala.concurrent.Future
 
-class Evaluations(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Integrations
-    with Services
-    with Activities
-    with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                             override val messagesApi: MessagesApi,
+                             val email: EmailComponent,
+                             val services: Services,
+                             @Named("event-rating") eventActor: ActorRef,
+                             @Named("facilitator-rating") facilitatorActor: ActorRef,
+                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with I18nSupport
+  with Integrations
+  with Activities
+  with BrandAware {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String) = Form(mapping(
@@ -82,78 +90,85 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    */
   def add(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      attendeeService.find(attendeeId, eventId) map { attendee =>
-        Future.successful(Ok(views.html.v2.evaluation.form(user, evaluationForm(user.name), attendee)))
-      } getOrElse Future.successful(
-        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown attendee")
-      )
+      services.attendeeService.find(attendeeId, eventId) flatMap {
+        case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
+        case Some(attendee) =>
+          ok(views.html.v2.evaluation.form(user, evaluationForm(user.name), attendee))
+      }
   }
 
   /**
-   * Approve form submits to this action
+    * Approve form submits to this action
    *
    * @param id Evaluation identifier
    */
-  def approve(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def approve(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      evaluationService.findWithAttendee(id).map { view ⇒
-        if (view.evaluation.approvable) {
-          val evaluation = view.evaluation.approve
-            // recalculate ratings
-            Event.ratingActor ! evaluation.eventId
-            Facilitator.ratingActor ! evaluation.eventId
+      services.evaluationService.findWithAttendee(id) flatMap {
+        case None => notFound("")
+        case Some(view) =>
+          if (view.evaluation.approvable) {
+            view.evaluation.approve(services) flatMap { evaluation =>
+              // recalculate ratings
+              eventActor ! evaluation.eventId
+              facilitatorActor ! evaluation.eventId
 
-            activity(evaluation, user.person).approved.insert()
-            sendApprovalConfirmation(user.person, evaluation, view.attendee, event)
+              sendApprovalConfirmation(user.person, evaluation, view.attendee, event)
 
-            jsonOk(Json.obj("date" -> evaluation.handled))
+              jsonOk(Json.obj("date" -> evaluation.handled))
+            }
           } else {
-          val error = view.evaluation.status match {
+            val error = view.evaluation.status match {
               case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.approve.unconfirmed"
               case _ ⇒ "error.evaluation.approve.approved"
             }
             jsonBadRequest(Messages(error))
           }
-        }.getOrElse(NotFound)
+      }
   }
 
   /**
    * Add form submits to this action
-   * @param eventId Event identifier to create evaluation for
+    *
+    * @param eventId Event identifier to create evaluation for
    * @param attendeeId Attendee identifier to create evaluation for
    */
   def create(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      attendeeService.find(attendeeId, eventId) map { attendee =>
-        val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
-        form.fold(
-          errors ⇒ Future.successful(BadRequest(views.html.v2.evaluation.form(user, errors, attendee))),
-          evaluation ⇒ {
-            val defaultHook = request.host + routes.Evaluations.confirm("").url
-            val eval = evaluation.copy(eventId = eventId, attendeeId = attendeeId).add(defaultHook)
-            val log = activity(eval, user.person).created.insert()
-            Future.successful(Redirect(routes.Events.details(eventId)).flashing("success" -> log.toString))
-          })
-      } getOrElse Future.successful(
-        Redirect(routes.Events.details(eventId)).flashing("error" -> "Unknown attendee")
-      )
+      services.attendeeService.find(attendeeId, eventId) flatMap {
+        case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
+        case Some(attendee) =>
+          val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
+          form.fold(
+            errors ⇒ badRequest(views.html.v2.evaluation.form(user, errors, attendee)),
+            evaluation ⇒ {
+              val defaultHook = request.host + routes.Evaluations.confirm("").url
+              val modified = evaluation.copy(eventId = eventId, attendeeId = attendeeId)
+              modified.add(defaultHook, false, email, services) flatMap { eval =>
+                redirect(routes.Events.details(eventId), "success" -> "Attendee was added")
+              }
+            })
+      }
   }
 
   /**
    * Delete an evaluation
-   * @param id Unique evaluation identifier
+    *
+    * @param id Unique evaluation identifier
    */
-  def delete(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def delete(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      evaluationService.find(id).map { evaluation ⇒
-        evaluationService.delete(evaluation)
-        // recalculate ratings
-        Event.ratingActor ! evaluation.eventId
-        Facilitator.ratingActor ! evaluation.eventId
-        activity(evaluation, user.person).deleted.insert()
-        val msg = "Evaluation was successfully deleted"
-        Redirect(routes.Events.details(evaluation.eventId).url).flashing("success" -> msg)
-      }.getOrElse(NotFound)
+      services.evaluationService.find(id) flatMap {
+        case None => notFound("")
+        case Some(evaluation) =>
+          services.evaluationService.delete(evaluation) flatMap { _ =>
+            // recalculate ratings
+            eventActor ! evaluation.eventId
+            facilitatorActor ! evaluation.eventId
+            val msg = "Evaluation was successfully deleted"
+            redirect(routes.Events.details(evaluation.eventId), "success" -> msg)
+          }
+      }
   }
 
   /**
@@ -161,30 +176,32 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Unique evaluation identifier
    */
-  def details(id: Long) = SecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
+  def details(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      evaluationService.findWithEvent(id) map { x ⇒
-        val attendee = attendeeService.find(x.eval.attendeeId, x.eval.eventId).get
-        val personId = user.person.identifier
-        val (facilitator, endorsement) = if (x.event.facilitatorIds.contains(personId))
-          (true, personService.findEndorsementByEvaluation(id, personId))
-        else
-          (false, None)
-        roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
-          Ok(views.html.v2.evaluation.details(user, view.brand, brands, x,
-            attendee.fullName,
-            view.settings.certificates,
-            facilitator,
-            endorsement))
-        } { (view, brands) =>
-          Ok(views.html.v2.evaluation.details(user, view.get.brand, brands, x,
-            attendee.fullName,
-            view.get.settings.certificates,
-            facilitator,
-            endorsement))
-        } { Redirect(routes.Dashboard.index()) }
-      } getOrElse NotFound
-
+      services.evaluationService.findWithEvent(id) flatMap {
+        case None => notFound("")
+        case Some(x) =>
+          (for {
+            attendee <- services.attendeeService.find(x.eval.attendeeId, x.eval.eventId)
+            endorsementData <- endorsementPair(x, user.person.identifier, id)
+          } yield (attendee, endorsementData)) flatMap {
+            case (None, _) => notFound("Attendee not found")
+            case (Some(attendee), (facilitator, endorsement)) =>
+              roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
+                ok(views.html.v2.evaluation.details(user, view.brand, brands, x,
+                  attendee.fullName,
+                  view.settings.certificates,
+                  facilitator,
+                  endorsement))
+              } { (view, brands) =>
+                ok(views.html.v2.evaluation.details(user, view.get.brand, brands, x,
+                  attendee.fullName,
+                  view.get.settings.certificates,
+                  facilitator,
+                  endorsement))
+              } { redirect(routes.Dashboard.index()) }
+          }
+      }
   }
 
   /**
@@ -192,97 +209,122 @@ class Evaluations(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Evaluation identifier
    */
-  def reject(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def reject(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      evaluationService.findWithAttendee(id).map { view ⇒
-        if (view.evaluation.rejectable) {
-          val evaluation = view.evaluation.reject()
+      services.evaluationService.findWithAttendee(id) flatMap {
+        case None => notFound("")
+        case Some(view) =>
+          if (view.evaluation.rejectable) {
+            view.evaluation.reject(services) flatMap { evaluation =>
+              // recalculate ratings
+              eventActor ! view.evaluation.eventId
+              facilitatorActor ! view.evaluation.eventId
+              sendRejectionConfirmation(user.person, view.attendee, event)
 
-          // recalculate ratings
-          Event.ratingActor ! view.evaluation.eventId
-          Facilitator.ratingActor ! view.evaluation.eventId
-
-          val log = activity(view.evaluation, user.person).rejected.insert()
-          sendRejectionConfirmation(user.person, view.attendee, view.evaluation.event)
-
-          jsonOk(Json.obj("date" -> evaluation.handled))
-        } else {
-          val error = view.evaluation.status match {
-            case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"
-            case _ ⇒ "error.evaluation.reject.rejected"
+              jsonOk(Json.obj("date" -> evaluation.handled))
+            }
+          } else {
+            val error = view.evaluation.status match {
+              case EvaluationStatus.Unconfirmed ⇒ "error.evaluation.reject.unconfirmed"
+              case _ ⇒ "error.evaluation.reject.rejected"
+            }
+            jsonBadRequest(Messages(error))
           }
-          jsonBadRequest(Messages(error))
-        }
-      }.getOrElse(NotFound)
+      }
   }
 
   /**
    * Sends a request to a participant to confirm the evaluation
-   * @param id Evaluation id
+    *
+    * @param id Evaluation id
    */
-  def sendConfirmationRequest(id: Long) = SecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def sendConfirmationRequest(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      evaluationService.find(id) map { evaluation ⇒
-        val defaultHook = request.host + routes.Evaluations.confirm("").url
-        evaluation.sendConfirmationRequest(defaultHook)
-        jsonSuccess("Confirmation request was sent")
-      } getOrElse jsonNotFound("Evaluation not found")
+      services.evaluationService.find(id) flatMap {
+        case None => jsonNotFound("Evaluation not found")
+        case Some(evaluation) =>
+          val defaultHook = request.host + routes.Evaluations.confirm("").url
+          evaluation.sendConfirmationRequest(defaultHook, email, services)
+          jsonSuccess("Confirmation request was sent")
+      }
   }
 
   /**
    * Confirms the given evaluation
-   * @param confirmationId Confirmation unique id
+    *
+    * @param confirmationId Confirmation unique id
    */
-  def confirm(confirmationId: String) = Action { implicit request ⇒
-    evaluationService.findByConfirmationId(confirmationId) map { x ⇒
-      x.confirm()
-      Ok(views.html.evaluation.confirmed())
-    } getOrElse NotFound(views.html.evaluation.notfound())
+  def confirm(confirmationId: String) = Action.async { implicit request ⇒
+    services.evaluationService.findByConfirmationId(confirmationId) flatMap {
+      case None => notFound(views.html.evaluation.notfound())
+      case Some(evaluation) =>
+        evaluation.confirm(email, services)
+        ok(views.html.evaluation.confirmed())
+    }
+  }
+
+  /**
+    * Returns endorsement and related flag if the given person is a facilitator
+    *
+    * @param view Evaluation view
+    * @param personId Person identifier
+    * @param id Evaluation identifier
+    * @return
+    */
+  protected def endorsementPair(view: EvaluationEventView, personId: Long, id: Long): Future[(Boolean, Option[Endorsement])] = {
+    if (view.event.facilitatorIds(services).contains(personId))
+      services.personService.findEndorsementByEvaluation(id, personId) map { endorsement => (true, endorsement) }
+    else
+      Future.successful((false, None))
   }
 
   /**
    * Sends confirmation email that evaluation was approved
-   * @param approver Person who approved the given evaluation
+    *
+    * @param approver Person who approved the given evaluation
    * @param evaluation Evaluation
    * @param attendee Attendee
    * @param event Related event
    */
   protected def sendApprovalConfirmation(approver: Person, evaluation: Evaluation, attendee: Attendee, event: Event) = {
-    brandService.findWithSettings(event.brandId) foreach { withSettings =>
-      val coordinators = brandService.coordinators(event.brandId)
+    (for {
+      withSettings <- services.brandService.findWithSettings(event.brandId) if withSettings.isDefined
+      coordinators <- services.brandService.coordinators(event.brandId)
+    } yield (withSettings.get, coordinators)) foreach { case (withSettings, coordinators) =>
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
       if (attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
         val cert = new Certificate(evaluation.handled, event, attendee)
-        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver)
-        attendeeService.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
+        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, services)
+        services.attendeeService.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
       } else if (attendee.certificate.isEmpty) {
         val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
         val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
         email.send(Set(attendee),
-          Some(event.facilitators.toSet),
+          Some(event.facilitators(services).toSet),
           Some(bcc.toSet),
           subject, body, from = withSettings.brand.name, richMessage = true, None)
       } else {
         val cert = new Certificate(evaluation.handled, event, attendee, renew = true)
-        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver)
+        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, services)
       }
     }
   }
 
   /**
    * Sends confirmation email that evaluation was rejected
-   * @param rejector Person who rejected the evaluation
+    *
+    * @param rejector Person who rejected the evaluation
    * @param attendee Attendee
    * @param event Related event
    */
   protected def sendRejectionConfirmation(rejector: Person, attendee: Attendee, event: Event) = {
-    brandService.findWithCoordinators(event.brandId) foreach { x ⇒
-      val bcc = x.coordinators.filter(_._2.notification.evaluation).map(_._1)
-      val subject = s"Your ${x.brand.name} certificate"
+    services.brandService.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
+      val bcc = view.coordinators.filter(_._2.notification.evaluation).map(_._1)
+      val subject = s"Your ${view.brand.name} certificate"
       email.send(Set(attendee),
-        Some(event.facilitators.toSet),
+        Some(event.facilitators(services).toSet),
         Some(bcc.toSet), subject,
-        mail.templates.evaluation.html.rejected(x.brand, attendee, rejector).toString(),
+        mail.templates.evaluation.html.rejected(view.brand, attendee, rejector).toString(),
         richMessage = true)
     }
   }

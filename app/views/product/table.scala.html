@@ -1,4 +1,4 @@
-@(products: List[Product], viewOnly: Boolean = false)(actions: (Product) => Html)
+@(products: List[Product], viewOnly: Boolean = false)(actions: (Product) => Html)(implicit messages: Messages)
 
 @if(products.nonEmpty) {
   <table class="datatables table table-bordered">

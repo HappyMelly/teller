@@ -61,7 +61,7 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.brandService_=(brandService)
 
   def e1 = {
-    (brandService.find(_: Long)) expects 1L returning None
+    (services.brandService.find(_: Long)) expects 1L returning None
     val res = controller.create(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
     val data = contentAsJson(res).as[JsObject]
@@ -70,7 +70,7 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e2 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
     val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "video", "url" -> "")
     val res = controller.create(1L).apply(req)
@@ -81,9 +81,9 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val brand = BrandHelper.one
-    (brandService.find(_: Long)) expects 1L returning Some(brand)
+    (services.brandService.find(_: Long)) expects 1L returning Some(brand)
     val brandLink = BrandLink(None, 1L, "other", "http://test.com")
-    (brandService.insertLink _) expects brandLink returning brandLink.copy(id = Some(1L))
+    (services.brandService.insertLink _) expects brandLink returning brandLink.copy(id = Some(1L))
     val req = fakePostRequest().
       withFormUrlEncodedBody("type" -> "blabla", "url" -> "http://test.com")
     val res = controller.create(1L).apply(req)
@@ -91,7 +91,7 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    (brandService.deleteLink _) expects (2L, 1L)
+    (services.brandService.deleteLink _) expects (2L, 1L)
     val res = controller.remove(2L, 1L).apply(fakeDeleteRequest())
     status(res) must equalTo(OK)
   }

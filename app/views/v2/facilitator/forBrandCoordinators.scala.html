@@ -4,7 +4,7 @@
     facilitators: List[(License, Person, Facilitator, Boolean, Boolean, List[models.brand.Badge])])(implicit
         request: Request[Any],
         flash: Flash,
-        handler: AuthorisationHandler)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import views.Countries
 @import views.ViewHelpersV2._

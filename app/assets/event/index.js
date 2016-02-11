@@ -22,17 +22,10 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-/**
- * Show success message
- * @param message {string}
- */
-function showSuccess(message) {
-    $('.alert-block').append(
-        $('<div class="alert alert-success">')
-            .text(message)
-            .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
-    );
+function afterEventCancellation(object) {
+   $('#events').find('.active').remove();
 }
+
 
 /**
  * This function collects data from all filters and provides a requests based on their values
@@ -200,18 +193,5 @@ $(document).ready( function() {
 
     $("#events").on('click', '.delete', function(){
         $("#cancelLink").attr('href', $(this).data('href'));
-    });
-
-    $('#cancelLink').on('click', function(e) {
-        e.preventDefault();
-        $.ajax({
-            type: "POST",
-            url: $(this).attr("href"),
-            data: $("#cancelForm").serialize()
-        }).done(function(data){
-            updateTable();
-            $("#cancelDialog").modal('hide');
-            showSuccess("You successfully cancelled the event")
-        });
     });
 });

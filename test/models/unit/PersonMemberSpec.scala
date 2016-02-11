@@ -98,9 +98,9 @@ class PersonMemberSpec extends Specification {
     "the membership data should be saved to database" in new MockContext {
       val memberService = mock[MemberService]
       val profileStrengthService = mock[ProfileStrengthService]
-      (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning None
+      (services.profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning None
       //the line of interest
-      (memberService.insert _) expects member returning member
+      (services.memberService.insert _) expects member returning member
       person.memberService_=(memberService)
       person.profileStrengthService_=(profileStrengthService)
       person.becomeMember(true, fee)
@@ -110,10 +110,10 @@ class PersonMemberSpec extends Specification {
       val profileStength = ProfileStrength.empty(1L, false)
       val profileStrengthService = mock[ProfileStrengthService]
       val memberService = mock[MemberService]
-      (memberService.insert _) expects member returning member
-      (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(profileStength)
+      (services.memberService.insert _) expects member returning member
+      (services.profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(profileStength)
       //the line of interest
-      (profileStrengthService.update _) expects ProfileStrength.forMember(profileStength)
+      (services.profileStrengthService.update _) expects ProfileStrength.forMember(profileStength)
       person.memberService_=(memberService)
       person.profileStrengthService_=(profileStrengthService)
       person.becomeMember(true, fee)

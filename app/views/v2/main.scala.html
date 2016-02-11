@@ -5,14 +5,14 @@
   withMelly: Boolean = false)(
   content: Html)(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 <!DOCTYPE html>
 <html>
   <head>
     <title>@title - Happy Melly</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    @head()
+    @v2.head()
   </head>
   <body class='@if(withMelly) { with-melly }'>
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>

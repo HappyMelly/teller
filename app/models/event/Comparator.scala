@@ -26,87 +26,111 @@ package models.event
 import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
-import models.service.brand.EventTypeService
-import models.service.{ Services, OrganisationService, PersonService }
-import models.{ Brand, EventView }
+import models.EventView
+import models.service.Services
 import play.api.i18n.Messages
 import views.Languages
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import scala.concurrent.duration._
 
-object Comparator extends Services {
+class Comparator(services: Services) {
 
-  abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
-    def changed() = oldValue != newValue
-    def printable(): (String, String, String) = (label, newValue.toString, oldValue.toString)
-  }
+  import Comparator._
 
   class SimpleFieldChange(label: String, oldValue: String, newValue: String) extends FieldChange(label, oldValue, newValue) {
-    override def toString = s"$label: $newValue (was: $oldValue)"
+    def toStr = s"$label: $newValue (was: $oldValue)"
   }
 
   class BrandChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val oldBrand = brandService.find(oldValue).get.name
-      val newBrand = brandService.find(newValue).get.name
-      s"$label: $newBrand (was: $oldBrand)"
+    def toStr = names map { case (oldName, newName) =>
+      s"$label: $newName (was: $oldName)"
     }
 
     override def printable(): (String, String, String) = {
-      val oldBrand = brandService.find(oldValue).get.name
-      val newBrand = brandService.find(newValue).get.name
-      (label, newBrand, oldBrand)
+      val (oldName, newName) = Await.result(names, 3.seconds)
+      (label, newName, oldName)
+    }
+
+    protected def names: Future[(String, String)] = {
+      (for {
+        o <- services.brandService.get(oldValue)
+        n <- services.brandService.get(newValue)
+      } yield (o, n)) map { case (oldBrand, newBrand) =>
+        (oldBrand.name, newBrand.name)
+      }
     }
   }
 
   class EventTypeChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val label, newEventType, oldEventType = printable()
-      s"$label: $newEventType (was: $oldEventType)"
+    def toStr = names map { case (oldName, newName) =>
+      s"$label: $newName (was: $oldName)"
     }
 
     override def printable(): (String, String, String) = {
-      val oldEventType = EventTypeService.get.find(oldValue).get.name
-      val newEventType = EventTypeService.get.find(newValue).get.name
-      (label, newEventType, oldEventType)
+      val (oldName, newName) = Await.result(names, 3.seconds)
+      (label, newName, oldName)
+    }
+
+    protected def names: Future[(String, String)] = {
+      (for {
+        o <- services.eventTypeService.get(oldValue)
+        n <- services.eventTypeService.get(newValue)
+      } yield (o, n)) map { case (oldEventType, newEventType) =>
+        (oldEventType.name, newEventType.name)
+      }
     }
   }
 
   class InvoiceChange(label: String, oldValue: Long, newValue: Long) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val oldInvoiceToOrg = OrganisationService.get.find(oldValue).get.name
-      val newInvoiceToOrg = OrganisationService.get.find(newValue).get.name
-      s"$label: $newInvoiceToOrg (was: $oldInvoiceToOrg)"
+    def toStr = names map { case (oldName, newName) =>
+      s"$label: $newName (was: $oldName)"
     }
 
     override def printable(): (String, String, String) = {
-      val oldInvoiceToOrg = OrganisationService.get.find(oldValue).get.name
-      val newInvoiceToOrg = OrganisationService.get.find(newValue).get.name
-      (label, newInvoiceToOrg, oldInvoiceToOrg)
+      val (oldName, newName) = Await.result(names, 3.seconds)
+      (label, newName, oldName)
     }
 
+    protected def names: Future[(String, String)] = {
+      (for {
+        o <- services.orgService.get(oldValue)
+        n <- services.orgService.get(newValue)
+      } yield (o, n)) map { case (oldEventType, newEventType) =>
+        (oldEventType.name, newEventType.name)
+      }
+    }
   }
 
   class FacilitatorChange(label: String, oldValue: List[Long], newValue: List[Long]) extends FieldChange(label, oldValue, newValue) {
-    override def toString = {
-      val newFacilitators = newValue.diff(oldValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
-      val removedFacilitators = oldValue.diff(newValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
-      s"Removed $label: $removedFacilitators / Added $label: $newFacilitators"
+    def toStr = facilitators map { case (added, removed) =>
+      s"Removed $label: $removed / Added $label: $added"
     }
 
     override def printable(): (String, String, String) = {
-      val newFacilitators = newValue.diff(oldValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
-      val removedFacilitators = oldValue.diff(newValue).map(PersonService.get.find(_).get.fullName).mkString(", ")
-      (label, newFacilitators, removedFacilitators)
+      val (added, removed) = Await.result(facilitators, 3.seconds)
+      (label, added, removed)
+    }
+
+    protected def facilitators: Future[(String, String)] = {
+      (for {
+        o <- services.personService.find(oldValue.diff(newValue))
+        n <- services.personService.find(newValue.diff(oldValue))
+      } yield (o, n)) map { case (removed, added) =>
+        (added.map(_.fullName).mkString(", "), removed.map(_.fullName).mkString(", "))
+      }
     }
   }
 
   /**
    * Compares two events and returns a list of changes.
-   * @param was The event with ‘old’ values.
+    *
+    * @param was The event with ‘old’ values.
    * @param now The event with ‘new’ values.
    */
-  def compare(was: EventView, now: EventView): List[FieldChange] = {
+  def compare(was: EventView, now: EventView)(implicit messages: Messages): List[FieldChange] = {
     val changes = List(
       new BrandChange("Brand", was.event.brandId, now.event.brandId),
       new EventTypeChange("Event Type", was.event.eventTypeId, now.event.eventTypeId),
@@ -134,10 +158,18 @@ object Comparator extends Services {
       new SimpleFieldChange("Private Event", was.event.notPublic.toString, now.event.notPublic.toString),
       new SimpleFieldChange("Achived Event", was.event.archived.toString, now.event.archived.toString),
       new SimpleFieldChange("Follow Up Emails", was.event.followUp.toString, now.event.followUp.toString),
-      new FacilitatorChange("Facilitators", was.event.facilitatorIds, now.event.facilitatorIds),
+      new FacilitatorChange("Facilitators", was.event.facilitatorIds(services), now.event.facilitatorIds(services)),
       new InvoiceChange("Invoice To", was.invoice.invoiceTo, now.invoice.invoiceTo))
 
     changes.filter(change ⇒ change.changed())
   }
 
+}
+
+object Comparator {
+
+  abstract class FieldChange(label: String, oldValue: Any, newValue: Any) {
+    def changed() = oldValue != newValue
+    def printable(): (String, String, String) = (label, newValue.toString, oldValue.toString)
+  }
 }

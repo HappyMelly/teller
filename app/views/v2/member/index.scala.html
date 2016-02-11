@@ -3,7 +3,7 @@
   fee: Option[org.joda.money.Money],
   totalFee: org.joda.money.Money)(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._

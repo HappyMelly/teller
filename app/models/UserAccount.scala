@@ -46,7 +46,7 @@ case class UserAccount(id: Option[Long],
                        admin: Boolean = false,
                        member: Boolean = false,
                        registered: Boolean = false,
-                       activeRole: Boolean = false) extends Subject with Services {
+                       activeRole: Boolean = false) extends Subject {
 
   /**
    * Returns a string list of role names, for the Subject interface.

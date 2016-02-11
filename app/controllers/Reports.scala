@@ -24,22 +24,27 @@
 
 package controllers
 
-import java.io.{ File, FileOutputStream }
-import models._
+import java.io.{File, FileOutputStream}
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
+import models._
 import models.event.Attendee
-import models.service.{ Services, EventService }
+import models.service.Services
 import org.joda.time._
 import play.api.Play.current
-import play.mvc.Controller
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.MessagesApi
+import services.TellerRuntimeEnvironment
 
-class Reports(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
-    with Security
-    with Services {
+import scala.concurrent.Future
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                         override val messagesApi: MessagesApi,
+                         val services: Services,
+                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
    * Generate a XLSX report with evaluations (if they're available)
@@ -49,42 +54,58 @@ class Reports(environment: RuntimeEnvironment[ActiveUser])
    * @param status  filter events by their statuses
    * @return
    */
-  def create(brandId: Long, eventId: Long, status: Int) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def create(brandId: Long, eventId: Long, status: Int) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(brandId) map { brand ⇒
-        val personId = user.account.personId
-        val events =
-          if (brand.ownerId == personId) {
-            eventService.findByParameters(brand.id)
-          } else if (License.licensedSince(personId, brand.id.get).nonEmpty) {
-            eventService.findByFacilitator(personId, brand.id, archived = Some(false))
-          } else
-            List()
-        val filteredEvents = if (eventId > 0)
-          events.filter(_.identifier == eventId)
-        else
-          events
-        val eventIds = filteredEvents.map(e ⇒ e.id.get)
-        val evaluations = evaluationService.findByEventsWithAttendees(eventIds)
-        val attendees = if (status >= 0) {
-          // no attendee without an evaluation
-          evaluations.filter(e ⇒ e._3.status.id == status).map(e ⇒ (e._1, e._2, Option(e._3)))
-        } else {
-          // add attendees without an evaluation
-          val participants = attendeeService.findByEvents(eventIds)
-          val noEvaluation = participants.filter(p ⇒ !evaluations.exists(ev ⇒ ev._1.id == p._1.id && ev._2.id == p._2.id))
-          evaluations.map(e ⇒ (e._1, e._2, Option(e._3))).union(noEvaluation.map(e ⇒ (e._1, e._2, None)))
-        }
-        val date = LocalDate.now.toString
-        Ok.sendFile(
-          content = createXLSXreport(attendees),
-          fileName = _ ⇒ s"report-$date-${brand.code}.xlsx")
-      } getOrElse NotFound("Unknown brand")
+      services.brandService.find(brandId) flatMap {
+        case None => notFound("Brand not found")
+        case Some(brand) ⇒
+          val personId = user.account.personId
+          val filteredEvents = if (eventId > 0)
+            events(brand, personId).map(_.filter(_.identifier == eventId))
+          else
+            events(brand, personId)
+          (for {
+            eventIds <- filteredEvents.map(_.map(e ⇒ e.id.get))
+            evaluations <- services.evaluationService.findByEventsWithAttendees(eventIds)
+            participants <- services.attendeeService.findByEvents(eventIds)
+          } yield (evaluations, participants)) flatMap { case (evaluations, participants) =>
+            val attendees = if (status >= 0) {
+              // no attendee without an evaluation
+              evaluations.filter(e ⇒ e._3.status.id == status).map(e ⇒ (e._1, e._2, Option(e._3)))
+            } else {
+              // add attendees without an evaluation
+              val noEvaluation = participants.filter(p ⇒ !evaluations.exists(ev ⇒ ev._1.id == p._1.id && ev._2.id == p._2.id))
+              evaluations.map(e ⇒ (e._1, e._2, Option(e._3))).union(noEvaluation.map(e ⇒ (e._1, e._2, None)))
+            }
+            val date = LocalDate.now.toString
+            Future.successful(
+              Ok.sendFile(content = createXLSXreport(attendees),fileName = _ ⇒ s"report-$date-${brand.code}.xlsx"))
+
+          }
+      }
+  }
+
+  /**
+    * Returns the list of events based of current status of the given person
+    *
+    * @param brand Brand
+    * @param personId Person identifier
+    */
+  private def events(brand: Brand, personId: Long): Future[List[Event]] = {
+    if (brand.ownerId == personId)
+      services.eventService.findByParameters(brand.id)
+    else
+      services.licenseService.activeLicense(brand.identifier, personId) flatMap {
+        case None => Future.successful(List())
+        case Some(_) =>
+          services.eventService.findByFacilitator(personId, brand.id, archived = Some(false))
+      }
   }
 
   /**
    * Create XSLX report file for a set of evaluations
-   * @param attendees A set of evaluations to be included into the report
+    *
+    * @param attendees A set of evaluations to be included into the report
    * @return
    */
   private def createXLSXreport(attendees: List[(Event, Attendee, Option[Evaluation])]): java.io.File = {

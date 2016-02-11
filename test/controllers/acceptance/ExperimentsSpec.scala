@@ -109,14 +109,14 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   val recordInfo = DateStamp(createdBy = "Tester", updated = DateTime.now(), updatedBy = "Tester")
 
   def e1 = {
-    (experimentService.findByMember _) expects 1L returning experiments
+    (services.experimentService.findByMember _) expects 1L returning experiments
     val result = controller.experiments(1L).apply(fakeGetRequest())
     contentAsString(result) must contain("Exp 1")
     contentAsString(result) must contain("Exp 2")
   }
 
   def e2 = {
-    (memberService.find(_: Long)) expects 1L returning None
+    (services.memberService.find(_: Long)) expects 1L returning None
     val result = controller.create(1L).apply(postReq)
 
     status(result) must equalTo(NOT_FOUND)
@@ -124,12 +124,12 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
-    (memberService.find(_: Long)) expects 1L returning Some(member)
+    (services.memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(None, 1L, "Test", "Test", false, None, recordInfo)
-    (experimentService.insert _) expects(where { (ex: Experiment) =>
+    (services.experimentService.insert _) expects(where { (ex: Experiment) =>
       equal(ex, experiment)
     }) returning experiment.copy(id = Some(1L))
-    (experimentService.update _) expects experiment.copy(id = Some(1L), picture = true)
+    (services.experimentService.update _) expects experiment.copy(id = Some(1L), picture = true)
     val result = controller.create(1L).apply(postReq)
 
     header("Location", result) must beSome.which(_.contains("/person/5"))
@@ -137,9 +137,9 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e4 = {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
-    (memberService.find(_: Long)) expects 1L returning Some(member)
+    (services.memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(None, 1L, "Test", "Test", false, None, recordInfo)
-    (experimentService.insert _) expects(where { (ex: Experiment) =>
+    (services.experimentService.insert _) expects(where { (ex: Experiment) =>
       equal(ex, experiment)
     }) returning experiment.copy(id = Some(1L))
     controller._uploadValue = false
@@ -150,13 +150,13 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e5 = {
-    (experimentService.find _) expects 1L returning None
+    (services.experimentService.find _) expects 1L returning None
     val result = controller.edit(1L, 1L).apply(fakeGetRequest())
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e6 = {
-    (experimentService.find _) expects 1L returning None
+    (services.experimentService.find _) expects 1L returning None
     val result = controller.update(1L, 1L).apply(postReq)
 
     status(result) must equalTo(NOT_FOUND)
@@ -164,10 +164,10 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e7 = {
     val member = MemberHelper.make(Some(1L), 5L, person = true, funder = false)
-    (memberService.find(_: Long)) expects 1L returning Some(member)
+    (services.memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
-    (experimentService.find _) expects 1L returning Some(experiment)
-    (experimentService.update _) expects(where { (ex: Experiment) =>
+    (services.experimentService.find _) expects 1L returning Some(experiment)
+    (services.experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1), memberId = 1, name = "Test", description = "Test", picture = true))
     })
     val result = controller.update(1L, 1L).apply(postReq)
@@ -177,10 +177,10 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e8 = {
     val member = MemberHelper.make(Some(1L), 5L, person = false, funder = false)
-    (memberService.find(_: Long)) expects 1L returning Some(member)
+    (services.memberService.find(_: Long)) expects 1L returning Some(member)
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
-    (experimentService.find _) expects 1L returning Some(experiment)
-    (experimentService.update _) expects(where { (ex: Experiment) =>
+    (services.experimentService.find _) expects 1L returning Some(experiment)
+    (services.experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1), memberId = 1, name = "Test", description = "Test", picture = true))
     })
     val result = controller.update(1L, 1L).apply(postReq)
@@ -190,15 +190,15 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e9 = {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
-    (experimentService.find _) expects 1L returning Some(experiment)
-    (memberService.find(_: Long)) expects 5L returning None
+    (services.experimentService.find _) expects 1L returning Some(experiment)
+    (services.memberService.find(_: Long)) expects 5L returning None
     val result = controller.update(5L, 1L).apply(postReq)
 
     status(result) must equalTo(NOT_FOUND)
   }
 
   def e10 = {
-    (experimentService.find _) expects 1L returning None
+    (services.experimentService.find _) expects 1L returning None
     val result = controller.update(5L, 1L).apply(postReq)
 
     status(result) must equalTo(NOT_FOUND)
@@ -206,10 +206,10 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e11 = {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
-    (experimentService.find _) expects 1L returning Some(experiment)
+    (services.experimentService.find _) expects 1L returning Some(experiment)
     val member = MemberHelper.make(Some(5L), 5L, person = true, funder = false)
-    (memberService.find(_: Long)) expects 5L returning Some(member)
-    (experimentService.update _) expects(where { (ex: Experiment) =>
+    (services.memberService.find(_: Long)) expects 5L returning Some(member)
+    (services.experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1L), name = "Test", description = "Test", memberId = 5L, picture = true))
     })
     val result = controller.update(5L, 1L).apply(postReq)
@@ -218,10 +218,10 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e12 = {
     val experiment = Experiment(Some(1L), 1L, "T", "T", false, None, recordInfo)
-    (experimentService.find _) expects 1L returning Some(experiment)
+    (services.experimentService.find _) expects 1L returning Some(experiment)
     val member = MemberHelper.make(Some(5L), 5L, person = false, funder = false)
-    (memberService.find(_: Long)) expects 5L returning Some(member)
-    (experimentService.update _) expects(where { (ex: Experiment) =>
+    (services.memberService.find(_: Long)) expects 5L returning Some(member)
+    (services.experimentService.update _) expects(where { (ex: Experiment) =>
       equal(ex, experiment.copy(id = Some(1L), name = "Test", description = "Test", memberId = 5L))
     }) returning * once
     val req = fakePostRequest().withFormUrlEncodedBody("memberId" -> "2",

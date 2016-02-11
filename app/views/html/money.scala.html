@@ -1,4 +1,7 @@
-@(id: String, codeField: play.api.data.Field, amountField: play.api.data.Field, args: (Symbol,Any)*)(implicit lang: play.api.i18n.Lang)
+@(id: String,
+    codeField: play.api.data.Field,
+    amountField: play.api.data.Field,
+    args: (Symbol,Any)*)(implicit messages: Messages)
 
 @import scala.collection.JavaConverters._
 @import org.joda.money.CurrencyUnit

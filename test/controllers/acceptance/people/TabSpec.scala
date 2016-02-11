@@ -96,7 +96,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   person.member_=(MemberHelper.make(Some(1L), 1L, person = true, funder = true))
 
   def e1 = {
-    (personService.find(_: Long)) expects 1L returning Some(PersonHelper.one)
+    (services.personService.find(_: Long)) expects 1L returning Some(PersonHelper.one)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
     contentAsString(res) must contain("Person is not a member")
@@ -104,7 +104,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e2 = {
     (paymentService.findByPerson _) expects 1L returning payments
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
     val strings = Seq("One Year Membership Fee", "<td>100.00</td>",
@@ -116,7 +116,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     (paymentService.findByPerson _) expects 1L returning payments
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
@@ -125,7 +125,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e4 = {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
     controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest("/1"))
@@ -140,7 +140,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), 1L, person = true, funder = true,
       renewal = false)
     person.member_=(member)
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
     controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
@@ -155,7 +155,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     val member = MemberHelper.make(Some(1L), 1L, person = true, funder = true,
       renewal = false)
     person.member_=(member)
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
     controller.identity_=(FakeSocialIdentity.viewer)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
@@ -170,7 +170,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
     val person = PersonHelper.two
     val member = MemberHelper.make(Some(1L), 2L, person = true, funder = true)
     person.member_=(member)
-    (personService.find(_: Long)) expects 2L returning Some(person)
+    (services.personService.find(_: Long)) expects 2L returning Some(person)
     (paymentService.findByPerson _) expects 2L returning List()
     val res = controller.renderTabs(2L, "membership").apply(fakeGetRequest())
 
@@ -181,7 +181,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e9 = {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())
 
@@ -192,7 +192,7 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e10 = {
-    (personService.find(_: Long)) expects 1L returning Some(person)
+    (services.personService.find(_: Long)) expects 1L returning Some(person)
     (paymentService.findByPerson _) expects 1L returning List()
     controller.identity_=(FakeSocialIdentity.admin)
     val res = controller.renderTabs(1L, "membership").apply(fakeGetRequest())

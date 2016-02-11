@@ -53,14 +53,14 @@ class MiscSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.orgService_=(orgService)
 
   def e1 = {
-    (orgService.search _) expects "tt" returning List() never
+    (services.orgService.search _) expects "tt" returning List() never
     val result = controller.search(Some("tt")).apply(fakeGetRequest())
     contentAsString(result) must_== "[ ]"
   }
 
   def e2 = {
     val org = OrganisationHelper.make(id = Some(1L), name = "Test org")
-    (orgService.search _) expects "Test" returning List(org)
+    (services.orgService.search _) expects "Test" returning List(org)
     val result = controller.search(Some("Test")).apply(fakeGetRequest())
     val data = contentAsJson(result).as[JsArray]
     data.value.length must_== 1

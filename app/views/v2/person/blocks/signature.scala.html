@@ -1,10 +1,10 @@
 @(person: Person)(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 
@@ -16,7 +16,7 @@
     <img class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
   </div>
   <div class="col-md-5">
-  @dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+  @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
       <button class="btn btn-primary btn-block" id="formSwither">Upload new signature</button>
       <br/>
       <form method="post" action="@CSRF(routes.Signatures.delete(person.id.getOrElse(0)))">
@@ -25,7 +25,7 @@
     }
   </div>
 </div>
-@dynamic(handler, DynamicRole.ProfileEditor, person.identifier.toString) {
+@dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
   <div class="row no-signature" @if(person.signature) { style="display: none;" }>
     <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
       method="post" enctype="multipart/form-data">

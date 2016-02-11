@@ -23,14 +23,18 @@
  */
 package controllers
 
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.UserRole.Role
 import models.service.Services
-import models.{ActiveUser, Brand, Endorsement}
+import models.{Brand, Endorsement}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
+import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.libs.json.{JsArray, JsValue, Json, Writes}
-import securesocial.core.RuntimeEnvironment
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
@@ -39,12 +43,12 @@ case class EndorsementFormData(content: String,
   brandId: Long,
   company: Option[String])
 
-class Endorsements(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Services
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                              override val messagesApi: MessagesApi,
+                              val services: Services,
+                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with I18nSupport{
 
   implicit val EndorsementWrites = new Writes[Endorsement] {
     def writes(endorsement: Endorsement): JsValue = {
@@ -66,14 +70,18 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Renders endorsement add form
-   * @param personId Person identifier
+    *
+    * @param personId Person identifier
    */
-  def add(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
-          Ok(views.html.v2.endorsement.addForm(user, personId, brands(personId), form))
-        } getOrElse NotFound(Messages("error.person.notFound"))
+  def add(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      (for {
+        person <- services.personService.find(personId)
+        brands <- brands(personId)
+      } yield (person, brands)) flatMap {
+        case (None, _) => notFound(Messages("error.person.notFound"))
+        case (Some(person), brands) => ok(views.html.v2.endorsement.addForm(user, personId, brands, form))
+      }
   }
 
   /**
@@ -82,43 +90,53 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person id
    */
-  def renderSelectForm(personId: Long) = SecuredProfileAction(personId) {
-    implicit request =>
-      implicit handler => implicit user =>
-        val brands = brandService.findAll
-        val events = eventService.findByFacilitator(personId).map { x =>
+  def renderSelectForm(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request =>
+    implicit handler => implicit user =>
+      (for {
+        brands <- services.brandService.findAll
+        events <- services.eventService.findByFacilitator(personId)
+        endorsements <- services.personService.endorsements(personId)
+      } yield (brands, events, endorsements)) flatMap { case (brands, events, endorsements) =>
+        val filteredEvents = events.map { x =>
           (x, brands.find(_.id.get == x.brandId).map(_.name).getOrElse(""))
         }
-        val evaluationIds = personService.endorsements(personId).
-          filter(_.evaluationId != 0).map(_.evaluationId)
-        val evaluations = evaluationService.
-          findByEvents(events.map(_._1.id.get)).
-          filterNot(x => evaluationIds.contains(x.id.get))
+        val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
+        services.evaluationService.findByEvents(filteredEvents.map(_._1.id.get)) map { evaluations =>
+          evaluations.filterNot(x => evaluationIds.contains(x.id.get))
+        } flatMap { evaluations =>
+          services.personService.find(evaluations.map(_.attendeeId).distinct) flatMap { people =>
+            val content = evaluations.sortBy(_.impression).reverse.map { x =>
+              (x,
+                people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse(""),
+                filteredEvents.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
+            }
+            ok(views.html.v2.endorsement.selectForm(user, personId, content))
 
-        val people = personService.find(evaluations.map(_.attendeeId).distinct)
-        val content = evaluations.sortBy(_.impression).reverse.map { x =>
-          (x,
-            people.find(_.identifier == x.attendeeId).map(_.fullName).getOrElse(""),
-            events.find(_._1.id.get == x.eventId).map(_._2).getOrElse(""))
+          }
         }
-        Ok(views.html.v2.endorsement.selectForm(user, personId, content))
+      }
   }
 
   /**
    * Renders endorsement edit form
-   * @param personId Person identifier
+    *
+    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def edit(personId: Long, id: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
-          personService.findEndorsement(id) map { endorsement ⇒
-            val formData = EndorsementFormData(endorsement.content,
-              endorsement.name, endorsement.brandId, endorsement.company)
-            Ok(views.html.v2.endorsement.editForm(user, personId, brands(personId), form.fill(formData), id))
-          } getOrElse NotFound("Endorsement is not found")
-        } getOrElse NotFound(Messages("error.person.notFound"))
+  def edit(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      (for {
+        person <- services.personService.find(personId)
+        endorsement <- services.personService.findEndorsement(id)
+        brands <- brands(personId)
+      } yield (person, endorsement, brands)) flatMap {
+        case (None, _, _) => notFound(Messages("error.person.notFound"))
+        case (_, None, _) => notFound("Endorsement not found")
+        case (Some(person), Some(endorsement), brands) =>
+          val formData = EndorsementFormData(endorsement.content,
+            endorsement.name, endorsement.brandId, endorsement.company)
+          ok(views.html.v2.endorsement.editForm(user, personId, brands, form.fill(formData), id))
+      }
   }
 
   /**
@@ -126,15 +144,18 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId) map { person ⇒
-          form.bindFromRequest.fold(
-            error ⇒
-              BadRequest(views.html.v2.endorsement.addForm(user, personId, brands(personId), error)),
-            endorsementData ⇒ {
-              val endorsements = personService.endorsements(personId)
+  def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      form.bindFromRequest.fold(
+        error ⇒ brands(personId) flatMap { brands =>
+          badRequest(views.html.v2.endorsement.addForm(user, personId, brands, error))},
+        endorsementData ⇒
+          (for {
+            person <- services.personService.find(personId)
+            endorsements <- services.personService.endorsements(personId)
+          } yield (person, endorsements)) flatMap {
+            case (None, _) => notFound(Messages("error.person.notFound"))
+            case (Some(person), endorsements) =>
               val maxPosition = if (endorsements.nonEmpty)
                 endorsements.last.position
               else
@@ -142,11 +163,10 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
               val endorsement = Endorsement(None, personId, endorsementData.brandId,
                 endorsementData.content, endorsementData.name,
                 endorsementData.company, maxPosition + 1)
-              personService.insertEndorsement(endorsement)
-              val url = routes.People.details(personId).url + "#experience"
-              Redirect(url)
-            })
-        } getOrElse NotFound(Messages("error.person.notFound"))
+              services.personService.insertEndorsement(endorsement) flatMap { _ =>
+                redirect(routes.People.details(personId).url + "#experience")
+              }
+          })
   }
 
   /**
@@ -154,56 +174,64 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def createFromSelected(personId: Long) = SecuredProfileAction(personId) {
+  def createFromSelected(personId: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       val form = Form(single("evaluations" -> nonEmptyText))
       form.bindFromRequest.fold(
         error => jsonBadRequest("'evaluations' param is empty"),
         formData => {
-          val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
-          val events = eventService.findByFacilitator(personId)
-          val endorsements = personService.endorsements(personId)
-          val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
-          val evaluations = evaluationService.
-            findByEventsWithAttendees(events.map(_.identifier)).
-            filter(x => receivedIds.contains(x._3.identifier)).
-            filterNot(x => evaluationIds.contains(x._3.identifier))
-          val maxPosition = maxEndorsementPosition(endorsements)
-          val newEndorsements = evaluations.map { view =>
-            val name = view._2.fullName
-            val brandId = view._1.brandId
-            Endorsement(None, personId, brandId, view._3.facilitatorReview, name,
-              evaluationId = view._3.identifier, rating = Some(view._3.impression))
-          }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
-          newEndorsements.foreach { x => personService.insertEndorsement(x) }
-          val url = routes.People.details(personId).url + "#experience"
-          jsonOk(Json.obj("url" -> url))
+          (for {
+            events <- services.eventService.findByFacilitator(personId)
+            endorsements <- services.personService.endorsements(personId)
+            evaluations <- services.evaluationService.findByEventsWithAttendees(events.map(_.identifier))
+          } yield (events, endorsements, evaluations)) flatMap { case (events, endorsements, evaluations) =>
+            val evaluationIds = endorsements.filter(_.evaluationId != 0).map(_.evaluationId)
+            val receivedIds = Json.parse(formData).as[JsArray].value.toList.map(_.as[Long])
+            val filteredEvaluations = evaluations.filter(x => receivedIds.contains(x._3.identifier)).
+              filterNot(x => evaluationIds.contains(x._3.identifier))
+            val maxPosition = maxEndorsementPosition(endorsements)
+            val newEndorsements = filteredEvaluations.map { view =>
+              val name = view._2.fullName
+              val brandId = view._1.brandId
+              Endorsement(None, personId, brandId, view._3.facilitatorReview, name,
+                evaluationId = view._3.identifier, rating = Some(view._3.impression))
+            }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
+            newEndorsements.foreach { x => services.personService.insertEndorsement(x) }
+            val url = routes.People.details(personId).url + "#experience"
+            jsonOk(Json.obj("url" -> url))
+          }
         }
       )
   }
 
   /**
    * Creates an endorsement from the given evaluation
-   * @param eventId Event identifier
+    *
+    * @param eventId Event identifier
    * @param evaluationId Evaluation identifier
    */
   def createFromEvaluation(eventId: Long, evaluationId: Long) =
     AsyncSecuredEventAction(List(Role.Facilitator), eventId) {
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
-        if (event.facilitatorIds.contains(personId)) {
-          evaluationService.findWithAttendee(evaluationId) map { view =>
-            val endorsements = personService.endorsements(personId)
-            val maxPosition = maxEndorsementPosition(endorsements)
-            val endorsement = Endorsement(None, personId,
-              event.brandId, view.evaluation.facilitatorReview, view.attendee.fullName,
-              position = maxPosition + 1, evaluationId = view.evaluation.id.get,
-              rating = Some(view.evaluation.impression))
-            val id = personService.insertEndorsement(endorsement).id.get
-            Future.successful(jsonOk(Json.obj("endorsementId" -> id)))
-          } getOrElse Future.successful(jsonNotFound("Evaluation doesn't exist"))
+        if (event.facilitatorIds(services).contains(personId)) {
+          (for {
+            view <- services.evaluationService.findWithAttendee(evaluationId)
+            endorsements <- services.personService.endorsements(personId)
+          } yield (view, endorsements)) flatMap {
+            case (None, _) => jsonNotFound("Evaluation doesn't exist")
+            case (Some(view), endorsements) =>
+              val maxPosition = maxEndorsementPosition(endorsements)
+              val endorsement = Endorsement(None, personId,
+                event.brandId, view.evaluation.facilitatorReview, view.attendee.fullName,
+                position = maxPosition + 1, evaluationId = view.evaluation.id.get,
+                rating = Some(view.evaluation.impression))
+              services.personService.insertEndorsement(endorsement) flatMap { endorsement =>
+                jsonOk(Json.obj("endorsementId" -> endorsement.id.get))
+              }
+          }
         } else {
-          Future.successful(jsonBadRequest("Internal error. You shouldn't be able to make this request"))
+          jsonBadRequest("Internal error. You shouldn't be able to make this request")
         }
   }
 
@@ -212,7 +240,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def updatePositions(personId: Long) = SecuredProfileAction(personId) {
+  def updatePositions(personId: Long) = AsyncSecuredProfileAction(personId) {
     implicit request => implicit handler => implicit user =>
       val form = Form(single("positions" -> nonEmptyText))
       form.bindFromRequest.fold(
@@ -222,7 +250,7 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
           positions.value.foreach { x =>
             val id = (x \ "id").as[Long]
             val position = (x \ "position").as[Int]
-            personService.updateEndorsementPosition(personId, id, position)
+            services.personService.updateEndorsementPosition(personId, id, position)
           }
           jsonSuccess("ok")
         }
@@ -238,11 +266,11 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id endorsement identifier
    */
-  def remove(personId: Long, id: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.deleteEndorsement(personId, id)
+  def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.personService.deleteEndorsement(personId, id) flatMap { _ =>
         jsonSuccess("ok")
+      }
   }
 
   /**
@@ -251,31 +279,34 @@ class Endorsements(environment: RuntimeEnvironment[ActiveUser])
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def update(personId: Long, id: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        form.bindFromRequest.fold(
-          error ⇒ BadRequest(views.html.v2.endorsement.editForm(user, personId, brands(personId), error, id)),
-          endorsementData ⇒ {
-            val endorsement = Endorsement(Some(id), personId, endorsementData.brandId,
-              endorsementData.content, endorsementData.name,
-              endorsementData.company)
-            personService.updateEndorsement(endorsement)
-            val url = routes.People.details(personId).url + "#experience"
-            Redirect(url)
-          })
+  def update(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      form.bindFromRequest.fold(
+        error ⇒ brands(personId) flatMap { brands =>
+          badRequest(views.html.v2.endorsement.editForm(user, personId, brands, error, id))},
+        endorsementData ⇒ {
+          val endorsement = Endorsement(Some(id), personId, endorsementData.brandId,
+            endorsementData.content, endorsementData.name,
+            endorsementData.company)
+          services.personService.updateEndorsement(endorsement) flatMap { _ =>
+            val url: String = routes.People.details(personId).url + "#experience"
+            redirect(url)
+          }
+        })
   }
 
   /**
    * Returns list of brands for which the given person has licenses
-   * @param personId Person identifier
+    *
+    * @param personId Person identifier
    */
-  protected def brands(personId: Long): List[Brand] =
-    brandService.findByLicense(personId).map(_.brand)
+  protected def brands(personId: Long): Future[List[Brand]] =
+    services.brandService.findByLicense(personId).map(_.map(_.brand))
 
   /**
    * Returns maximum position of endorsements from the given list
-   * @param endorsements Endorsements
+    *
+    * @param endorsements Endorsements
    */
   protected def maxEndorsementPosition(endorsements: List[Endorsement]): Int = {
     if (endorsements.nonEmpty)

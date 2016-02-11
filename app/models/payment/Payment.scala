@@ -24,6 +24,7 @@
 
 package models.payment
 
+import models.service.Services
 import models.{ Organisation, Person }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -37,6 +38,7 @@ case class Payment(key: String) {
 
   /**
    * Subscribes new member either a person or an organisation
+ *
    * @param person Person making a payment (also may want to be a member)
    * @param org Organisation which wants to be a member
    * @param token Card token
@@ -44,9 +46,8 @@ case class Payment(key: String) {
    * @return Returns remote customer identifier
    */
   def subscribe(person: Person,
-    org: Option[Organisation],
-    token: String,
-    amount: Int): String = {
+                org: Option[Organisation],
+                token: String, amount: Int)(implicit services: Services): String = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }
@@ -62,7 +63,8 @@ case class Payment(key: String) {
     else
       "Internal error. Please inform the support stuff"
     val userId = person.id.get
-    Record(invoiceId, userId, customerId, person = org.isEmpty, Payment.DESC, fee).insert
+    val record = Record(invoiceId, userId, customerId, person = org.isEmpty, Payment.DESC, fee)
+    services.paymentRecordService.insert(record)
     val msg = org map { o ⇒
       "Organisation %s (id = %s) paid membership fee EUR %s".format(
         customerName, customerId, fee)
@@ -83,6 +85,7 @@ object Payment {
   /**
    * Returns minimum, suggested and elite fees for supporters based on country.
    * Fee amounts are taken from HM constitution: http://www.happymelly.com/constitution/
+ *
    * @param code Country code
    */
   def countryBasedFees(code: String): (Int, Int, Int) = {

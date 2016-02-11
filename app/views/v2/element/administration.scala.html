@@ -1,5 +1,5 @@
 @(member: Member)(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF

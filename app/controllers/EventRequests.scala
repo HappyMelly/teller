@@ -1,52 +1,55 @@
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
 import models.service.Services
+import play.api.i18n.MessagesApi
 import play.api.mvc.Action
-import securesocial.core.RuntimeEnvironment
-import scala.concurrent.Future
+import services.TellerRuntimeEnvironment
 
 /**
   * Contains methods for managing event requests UI
   */
-class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonController
-  with Security
-  with Services
-  with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                               override val messagesApi: MessagesApi,
+                               val services: Services,
+                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware {
 
   /**
     * Renders details info for the given request
- *
+    *
     * @param brandId Brand identifier
     * @param requestId Request identifier
     */
   def details(brandId: Long, requestId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
-    implicit handler => implicit user => Future.successful {
-      eventRequestService.find(requestId) map { request =>
-        Ok(views.html.v2.eventRequest.details(request))
-      } getOrElse jsonBadRequest("Event request not found")
-    }
+    implicit handler => implicit user =>
+      services.eventRequestService.find(requestId) flatMap {
+        case None => jsonBadRequest("Event request not found")
+        case Some(eventRequest) => ok(views.html.v2.eventRequest.details(eventRequest))
+      }
   }
 
   /**
     * Returns list of event requests for the given brand
- *
+    *
     * @param brandId Brand identifier
     */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
-    implicit request => implicit handler => implicit user => Future.successful {
-      val requests = eventRequestService.findByBrand(brandId)
-      roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
-        Ok(views.html.v2.eventRequest.index(user, view.brand, brands, requests))
-      } { (brand, brands) =>
-        Redirect(routes.Dashboard.index())
-      } {
-        Redirect(routes.Dashboard.index())
+    implicit request => implicit handler => implicit user =>
+      services.eventRequestService.findByBrand(brandId) flatMap { requests =>
+        roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
+          ok(views.html.v2.eventRequest.index(user, view.brand, brands, requests))
+        } { (brand, brands) =>
+          redirect(routes.Dashboard.index())
+        } {
+          redirect(routes.Dashboard.index())
+        }
       }
-    }
   }
 
   /**
@@ -54,11 +57,14 @@ class EventRequests(environment: RuntimeEnvironment[ActiveUser]) extends JsonCon
  *
     * @param hashedId Hashed unique id
     */
-  def unsubscribe(hashedId: String) = Action { implicit request ⇒
-    eventRequestService.find(hashedId) map { eventRequest =>
-      eventRequestService.update(eventRequest.copy(unsubscribed = true))
-      Ok(views.html.v2.eventRequest.unsubscribed())
-    } getOrElse NotFound(views.html.v2.eventRequest.notfound())
+  def unsubscribe(hashedId: String) = Action.async { implicit request ⇒
+    services.eventRequestService.find(hashedId) flatMap {
+      case None => notFound(views.html.v2.eventRequest.notfound())
+      case Some(eventRequest) =>
+        services.eventRequestService.update(eventRequest.copy(unsubscribed = true)) flatMap { _ =>
+          ok(views.html.v2.eventRequest.unsubscribed())
+        }
+    }
   }
 
 

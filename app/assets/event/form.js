@@ -290,11 +290,11 @@ $(document).ready( function() {
     $('#schedule_totalHours').on('change', function(e) {
         checkTotalHours($(this).val());
     });
-    $('#details_webSite').on('change', function(e) {
-        checkUrl($(this).val(), '#details_webSite');
+    $('#organizer_webSite').on('change', function(e) {
+        checkUrl($(this).val(), '#organizer_webSite');
     });
-    $('#details_registrationPage').on('change', function(e) {
-        checkUrl($(this).val(), '#details_registrationPage');
+    $('#organizer_registrationPage').on('change', function(e) {
+        checkUrl($(this).val(), '#organizer_registrationPage');
     });
     var brandId = $('#brandId').find(':selected').val();
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));

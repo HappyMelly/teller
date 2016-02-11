@@ -1,10 +1,12 @@
 @(user: ActiveUser,
-  id: Option[Long],
-  title: Option[String],
-  form: Form[Product])(implicit flash: Flash,
+    id: Option[Long],
+    title: Option[String],
+    products: List[Product],
+    form: Form[Product])(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import helper.CSRF
 @import models.service.ProductService
@@ -39,7 +41,7 @@
 
           @html.select(
             form("parentId"),
-            ("", "Choose a product parent") :: ProductService.get.findAll.map(p => (p.id.get.toString, p.title)),
+            ("", "Choose a product parent") :: products.map(p => (p.id.get.toString, p.title)),
             '_label -> "Parent", '_help -> "")
 
         <div clas="row">

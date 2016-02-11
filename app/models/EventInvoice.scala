@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,41 +21,19 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
-import models.database.EventInvoices
-import models.service.OrganisationService
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+case class InvoiceView(invoice: EventInvoice, invoiceTo: String, invoiceBy: Option[String])
 
 case class EventInvoice(id: Option[Long],
     eventId: Option[Long],
     invoiceTo: Long,
     invoiceBy: Option[Long],
-    number: Option[String]) {
-
-  lazy val invoiceToOrg: Option[Organisation] = OrganisationService.get.find(invoiceTo)
-  lazy val invoiceByOrg: Option[Organisation] = invoiceBy.map { OrganisationService.get.find(_) }.getOrElse(None)
-}
+    number: Option[String])
 
 object EventInvoice {
 
   def empty: EventInvoice = EventInvoice(None, None, 0, None, None)
 
-  def findByEvent(id: Long): EventInvoice = DB.withSession { implicit session ⇒
-    TableQuery[EventInvoices].filter(_.eventId === id).first
-  }
-
-  def update(invoice: EventInvoice): Unit = DB.withSession {
-    implicit session: Session ⇒
-      _update(invoice)
-  }
-
-  def _update(invoice: EventInvoice)(implicit session: Session): Unit =
-    TableQuery[EventInvoices].filter(_.id === invoice.id)
-      .map(_.forUpdate)
-      .update((invoice.invoiceTo, invoice.invoiceBy, invoice.number))
 }
 

@@ -1,24 +1,25 @@
 @(user: ActiveUser,
     brand: Brand,
+    profile: SocialProfile,
     coordinator: Option[Person],
-    links: List[models.brand.BrandLink])(implicit request: Request[Any],
+    links: List[models.brand.BrandLink],
+    deletable: Boolean)(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
-@import models.UserRole.DynamicRole
-
+@import models.UserRole.Role
 
 @v2.main(brand.code + " - Brand", "brands", user) {
     <div class="row profile-header">
       <div class="container">
           <div class="content-block">
               <h2>@brand.name</h2>
-              @views.html.element.profiles(brand.socialProfile, None)
+              @views.html.element.profiles(profile, None)
               <div class="actions pull-right">
-                  @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                  @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
                       <div class="button">
                           <a class="btn btn-primary" href="@routes.Brands.edit(brand.id.get)">Edit</a>
                       </div>
@@ -43,7 +44,7 @@
                           <form class="delete form-inline" method="post" text="brand"
                           action="@CSRF(routes.Brands.delete(brand.id.get))">
                               <button class="btn btn-default" type="submit"
-                                  @if(!brand.deletable) {
+                                  @if(!deletable) {
                                       disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }
                               >Delete</button>
                           </form>
@@ -91,7 +92,7 @@
                         </a>
                     </div>
 
-                    @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                    @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
                         <div class="b-sidemenu__group">
                             <div class="b-sidemenu__head">
                                 Settings
@@ -141,7 +142,7 @@
             </div>
             <div class="center tab-content">
                 <div class="tab-pane active" id="general">
-                    @views.html.v2.brand.tabs.general(brand, coordinator, links)
+                    @views.html.v2.brand.tabs.general(brand, profile, coordinator, links)
                 </div>
                 <div class="tab-pane" id="testimonials"></div>
                 <div class="tab-pane" id="team"></div>

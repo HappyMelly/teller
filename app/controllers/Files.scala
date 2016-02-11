@@ -59,8 +59,7 @@ trait Files extends Controller {
    * @param file File object
    * @param fieldName Name of a file field on the form
    */
-  protected def uploadFile(file: File, fieldName: String)(
-    implicit request: Request[AnyContent]): Future[Any] = {
+  protected def uploadFile(file: File, fieldName: String)(implicit request: Request[AnyContent]): Future[Any] = {
     request.body.asMultipartFormData.map { data ⇒
       data.file(fieldName).map { picture ⇒
         val encoding = "ISO-8859-1"
@@ -84,8 +83,7 @@ trait Files extends Controller {
    * @param image File object
    * @param fieldName Name of a file field on the form
    */
-  protected def uploadImage(image: Image, fieldName: String)(
-    implicit request: Request[AnyContent]): Future[Any] = {
+  protected def uploadImage(image: Image, fieldName: String)(implicit request: Request[AnyContent]): Future[Any] = {
     request.body.asMultipartFormData.map { data ⇒
       data.file(fieldName).map { picture ⇒
         val source = com.sksamuel.scrimage.Image.fromFile(picture.ref.file)

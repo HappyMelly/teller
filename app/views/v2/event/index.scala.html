@@ -1,7 +1,7 @@
 @(user: ActiveUser,
   brand: Brand,
   brands: List[Brand],
-  facilitators: List[(Long, String)])(implicit request: Request[Any], flash: Flash, handler: AuthorisationHandler)
+  facilitators: List[(Long, String)])(implicit request: Request[Any], flash: Flash, handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.main("Events", "events", user) {
   @v2.element.brandHeader(brand, brands, "events", facilitator = user.account.isFacilitatorNow) {

@@ -23,10 +23,12 @@
  */
 package models
 
+import play.api.Play.current
 import play.api.data.FormError
 import play.api.i18n.Messages
-import play.api.libs.json._
+import play.api.i18n.Messages.Implicits._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 import utils.EnumUtils
 
 /**
@@ -60,7 +62,7 @@ object ErrorCode extends Enumeration {
 object APIError {
 
   def unapply(e: APIError) = {
-    new Some(e.code, Messages(e.message), e.field, e.subErrors)
+    new Some((e.code, Messages(e.message), e.field, e.subErrors))
   }
 
   implicit lazy val apiErrorWrites: Writes[APIError] = (
@@ -71,6 +73,7 @@ object APIError {
 
   /**
    * Create an APIError object based on type of the error
+ *
    * @param identifier Error identifier for look-up
    * @param field A field with the error
    * @return APIError
@@ -98,6 +101,7 @@ object APIError {
 
   /**
    * Create a validation error object from FormError sequence
+ *
    * @param subErrors A set of errors for the children
    * @return APIError
    */

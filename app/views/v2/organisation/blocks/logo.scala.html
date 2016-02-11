@@ -1,15 +1,15 @@
 @(org: Organisation,
     width: String)(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 <div class="b-avatar js-organization-photo @if(org.logo) { b-avatar_stat_real } ">
   <div style="display: none ;" id="org">@org.identifier</div>
 
-  @dynamicOr(handler, DynamicRole.OrgMember, org.identifier.toString) {
+  @dynamicOr(handler, Role.OrgMember.toString, org.identifier.toString) {
     <img width="@width" class="b-avatar__img b-avatar__img-real" src="@Organisations.logoUrl(org.identifier)"/>
 
     <a href="#" class="js-choose-link">
@@ -38,7 +38,7 @@
     }
   }
 
-  @dynamic(handler, DynamicRole.OrgMember, org.identifier.toString) {
+  @dynamic(handler, Role.OrgMember.toString, org.identifier.toString) {
     <div id="uploadPhotoDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
       <div id="uploadPhotoContent">
       @v2.html.dialog("photoSelection",

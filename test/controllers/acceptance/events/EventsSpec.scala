@@ -59,13 +59,13 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.eventService_=(eventService)
 
   def e2 = {
-    (eventService.confirm _) expects 1L
+    (services.eventService.confirm _) expects 1L
     val result = controller.confirm(1L).apply(fakePostRequest())
     header("Location", result) must beSome.which(_.contains("/event/1"))
   }
 
   def e3 = {
-    (eventService.findWithInvoice _) expects 1L returning None
+    (services.eventService.findWithInvoice _) expects 1L returning None
     val result = controller.invoice(1L).apply(fakePostRequest())
     status(result) must equalTo(NOT_FOUND)
   }
@@ -74,12 +74,12 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
     val id = 2L
     val invoice = EventInvoice(Some(1L), Some(id), 5L, None, None)
     val view = EventView(EventHelper.one, invoice)
-    (eventService.findWithInvoice _) expects id returning Some(view)
+    (services.eventService.findWithInvoice _) expects id returning Some(view)
     val invoiceService = mock[EventInvoiceService]
     (invoiceService.update _) expects invoice.copy(invoiceBy = Some(6L), number = Some("31"))
     controller.eventInvoiceService_=(invoiceService)
     val orgService = mock[OrganisationService]
-    (orgService.find(_: Long)) expects 6L returning Some(OrganisationHelper.one)
+    (services.orgService.find(_: Long)) expects 6L returning Some(OrganisationHelper.one)
     controller.orgService_=(orgService)
     val request = fakePostRequest().
       withFormUrlEncodedBody(("invoiceBy", "6"), ("number", "31"))

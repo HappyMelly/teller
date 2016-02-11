@@ -1,45 +1,48 @@
+@import models.service.Services
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
     funders: List[Organisation],
-    view: EventView,
+    event: Event,
+    view: InvoiceView,
     typeName: String,
-    fees: List[(String, String)])(implicit
-    request: Request[Any],
-    flash: Flash,
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    fees: List[(String, String)],
+    deletable: Boolean)(implicit
+        request: Request[Any],
+        flash: Flash,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        services: Services)
 
-@import helper.CSRF
 @import templates.Formatters._
 @import views.Countries
 @import views.ViewHelpers.dateInterval
 
-@v2.main(view.event.title + " - Event", "events", user, withMelly = true) {
+@v2.main(event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
     <span><a href="@routes.Events.index(brand.identifier)">Events</a></span>
   }
-  <input type="hidden" disabled id="brandId" value="@view.event.brandId"/>
-  <input type="hidden" disabled id="eventId" value="@view.event.id"/>
+  <input type="hidden" disabled id="brandId" value="@event.brandId"/>
+  <input type="hidden" disabled id="eventId" value="@event.id"/>
 
   <div class="row page-content">
     <div class="container">
       <div class="row event-details  content-block">
         <div class="col-md-9">
-          @views.html.event.requestEvaluation(view.event, view.event.facilitatorIds.head, brand.evaluationUrl)
+          @views.html.event.requestEvaluation(event, event.facilitatorIds(services).head, brand.evaluationUrl)
           <div class="header-block">
             <div class="row">
-              <div class="col-md-12"><h2>@view.event.title</h2></div>
+              <div class="col-md-12"><h2>@event.title</h2></div>
               <div class="col-md-6">
-                @dateInterval(view.event.schedule.start, view.event.schedule.end)
-                @if(view.event.location.online) {
+                @dateInterval(event.schedule.start, event.schedule.end)
+                @if(event.location.online) {
                   online
                 } else {
-                  in @view.event.location.city, @Countries.name(view.event.location.countryCode)
+                  in @event.location.city, @Countries.name(event.location.countryCode)
                 }
               </div>
               <div class="col-md-4">
-                Event Rating @views.html.v2.element.rating(view.event.rating)
+                Event Rating @views.html.v2.element.rating(event.rating)
               </div>
             </div>
           </div>
@@ -48,30 +51,30 @@
               <div class="col-md-12">
                 <div class="buttons">
                   <div class="buttons-block">
-                    @if(!view.event.confirmed) {
-                      <a href="#" data-id="@view.event.identifier" class="btn btn-primary event-confirm">
+                    @if(!event.confirmed) {
+                      <a href="#" data-id="@event.identifier" class="btn btn-primary event-confirm">
                         Confirm
                       </a>
                     } else {
                       <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
                     }
-                    <a class="btn btn-default" href="@routes.Events.edit(view.event.id.get)">
+                    <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
                       Edit
                     </a>
                   </div>
                   <div class="buttons-block">
-                    <a class="btn btn-default" href="@routes.Events.duplicate(view.event.id.get)">
+                    <a class="btn btn-default" href="@routes.Events.duplicate(event.id.get)">
                       Duplicate
                     </a>
-                    <a data-id="@view.event.identifier" class="btn btn-default event-cancel"
-                      id="cancelButton" @if(!view.event.deletable) {disabled="disabled"} >Cancel</a>
+                    <a data-id="@event.identifier" class="btn btn-default event-cancel"
+                      id="cancelButton" @if(!deletable) {disabled="disabled"} >Cancel</a>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           @if(user.account.isCoordinatorNow) {
-            @if(!view.event.schedule.validateTotalHours) {
+            @if(!event.schedule.validateTotalHours) {
               <div class="alert alert-warning">
                 <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
                 suspiciously less than a number of hours per day multiplied to a number of days.
@@ -84,7 +87,7 @@
             <div class="col-md-12 event-info">
             <div class="column">
               <div class="title">Facilitators</div>
-              @for(facilitator <- view.event.facilitators) {
+              @for(facilitator <- event.facilitators(services)) {
                 <a href="@routes.People.details(facilitator.id.getOrElse(0))">
                   @element.photo(facilitator, "70")
                 </a>
@@ -95,94 +98,43 @@
               <div class="title">Event rundown</div>
               <div class="column">
                 <dt>Spoken Language</dt>
-                <dd>@view.event.spokenLanguage</dd>
-                @view.event.materialsLanguage.map { language =>
+                <dd>@event.spokenLanguage</dd>
+                @event.materialsLanguage.map { language =>
                   <dt>Materials in</dt>
                   <dd>@language</dd>
                 }
                 <dt>Hours</dt>
-                <dd>@view.event.schedule.totalHours (per day: @view.event.schedule.hoursPerDay)</dd>
+                <dd>@event.schedule.totalHours (per day: @event.schedule.hoursPerDay)</dd>
               </div>
               <div class="column">
                 <dt class="text-muted">Event type</dt>
                 <dd>@typeName</dd>
                 <dt class="text-muted">Organizer</dt>
-                <dd id="organizer" data-id="@view.event.organizer.id"></dd>
+                <dd id="organizer" data-id="@event.organizer.id"></dd>
               </div>
             </div>
           </div>
           </div>
           <div class="row">
             <div class="col-md-12">
-              @view.event.organizer.webSite.map { url =>
+              @event.organizer.webSite.map { url =>
                 <span class="text-muted">Website: </span><a href="@url" target="_blank">@url</a><br/>
               }
-              @view.event.organizer.registrationPage.map { url =>
+              @event.organizer.registrationPage.map { url =>
                 <span class="text-muted">Registration: </span><a href="@url" target="_blank">@url</a><br/>
               }
               <br/>
-              @view.event.details.description.map { desc =>
+              @event.details.description.map { desc =>
                 <span class="text-muted">Description: </span>@desc.markdown<br/>
               }
-              @view.event.details.specialAttention.map { attention =>
+              @event.details.specialAttention.map { attention =>
                 <span class="text-muted">Special attention: </span>@attention.markdown<br/>
               }
             </div>
           </div>
           @views.html.element.brandFees(brand.name, fees)
         </div>
-        <div class="col-md-3">
-          <div class="panel panel-success notification-widget">
-            <div class="panel-body grey-widget">
-              <h5>License Event Fee</h5>
-              @if(view.event.free) {
-                <div class="text-center strength-value">Free</div>
-              } else {
-                <div class="text-center strength-value">@view.event.fee.map { fee => @fee }</div>
-              }
-              @if(!view.event.free) {
-                <dt>Invoice To:</dt>
-                <dl><a href="@routes.Organisations.details(view.invoice.invoiceTo)">@view.invoice.invoiceToOrg.get.name</a></dl>
-                @view.invoice.invoiceBy.map { id =>
-                  <dt>Invoice By:</dt>
-                  <dl><a href="@routes.Organisations.details(id)">@view.invoice.invoiceByOrg.get.name</a></dl>
-                }
-                @view.invoice.number.map { number =>
-                  <dt>Invoice #:</dt>
-                  <dl>@number</dl>
-                }
-                @if(user.account.isCoordinatorNow) {
-                  <form method="POST" action="@CSRF(routes.Events.invoice(view.event.id.get))">
-                    <input type="hidden" name="id" value="@view.invoice.id">
-                    <input type="hidden" name="invoiceTo" id="invoiceTo" value="@view.invoice.invoiceTo">
-                    <input type="hidden" name="eventId" value="@view.event.id">
-                    <div class="form-group" id="invoiceBy_field">
-                      <label for="invoiceBy" class="control-label">Invoiced By</label>
-                      <select name="invoiceBy" class="form-control" id="invoiceBy">
-                        <option value="">Choose an organisation</option>
-                        @funders.map { entity =>
-                          <option value="@entity.id" @if(view.invoice.invoiceBy.exists(_ == entity.id.get)) {selected}>@entity.name </option>
-                        }
-                      </select>
-                    </div>
-                    <div class="form-group" id="number_field">
-                      <label for="number" class="control-label">Invoice Number</label>
-                      <input id="number" class="form-control" type="text" name="number" value="@view.invoice.number">
-                    </div>
-                    <p>
-                      <button class="btn btn-primary btn-block">Update Invoice Info</button>
-                    </p>
-                  </form>
-                }
-                @if(user.account.isFacilitatorNow) {
-                  <div class="text-warning">
-                    You will be invoiced for @view.event.fee.map { fee => @fee }. If the event didn't take place,
-                    <b>cancel it</b>.</div>
-                }
-              }
-            </div>
-          </div>
-        </div>
+        @views.html.v2.event.invoice(user, funders, event, view)
         <div class="col-md-12">
           <div class="table-title">
             <div class="pull-left">
@@ -190,7 +142,7 @@
             </div>
             <div class="pull-right">
               <a tabindex="-1"
-              href="@controllers.event.routes.Attendees.add(view.event.identifier)" title="Add Attendee">
+              href="@controllers.event.routes.Attendees.add(event.identifier)" title="Add Attendee">
                 Add Attendee</a>
               @if(brand.evaluationUrl.isDefined) {
                   <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">

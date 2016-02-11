@@ -24,44 +24,43 @@
 
 package controllers
 
-import models.ActiveUser
-import play.api.i18n.Messages
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Action
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import securesocial.controllers.{BasePasswordReset, BaseRegistration}
-import securesocial.core.RuntimeEnvironment
 import securesocial.core.providers.UsernamePasswordProvider
 import securesocial.core.services.SaveMode
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
 /**
   * Contains a set of methods for resetting user's password
   */
-class PasswordReset(implicit val env: RuntimeEnvironment[ActiveUser])
-  extends BasePasswordReset[ActiveUser]
-  with JsonController {
+class PasswordReset @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                            val messagesApi: MessagesApi)
+  extends BasePasswordReset
+  with AsyncController {
 
   private val logger = play.api.Logger("securesocial.controllers.BasePasswordReset")
 
-  override def handleStartResetPassword = Action.async {
-    implicit request =>
-      startForm.bindFromRequest.fold(
-        errors => Future.successful(BadRequest(env.viewTemplates.getStartResetPasswordPage(errors))),
-        email => env.userService.findByEmailAndProvider(email, UsernamePasswordProvider.UsernamePassword).map {
-          maybeUser =>
-            maybeUser match {
-              case Some(user) =>
-                createToken(email, isSignUp = false).map { token =>
-                  env.mailer.sendPasswordResetEmail(user, token.uuid)
-                  env.userService.saveToken(token)
-                }
-              case None =>
-                env.mailer.sendUnkownEmailNotice(email)
-            }
-            jsonSuccess(Messages(BaseRegistration.ThankYouCheckEmail))
-        }
-      )
+  override def handleStartResetPassword = Action.async { implicit request =>
+    startForm.bindFromRequest.fold(
+      errors => badRequest(env.viewTemplates.getStartResetPasswordPage(errors)),
+      email => env.userService.findByEmailAndProvider(email, UsernamePasswordProvider.UsernamePassword).flatMap {
+        maybeUser =>
+          maybeUser match {
+            case Some(user) =>
+              createToken(email, isSignUp = false).map { token =>
+                env.mailer.sendPasswordResetEmail(user, token.uuid)
+                env.userService.saveToken(token)
+              }
+            case None =>
+              env.mailer.sendUnkownEmailNotice(email)
+          }
+          jsonSuccess(Messages(BaseRegistration.ThankYouCheckEmail))
+      }
+    )
   }
 
 

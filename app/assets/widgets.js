@@ -87,6 +87,7 @@
 
         $.get(url, function(data){
             self.$el.html(data);
+            self.checkStatus();
         });
     };
 
@@ -95,6 +96,13 @@
 
         return (this.currentUserId == personId);
     };
+
+    CompletionWidget.prototype.checkStatus = function(){
+        var $el = this.$el,
+            value = $.trim($el.find('[data-completion-value]').text());
+
+        $el.toggleClass('b-completion_state_progress', value !== '100%');
+    }
 
     App.widgets.CompletionWidget = CompletionWidget;
 

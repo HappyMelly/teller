@@ -24,8 +24,7 @@
 
 package models.brand
 
-import models.service.BrandService
-import models.{ Activity, ActivityRecorder, Brand }
+import models.{Activity, ActivityRecorder}
 
 case class EventType(id: Option[Long],
     brandId: Long,
@@ -50,9 +49,4 @@ case class EventType(id: Option[Long],
    * Returns type of this object
    */
   def objectType: String = Activity.Type.EventType
-
-  /**
-   * @deprecated
-   */
-  def brand: Brand = BrandService.get.find(this.brandId).get
 }

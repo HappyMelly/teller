@@ -1,7 +1,9 @@
-@import securesocial.core.providers.UsernamePasswordProvider
 @(loginForm: Form[(String, String)],
     errorMsg: Option[String] = None)(implicit request: RequestHeader,
-    env: securesocial.core.RuntimeEnvironment[_])
+    env: securesocial.core.RuntimeEnvironment,
+    messages: Messages)
+
+@import securesocial.core.providers.UsernamePasswordProvider
 
 @alert(alertType: String) = {
     @request.flash.get(alertType).map { message =>
@@ -42,7 +44,7 @@
                 @if(loginForm.hasErrors) {
                     <div class="errors text-left">
                         @for((error, index) <- loginForm.errors.zipWithIndex) {
-                            @play.api.i18n.Messages(error.message)<br/>
+                            @Messages(error.message)<br/>
                         }
                     </div>
                 }

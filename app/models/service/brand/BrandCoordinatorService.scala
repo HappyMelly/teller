@@ -24,17 +24,26 @@
 
 package models.service.brand
 
+import models.UserAccount
 import models.brand.BrandCoordinator
-import models.database.brand.BrandCoordinators
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.UserAccountTable
+import models.database.brand.BrandCoordinatorTable
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Contains a set of functions for managing team members in database
  */
-class BrandCoordinatorService {
+class BrandCoordinatorService(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with BrandCoordinatorTable
+  with UserAccountTable {
 
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
   private val coordinators = TableQuery[BrandCoordinators]
 
   /**
@@ -42,45 +51,40 @@ class BrandCoordinatorService {
    * @param brandId Brand identifier
    * @param personId Person identifier
    */
-  def delete(brandId: Long, personId: Long) = DB.withSession { implicit session ⇒
-    coordinators.
-      filter(_.brandId === brandId).
-      filter(_.personId === personId).delete
-  }
+  def delete(brandId: Long, personId: Long) =
+    db.run(coordinators.filter(_.brandId === brandId).filter(_.personId === personId).delete)
 
   /**
-   * Adds new team member to the given brand
-   * @param coordinator Brand object
-   */
-  def insert(coordinator: BrandCoordinator) = DB.withSession {
-    implicit session ⇒ _insert(coordinator)
-  }
-
-  def update(brandId: Long, personId: Long, notification: String, value: Boolean) =
-    DB.withSession { implicit session ⇒
-      val query = coordinators.
-        filter(_.brandId === brandId).
-        filter(_.personId === personId)
-      notification match {
-        case "event" ⇒ query.map(_.event).update(value)
-        case "evaluation" ⇒ query.map(_.evaluation).update(value)
-        case _ ⇒ query.map(_.certificate).update(value)
+    * Adds new coordinator to database
+    * @param coordinator Brand coordinator
+    */
+  def save(coordinator: BrandCoordinator): Future[BrandCoordinator] = {
+    val actions = (for {
+      _ <- coordinators += coordinator
+      _ <- userAccountQuery.findByPerson(coordinator.personId).result.headOption.flatMap {
+        case Some(account) => updateUserAccountQuery(coordinator.personId)
+        case None => insertUserAccountQuery(coordinator.personId)
       }
+    } yield ()).transactionally
+    db.run(actions).map(_ => coordinator)
+  }
+
+  def update(brandId: Long, personId: Long, notification: String, value: Boolean) = {
+    val query = coordinators.filter(_.brandId === brandId).filter(_.personId === personId)
+    val action = notification match {
+      case "event" ⇒ query.map(_.event).update(value)
+      case "evaluation" ⇒ query.map(_.evaluation).update(value)
+      case _ ⇒ query.map(_.certificate).update(value)
     }
+    db.run(action)
+  }
 
-  /**
-   * Adds new coordinator to the given brand
-   *
-   * Requires session object so it can be used inside withTransaction
-   * @param coordinator Brand object
-   * @param session Session object
-   */
-  def _insert(coordinator: BrandCoordinator)(implicit session: Session) =
-    coordinators += coordinator
-}
 
-object BrandCoordinatorService {
-  private val instance = new BrandCoordinatorService
+  protected def insertUserAccountQuery(personId: Long) = {
+    val account = UserAccount.empty(personId).copy(coordinator = true, registered = true, activeRole = true)
+    userAccountActions.insert(account)
+  }
 
-  def get: BrandCoordinatorService = instance
+  protected def updateUserAccountQuery(personId: Long) =
+    userAccountQuery.findByPerson(personId).map(x => (x.coordinator, x.activeRole)).update((true, true))
 }

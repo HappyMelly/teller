@@ -1,6 +1,6 @@
 @(user: ActiveUser)(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler)
+        handler: _root_.be.objectify.deadbolt.scala.DeadboltHandler)
 
 @main("API", "admin", user) {
 
@@ -34,26 +34,26 @@
 
   <!-- Tab panes -->
   <div class="col-md-9 tab-content">
-    <div class="tab-pane active" id="security">@security()</div>
-    <div class="tab-pane" id="brand">@brand()</div>
-    <div class="tab-pane" id="brands">@brands()</div>
-    <div class="tab-pane" id="fees">@fees()</div>
-    <div class="tab-pane" id="evaluation">@evaluation()</div>
-    <div class="tab-pane" id="event">@event()</div>
-    <div class="tab-pane" id="events">@events()</div>
-    <div class="tab-pane" id="eventRequest">@eventRequest()</div>
-    <div class="tab-pane" id="eventTypes">@eventTypes()</div>
-    <div class="tab-pane" id="experiments">@experiments()</div>
-    <div class="tab-pane" id="facilitator">@facilitator()</div>
-    <div class="tab-pane" id="facilitators">@facilitators()</div>
-    <div class="tab-pane" id="memberlist">@members()</div>
-    <div class="tab-pane" id="member">@member()</div>
-    <div class="tab-pane" id="participants">@participants()</div>
-    <div class="tab-pane" id="participant">@participant()</div>
-    <div class="tab-pane" id="people">@people(user)</div>
-    <div class="tab-pane" id="person">@person(user)</div>
-    <div class="tab-pane" id="products">@products()</div>
-    <div class="tab-pane" id="product">@product()</div>
+    <div class="tab-pane active" id="security">@views.html.apiv2.security()</div>
+    <div class="tab-pane" id="brand">@views.html.apiv2.brand()</div>
+    <div class="tab-pane" id="brands">@views.html.apiv2.brands()</div>
+    <div class="tab-pane" id="fees">@views.html.apiv2.fees()</div>
+    <div class="tab-pane" id="evaluation">@views.html.apiv2.evaluation()</div>
+    <div class="tab-pane" id="event">@views.html.apiv2.event()</div>
+    <div class="tab-pane" id="events">@views.html.apiv2.events()</div>
+    <div class="tab-pane" id="eventRequest">@views.html.apiv2.eventRequest()</div>
+    <div class="tab-pane" id="eventTypes">@views.html.apiv2.eventTypes()</div>
+    <div class="tab-pane" id="experiments">@views.html.apiv2.experiments()</div>
+    <div class="tab-pane" id="facilitator">@views.html.apiv2.facilitator()</div>
+    <div class="tab-pane" id="facilitators">@views.html.apiv2.facilitators()</div>
+    <div class="tab-pane" id="memberlist">@views.html.apiv2.members()</div>
+    <div class="tab-pane" id="member">@views.html.apiv2.member()</div>
+    <div class="tab-pane" id="participants">@views.html.apiv2.participants()</div>
+    <div class="tab-pane" id="participant">@views.html.apiv2.participant()</div>
+    <div class="tab-pane" id="people">@views.html.apiv2.people(user)</div>
+    <div class="tab-pane" id="person">@views.html.apiv2.person(user)</div>
+    <div class="tab-pane" id="products">@views.html.apiv2.products()</div>
+    <div class="tab-pane" id="product">@views.html.apiv2.product()</div>
   </div>
 
 }

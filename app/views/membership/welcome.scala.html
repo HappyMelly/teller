@@ -1,6 +1,6 @@
 @(user: ActiveUser,
     orgs: List[Organisation])(implicit request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     flash: Flash)
 
 @main("Welcome", "membership", user, false) {
@@ -17,7 +17,7 @@
           <div class="col-md-5 text-center button-block">
             <h5>I want to be a Supporter</h5>
             <div class="button-line text-center">
-              @user.person.member.map { m =>
+              @user.member.map { m =>
                   @if(m.funder) {
                     <a href="" disabled="disabled" class="btn btn-primary">
                       You're a Funder

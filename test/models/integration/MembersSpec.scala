@@ -120,9 +120,9 @@ class MembersSpec extends PlayAppSpec {
           ("address.country", "GB"), ("firstName", "Test"),
           ("lastName", "Test"), ("signature", "false"),
           ("role", "0"))
-      (personService.insert _) expects * returning PersonHelper.one
+      (services.personService.insert _) expects * returning PersonHelper.one
       val m = member().copy(objectId = 1L)
-      (memberService.insert _) expects m returning m.copy(id = Some(1L))
+      (services.memberService.insert _) expects m returning m.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       controller.createNewPerson().apply(request)
 
@@ -135,9 +135,9 @@ class MembersSpec extends PlayAppSpec {
         withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
           ("profile.email", "test@test.ru"))
 
-      (orgService.insert _) expects * returning OrgView(org, profile)
+      (services.orgService.insert _) expects * returning OrgView(org, profile)
       val updated = m.copy(objectId = 1, person = false)
-      (memberService.insert _) expects * returning updated
+      (services.memberService.insert _) expects * returning updated
       Cache.set(Members.cacheId(1L), m, 1800)
 
       controller.createNewOrganisation().apply(req)
@@ -159,10 +159,10 @@ class MembersSpec extends PlayAppSpec {
         withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
           ("profile.email", "test@test.ru"))
       Cache.set(Members.cacheId(1L), m, 1800)
-      (orgService.insert _) expects * returning OrgView(org, profile)
+      (services.orgService.insert _) expects * returning OrgView(org, profile)
       val updated = m.copy(objectId = 1, person = false)
       //test line
-      (memberService.insert _) expects updated returning updated
+      (services.memberService.insert _) expects updated returning updated
 
       controller.createNewOrganisation().apply(req)
       ok
@@ -177,10 +177,10 @@ class MembersSpec extends PlayAppSpec {
           ("lastName", "Test"), ("signature", "false"),
           ("role", "0"))
       Cache.set(Members.cacheId(1L), m, 1800)
-      (personService.insert _) expects * returning person
+      (services.personService.insert _) expects * returning person
       val updated = m.copy(person = true, objectId = 1)
       //test line
-      (memberService.insert _) expects updated returning updated.copy(id = Some(1L))
+      (services.memberService.insert _) expects updated returning updated.copy(id = Some(1L))
       controller.createNewPerson().apply(req)
       ok
     }
@@ -188,10 +188,10 @@ class MembersSpec extends PlayAppSpec {
 
   "On step 2 an existing organisation " should {
     "be linked to a member object" in new WithStubs {
-      (orgService.find(_: Long)) expects 1L returning Some(org)
+      (services.orgService.find(_: Long)) expects 1L returning Some(org)
       val m = member(person = false).copy(objectId = 1L)
       //test line
-      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      (services.memberService.insert _) expects * returning m.copy(id = Some(1L))
       val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       Cache.set(Members.cacheId(1L), m, 1800)
 
@@ -202,11 +202,11 @@ class MembersSpec extends PlayAppSpec {
 
   "On step 2 an existing person" should {
     "be linked to a member object" in new WithStubs {
-      (personService.find(_: Long)) expects 1L returning Some(person)
+      (services.personService.find(_: Long)) expects 1L returning Some(person)
       val m = member(person = true).copy(objectId = 1L)
       Cache.set(Members.cacheId(1L), m, 1800)
       //test line
-      (memberService.insert _) expects m returning m.copy(id = Some(1L))
+      (services.memberService.insert _) expects m returning m.copy(id = Some(1L))
 
       val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       controller.updateExistingPerson().apply(req)
@@ -217,9 +217,9 @@ class MembersSpec extends PlayAppSpec {
   "Slack notification should be sent" >> {
     "when a new organisation becomes a member" in new WithStubs {
       val org = OrganisationHelper.make(id = Some(1L), name = "Test")
-      (orgService.insert _) expects * returning OrgView(org, profile)
+      (services.orgService.insert _) expects * returning OrgView(org, profile)
       val m = member(person = false)
-      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      (services.memberService.insert _) expects * returning m.copy(id = Some(1L))
       val req = fakePostRequest().
         withFormUrlEncodedBody(("name", "Test"), ("address.country", "RU"),
           ("profile.email", "test@test.com"))
@@ -231,9 +231,9 @@ class MembersSpec extends PlayAppSpec {
       controller.slackInstance.message must contain("Test")
     }
     "when a new person becomes a member" in new WithStubs {
-      (personService.insert _) expects * returning person
+      (services.personService.insert _) expects * returning person
       val m = member().copy(funder = true)
-      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      (services.memberService.insert _) expects * returning m.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       controller.counter = 0
       val req = fakePostRequest().
@@ -247,9 +247,9 @@ class MembersSpec extends PlayAppSpec {
       controller.slackInstance.message must contain("First Tester")
     }
     "when an existing organisation becomes a member" in new WithStubs {
-      (orgService.find(_: Long)) expects 1L returning Some(org)
+      (services.orgService.find(_: Long)) expects 1L returning Some(org)
       val m = member(person = false).copy(id = Some(1L))
-      (memberService.insert _) expects * returning m
+      (services.memberService.insert _) expects * returning m
       val req = fakePostRequest().withFormUrlEncodedBody(("id", "1"))
       Cache.set(Members.cacheId(1L), m, 1800)
       controller.counter = 0
@@ -261,9 +261,9 @@ class MembersSpec extends PlayAppSpec {
       controller.slackInstance.message must contain("One")
     }
     "when an existing person becomes a member" in new WithStubs {
-      (personService.find(_: Long)) expects 1L returning Some(person)
+      (services.personService.find(_: Long)) expects 1L returning Some(person)
       val m = member(person = true)
-      (memberService.insert _) expects * returning m.copy(id = Some(1L))
+      (services.memberService.insert _) expects * returning m.copy(id = Some(1L))
       Cache.set(Members.cacheId(1L), m, 1800)
       controller.counter = 0
 
@@ -276,8 +276,8 @@ class MembersSpec extends PlayAppSpec {
     "membership is revoked" in new WithStubs {
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find(_: Long)) expects 2L returning Some(member)
-      (memberService.delete _) expects (1L, true)
+      (services.memberService.find(_: Long)) expects 2L returning Some(member)
+      (services.memberService.delete _) expects (1L, true)
       controller.counter = 0
       controller.delete(2L).apply(fakePostRequest())
 
@@ -287,9 +287,9 @@ class MembersSpec extends PlayAppSpec {
     "when membership is changed" in new WithStubs {
       val member = MemberHelper.make(Some(2L), 1L, person = true, funder = false)
       member.memberObj_=(person)
-      (memberService.find(_: Long)) expects 2L returning Some(member)
-      (memberService.update _) expects *
-      // (memberService.update _) expects (where {
+      (services.memberService.find(_: Long)) expects 2L returning Some(member)
+      (services.memberService.update _) expects *
+      // (services.memberService.update _) expects (where {
       //   (m: Member) ⇒ m.funder == true && m.since.toString == "2015-01-01"
       // })
       controller.counter = 0

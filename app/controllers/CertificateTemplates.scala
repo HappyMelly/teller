@@ -24,16 +24,21 @@
 
 package controllers
 
-import models.ActiveUser
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
 import models.service.Services
-import play.api.data._
 import play.api.data.Forms._
-import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
-import scala.io.Source
+import play.api.data._
+import play.api.i18n.{MessagesApi, I18nSupport}
+import services.TellerRuntimeEnvironment
 import views.Languages
+
+import scala.concurrent.Future
+import scala.io.Source
 
 /**
  * This class exists to simplify form handling and generation
@@ -42,13 +47,13 @@ case class FakeCertificateTemplate(language: String,
   template: Option[String],
   templateNoFacilitator: Option[String])
 
-class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
-    with Security
-    with Services
-    with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                      override val messagesApi: MessagesApi,
+                                      val services: Services,
+                                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+    with Activities
+    with I18nSupport {
 
   val encoding = "ISO-8859-1"
 
@@ -65,13 +70,17 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
    * @todo change access rights to all brand managers
    * @param brandId Unique text brand identifier
    */
-  def add(brandId: Long) = SecuredBrandAction(brandId) { implicit request ⇒
+  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(brandId) map { brand ⇒
-        val templates = certificateService.findByBrand(brandId)
-        val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
-        Ok(views.html.v2.certificateTemplate.form(user, brand, languages, certificateFileForm))
-      } getOrElse NotFound
+      (for {
+        brand <- services.brandService.find(brandId)
+        templates <- services.certificateService.findByBrand(brandId)
+      } yield (brand, templates)) flatMap {
+        case (None, _) => Future.successful(NotFound)
+        case (Some(brand), templates) =>
+          val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
+          ok(views.html.v2.certificateTemplate.form(user, brand, languages, certificateFileForm))
+      }
   }
 
   /**
@@ -79,74 +88,71 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param brandId Unique brand identifier
    */
-  def create(brandId: Long) = SecuredBrandAction(brandId) { implicit request ⇒
+  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(brandId) map { brand ⇒
-        val templates = certificateService.findByBrand(brandId)
-        val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
-        val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
-        form.fold(
-          formWithErrors ⇒ BadRequest(views.html.v2.certificateTemplate.form(user,
-            brand,
-            languages,
-            formWithErrors)),
-          data ⇒ {
-            templates.find(_.language == data.language).map { v ⇒
-              BadRequest(views.html.v2.certificateTemplate.form(user,
-                brand,
-                languages,
-                form.withError("language", "error.template.exist")))
-            }.getOrElse {
-              val template = request.body.asMultipartFormData.get.file("oneFacilitator")
-              val templateOneFacilitator = request.body.asMultipartFormData.get.file("twoFacilitators")
-              val validMimeTypes = List("image/jpeg", "image/pjpeg", "image/gif", "image/png")
-              if (template.isEmpty || templateOneFacilitator.isEmpty
-                || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
-                || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
-                BadRequest(views.html.v2.certificateTemplate.form(user,
-                  brand,
-                  languages,
-                  form.withError(
-                    "oneFacilitator",
-                    "error.required").withError(
-                      "twoFacilitators",
-                      "error.required")))
-              } else {
-                val firstSource = Source.fromFile(template.get.ref.file.getPath, encoding)
-                val secondSource = Source.fromFile(templateOneFacilitator.get.ref.file.getPath, encoding)
-                val tpl = new CertificateTemplate(None,
-                  brandId,
-                  data.language,
-                  firstSource.toArray.map(_.toByte),
-                  secondSource.toArray.map(_.toByte)).insert
-                firstSource.close()
-                secondSource.close()
-                val log = activity(tpl, user.person).created.insert()
-                Redirect(routes.Brands.details(brandId).url + "#templates").flashing(
-                  "success" -> log.toString)
+      (for {
+        brand <- services.brandService.find(brandId)
+        templates <- services.certificateService.findByBrand(brandId)
+      } yield (brand, templates)) flatMap {
+        case (None, _) => Future.successful(NotFound)
+        case (Some(brand), templates) =>
+          val languages = Languages.all.filter(lang ⇒ templates.find(_.language == lang._1).isEmpty)
+          val form: Form[FakeCertificateTemplate] = certificateFileForm.bindFromRequest
+          form.fold(
+            errors ⇒ badRequest(views.html.v2.certificateTemplate.form(user, brand, languages, errors)),
+            data ⇒ {
+              templates.find(_.language == data.language).map { v ⇒
+                badRequest(views.html.v2.certificateTemplate.form(user, brand, languages,
+                  form.withError("language", "error.template.exist")))
+              }.getOrElse {
+                val template = request.body.asMultipartFormData.get.file("oneFacilitator")
+                val templateOneFacilitator = request.body.asMultipartFormData.get.file("twoFacilitators")
+                val validMimeTypes = List("image/jpeg", "image/pjpeg", "image/gif", "image/png")
+                if (template.isEmpty || templateOneFacilitator.isEmpty
+                  || !validMimeTypes.contains(template.get.contentType.getOrElse(""))
+                  || !validMimeTypes.contains(templateOneFacilitator.get.contentType.getOrElse(""))) {
+                  badRequest(views.html.v2.certificateTemplate.form(user,
+                    brand,
+                    languages,
+                    form.withError("oneFacilitator","error.required").withError("twoFacilitators","error.required")))
+                } else {
+                  val firstSource = Source.fromFile(template.get.ref.file.getPath, encoding)
+                  val secondSource = Source.fromFile(templateOneFacilitator.get.ref.file.getPath, encoding)
+                  val tpl = new CertificateTemplate(None,
+                    brandId,
+                    data.language,
+                    firstSource.toArray.map(_.toByte),
+                    secondSource.toArray.map(_.toByte))
+                  firstSource.close()
+                  secondSource.close()
+                  services.certificateService.insert(tpl) flatMap { _ =>
+                    redirect(routes.Brands.details(brandId).url + "#templates", "success" -> "Template was added")
+                  }
+                }
               }
-            }
-          })
-      } getOrElse NotFound
+            })
+      }
   }
 
   /**
    * Get a picture of a template
-   * @param id Unique template identifier
+    *
+    * @param id Unique template identifier
    * @param single Type of template to return: true - for single facilitator, false - for multiple facilitators
    * @return
    */
-  def template(id: Long, single: Boolean) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def template(id: Long, single: Boolean) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val contentType = "image/jpeg"
-
-      CertificateTemplate.find(id).map { template ⇒
-        if (single) {
-          Ok(template.oneFacilitator).as(contentType)
-        } else {
-          Ok(template.twoFacilitators).as(contentType)
-        }
-      }.getOrElse(Ok(Array[Byte]()).as(contentType))
+      services.certificateService.find(id) flatMap {
+        case None => Future.successful(Ok(Array[Byte]()).as(contentType))
+        case Some(template) =>
+          if (single) {
+            Future.successful(Ok(template.oneFacilitator).as(contentType))
+          } else {
+            Future.successful(Ok(template.twoFacilitators).as(contentType))
+          }
+      }
   }
 
   /**
@@ -155,14 +161,14 @@ class CertificateTemplates(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    * @param id Unique template identifier
    */
-  def delete(brandId: Long, id: Long) = SecuredBrandAction(brandId) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      CertificateTemplate.find(id).map { tpl ⇒
-        tpl.delete()
-        val log = activity(tpl, user.person).deleted.insert()
-        Redirect(routes.Brands.details(tpl.brandId).url + "#templates").flashing(
-          "success" -> log.toString)
-      }.getOrElse(NotFound)
+      services.certificateService.find(id) flatMap {
+        case None => notFound("Template not found")
+        case Some(template) =>
+          services.certificateService.delete(id) flatMap { _ =>
+            redirect(routes.Brands.details(template.brandId).url + "#templates", "success" -> "Template was deleted")
+          }
+      }
   }
 }

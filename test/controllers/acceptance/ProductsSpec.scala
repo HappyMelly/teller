@@ -55,7 +55,7 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
   controller.productService_=(productService)
 
   def e1 = {
-    (productService.find _) expects 1L returning None
+    (services.productService.find _) expects 1L returning None
     val res = controller.activation(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
     val data = contentAsJson(res).as[JsObject]
@@ -64,8 +64,8 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e2 = {
     val product = ProductHelper.make("Test", Some(1L))
-    (productService.find _) expects 1L returning Some(product)
-    (productService.activate _) expects 1L
+    (services.productService.find _) expects 1L returning Some(product)
+    (services.productService.activate _) expects 1L
     val req = fakePostRequest().withFormUrlEncodedBody("active" -> "true")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)
@@ -73,8 +73,8 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val product = ProductHelper.make("Test", Some(1L))
-    (productService.find _) expects 1L returning Some(product)
-    (productService.deactivate _) expects 1L
+    (services.productService.find _) expects 1L returning Some(product)
+    (services.productService.deactivate _) expects 1L
     val req = fakePostRequest().withFormUrlEncodedBody("active" -> "false")
     val res = controller.activation(1L).apply(req)
     status(res) must equalTo(OK)

@@ -1,10 +1,10 @@
 @(memberId: Long,
   experiments: List[Experiment])(implicit request: Request[Any],
-  handler: AuthorisationHandler)
+  handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 @import templates.Formatters._
 
 <div class="block">
@@ -12,7 +12,7 @@
 <p class="text-muted"><i>You can add an unlimited number of experiments you run. These
 experiments will be shown on <a href="http://happymelly.com" target="_blank">Happy Melly</a>
 website.</i></p>
-  @dynamic(handler, DynamicRole.Member, memberId.toString) {
+  @dynamic(handler, Role.Member.toString, memberId.toString) {
   <p><a href="@routes.Experiments.add(memberId)">
     + Add Experiment</a></p>
 }
@@ -31,7 +31,7 @@ website.</i></p>
       @if(experiment.picture) {
         <img class="picture" src="@Experiments.pictureUrl(experiment)"/>
       }
-      @dynamic(handler, DynamicRole.Member, memberId.toString) {
+      @dynamic(handler, Role.Member.toString, memberId.toString) {
         <div class="actions font-sm">
           <a href="@routes.Experiments.update(memberId, experiment.id.get)">
             Edit</a>

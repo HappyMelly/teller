@@ -2,8 +2,9 @@
   brand: Brand,
   form: Form[models.brand.EventType])(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import helper.CSRF
 @import views.ViewHelpersV2._
@@ -24,7 +25,7 @@
                 @v2.html.block("") {
                     <div class="errors">
                     @for(error <- form.errors) {
-                        @play.api.i18n.Messages(error.message)<br/>
+                        @Messages(error.message)<br/>
                     }
                     </div>
                 }

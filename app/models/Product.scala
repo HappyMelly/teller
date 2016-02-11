@@ -24,11 +24,13 @@
 
 package models
 
-import models.service.ProductService
+import models.service.{ContributionService, ProductService}
 import org.joda.time.DateTime
 import play.api.libs.Crypto
 
+import scala.concurrent.Await
 import scala.util.Random
+import scala.concurrent.duration._
 
 /**
  * Category classifications that a product has zero or one of.
@@ -41,7 +43,7 @@ object ProductCategory extends Enumeration {
   val Course = Value("course")
 }
 
-case class ProductView(product: Product, brands: List[Brand])
+case class ProductView(product: Product, brands: List[Brand], contributors: List[ContributorView])
 
 /**
  * A thing such as a book, a game or a piece of software
@@ -63,21 +65,6 @@ case class Product(
     updated: DateTime,
     updatedBy: String) {
 
-  def contributors: List[ContributorView] = Contribution.contributors(this.id.get)
-
-  /**
-   * Assign this product to a brand
-   */
-  def addBrand(brandId: Long) = ProductService.get.addBrand(this.id.get, brandId)
-
-  /**
-   * Unassign this product to a brand
-   */
-  def deleteBrand(brandId: Long) = ProductService.get.deleteBrand(this.id.get, brandId)
-
-  def insert: Product = ProductService.get.insert(this)
-
-  def update: Product = ProductService.get.update(this)
 }
 
 object Product {

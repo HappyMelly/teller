@@ -35,9 +35,7 @@ trait Activities {
    * @param subject Person who does an activity
    * @param supportiveObj Optional supportive object
    */
-  def activity(obj: ActivityRecorder,
-    subject: Person,
-    supportiveObj: Option[ActivityRecorder] = None): BaseActivity = {
+  def activity(obj: ActivityRecorder, subject: Person, supportiveObj: Option[ActivityRecorder] = None): BaseActivity = {
     supportiveObj map { supportive ⇒
       new Activity(None,
         subject.id.get,

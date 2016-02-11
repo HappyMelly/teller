@@ -1,4 +1,4 @@
-@(products: List[Product], viewOnly: Boolean = false)(actions: (Product) => Html)
+@(products: List[Product], viewOnly: Boolean = false)(actions: (Product) => Html)(implicit messages: Messages)
 
 <h4>Products</h4>
 @if(products.nonEmpty) {

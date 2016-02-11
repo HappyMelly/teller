@@ -16,7 +16,7 @@
   right: Field, rightData: play.twirl.api.Html,
   label: String,
   help: String = "",
-  required: Boolean = true)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+  required: Boolean = true)(implicit handler: helper.FieldConstructor, messages: Messages)
 
 @defining(left.hasErrors || right.hasErrors) { hasErrors =>
   <div class="form-group @if(hasErrors) {has-error}">

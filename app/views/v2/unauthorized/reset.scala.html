@@ -1,9 +1,10 @@
-@import securesocial.core.providers.MailToken
-@(form: Form[(String, String)], token: MailToken)(implicit request: RequestHeader,
-    env: securesocial.core.RuntimeEnvironment[_])
+@(form: Form[(String, String)], token: securesocial.core.providers.MailToken)(implicit request: RequestHeader,
+    env: securesocial.core.RuntimeEnvironment,
+    messages: Messages)
 
 @import helper.CSRF
 @import views.ViewHelpersV2._
+@import securesocial.core.providers.MailToken
 
 @v2.layout.unauthorized("Reset Password") {
     <div class="action-block">
@@ -13,7 +14,7 @@
             @if(form.hasErrors) {
                 <div class="errors text-left">
                     @for((error, index) <- form.errors.zipWithIndex) {
-                        @play.api.i18n.Messages(error.message)<br/>
+                        @Messages(error.message)<br/>
                     }
                 </div>
             }

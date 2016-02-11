@@ -23,13 +23,22 @@
  */
 package models.service
 
-import models.database.ProfileStrengths
 import models.ProfileStrength
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.ProfileStrengthTable
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class ProfileStrengthService {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class ProfileStrengthService(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with ProfileStrengthTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
+  private val profiles = TableQuery[ProfileStrengths]
+
 
   /**
    * Returns a profile strength object for the given person/org if exists
@@ -37,12 +46,10 @@ class ProfileStrengthService {
    * @param objectId Person or organisation identifier
    * @param org If true, objectId is an organisation identifier
    */
-  def find(objectId: Long, org: Boolean = false): Option[ProfileStrength] =
-    DB.withSession { implicit session ⇒
-      TableQuery[ProfileStrengths].
-        filter(_.objectId === objectId).
-        filter(_.org === org).firstOption
-    }
+  def find(objectId: Long, org: Boolean = false): Future[Option[ProfileStrength]] = {
+    val query = profiles.filter(_.objectId === objectId).filter(_.org === org)
+    db.run(query.result).map(_.headOption)
+  }
 
   /**
    * Returns list of profile strength objects for the given persons/orgs
@@ -50,36 +57,24 @@ class ProfileStrengthService {
    * @param objectIds List of person or organisation identifiers
    * @param org If true, objectIds are organisation identifiers
    */
-  def find(objectIds: List[Long], org: Boolean): List[ProfileStrength] =
-    DB.withSession { implicit session ⇒
-      TableQuery[ProfileStrengths].
-        filter(_.org === org).
-        filter(_.objectId inSet objectIds).list
-    }
-
-  def update(strength: ProfileStrength): ProfileStrength = {
-    DB.withSession { implicit session ⇒
-      TableQuery[ProfileStrengths].
-        filter(_.objectId === strength.objectId).
-        filter(_.org === strength.org).
-        map(_.forUpdate).
-        update(strength.stepsInJson)
-
-      strength
-    }
+  def find(objectIds: List[Long], org: Boolean): Future[List[ProfileStrength]] = {
+    val query = profiles.filter(_.org === org).filter(_.objectId inSet objectIds)
+    db.run(query.result).map(_.toList)
   }
 
-  def insert(strength: ProfileStrength): ProfileStrength = {
-    DB.withSession { implicit session ⇒
-      val strengths = TableQuery[ProfileStrengths]
-      val id = (strengths returning strengths.map(_.id)) += strength
-      strength.copy(id = Some(id))
-    }
+  def update(strength: ProfileStrength): Future[ProfileStrength] = {
+    import ProfileStrengths.jsArrayMapper
+
+    val query = profiles.
+      filter(_.objectId === strength.objectId).
+      filter(_.org === strength.org).
+      map(_.steps).
+      update(strength.stepsInJson)
+    db.run(query).map(_ => strength)
   }
-}
 
-object ProfileStrengthService {
-  private val _instance = new ProfileStrengthService
-
-  def get: ProfileStrengthService = _instance
+  def insert(strength: ProfileStrength): Future[ProfileStrength] = {
+    val query = profiles returning profiles.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += strength)
+  }
 }

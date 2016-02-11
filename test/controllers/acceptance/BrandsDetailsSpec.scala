@@ -78,7 +78,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
       EventType(Some(1L), 1L, "Meetup", Some("Yay, meetup!"), 8, false),
       EventType(Some(2L), 1L, "Meeting", None, 1, false),
       EventType(Some(3L), 1L, "CodeFest", Some("Coding sessions"), 16, false))
-    (eventTypeService.findByBrand _).expects(1L).returning(eventTypes)
+    (services.eventTypeService.findByBrand _).expects(1L).returning(eventTypes)
     val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Meetup")
@@ -89,21 +89,21 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    (eventTypeService.findByBrand _).expects(1L).returning(List())
+    (services.eventTypeService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
   }
 
   def e3 = {
-    (eventTypeService.findByBrand _).expects(1L).returning(List())
+    (services.eventTypeService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Event Type"
   }
 
 //  def e4 = {
-//    (eventTypeService.findByBrand _).expects(1L).returning(List())
+//    (services.eventTypeService.findByBrand _).expects(1L).returning(List())
 //    controller.identity_=(FakeUserIdentity.editor)
 //    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
 //    status(res) must equalTo(OK)
@@ -115,7 +115,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
       ProductHelper.make("One", Some(1L)),
       ProductHelper.make("Two", Some(2L)),
       ProductHelper.make("Three", Some(3L)))
-    (productService.findByBrand _).expects(1L).returning(products)
+    (services.productService.findByBrand _).expects(1L).returning(products)
     controller.identity_=(FakeSocialIdentity.viewer)
     val res = controller.renderTabs(1L, "products").apply(fakeGetRequest())
     status(res) must equalTo(OK)
@@ -125,7 +125,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e6 = {
-    (productService.findByBrand _).expects(1L).returning(List())
+    (services.productService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "products").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
@@ -135,7 +135,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     val templates = List(
       CertificateTemplate(Some(1L), 1L, "EN", Array[Byte](), Array[Byte]()),
       CertificateTemplate(Some(2L), 1L, "DE", Array[Byte](), Array[Byte]()))
-    (certificateService.findByBrand _).expects(1L).returning(templates)
+    (services.certificateService.findByBrand _).expects(1L).returning(templates)
     val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("English")
@@ -143,14 +143,14 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e8 = {
-    (certificateService.findByBrand _).expects(1L).returning(List())
+    (services.certificateService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
   }
 
   def e9 = {
-    (certificateService.findByBrand _).expects(1L).returning(List())
+    (services.certificateService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "templates").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Certificate Template"
@@ -160,7 +160,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
     val team = List(
       (PersonHelper.one(), BrandCoordinator(Some(1L), 1L, 1L)),
       (PersonHelper.two(), BrandCoordinator(Some(2L), 1L, 2L)))
-    (brandService.coordinators _).expects(1L).returning(team)
+    (services.brandService.coordinators _).expects(1L).returning(team)
     controller.identity_=(FakeSocialIdentity.viewer)
     val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
 
@@ -169,7 +169,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e13 = {
-    (brandService.coordinators _).expects(1L).returning(List())
+    (services.brandService.coordinators _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "team").apply(fakeGetRequest())
 
     contentAsString(res) must not contain "Add Coordinator"
