@@ -104,16 +104,17 @@ object EventForms {
     "confirmed" -> default(boolean, false),
     "free" -> default(boolean, false),
     "followUp" -> boolean,
+    "pageType" -> boolean,
     "invoice" -> longNumber.verifying("No organization to invoice", _ > 0),
     "facilitatorIds" -> list(longNumber).verifying(
       Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
     { (id, eventTypeId, brandId, title, language, location, details, organizer,
-       schedule, notPublic, archived, confirmed, free, followUp, invoiceTo,
+       schedule, notPublic, archived, confirmed, free, followUp, pageType, invoiceTo,
        facilitatorIds) ⇒
     {
       val event = Event(id, eventTypeId, brandId, title, language, location,
         details, organizer, schedule, notPublic, archived, confirmed, free,
-        followUp, 0.0f, None)
+        followUp, 0.0f, publicPage = pageType)
       val invoice = EventInvoice.empty.copy(eventId = id, invoiceTo = invoiceTo)
       event.facilitatorIds_=(facilitatorIds)
       EventView(event, invoice)
@@ -123,8 +124,8 @@ object EventForms {
       view.event.title, view.event.language, view.event.location,
       view.event.details, view.event.organizer, view.event.schedule,
       view.event.notPublic, view.event.archived, view.event.confirmed,
-      view.event.free, view.event.followUp, view.invoice.invoiceTo,
-      view.event.facilitatorIds(services)))
+      view.event.free, view.event.followUp, view.event.publicPage,
+      view.invoice.invoiceTo, view.event.facilitatorIds(services)))
 
   }))
 }

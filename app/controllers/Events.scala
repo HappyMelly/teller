@@ -70,7 +70,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         val default = Event(None, 0, 0, "", Language("", None, Some("English")),
           Location("", ""), defaultDetails, organizer, defaultSchedule,
           notPublic = false, archived = false, confirmed = false, free = false,
-          followUp = true, 0.0f, None)
+          followUp = true)
         val view = EventView(default, defaultInvoice)
         ok(views.html.v2.event.form(user, None, brands.filter(_.active), true, EventForms.event(services).fill(view)))
 
@@ -328,10 +328,10 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
 
   /**
     * Renders event public page
-    * @param id Hashed event identifier
+    * @param hashedId Hashed event identifier
     */
-  def public(id: String) = Action.async { implicit request =>
-    services.eventService.find(id.toLong) flatMap {
+  def public(hashedId: String) = Action.async { implicit request =>
+    services.eventService.find(hashedId) flatMap {
       case None => notFound(views.html.notFoundPage(request.path))
       case Some(event) =>
         val query = for {

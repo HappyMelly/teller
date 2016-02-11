@@ -30,6 +30,7 @@ import models.database._
 import org.joda.time.LocalDate
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.collection.heterogeneous.HNil
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -85,6 +86,13 @@ class EventService(app: Application, services: Services) extends HasDatabaseConf
    * @param id Event identifier
    */
   def find(id: Long): Future[Option[Event]] = db.run(events.filter(_.id === id).result).map(_.headOption)
+
+  /**
+    * Returns event if it exists, otherwise - None
+    *
+    * @param id Event identifier
+    */
+  def find(id: String): Future[Option[Event]] = db.run(events.filter(_.hashedId === id).result).map(_.headOption)
 
   /**
    * Returns event with related invoice if it exists
@@ -210,16 +218,17 @@ class EventService(app: Application, services: Services) extends HasDatabaseConf
    * @return Updated event object with id
    */
   def insert(view: EventView): Future[EventView] = {
-    val insertTuple = (view.event.eventTypeId, view.event.brandId,
-      view.event.title, view.event.language.spoken, view.event.language.secondSpoken,
-      view.event.language.materials, view.event.location.city,
-      view.event.location.countryCode, view.event.details.description,
-      view.event.details.specialAttention, view.event.organizer.id,
-      view.event.organizer.webSite,
-      view.event.organizer.registrationPage, view.event.schedule.start,
-      view.event.schedule.end, view.event.schedule.hoursPerDay,
-      view.event.schedule.totalHours, view.event.notPublic,
-      view.event.archived, view.event.confirmed, view.event.free, view.event.followUp)
+    val insertTuple = view.event.eventTypeId :: view.event.brandId ::
+      view.event.title :: view.event.language.spoken :: view.event.language.secondSpoken ::
+      view.event.language.materials :: view.event.location.city ::
+      view.event.location.countryCode :: view.event.details.description ::
+      view.event.details.specialAttention :: view.event.organizer.id ::
+      view.event.organizer.webSite ::
+      view.event.organizer.registrationPage :: view.event.schedule.start ::
+      view.event.schedule.end :: view.event.schedule.hoursPerDay ::
+      view.event.schedule.totalHours :: view.event.notPublic ::
+      view.event.archived :: view.event.confirmed :: view.event.free :: view.event.followUp ::
+      view.event.hashedId :: view.event.publicPage :: HNil
     val query = events.map(_.forInsert) returning events.map(_.id) into ((value, id) => id)
     val actions = (for {
       eventId <- query += insertTuple
@@ -284,17 +293,17 @@ class EventService(app: Application, services: Services) extends HasDatabaseConf
    * @return Updated event object with id
    */
   def update(view: EventView): EventView = {
-    val updateTuple = (view.event.eventTypeId, view.event.brandId,
-      view.event.title, view.event.language.spoken,
-      view.event.language.secondSpoken, view.event.language.materials,
-      view.event.location.city, view.event.location.countryCode,
-      view.event.details.description, view.event.details.specialAttention,
-      view.event.organizer.id,
-      view.event.organizer.webSite, view.event.organizer.registrationPage,
-      view.event.schedule.start, view.event.schedule.end,
-      view.event.schedule.hoursPerDay, view.event.schedule.totalHours,
-      view.event.notPublic, view.event.archived, view.event.confirmed,
-      view.event.free, view.event.followUp)
+    val updateTuple = view.event.eventTypeId :: view.event.brandId ::
+      view.event.title :: view.event.language.spoken ::
+      view.event.language.secondSpoken :: view.event.language.materials ::
+      view.event.location.city :: view.event.location.countryCode ::
+      view.event.details.description :: view.event.details.specialAttention ::
+      view.event.organizer.id ::
+      view.event.organizer.webSite :: view.event.organizer.registrationPage ::
+      view.event.schedule.start :: view.event.schedule.end ::
+      view.event.schedule.hoursPerDay :: view.event.schedule.totalHours ::
+      view.event.notPublic :: view.event.archived :: view.event.confirmed ::
+      view.event.free :: view.event.followUp :: view.event.publicPage :: HNil
 
     val facilitators = TableQuery[EventFacilitators]
     val actions = (for {

@@ -108,14 +108,16 @@
             <label  class="control-label col-md-2">Organizer website</label>
             <div class="control-label col-md-7">
               <label class="b-radio">
-                <input type="radio" class="b-radio__input" name="organizer.pageType" value="1" checked>
+                <input type="radio" class="b-radio__input" name="pageType" value="true"
+                  @if(form("pageType").value.contains("true")) { checked }>
                 <i class="b-radio__icon"></i>
                 <div class="b-radio__text">
                   Use Teller generated page
                 </div>
               </label>
               <label class="b-radio">
-                <input type="radio" class="b-radio__input"  name="organizer.pageType" value="0">
+                <input type="radio" class="b-radio__input"  name="pageType" value="false"
+                  @if(form("pageType").value.contains("false")) { checked }>
                 <i class="b-radio__icon"></i>
                 <div class="b-radio__text">
                   Enter web site URL
