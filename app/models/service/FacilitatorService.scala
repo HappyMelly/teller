@@ -111,6 +111,15 @@ class FacilitatorService(app: Application) extends HasDatabaseConfig[JdbcProfile
     db.run(facilitators.filter(_.personId === personId).filter(_.brandId === brandId).result).map(_.headOption)
 
   /**
+    * Returns facilitators for the given person ids
+    * @param brandId Brand id
+    * @param personIds Person ids
+    * @return
+    */
+  def find(brandId: Long, personIds: Seq[Long]): Future[List[Facilitator]] =
+    db.run(facilitators.filter(_.brandId === brandId).filter(_.personId inSet personIds).result).map(_.toList)
+
+  /**
    * Returns list of all facilitators
    */
   def findAll: Future[List[Facilitator]] = db.run(facilitators.result).map(_.toList)

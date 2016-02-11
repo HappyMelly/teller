@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -17,32 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.event
 
-import play.api.Play
-import play.api.Play.current
+import controllers.AsyncController
 
-object Utilities {
-
-  /**
-    * Returns CDN url to image if CDN is set
-    *
-    * @param path Path to image in Amazon S3 bucket
-    */
-  def cdnUrl(path: String): Option[String] = {
-    Play.configuration.getString("cdn.url").map(url => Some(url + path)).getOrElse(None)
-  }
+/**
+  * Set of helpers for event module
+  */
+trait Helpers extends AsyncController {
 
   /**
-    * Returns an url with domain
+    * Return redirect object with success message for the given event
     *
-    * @param url Domain-less part of url
+    * @param id Event identifier
+    * @param msg Message
     */
-  def fullUrl(url: String): String = {
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
+  protected def success(id: Long, msg: String) = redirect(controllers.routes.Events.details(id), "success" -> msg)
+
+  /**
+    * Return redirect object with error message for the given event
+    *
+    * @param id Event identifier
+    * @param msg Message
+    */
+  protected def error(id: Long, msg: String) = redirect(controllers.routes.Events.details(id), "error" -> msg)
+
 }

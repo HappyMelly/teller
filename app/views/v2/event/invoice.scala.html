@@ -30,7 +30,7 @@
                     <dl>@number</dl>
                 }
                 @if(user.account.isCoordinatorNow) {
-                    <form method="POST" action="@CSRF(routes.Events.invoice(event.id.get))">
+                    <form method="POST" action="@CSRF(controllers.event.routes.Invoices.update(event.id.get))">
                         <input type="hidden" name="id" value="@view.invoice.id">
                         <input type="hidden" name="invoiceTo" id="invoiceTo" value="@view.invoice.invoiceTo">
                         <input type="hidden" name="eventId" value="@event.id">

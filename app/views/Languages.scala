@@ -26,6 +26,12 @@ package views
 
 object Languages {
 
+  /**
+    * Returns language name by its code
+    * @param code Language code
+    */
+  def name(code: String): String = all.getOrElse(code, "")
+
   val all =
     Map("BG" -> "Bulgarian",
       "ZH" -> "Chinese",

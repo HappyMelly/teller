@@ -11,7 +11,7 @@
             </div>
             <div class="modal-body">
                 <form class="form-horizontal" id="requestForm"
-                action="@CSRF(routes.Events.sendRequest(event.id.get))" method="post">
+                action="@CSRF(controllers.event.routes.Requests.send(event.id.get))" method="post">
                     <h4>Choose participants</h4>
                     <table id="participantList" class="table table-bordered">
                         <tbody>

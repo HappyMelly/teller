@@ -21,22 +21,19 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.Forms._
-import mail.reminder.EvaluationReminder
+import controllers.event.{EventForms, Helpers}
 import models.UserRole.Role
-import models.event.{Attendee, Comparator}
+import models.event.Comparator
 import models.event.Comparator.FieldChange
 import models.service.Services
 import models.{Location, Schedule, _}
 import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data._
-import play.api.data.format.Formatter
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc._
@@ -54,100 +51,11 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
                                      handlers: HandlerCache,
                                      actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Activities
   with BrandAware
   with Integrations
-  with Activities
+  with Helpers
   with I18nSupport {
-
-  val dateRangeFormatter = new Formatter[LocalDate] {
-
-    override def bind(key: String, data: Map[String, String]): Either[Seq[FormError], LocalDate] = {
-      // "data" lets you access all form data values
-      try {
-        val start = LocalDate.parse(data.get("schedule.start").get)
-        try {
-          val end = LocalDate.parse(data.get("schedule.end").get)
-          if (start.isAfter(end)) {
-            Left(List(FormError("schedule.start", "error.date.range"), FormError("schedule.end", "error.date.range")))
-          } else {
-            Right(end)
-          }
-        } catch {
-          case e: IllegalArgumentException ⇒ Left(List(FormError("schedule.end", "Invalid date")))
-        }
-      } catch {
-        // The list is empty because we've already handled a date parse error inside the form (jodaLocalDate formatter)
-        case e: IllegalArgumentException ⇒ Left(List())
-      }
-    }
-
-    override def unbind(key: String, value: LocalDate): Map[String, String] = {
-      Map(key -> value.toString)
-    }
-  }
-
-  /**
-   * HTML form mapping for an event’s invoice.
-   */
-  val invoiceForm = Form(tuple(
-    "invoiceBy" -> longNumber,
-    "number" -> optional(nonEmptyText)))
-
-  /**
-   * HTML form mapping for creating and editing.
-   */
-  def eventForm = Form(mapping(
-    "id" -> ignored(Option.empty[Long]),
-    "eventTypeId" -> longNumber.verifying("Wrong event type", _ > 0),
-    "brandId" -> longNumber.verifying("Wrong brand", _ > 0),
-    "title" -> text.verifying("Empty title", _.nonEmpty),
-    "language" -> mapping(
-      "spoken" -> language,
-      "secondSpoken" -> optional(language),
-      "materials" -> optional(language))(Language.apply)(Language.unapply),
-    "location" -> mapping(
-      "city" -> text.verifying("Empty city name", _.nonEmpty),
-      "country" -> text.verifying("Unknown country", _.nonEmpty))(Location.apply)(Location.unapply),
-    "details" -> mapping(
-      "description" -> optional(text),
-      "specialAttention" -> optional(text))(Details.apply)(Details.unapply),
-    "organizer" -> mapping(
-      "id" -> longNumber.verifying("Unknown organizer", _ > 0),
-      "webSite" -> optional(webUrl),
-      "registrationPage" -> optional(text))(Organizer.apply)(Organizer.unapply),
-    "schedule" -> mapping(
-      "start" -> jodaLocalDate,
-      "end" -> of(dateRangeFormatter),
-      "hoursPerDay" -> number(1, 24),
-      "totalHours" -> number(1))(Schedule.apply)(Schedule.unapply),
-    "notPublic" -> default(boolean, false),
-    "archived" -> default(boolean, false),
-    "confirmed" -> default(boolean, false),
-    "free" -> default(boolean, false),
-    "followUp" -> boolean,
-    "invoice" -> longNumber.verifying("No organization to invoice", _ > 0),
-    "facilitatorIds" -> list(longNumber).verifying(
-      Messages("error.event.nofacilitators"), (ids: List[Long]) ⇒ ids.nonEmpty))(
-      { (id, eventTypeId, brandId, title, language, location, details, organizer,
-        schedule, notPublic, archived, confirmed, free, followUp, invoiceTo,
-        facilitatorIds) ⇒
-        {
-          val event = Event(id, eventTypeId, brandId, title, language, location,
-            details, organizer, schedule, notPublic, archived, confirmed, free,
-            followUp, 0.0f, None)
-          val invoice = EventInvoice.empty.copy(eventId = id, invoiceTo = invoiceTo)
-          event.facilitatorIds_=(facilitatorIds)
-          EventView(event, invoice)
-        }
-      })({ (view: EventView) ⇒
-        Some((view.event.id, view.event.eventTypeId, view.event.brandId,
-          view.event.title, view.event.language, view.event.location,
-          view.event.details, view.event.organizer, view.event.schedule,
-          view.event.notPublic, view.event.archived, view.event.confirmed,
-          view.event.free, view.event.followUp, view.invoice.invoiceTo,
-          view.event.facilitatorIds(services)))
-
-      }))
 
   /**
    * Create page.
@@ -162,9 +70,9 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         val default = Event(None, 0, 0, "", Language("", None, Some("English")),
           Location("", ""), defaultDetails, organizer, defaultSchedule,
           notPublic = false, archived = false, confirmed = false, free = false,
-          followUp = true, 0.0f, None)
+          followUp = true)
         val view = EventView(default, defaultInvoice)
-        ok(views.html.v2.event.form(user, None, brands.filter(_.active), true, eventForm.fill(view)))
+        ok(views.html.v2.event.form(user, None, brands.filter(_.active), true, EventForms.event(services).fill(view)))
 
       }
   }
@@ -183,7 +91,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       } yield (e, b)) flatMap {
         case (None, _) => notFound("Event not found")
         case (Some(view), brands) =>
-          ok(views.html.v2.event.form(user, None, brands, false, eventForm.fill(view)))
+          ok(views.html.v2.event.form(user, None, brands, false, EventForms.event(services).fill(view)))
       }
   }
 
@@ -193,7 +101,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   def create = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
-      val form = eventForm.bindFromRequest
+      val form = EventForms.event(services).bindFromRequest
       form.fold(
         formWithErrors ⇒ formError(user, formWithErrors, None),
         view ⇒ {
@@ -254,32 +162,6 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       }
   }
 
-  /**
-   * Updates invoice data for the given event
-   *
-   * @param id Event ID
-   * @return
-   */
-  def invoice(id: Long) = AsyncSecuredEventAction(List(Role.Coordinator), id) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.eventService.findWithInvoice(id) flatMap {
-        case None => notFound("")
-        case Some(view) =>
-          invoiceForm.bindFromRequest.fold(
-            formWithErrors ⇒ error(id, "Invoice data are wrong. Please try again"),
-            invoiceData ⇒ {
-              val (invoiceBy, number) = invoiceData
-              services.orgService.find(invoiceBy) flatMap {
-                case None => notFound("Organisation not found")
-                case Some(_) =>
-                  val invoice = view.invoice.copy(invoiceBy = Some(invoiceBy), number = number)
-                  services.eventInvoiceService.update(invoice)
-                  activity(view.event, user.person).updated.insert(services)
-                  success(id, "Invoice data was successfully updated")
-              }
-            })
-      }
-  }
 
   /**
     * Details page.
@@ -321,17 +203,6 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       }
   }
 
-  /**
-    * Returns invoice view object ready for the representation
-    * @param invoice Invoice
-    * @param orgs List of organisations related to the invoice
-    */
-  protected def invoice(invoice: EventInvoice, orgs: List[Organisation]): InvoiceView = {
-    val invoiceTo = orgs.filter(_.identifier == invoice.invoiceTo).map(_.name).head
-    val invoiceBy = orgs.filter(_.id == invoice.invoiceBy).map(_.name).headOption
-    InvoiceView(invoice, invoiceTo, invoiceBy)
-  }
-
   def detailsButtons(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       services.attendeeService.findByEvents(List(id)) flatMap { attendees =>
@@ -353,7 +224,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       } yield (e, b)) flatMap {
         case (None, _) => notFound("Event not found")
         case (Some(view), brands) =>
-          ok(views.html.v2.event.form(user, Some(id), brands, emptyForm = false, eventForm.fill(view)))
+          ok(views.html.v2.event.form(user, Some(id), brands, emptyForm = false, EventForms.event(services).fill(view)))
       }
   }
 
@@ -456,6 +327,26 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   }
 
   /**
+    * Renders event public page
+    * @param hashedId Hashed event identifier
+    */
+  def public(hashedId: String) = Action.async { implicit request =>
+    services.eventService.find(hashedId) flatMap {
+      case None => notFound(views.html.notFoundPage(request.path))
+      case Some(event) =>
+        val query = for {
+          b <- services.brandService.get(event.brandId)
+          f <- services.eventService.facilitators(event.identifier)
+          d <- services.facilitatorService.find(event.brandId, f.map(_.identifier))
+        } yield (b, f.sortBy(_.id), d.sortBy(_.personId))
+        query flatMap { case (brand, facilitators, stats) =>
+          val facilitatorsWithStat = facilitators.zip(stats).map(v => (v._1, v._2.publicRating, ""))
+          ok(views.html.v2.event.public(event, brand, facilitatorsWithStat))
+        }
+    }
+  }
+
+  /**
     * Renders form with cancellation reason
     *
     * @param id Event identifier
@@ -473,7 +364,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   def update(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
 
-      val form = eventForm.bindFromRequest
+      val form = EventForms.event(services).bindFromRequest
       form.fold(
         errors ⇒ formError(user, errors, Some(id)),
         received ⇒ {
@@ -504,55 +395,16 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   }
 
   /**
-   * Send requests for evaluation to participants of the event
+    * Returns invoice view object ready for the representation
     *
-    * @param id Event ID
-   */
-  def sendRequest(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒ implicit event =>
-      case class EvaluationRequestData(attendeeIds: List[Long], body: String)
-      val form = Form(mapping(
-        "participantIds" -> list(longNumber),
-        "body" -> nonEmptyText.verifying(
-          "The letter's body doesn't contains a link",
-          (b: String) ⇒ {
-            val url = """https?:\/\/""".r findFirstIn b
-            url.isDefined
-          }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
-
-      form.fold(
-        formWithErrors ⇒
-          redirect(routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
-        requestData ⇒ {
-          (for {
-            a <- services.attendeeService.findByEvents(List(event.identifier))
-            b <- services.brandService.get(event.brandId)
-          } yield (a, b)) flatMap { case (unfilteredAttendees, brand) =>
-            val attendees = unfilteredAttendees.map(_._2).filter(a => requestData.attendeeIds.contains(a.identifier))
-            if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {
-              import scala.util.matching.Regex
-              val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
-              val reminder = new EvaluationReminder(email, services)
-              attendees.foreach { attendee ⇒
-                val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
-                reminder.sendEvaluationRequest(attendee, brand, body)
-              }
-
-              Activity.insert(user.name, Activity.Predicate.Sent, event.title)(services)
-              redirect(routes.Events.details(id), "success" -> requestMessage(attendees))
-            } else {
-                redirect(routes.Events.details(id), "error" -> "Some people are not the attendees of the event")
-            }
-          }
-        })
+    * @param invoice Invoice
+    * @param orgs List of organisations related to the invoice
+    */
+  protected def invoice(invoice: EventInvoice, orgs: List[Organisation]): InvoiceView = {
+    val invoiceTo = orgs.filter(_.identifier == invoice.invoiceTo).map(_.name).head
+    val invoiceBy = orgs.filter(_.id == invoice.invoiceBy).map(_.name).headOption
+    InvoiceView(invoice, invoiceTo, invoiceBy)
   }
-
-  protected def requestMessage(attendees: Seq[Attendee]): String =
-    if (attendees.length == 1)
-      "Evaluation request was sent to one attendee"
-    else
-      s"Evaluation request was sent to ${attendees.length} attendees"
-
 
   /**
    * Returns none if the given event is valid; otherwise returns a list with errors
@@ -644,20 +496,4 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         mail.templates.event.html.details(event, eventType.name, x.brand, changes).toString, richMessage = true)
     }
   }
-
-  /**
-   * Return redirect object with success message for the given event
-   *
-   * @param id Event identifier
-   * @param msg Message
-   */
-  private def success(id: Long, msg: String) = redirect(routes.Events.details(id), "success" -> msg)
-
-  /**
-   * Return redirect object with error message for the given event
-   *
-   * @param id Event identifier
-   * @param msg Message
-   */
-  private def error(id: Long, msg: String) = redirect(routes.Events.details(id), "error" -> msg)
 }

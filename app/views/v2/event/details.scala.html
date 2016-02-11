@@ -17,6 +17,7 @@
 @import templates.Formatters._
 @import views.Countries
 @import views.ViewHelpers.dateInterval
+@import controllers.Utilities
 
 @v2.main(event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
@@ -117,8 +118,10 @@
           </div>
           <div class="row">
             <div class="col-md-12">
-              @event.organizer.webSite.map { url =>
-                <span class="text-muted">Website: </span><a href="@url" target="_blank">@url</a><br/>
+              @defining(event.pageUrl(routes.Events.public(event.hashedId).url)) { maybeUrl =>
+                  @maybeUrl.map { url =>
+                    <span class="text-muted">Website: </span> <a href="@url" target="_blank">@url</a> <br/>
+                  }
               }
               @event.organizer.registrationPage.map { url =>
                 <span class="text-muted">Registration: </span><a href="@url" target="_blank">@url</a><br/>
