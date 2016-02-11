@@ -136,7 +136,6 @@ case class Event(
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
   def facilitators(services: Services): List[Person] = if (_facilitators.isEmpty) {
-    println(identifier)
     val data = Await.result(services.eventService.facilitators(identifier), 3.seconds)
     facilitators_=(data)
     data
