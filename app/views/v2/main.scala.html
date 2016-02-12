@@ -18,8 +18,8 @@
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>
     <div id="wrapper">
 
-      @views.html.v2.element.notification("url", "Reconnect my profiles"){
-        Hi, there! We’ve made some changes to stabilize login through social networks. You have to reconnect all networks you were using to login, otherwise they will not work.
+      @views.html.v2.element.notification(routes.People.edit(user.person.identifier).url, "Reconnect my profiles"){
+        Hi there! We’ve made some changes to stabilize login through social networks. You need to reconnect some networks you were using to login, otherwise they will not work.
       }
 
       <div class="navbar navbar-inverse" role="nagivation">
