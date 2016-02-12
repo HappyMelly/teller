@@ -133,8 +133,9 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    * @param current The current user instance
    * @param to the profile that needs to be linked to
    */
-  def link(current: ActiveUser, to: BasicProfile): Future[ActiveUser] =
+  def link(current: ActiveUser, to: BasicProfile): Future[ActiveUser] = {
     Future.successful(current)
+  }
 
   /**
    * Returns an optional PasswordInfo instance for a given user

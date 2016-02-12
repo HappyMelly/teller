@@ -30,10 +30,7 @@
 
     PersonSocialConnect.prototype.setConnect = function($el){
         var socialType = $el.data('social');
-
-        $.post('/setSocialConntect', {
-            social: socialType
-        }, function(){
+        $.get($el.data('url'), function(){
             $el.addClass('state-complete');
         })
     };

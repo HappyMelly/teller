@@ -512,7 +512,6 @@ object People {
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
-      "profile" -> socialProfileMapping,
       "webSite" -> optional(webUrl),
       "blog" -> optional(webUrl),
       "active" -> ignored(true),
@@ -522,21 +521,19 @@ object People {
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply))(
         { (id, firstName, lastName, emailAddress, birthday, signature,
-          address, bio, interests, profile, webSite, blog, active, dateStamp) ⇒
+          address, bio, interests, webSite, blog, active, dateStamp) ⇒
           {
             val person = Person(id, firstName, lastName, emailAddress, birthday, Photo.empty,
               signature, address.id.getOrElse(0), bio, interests,
               webSite, blog, customerId = None, virtual = false, active, dateStamp)
             person.address_=(address)
-            person.socialProfile_=(profile)
             person
           }
         })(
           { (p: Person) ⇒
             Some(
               (p.id, p.firstName, p.lastName, p.email, p.birthday,
-                p.signature, p.address, p.bio, p.interests,
-                p.socialProfile, p.webSite, p.blog, p.active, p.dateStamp))
+                p.signature, p.address, p.bio, p.interests, p.webSite, p.blog, p.active, p.dateStamp))
           }))
   }
 }

@@ -23,13 +23,10 @@
  */
 package models
 
-import akka.actor.{Actor, Props}
 import models.event.{Attendee, EventCancellation}
 import models.service.Services
 import org.joda.money.Money
 import org.joda.time.{Days, LocalDate}
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
 import views.Languages
 
 import scala.concurrent.Await

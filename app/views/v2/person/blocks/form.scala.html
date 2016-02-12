@@ -1,4 +1,8 @@
-@(form: Form[Person], disabledEmail: Boolean = false)(implicit messages: Messages)
+@(form: Form[Person],
+    disabledEmail: Boolean = false,
+    connectProfiles: Boolean = false)(implicit messages: Messages,
+        request: RequestHeader,
+        env: securesocial.core.RuntimeEnvironment)
 
 @import views.Countries
 @import views.ViewHelpersV2._
@@ -32,45 +36,47 @@
 <input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
 <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
-@v2.html.block("Connect Profiles", Some("grey")) {
-<div class="row">
-  <label class="control-label col-md-2">
-    Social Profiles
-  </label>
-  <div class="col-md-10">
-    <div class="b-connect js-social-connect">
-      <div class="b-connect-i type-tw" data-social="twitter">
-        <i class="b-connect-i__img"></i>
-        <a href="#" class="btn b-connect-i__btn" data-social-connect>
-          <span class="text">Connect</span>
-          <span class="complete">Connected</span>
-        </a>
-      </div>
-      <div class="b-connect-i type-fb"  data-social="facebook">
-        <i class="b-connect-i__img type-fb"></i>
-        <a href="#" class="btn b-connect-i__btn" data-social-connect>
-          <span class="text">Connect</span>
-          <span class="complete">Connected</span>
-        </a>
-      </div>
-      <div class="b-connect-i type-linkedin"  data-social="linkedin">
-        <i class="b-connect-i__img "></i>
-        <a href="#" class="btn b-connect-i__btn" data-social-connect>
-          <span class="text">Connect</span>
-          <span class="complete">Connected</span>
-        </a>
-      </div>
-      <div class="b-connect-i type-gp"  data-social="googleplus">
-        <i class="b-connect-i__img "></i>
-        <a href="#" class="btn b-connect-i__btn" data-social-connect>
-          <span class="text">Connect</span>
-          <span class="complete">Connected</span>
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
+@if(connectProfiles) {
+    @v2.html.block("Connect Profiles", Some("grey")) {
+        <div class="row">
+            <label class="control-label col-md-2">
+                Social Profiles
+            </label>
+            <div class="col-md-10">
+                <div class="b-connect js-social-connect">
+                    <div class="b-connect-i type-tw" data-social="twitter" data-url="@env.routes.authenticationUrl("twitter")">
+                        <i class="b-connect-i__img"></i>
+                        <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                            <span class="text">Connect</span>
+                            <span class="complete">Connected</span>
+                        </a>
+                    </div>
+                    <div class="b-connect-i type-fb" data-social="facebook">
+                        <i class="b-connect-i__img type-fb"></i>
+                        <a href="@env.routes.authenticationUrl("facebook")" class="btn b-connect-i__btn" data-social-connect>
+                            <span class="text">Connect</span>
+                            <span class="complete">Connected</span>
+                        </a>
+                    </div>
+                    <div class="b-connect-i type-linkedin" data-social="linkedin">
+                        <i class="b-connect-i__img "></i>
+                        <a href="@env.routes.authenticationUrl("linkedin")" class="btn b-connect-i__btn" data-social-connect>
+                            <span class="text">Connect</span>
+                            <span class="complete">Connected</span>
+                        </a>
+                    </div>
+                    <div class="b-connect-i type-gp" data-social="googleplus" data-url="@env.routes.authenticationUrl("google")">
+                        <i class="b-connect-i__img "></i>
+                        <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                            <span class="text">Connect</span>
+                            <span class="complete">Connected</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+    }
 }
 
 @v2.html.block("On The Web", Some("yellow")) {
