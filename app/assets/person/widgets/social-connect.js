@@ -29,10 +29,11 @@
     };
 
     PersonSocialConnect.prototype.setConnect = function($el){
-        var socialType = $el.data('social');
-        $.get($el.data('url'), function(){
-            $el.addClass('state-complete');
-        })
+        var self = this,
+            socialType = $el.data('social'),
+            authWindow = self.createWindow('http://www.happymelly.com/');
+
+        authWindow.location = "http://buffer.com";
     };
 
     PersonSocialConnect.prototype.unSetConnect = function($el){
@@ -51,6 +52,12 @@
         } else {
             this.setConnect($el);
         }
+    };
+
+    PersonSocialConnect.prototype.createWindow = function(url){
+        var windowParams = "menubar=no,location=yes,resizable=yes,scrollbars=yes,status=no,width=500,height=300"
+
+        return window.open(url, "HMT_authorization", windowParams);
     };
 
     App.widgets.PersonSocialConnect = PersonSocialConnect;
