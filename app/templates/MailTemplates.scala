@@ -8,7 +8,7 @@ import securesocial.core.{BasicProfile, RuntimeEnvironment}
 /**
   * Created by sery0ga on 03/12/15.
   */
-class MailTemplates(env: RuntimeEnvironment[_]) extends securesocial.controllers.MailTemplates.Default(env) {
+class MailTemplates(env: RuntimeEnvironment) extends securesocial.controllers.MailTemplates.Default(env) {
 
   override def getPasswordChangedNoticeEmail(user: BasicProfile)(implicit request: RequestHeader, lang: Lang): (Option[Txt], Option[Html]) = {
     (None, Some(mail.templates.password.html.changeNotice(user)(request, env)))

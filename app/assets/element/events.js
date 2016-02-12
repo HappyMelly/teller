@@ -22,6 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
+
 /**
  * Cancels the event and removes a tile from the page
  * @param object {object} Link or button
@@ -39,7 +40,7 @@ function cancelEvent(object) {
         $('#eventCancelButton').on('click', function(e) {
             e.preventDefault();
             var url = jsRoutes.controllers.Events.cancel($(object).data('id')).url;
-            $.post(url, {}, function(data) {
+            $.post(url, $("#cancelForm").serialize(), function(data) {
                 $('#' + dialog).modal('hide');
                 afterEventCancellation(object);
                 var msg = "Event was successfully canceled";

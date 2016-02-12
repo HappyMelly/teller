@@ -1,0 +1,86 @@
+@(event: Event, brand: Brand, facilitators: List[(Person, Float, String)])(implicit request: RequestHeader)
+
+@import templates.Formatters._
+@import views.{Countries, Languages}
+@import views.ViewHelpersV2._
+
+@language(lang: Language) = {
+    @defining(lang.secondSpoken.map(value => s" and $value").getOrElse("")) { suffix =>
+    Event is in @Languages.name(lang.spoken)@Languages.name(suffix)
+    }
+    @lang.materials.map { value =>
+    , all materials and handouts are in @Languages.name(value).
+    }.getOrElse {
+    .
+    }
+}
+
+@v2.layout.public(event.title) {
+    <div class="p-public-con">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+
+                    <div class="p-public">
+                        <div class="p-public__hint">
+                            @brand.name Events
+                        </div>
+                        <h2 class="p-public__title">
+                            @event.title
+                        </h2>
+                        @event.details.description.map { text =>
+                            <div class="p-public__text">
+                                @text.markdown
+                            </div>
+                        }
+                        @event.details.specialAttention.map { text =>
+                            <div class="p-public__text">
+                                @text.markdown
+                            </div>
+                        }
+
+                        <div class="b-event">
+                            <div class="b-event__info">
+                                <h3 class="b-event__title">Event specific</h3>
+                                <p>
+                                    @language(event.language)
+                                </p>
+                                <p>
+                                    Total hours @event.schedule.totalHours, @event.schedule.hoursPerDay hour(s) per day.
+                                </p>
+                            </div>
+
+                            <div class="b-event__people">
+                                <h3 class="b-event__title">Facilitators</h3>
+                                <div class="b-event__people-list">
+                                    @for((person, rating, url) <- facilitators) {
+                                        @defining(person.photo.url.getOrElse(routes.Assets.at("images/happymelly-face-white.png").url)) { photo =>
+                                            @v2.element.personBadge(photo, url, rating) {
+                                                @person.firstName<br> @person.lastName
+                                            }
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-public__submit">
+                            <div class="p-public__submit-text">
+                                @dateInterval(event.schedule.start, event.schedule.end)<br>
+                                in @event.location.city, @Countries.name(event.location.countryCode)
+                            </div>
+                            @event.organizer.registrationPage.map { url =>
+                                <div class="h-ovh">
+                                    <a href="@url" class="btn btn-primary p-public__submit-btn">
+                                        Register for the event
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

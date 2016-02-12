@@ -23,35 +23,35 @@
  */
 package controllers
 
-import models.ActiveUser
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.service.Services
-import play.api.Play.current
-import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
-import scala.concurrent.Future
+import play.api.i18n.MessagesApi
+import services.TellerRuntimeEnvironment
 import views.Countries
 
-class BrandFees(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
-    with Services
-    with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        override val messagesApi: MessagesApi,
+                                        val services: Services,
+                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
    * Renders list of available fees for the given brand
    *
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandService.find(brandId) map { brand ⇒
-        val fees = feeService.findByBrand(brandId)
-        val printableFees = fees.
-          map(x ⇒ (Countries.name(x.country), x.fee.toString)).
-          sortBy(_._1)
-        Ok(views.html.fee.index(brand.name, printableFees))
-      } getOrElse NotFound("Brand not found")
+      (for {
+        brand <- services.brandService.find(brandId)
+        fees <- services.feeService.findByBrand(brandId)
+      } yield (brand, fees)) flatMap {
+        case (None, _) => notFound("Brand not found")
+        case (Some(brand), fees) =>
+          val printableFees = fees.map(x ⇒ (Countries.name(x.country), x.fee.toString)).sortBy(_._1)
+          ok(views.html.fee.index(brand.name, printableFees))
+      }
   }
 }

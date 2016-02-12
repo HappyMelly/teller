@@ -1,6 +1,6 @@
 @(recipient: String,
     mailToken: String)(implicit request: RequestHeader,
-        env: securesocial.core.RuntimeEnvironment[_])
+        env: securesocial.core.RuntimeEnvironment)
 
 @mail.templates.html.hmTmpl(s"Your Happy Melly Account") {
     <h2>Hi @recipient,</h2>

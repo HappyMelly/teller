@@ -70,7 +70,7 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
     default.copy(start = LocalDate.parse("2013-05-11")))
 
   def e1 = {
-    (licenseService.findByBrand _) expects 1L returning licenses
+    (services.licenseService.findByBrand _) expects 1L returning licenses
     val res = controller.byFacilitators(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
     val dataset = (contentAsJson(res) \ "datasets").as[List[JsObject]]
@@ -81,7 +81,7 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    (licenseService.findByBrand _) expects 1L returning List()
+    (services.licenseService.findByBrand _) expects 1L returning List()
     val res = controller.byFacilitators(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
     val months = (contentAsJson(res) \ "labels").as[List[String]]
@@ -89,10 +89,10 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e3 = {
-    (eventService.findByParameters _)
+    (services.eventService.findByParameters _)
       .expects(Some(1L), None, None, None, None, None, None)
       .returning(List())
-    (eventService.applyFacilitators _) expects List()
+    (services.eventService.applyFacilitators _) expects List()
     val res = controller.byEvents(1L).apply(fakeGetRequest())
     status(res) must equalTo(OK)
   }

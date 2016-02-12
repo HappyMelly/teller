@@ -24,13 +24,25 @@
  */
 package models.service
 
-import models.{ ProductView, Product, Brand }
-import models.database.{ ProductBrandAssociations, Products }
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.database.{ProductBrandAssociationTable, ProductTable}
+import models.{Brand, Product, ProductView}
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class ProductService {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class ProductService(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with ProductTable
+  with ProductBrandAssociationTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
+
+  private val products = TableQuery[Products]
+  private val associations = TableQuery[ProductBrandAssociations]
 
   /**
    * Activates the given product
@@ -41,25 +53,21 @@ class ProductService {
 
   /**
    * Assign this product to a brand
-   * @TEST
    */
-  def addBrand(productId: Long, brandId: Long): Unit = DB.withSession {
-    implicit session ⇒
-      TableQuery[ProductBrandAssociations] += ((None, productId, brandId))
-  }
+  def addBrand(productId: Long, brandId: Long): Unit =
+    db.run(TableQuery[ProductBrandAssociations] += (None, productId, brandId))
 
   /**
    * Returns list of related brand for the given product, sorted by name
    *
    * @param id Product id
    */
-  def brands(id: Long): List[Brand] = DB.withSession { implicit session ⇒
-    val associations = TableQuery[ProductBrandAssociations]
+  def brands(id: Long): Future[List[Brand]] = {
     val query = for {
       relation ← associations if relation.productId === id
       brand ← relation.brand
     } yield brand
-    query.sortBy(_.name.toLowerCase).list
+    db.run(query.sortBy(_.name.toLowerCase).result).map(_.toList)
   }
 
   /**
@@ -70,60 +78,45 @@ class ProductService {
   def deactivate(id: Long): Unit = switchState(id, false)
 
   /**
-   * @TEST
    * @param productId
    * @param brandId
    */
-  def deleteBrand(productId: Long, brandId: Long): Unit = DB.withSession {
-    implicit session ⇒
-      val associations = TableQuery[ProductBrandAssociations]
-      associations.filter(x ⇒ x.productId === productId && x.brandId === brandId).delete
-  }
+  def deleteBrand(productId: Long, brandId: Long): Unit =
+    db.run(associations.filter(x ⇒ x.productId === productId && x.brandId === brandId).delete)
+
   /**
    * Deletes a product with the given id
    *
    * @param id Product id
    */
-  def delete(id: Long): Unit = DB.withSession { implicit session ⇒
-    val products = TableQuery[Products]
-    products.filter(_.id === id).delete
-  }
+  def delete(id: Long): Unit = db.run(products.filter(_.id === id).delete)
 
   /**
    * Returns a product with the given id if exists
    *
    * @param id Product id
    */
-  def find(id: Long) = DB.withSession { implicit session ⇒
-    val products = TableQuery[Products]
-    products.filter(_.id === id).firstOption
-  }
+  def find(id: Long) = db.run(products.filter(_.id === id).result).map(_.headOption)
 
   /** Returns list with active products */
-  def findActive: List[Product] = DB.withSession { implicit session ⇒
-    val products = TableQuery[Products]
-    products.filter(_.active === true).sortBy(_.title.toLowerCase).list
-  }
+  def findActive: Future[List[Product]] =
+    db.run(products.filter(_.active === true).sortBy(_.title.toLowerCase).result).map(_.toList)
 
   /** Returns list with all products */
-  def findAll: List[Product] = DB.withSession { implicit session ⇒
-    val products = TableQuery[Products]
-    products.sortBy(_.title.toLowerCase).list
-  }
+  def findAll: Future[List[Product]] =
+    db.run(products.sortBy(_.title.toLowerCase).result).map(_.toList)
 
   /**
    * Returns sorted list of products for the given brand
    *
    * @param brandId Brand identifier
    */
-  def findByBrand(brandId: Long): List[Product] = DB.withSession {
-    implicit session ⇒
-      val associations = TableQuery[ProductBrandAssociations]
-      val query = for {
-        relation ← associations if relation.brandId === brandId
-        product ← relation.product
-      } yield product
-      query.sortBy(_.title.toLowerCase).list
+  def findByBrand(brandId: Long): Future[List[Product]] = {
+    val query = for {
+      relation ← associations if relation.brandId === brandId
+      product ← relation.product
+    } yield product
+    db.run(query.sortBy(_.title.toLowerCase).result).map(_.toList)
   }
 
   /**
@@ -131,11 +124,14 @@ class ProductService {
    *
    * @param parentId Product id
    */
-  def findDerivatives(parentId: Long): List[Product] = DB.withSession {
-    implicit session ⇒
-      val products = TableQuery[Products]
-      products.filter(_.parentId === parentId).list
-  }
+  def findDerivatives(parentId: Long): Future[List[Product]] =
+    db.run(products.filter(_.parentId === parentId).result).map(_.toList)
+
+  /**
+    * Return number of product per brand
+    */
+  def findNumberPerBrand: Future[Map[Long, Int]] =
+    db.run(associations.result).map(_.toList.groupBy(_._3).map(value => value._1 -> value._2.length))
 
   /**
    * Inserts the given product to database
@@ -143,50 +139,60 @@ class ProductService {
    * @param product Product to insert
    * @return The given product with updated id
    */
-  def insert(product: Product): Product = DB.withSession { implicit session ⇒
-    val products = TableQuery[Products]
-    val id = (products returning products.map(_.id)) += product
-    product.copy(id = Some(id))
+  def insert(product: Product): Future[Product] = {
+    val query = products returning products.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += product)
   }
 
   /**
    * Returns true if the given title is taken by other product except the given one
-   * @TEST
    * @param title The title of interest
    * @param id Product id
    */
-  def isTitleTaken(title: String, id: Long): Boolean = DB.withSession {
-    implicit session ⇒
-      val products = TableQuery[Products]
-      products.filter(_.title === title).filter(_.id =!= id).exists.run
-  }
+  def isTitleTaken(title: String, id: Long): Future[Boolean] =
+    db.run(products.filter(_.title === title).filter(_.id =!= id).exists.result)
 
   /**
    * Returns true if a product with the given title exists
-   * @TEST
    * @param title Product title
    */
-  def titleExists(title: String): Boolean = DB.withSession {
-    implicit session ⇒
-      val products = TableQuery[Products]
-      products.filter(_.title === title).exists.run
-  }
+  def titleExists(title: String): Future[Boolean] =
+    db.run(products.filter(_.title === title).exists.result)
 
   /**
    * Updates the given product to database
    *
-   * @TEST
    * @param product Product to update
    * @return The given product
    */
-  def update(product: Product): Product = DB.withSession { implicit session ⇒
-    val products = TableQuery[Products]
+  def update(product: Product): Future[Product] = {
+    import Products.productCategoryTypeMapper
+
     val updateTuple = (product.title, product.subtitle, product.url,
       product.description, product.callToActionUrl, product.callToActionText,
       product.picture, product.category, product.parentId,
       product.updated, product.updatedBy)
-    products.filter(_.id === product.id).map(_.forUpdate).update(updateTuple)
-    product
+    db.run(products.filter(_.id === product.id).map(_.forUpdate).update(updateTuple)).map(_ => product)
+  }
+
+  object collection {
+
+    /**
+      * Fill products with brands (using only one query to database)
+      * @param products List of products
+      */
+    def brands(products: List[Product]): Future[List[ProductView]] = {
+      val ids = products.map(_.id.get).distinct
+
+      val query = for {
+        relation ← associations if relation.productId inSet ids
+        brand ← relation.brand
+      } yield (relation.productId, brand)
+      val result = db.run(query.result).map(_.toList.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2))))
+      result map { brands =>
+        products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List()), List()))
+      }
+    }
   }
 
   /**
@@ -195,39 +201,6 @@ class ProductService {
    * @param id Product id
    * @param active If true, the product is activated
    */
-  private def switchState(id: Long, active: Boolean): Unit = DB.withSession {
-    implicit session: Session ⇒
-      val products = TableQuery[Products]
-      val query = for {
-        product ← products if product.id === id
-      } yield product.active
-      query.update(active)
-  }
-}
-
-object ProductService {
-  private val instance = new ProductService
-
-  def get: ProductService = instance
-}
-
-object ProductsCollection {
-
-  /**
-   * Fill products with brands (using only one query to database)
-   * @TEST
-   * @param products List of products
-   */
-  def brands(products: List[Product]): List[ProductView] = DB.withSession {
-    implicit session ⇒
-      val ids = products.map(_.id.get).distinct
-      val associations = TableQuery[ProductBrandAssociations]
-
-      val query = for {
-        relation ← associations if relation.productId inSet ids
-        brand ← relation.brand
-      } yield (relation.productId, brand)
-      val brands = query.list.groupBy(_._1).map(f ⇒ (f._1, f._2.map(_._2)))
-      products map (p ⇒ ProductView(p, brands.getOrElse(p.id.get, List())))
-  }
+  private def switchState(id: Long, active: Boolean): Unit =
+    db.run(products.filter(_.id === id).map(_.active).update(active))
 }

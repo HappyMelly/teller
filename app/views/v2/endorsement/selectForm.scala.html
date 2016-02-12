@@ -2,7 +2,7 @@
   personId: Long,
   records: List[(Evaluation, String, String)])(implicit flash: Flash,
     request: Request[Any],
-    handler: AuthorisationHandler,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)
 
 <div class="container">

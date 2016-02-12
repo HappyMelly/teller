@@ -1,6 +1,8 @@
 @(event: Event,
+    eventType: String,
     brand: Brand,
-    changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader)
+    changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader,
+        messages: Messages)
 
 @import models.service.brand.EventTypeService
 @import laika.api._
@@ -58,7 +60,7 @@
                 </tr>
                 <tr>
                     <td width="150"><strong>Event Type</strong></td>
-                    <td>@EventTypeService.get.find(event.eventTypeId).get.name</td>
+                    <td>@eventType</td>
                 </tr>
                 <tr>
                     <td width="150"><strong>Spoken Languages</strong></td>

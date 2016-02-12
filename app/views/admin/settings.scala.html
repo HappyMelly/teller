@@ -2,8 +2,9 @@
     transactionTypes: List[models.admin.TransactionType],
     form: Form[String])(implicit flash: Flash,
         request: Request[Any],
-        handler: AuthorisationHandler,
-        token: play.filters.csrf.CSRF.Token)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
 @import controllers.admin.routes.Administration
 @import helper.CSRF

@@ -52,7 +52,7 @@ class AccessSpec extends PlayAppSpec {
   "Method 'cancel'" should {
     "have 'edit' access rights for 'organisation' object" in {
       controller.cancel(1L).apply(fakePostRequest())
-      controller.checkedDynamicRole must_== Some(DynamicRole.OrgMember)
+      controller.checkedDynamicRole must_== Some(OrgMember)
       controller.checkedObjectId must_== Some(1L)
     }
   }
@@ -81,7 +81,7 @@ class AccessSpec extends PlayAppSpec {
   "Method 'deleteLogo'" should {
     "have 'edit' access rights for 'organisation' object" in {
       controller.deleteLogo(1L).apply(fakePostRequest())
-      controller.checkedDynamicRole must_== Some(DynamicRole.OrgMember)
+      controller.checkedDynamicRole must_== Some(OrgMember)
       controller.checkedObjectId must_== Some(1L)
     }
   }
@@ -96,7 +96,7 @@ class AccessSpec extends PlayAppSpec {
   "Method 'edit'" should {
     "have 'edit' access rights for 'organisation' object" in {
       controller.edit(1L).apply(fakePostRequest())
-      controller.checkedDynamicRole must_== Some(DynamicRole.OrgMember)
+      controller.checkedDynamicRole must_== Some(OrgMember)
       controller.checkedObjectId must_== Some(1L)
     }
   }
@@ -125,7 +125,7 @@ class AccessSpec extends PlayAppSpec {
   "Method 'update'" should {
     "have 'edit' access rights for 'organisation' object" in {
       controller.update(1L).apply(fakePostRequest())
-      controller.checkedDynamicRole must_== Some(DynamicRole.OrgMember)
+      controller.checkedDynamicRole must_== Some(OrgMember)
       controller.checkedObjectId must_== Some(1L)
     }
   }
@@ -133,7 +133,7 @@ class AccessSpec extends PlayAppSpec {
   "Method 'uploadLogo'" should {
     "have 'edit' access rights for 'organisation' object" in {
       controller.uploadLogo(1L).apply(fakePostRequest())
-      controller.checkedDynamicRole must_== Some(DynamicRole.OrgMember)
+      controller.checkedDynamicRole must_== Some(OrgMember)
       controller.checkedObjectId must_== Some(1L)
     }
   }

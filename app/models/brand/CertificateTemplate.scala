@@ -24,11 +24,7 @@
 
 package models.brand
 
-import models.database.brand.CertificateTemplates
-import models.{ Activity, ActivityRecorder, Brand }
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.{Activity, ActivityRecorder}
 
 /**
  * A thing such as a book, a game or a piece of software
@@ -56,28 +52,5 @@ case class CertificateTemplate(
    * Returns type of this object
    */
   def objectType: String = Activity.Type.CertificateTemplate
-
-  def insert: CertificateTemplate = DB.withSession { implicit session ⇒
-    val templates = TableQuery[CertificateTemplates]
-    val id = (templates returning templates.map(_.id)) += this
-    this.copy(id = Some(id))
-  }
-
-  def delete(): Unit = DB.withSession { implicit session ⇒
-    TableQuery[CertificateTemplates].filter(_.id === this.id).delete
-  }
-}
-
-object CertificateTemplate {
-
-  /**
-   * Find a certificate file
-   *
-   * @param id Unique identifier
-   * @return
-   */
-  def find(id: Long): Option[CertificateTemplate] = DB.withSession { implicit session ⇒
-    TableQuery[CertificateTemplates].filter(_.id === id).firstOption
-  }
 
 }

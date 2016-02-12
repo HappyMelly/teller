@@ -129,9 +129,9 @@ class LicenseServiceSpec extends PlayAppSpec {
         "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
         true, Money.of(EUR, 100), None)
       val facilitatorService = mock[FacilitatorService]
-      (facilitatorService.find _) expects (1, 1) returning None
+      (services.facilitatorService.find _) expects (1, 1) returning None
       val facilitator = Facilitator(None, 1L, 1L)
-      (facilitatorService.insert _) expects facilitator
+      (services.facilitatorService.insert _) expects facilitator
       service.facilitatorService_=(facilitatorService)
       service.update(license)
       ok
@@ -143,7 +143,7 @@ class LicenseServiceSpec extends PlayAppSpec {
         true, Money.of(EUR, 100), None)
       val facilitatorService = mock[FacilitatorService]
       val facilitator = Facilitator(None, 1L, 1L)
-      (facilitatorService.find _) expects (1, 1) returning Some(facilitator)
+      (services.facilitatorService.find _) expects (1, 1) returning Some(facilitator)
       service.facilitatorService_=(facilitatorService)
       service.update(license)
       ok

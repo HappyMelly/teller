@@ -21,37 +21,34 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models.service.admin
 
 import models.admin.ApiToken
-import models.database.admin.ApiTokens
-import play.api.Play.current
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import models.database.admin.ApiTokenTable
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-class ApiTokenService {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class ApiTokenService(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with ApiTokenTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
+  private val tokens = TableQuery[ApiTokens]
 
   /**
    * Returns ApiToken if exists, None otherwise
    * @param id Token identifier
    */
-  def find(id: Long): Option[ApiToken] = DB.withSession { implicit session ⇒
-    TableQuery[ApiTokens].filter(_.id === id).firstOption
-  }
+  def find(id: Long): Future[Option[ApiToken]] = db.run(tokens.filter(_.id === id).result).map(_.headOption)
 
   /**
    * Returns ApiToken if exists, None otherwise
    * @param token Token
    */
-  def find(token: String): Option[ApiToken] = DB.withSession {
-    implicit session ⇒
-      TableQuery[ApiTokens].filter(_.token === token).firstOption
-  }
-}
-
-object ApiTokenService {
-  private val instance = new ApiTokenService
-
-  def get: ApiTokenService = instance
+  def find(token: String): Future[Option[ApiToken]] =
+    db.run(tokens.filter(_.token === token).result).map(_.headOption)
 }

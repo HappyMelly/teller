@@ -24,99 +24,111 @@
 
 package controllers
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.service.Services
 import org.joda.time.LocalDate
-import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{I18nSupport, MessagesApi}
+import services.TellerRuntimeEnvironment
 
-class Dashboard(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
-    with Security
-    with Services
-    with Utilities {
+import scala.concurrent.Future
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                        override val messagesApi: MessagesApi,
+                                        val services: Services,
+                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with BrandAware
+  with I18nSupport {
 
   /**
    * About page - credits.
    */
-  def about = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.about(user))
+  def about = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.about(user))
   }
 
   /**
    * API v2 documentation page.
    */
-  def apiv2 = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.apiv2.index(user))
+  def apiv2 = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.apiv2.index(user))
   }
 
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = SecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
+  def index = AsyncSecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.registered) {
         roleDiffirentiator(user.account) { (view, brands) =>
-          val licenses = licenseService.expiring(List(view.brand.identifier))
-          val events = unbilledEvents(view.brand)
-          Ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
-            licenses, events))
+          (for {
+            l <- services.licenseService.expiring(List(view.brand.identifier))
+            e <- unbilledEvents(view.brand)
+          } yield (l, e)) flatMap { case (licenses, events) =>
+            ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands, licenses, events))
+          }
         } { (view, brands) =>
-          val events = eventService.findByFacilitator(
-            user.account.personId,
-            brandId = None)
-          Ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
-            upcomingEvents(events, brands),
-            pastEvents(events, brands),
-            unhandledEvaluations(events, brands)))
+          (for {
+            events <- services.eventService.findByFacilitator(user.account.personId, brandId = None)
+            evals <- unhandledEvaluations(events, brands)
+          } yield (events, evals)) flatMap { case (events, evaluations) =>
+            ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
+              upcomingEvents(events, brands),
+              pastEvents(events, brands),
+              evaluations))
+          }
         } {
-          Ok(views.html.v2.dashboard.forMembers(user))
+          ok(views.html.v2.dashboard.forMembers(user))
         }
       } else {
-        Redirect(routes.LoginPage.logout(error = Some("You are not registered in the system")))
+        redirect(routes.LoginPage.logout(error = Some("You are not registered in the system")))
       }
   }
 
   /**
    * Dashboard page for the specific brand
-   * @param id Brand identifier
+    *
+    * @param id Brand identifier
    */
-  def overview(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def overview(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
-        val licenses = licenseService.expiring(List(view.brand.identifier))
-        val events = unbilledEvents(view.brand)
-        Ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
-          licenses, events))
+        (for {
+          l <- services.licenseService.expiring(List(view.brand.identifier))
+          e <- unbilledEvents(view.brand)
+        } yield (l, e)) flatMap { case (licenses, events) =>
+          ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
+            licenses, events))
+        }
       } { (view, brands) =>
-        val events = eventService.findByFacilitator(
-          user.account.personId,
-          brandId = Some(id))
-        Ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
-          upcomingEvents(events, brands),
-          pastEvents(events, brands),
-          unhandledEvaluations(events, brands)))
-      } { Ok(views.html.v2.dashboard.index(user)) }
+        (for {
+          events <- services.eventService.findByFacilitator(user.account.personId, brandId = Some(id))
+          evaluations <- unhandledEvaluations(events, brands)
+        } yield (events, evaluations)) flatMap { case (events, evaluations) =>
+          ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
+            upcomingEvents(events, brands),
+            pastEvents(events, brands),
+            evaluations))
+        }
+      } { ok(views.html.v2.dashboard.index(user)) }
   }
 
   /**
    * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
    */
-  def profile = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val currentUser = user.person
-      Redirect(routes.People.details(currentUser.id.getOrElse(0)))
+  def profile = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val currentUser = user.person
+    redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
 
   /**
    * Returns 3 past events happened in the last 7 days
-   * @param events List of all events
+    *
+    * @param events List of all events
    */
   protected def pastEvents(events: List[Event], brands: List[Brand]) = {
     val now = LocalDate.now()
@@ -130,18 +142,21 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Returns unhandled evaluations for the given events
-   * @param events List of events
+    *
+    * @param events List of events
    */
   protected def unhandledEvaluations(events: List[Event], brands: List[Brand]) = {
-    evaluationService
-      .findUnhandled(events)
-      .sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-      .map(value => (value, brands.find(_.identifier == value._1.brandId)))
+    services.evaluationService.findUnhandled(events) map { evaluations =>
+      evaluations.sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
+        .map(value => (value, brands.find(_.identifier == value._1.brandId)))
+
+    }
   }
 
   /**
    * Returns list of upcoming events (not more than 3)
-   * @param events List of all events
+    *
+    * @param events List of all events
    * @param brands List of related brands
    */
   protected def upcomingEvents(events: List[Event], brands: List[Brand]) = {
@@ -152,18 +167,21 @@ class Dashboard(environment: RuntimeEnvironment[ActiveUser])
 
   /**
    * Returns list of past confirmed events without invoices
-   * @param brand Brand of interest
+    *
+    * @param brand Brand of interest
    */
-  protected def unbilledEvents(brand: Brand): List[Event] = {
-    val events = eventService.
-      findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
-    val TELLER_LAUNCHED_DATE = LocalDate.parse("2015-01-01")
-    eventService.
-      withInvoices(events).
-      filter(_.invoice.invoiceBy.isEmpty).
-      map(_.event).filterNot(_.free).
-      filter(_.schedule.start.isAfter(TELLER_LAUNCHED_DATE)).
-      sortBy(_.schedule.start.toString)
+  protected def unbilledEvents(brand: Brand): Future[List[Event]] = {
+    (for {
+      e <- services.eventService.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
+      i <- services.eventService.withInvoices(e)
+    } yield i) map { withInvoices =>
+      val TELLER_LAUNCHED_DATE = LocalDate.parse("2015-01-01")
+      withInvoices.filter(_.invoice.invoiceBy.isEmpty).
+        map(_.event).filterNot(_.free).
+        filter(_.schedule.start.isAfter(TELLER_LAUNCHED_DATE)).
+        sortBy(_.schedule.start.toString)
+
+    }
   }
 }
 

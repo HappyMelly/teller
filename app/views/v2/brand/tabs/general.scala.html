@@ -1,12 +1,13 @@
 @(brand: Brand,
+    profile: SocialProfile,
     coordinator: Option[Person],
     links: List[models.brand.BrandLink])(implicit request: Request[Any],
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import _root_.templates.Formatters._
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
-@import models.UserRole.DynamicRole
+@import models.UserRole.Role
 
 <div id="deactivatedStatus" class="alert alert-warning">
     <i class="glyphicon glyphicon-info-sign"></i> This brand is <strong>deactivated</strong>.
@@ -42,13 +43,13 @@
             @brand.blog.map { url =>
                 <p><i class="fa fa-rss-square fa-fw fa-lg"></i> <a href="@url" target="_blank">@url</a></p>
             }
-            @brand.socialProfile.skype.map { skype =>
+            @profile.skype.map { skype =>
                 <p><i class="fa fa-skype fa-fw fa-lg"></i>  <a href="skype:@skype" target="_blank">skype</a>
             }
-            @brand.socialProfile.contactForm.map { url =>
+            @profile.contactForm.map { url =>
                 <p><i class="fa fa-globe fa-fw fa-lg"></i> <a href="@url" target="_blank">Contact form</a>
             }
-            @brand.socialProfile.phone.map { phone =>
+            @profile.phone.map { phone =>
                 <p><i class="fa fa-phone fa-fw fa-lg"></i> @phone</p>
             }
         </dl>
@@ -76,7 +77,7 @@
                         <td>@link.linkType.capitalize</td>
                         <td><a href="@link.link" target="_blank">@link.link</td>
                         <td>
-                        @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+                        @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
                             <a data-id="@link.id.get" href="#" class="font-sm remove"
                             data-href="@routes.BrandLinks.remove(brand.id.get, link.id.get)">Remove</a>
                         }
@@ -87,7 +88,7 @@
             </table>
         }
         <div id="brandLinkNotification"></div>
-        @dynamic(handler, DynamicRole.Coordinator, brand.identifier.toString) {
+        @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
             <form id="addLinkForm" class="form-inline pull-right" method="POST"
             action="@CSRF(routes.BrandLinks.create(brand.id.get))">
                 <select name="type" id="linkType" class="form-control input-sm">

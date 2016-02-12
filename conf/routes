@@ -1,291 +1,267 @@
 # Application pages
 
-GET           /                                                              @controllers.Dashboard.index
-GET           /about                                                         @controllers.Dashboard.about
-GET           /apiv2                                                         @controllers.Dashboard.apiv2
-GET           /profile                                                       @controllers.Dashboard.profile
-GET           /overview/:id                                                  @controllers.Dashboard.overview(id: Long)
+GET           /                                                              controllers.Dashboard.index
+GET           /about                                                         controllers.Dashboard.about
+GET           /apiv2                                                         controllers.Dashboard.apiv2
+GET           /profile                                                       controllers.Dashboard.profile
+GET           /overview/:id                                                  controllers.Dashboard.overview(id: Long)
 
-GET           /accounts                                                      @controllers.Accounts.index
-GET           /accounts/balance                                              @controllers.Accounts.previewBalance
-POST          /accounts/balance                                              @controllers.Accounts.balanceAccounts
+GET           /admin/settings                                                controllers.admin.Administration.settings
+POST          /admin/transactiontype/new                                     controllers.admin.Administration.createTransactionType
+POST          /admin/transactiontype/:id/delete                              controllers.admin.Administration.deleteTransactionType(id: Long)
 
-GET           /account/:id                                                   @controllers.Accounts.details(id: Long)
-GET           /account/:id/bookings                                          @controllers.Accounts.bookings(id: Long, from: Option[org.joda.time.LocalDate] ?= None, to: Option[org.joda.time.LocalDate] ?= None)
-POST          /account/:id/activate                                          @controllers.Accounts.activate(id: Long)
-POST          /account/:id/deactivate                                        @controllers.Accounts.deactivate(id: Long)
+GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
+POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
 
-GET           /admin/settings                                                @controllers.admin.Administration.settings
-POST          /admin/transactiontype/new                                     @controllers.admin.Administration.createTransactionType
-POST          /admin/transactiontype/:id/delete                              @controllers.admin.Administration.deleteTransactionType(id: Long)
+GET           /badge/:hash/picture                                           controllers.brand.Badges.picture(hash: String, size: String ?= "")
 
-GET           /attendee/:id/event/:eventId/licenses/new                      @controllers.Licenses.addForAttendee(id: Long, eventId: Long)
-POST          /attendee/:id/event/:eventId/licenses/new                      @controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
+POST          /brand/:id/activation                                          controllers.Brands.activation(id: Long)
+GET           /brands                                                        controllers.Brands.index
+GET           /brand/new                                                     controllers.Brands.add
+POST          /brand/new                                                     controllers.Brands.create
+GET           /brand/:id                                                     controllers.Brands.details(id: Long)
+GET           /brand/:id/tabs/coordinator                                    controllers.Brands.renderCoordinatorTabs(id: Long, tab: String)
+GET           /brand/:id/tabs                                                controllers.Brands.renderTabs(id: Long, tab: String)
+POST          /brand/:id/member                                              controllers.Brands.addCoordinator(id: Long)
+DELETE        /brand/:id/member/:personId                                    controllers.Brands.removeCoordinator(id: Long, personId: Long)
+POST          /brand/:id                                                     controllers.Brands.update(id: Long)
+GET           /brand/:id/attendees/list                                      controllers.event.Attendees.list(id: Long)
+GET           /brand/:id/attendees                                           controllers.event.Attendees.index(id: Long)
+GET           /brand/:id/events                                              controllers.Brands.events(id: Long, future: Option[Boolean])
+GET           /brand/:id/edit                                                controllers.Brands.edit(id: Long)
+POST          /brand/:id/delete                                              controllers.Brands.delete(id: Long)
+GET           /brand/:code/picture                                           controllers.Brands.picture(code: String)
+POST          /brand/:id/picture/delete                                      controllers.Brands.deletePicture(id: Long)
+GET           /brand/:brandId/eventtype                                      controllers.EventTypes.add(brandId: Long)
+POST          /brand/:brandId/eventtype                                      controllers.EventTypes.create(brandId: Long)
+POST          /brand/:brandId/eventtype/:id                                  controllers.EventTypes.update(brandId: Long, id: Long)
+GET           /brand/:brandId/eventtype/:id/delete                           controllers.EventTypes.delete(brandId: Long, id: Long)
+GET           /brand/:id/eventtypes                                          controllers.EventTypes.index(id: Long)
+GET           /brand/:id/facilitators/list                                   controllers.Facilitators.list(id: Long)
+GET           /brand/:id/facilitators                                        controllers.Facilitators.index(id: Long)
+POST          /brand/:id/coordinator/:personId/type/:notification/off        controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
+POST          /brand/:id/coordinator/:personId/type/:notification/on         controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
+GET           /brand/:id/eventrequests                                       controllers.EventRequests.index(id: Long)
+GET           /brand/:id/eventrequest/:requestId                             controllers.EventRequests.details(id: Long, requestId: Long)
 
-GET           /bookings                                                      @controllers.BookingEntries.index
-GET           /booking/new                                                   @controllers.BookingEntries.add
-POST          /booking/new                                                   @controllers.BookingEntries.create
-GET           /booking/:bookingNumber                                        @controllers.BookingEntries.details(bookingNumber: Int)
-POST          /booking/:bookingNumber                                        @controllers.BookingEntries.update(bookingNumber: Int)
-GET           /booking/:bookingNumber/edit                                   @controllers.BookingEntries.edit(bookingNumber: Int)
-POST          /booking/:bookingNumber/delete                                 @controllers.BookingEntries.delete(bookingNumber: Int)
+GET           /brand/:id/badge                                               controllers.brand.Badges.add(id: Long)
+POST          /brand/:id/badge                                               controllers.brand.Badges.create(id: Long)
+DELETE        /brand/:id/badge/:badgeId                                      controllers.brand.Badges.delete(id: Long, badgeId: Long)
+GET           /brand/:id/badge/:badgeId                                      controllers.brand.Badges.edit(id: Long, badgeId: Long)
+POST          /brand/:id/badge/:badgeId                                      controllers.brand.Badges.update(id: Long, badgeId: Long)
 
-GET           /booking/:bookingNumber/attachment                             @controllers.BookingEntries.attachFile(bookingNumber: Int, key: String)
-GET           /booking/:bookingNumber/attachment                             @controllers.BookingEntries.s3Callback(bookingNumber: Int)
-POST          /booking/:bookingNumber/attachment/delete                      @controllers.BookingEntries.deleteAttachment(bookingNumber: Int)
+POST          /brand/:id/settings/licensereminder/off                        controllers.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
+POST          /brand/:id/settings/licensereminder/on                         controllers.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
 
-GET           /badge/:hash/picture                                           @controllers.brand.Badges.picture(hash: String, size: String ?= "")
+POST          /brand/:brandId/link                                           controllers.BrandLinks.create(brandId: Long)
+DELETE        /brand/:brandId/link/:id                                       controllers.BrandLinks.remove(brandId: Long, id: Long)
 
-POST          /brand/:id/activation                                          @controllers.Brands.activation(id: Long)
-GET           /brands                                                        @controllers.Brands.index
-GET           /brand/new                                                     @controllers.Brands.add
-POST          /brand/new                                                     @controllers.Brands.create
-GET           /brand/:id                                                     @controllers.Brands.details(id: Long)
-GET           /brand/:id/tabs/coordinator                                    @controllers.Brands.renderCoordinatorTabs(id: Long, tab: String)
-GET           /brand/:id/tabs                                                @controllers.Brands.renderTabs(id: Long, tab: String)
-POST          /brand/:id/member                                              @controllers.Brands.addCoordinator(id: Long)
-DELETE        /brand/:id/member/:personId                                    @controllers.Brands.removeCoordinator(id: Long, personId: Long)
-POST          /brand/:id                                                     @controllers.Brands.update(id: Long)
-GET           /brand/:id/attendees/list                                      @controllers.event.Attendees.list(id: Long)
-GET           /brand/:id/attendees                                           @controllers.event.Attendees.index(id: Long)
-GET           /brand/:id/events                                              @controllers.Brands.events(id: Long, future: Option[Boolean])
-GET           /brand/:id/edit                                                @controllers.Brands.edit(id: Long)
-POST          /brand/:id/delete                                              @controllers.Brands.delete(id: Long)
-GET           /brand/:code/picture                                           @controllers.Brands.picture(code: String)
-POST          /brand/:id/picture/delete                                      @controllers.Brands.deletePicture(id: Long)
-GET           /brand/:brandId/eventtype                                      @controllers.EventTypes.add(brandId: Long)
-POST          /brand/:brandId/eventtype                                      @controllers.EventTypes.create(brandId: Long)
-POST          /brand/:brandId/eventtype/:id                                  @controllers.EventTypes.update(brandId: Long, id: Long)
-GET           /brand/:brandId/eventtype/:id/delete                           @controllers.EventTypes.delete(brandId: Long, id: Long)
-GET           /brand/:id/eventtypes                                          @controllers.EventTypes.index(id: Long)
-GET           /brand/:id/facilitators/list                                   @controllers.Facilitators.list(id: Long)
-GET           /brand/:id/facilitators                                        @controllers.Facilitators.index(id: Long)
-POST          /brand/:id/coordinator/:personId/type/:notification/off        @controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
-POST          /brand/:id/coordinator/:personId/type/:notification/on         @controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
-GET           /brand/:id/eventrequests                                       @controllers.EventRequests.index(id: Long)
-GET           /brand/:id/eventrequest/:requestId                             @controllers.EventRequests.details(id: Long, requestId: Long)
-
-GET           /brand/:id/badge                                               @controllers.brand.Badges.add(id: Long)
-POST          /brand/:id/badge                                               @controllers.brand.Badges.create(id: Long)
-DELETE        /brand/:id/badge/:badgeId                                      @controllers.brand.Badges.delete(id: Long, badgeId: Long)
-GET           /brand/:id/badge/:badgeId                                      @controllers.brand.Badges.edit(id: Long, badgeId: Long)
-POST          /brand/:id/badge/:badgeId                                      @controllers.brand.Badges.update(id: Long, badgeId: Long)
-
-POST          /brand/:id/settings/licensereminder/off                        @controllers.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
-POST          /brand/:id/settings/licensereminder/on                         @controllers.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
-
-POST          /brand/:brandId/link                                           @controllers.BrandLinks.create(brandId: Long)
-DELETE        /brand/:brandId/link/:id                                       @controllers.BrandLinks.remove(brandId: Long, id: Long)
-
-GET           /brand/:brandId/testimonial                                    @controllers.BrandTestimonials.add(brandId: Long)
-GET           /brand/:brandId/testimonial/:id                                @controllers.BrandTestimonials.edit(brandId: Long, id: Long)
-POST          /brand/:brandId/testimonial                                    @controllers.BrandTestimonials.create(brandId: Long)
-POST          /brand/:brandId/testimonial/:id                                @controllers.BrandTestimonials.update(brandId: Long, id: Long)
-DELETE        /brand/:brandId/testimonial/:id                                @controllers.BrandTestimonials.remove(brandId: Long, id: Long)
+GET           /brand/:brandId/testimonial                                    controllers.BrandTestimonials.add(brandId: Long)
+GET           /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.edit(brandId: Long, id: Long)
+POST          /brand/:brandId/testimonial                                    controllers.BrandTestimonials.create(brandId: Long)
+POST          /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.update(brandId: Long, id: Long)
+DELETE        /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.remove(brandId: Long, id: Long)
 
 
-GET           /brand/:id/template                                            @controllers.CertificateTemplates.add(id: Long)
-POST          /brand/:id/template                                            @controllers.CertificateTemplates.create(id: Long)
+GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
+POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
 
-GET           /certificate/:id                                               @controllers.Certificates.certificate(id: String)
-GET           /certificate/new/:eventId/:personId                            @controllers.Certificates.create(eventId: Long, personId: Long)
+GET           /certificate/:id                                               controllers.Certificates.certificate(id: String)
+GET           /certificate/new/:eventId/:personId                            controllers.Certificates.create(eventId: Long, personId: Long)
 
-POST          /contribution/new                                              @controllers.Contributions.create(page: String)
-GET           /contribution/:id/delete                                       @controllers.Contributions.delete(id: Long, page: String)
+POST          /contribution/new                                              controllers.Contributions.create(page: String)
+GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
 
-POST          /password/reset                                                @controllers.PasswordReset.handleStartResetPassword
+POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword
 
-GET           /person/:personId/endorsement                                  @controllers.Endorsements.add(personId: Long)
-GET           /person/:personId/endorsement/select                           @controllers.Endorsements.renderSelectForm(personId: Long)
-GET           /person/:personId/endorsement/:id                              @controllers.Endorsements.edit(personId: Long, id: Long)
-POST          /person/:personId/endorsement                                  @controllers.Endorsements.create(personId: Long)
-POST          /person/:personId/endorsement/:id                              @controllers.Endorsements.update(personId: Long, id: Long)
-DELETE        /person/:personId/endorsement/:id                              @controllers.Endorsements.remove(personId: Long, id: Long)
-POST          /person/:personId/endorsements/positions                       @controllers.Endorsements.updatePositions(personId: Long)
-POST          /person/:personId/endorsements/add                             @controllers.Endorsements.createFromSelected(personId: Long)
-POST          /event/:eventId/endorsement/evaluation/:evaluationId           @controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
+GET           /person/:personId/endorsement                                  controllers.Endorsements.add(personId: Long)
+GET           /person/:personId/endorsement/select                           controllers.Endorsements.renderSelectForm(personId: Long)
+GET           /person/:personId/endorsement/:id                              controllers.Endorsements.edit(personId: Long, id: Long)
+POST          /person/:personId/endorsement                                  controllers.Endorsements.create(personId: Long)
+POST          /person/:personId/endorsement/:id                              controllers.Endorsements.update(personId: Long, id: Long)
+DELETE        /person/:personId/endorsement/:id                              controllers.Endorsements.remove(personId: Long, id: Long)
+POST          /person/:personId/endorsements/positions                       controllers.Endorsements.updatePositions(personId: Long)
+POST          /person/:personId/endorsements/add                             controllers.Endorsements.createFromSelected(personId: Long)
+POST          /event/:eventId/endorsement/evaluation/:evaluationId           controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
-POST          /evaluation/:id/approve                                        @controllers.Evaluations.approve(id: Long)
-POST          /evaluation/:id/reject                                         @controllers.Evaluations.reject(id: Long)
-POST          /evaluation/:id/confirmrequest                                 @controllers.Evaluations.sendConfirmationRequest(id: Long)
-GET           /evaluation/:id                                              @controllers.Evaluations.details(id: Long)
-DELETE        /evaluation/:id                                              @controllers.Evaluations.delete(id: Long)
+POST          /evaluation/:id/approve                                        controllers.Evaluations.approve(id: Long)
+POST          /evaluation/:id/reject                                         controllers.Evaluations.reject(id: Long)
+POST          /evaluation/:id/confirmrequest                                 controllers.Evaluations.sendConfirmationRequest(id: Long)
+GET           /evaluation/:id                                              controllers.Evaluations.details(id: Long)
+DELETE        /evaluation/:id                                              controllers.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
-GET           /evaluation/confirm/:confirmationId                          @controllers.Evaluations.confirm(confirmationId: String)
+GET           /evaluation/confirm/:confirmationId                          controllers.Evaluations.confirm(confirmationId: String)
 
-POST          /person/:personId/material                                   @controllers.Materials.create(personId: Long)
-DELETE        /person/:personId/material/:id                               @controllers.Materials.remove(personId: Long, id: Long)
+POST          /person/:personId/material                                   controllers.Materials.create(personId: Long)
+DELETE        /person/:personId/material/:id                               controllers.Materials.remove(personId: Long, id: Long)
 
-GET           /report/create/:brandId/event/:eventId/status/:status        @controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
+GET           /report/create/:brandId/event/:eventId/status/:status        controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
 
-GET           /reset/:token                                                @controllers.PasswordReset.resetPassword(token: String)
-POST          /reset/:token                                                @controllers.PasswordReset.handleResetPassword(token: String)
+GET           /reset/:token                                                controllers.PasswordReset.resetPassword(token: String)
+POST          /reset/:token                                                controllers.PasswordReset.handleResetPassword(token: String)
 
-GET           /events                                                      @controllers.Events.index(brandId: Long)
-GET           /events/filtered                                             @controllers.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
-POST          /event                                                       @controllers.Events.create
-GET           /events/new/                                                 @controllers.Events.add
-GET           /event/:id/duplicate                                         @controllers.Events.duplicate(id: Long)
-GET           /event/:id/edit                                              @controllers.Events.edit(id: Long)
-GET           /event/:id/reason                                            @controllers.Events.reason(id: Long)
-GET           /event/:id                                                   @controllers.Events.details(id: Long)
-GET           /event/:id/detailsButtons                                    @controllers.Events.detailsButtons(id: Long)
-POST          /event/:id                                                   @controllers.Events.update(id: Long)
-POST          /event/:id/confirm                                           @controllers.Events.confirm(id: Long)
-POST          /event/:id/cancel                                            @controllers.Events.cancel(id: Long)
-POST          /event/:id/invoice                                           @controllers.Events.invoice(id: Long)
-POST          /event/:id/send                                              @controllers.Events.sendRequest(id: Long)
-GET           /event/:id/attendee                                          @controllers.event.Attendees.add(id: Long)
-POST          /event/:id/attendee                                          @controllers.event.Attendees.create(id: Long)
-GET           /event/:id/attendee/:attendeeId/evaluation/new               @controllers.Evaluations.add(id: Long, attendeeId: Long)
-POST          /event/:id/attendee/:attendeeId/evaluation/new               @controllers.Evaluations.create(id: Long, attendeeId: Long)
-GET           /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.details(id: Long, attendeeId: Long)
-GET           /event/:id/attendee/:attendeeId/edit                         @controllers.event.Attendees.edit(id: Long, attendeeId: Long)
-POST          /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.update(id: Long, attendeeId: Long)
-DELETE        /event/:id/attendee/:attendeeId                              @controllers.event.Attendees.delete(id: Long, attendeeId: Long)
-GET           /event/:id/attendees                                         @controllers.event.Attendees.listByEvent(id: Long)
+GET           /events                                                      controllers.Events.index(brandId: Long)
+GET           /events/filtered                                             controllers.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
+POST          /event                                                       controllers.Events.create
+GET           /events/new/                                                 controllers.Events.add
+GET           /event/:id/duplicate                                         controllers.Events.duplicate(id: Long)
+GET           /event/:id/edit                                              controllers.Events.edit(id: Long)
+GET           /event/:id/reason                                            controllers.Events.reason(id: Long)
+GET           /event/:id/public                                            controllers.Events.public(id: String)
+GET           /event/:id                                                   controllers.Events.details(id: Long)
+GET           /event/:id/detailsButtons                                    controllers.Events.detailsButtons(id: Long)
+POST          /event/:id                                                   controllers.Events.update(id: Long)
+POST          /event/:id/confirm                                           controllers.Events.confirm(id: Long)
+POST          /event/:id/cancel                                            controllers.Events.cancel(id: Long)
+POST          /event/:id/invoice                                           controllers.event.Invoices.update(id: Long)
+POST          /event/:id/send                                              controllers.event.Requests.send(id: Long)
+GET           /event/:id/attendee                                          controllers.event.Attendees.add(id: Long)
+POST          /event/:id/attendee                                          controllers.event.Attendees.create(id: Long)
+GET           /event/:id/attendee/:attendeeId/evaluation/new               controllers.Evaluations.add(id: Long, attendeeId: Long)
+POST          /event/:id/attendee/:attendeeId/evaluation/new               controllers.Evaluations.create(id: Long, attendeeId: Long)
+GET           /event/:id/attendee/:attendeeId                              controllers.event.Attendees.details(id: Long, attendeeId: Long)
+GET           /event/:id/attendee/:attendeeId/edit                         controllers.event.Attendees.edit(id: Long, attendeeId: Long)
+POST          /event/:id/attendee/:attendeeId                              controllers.event.Attendees.update(id: Long, attendeeId: Long)
+DELETE        /event/:id/attendee/:attendeeId                              controllers.event.Attendees.delete(id: Long, attendeeId: Long)
+GET           /event/:id/attendees                                         controllers.event.Attendees.listByEvent(id: Long)
 
-GET           /eventrequest/:id/unsubscribe                                @controllers.EventRequests.unsubscribe(id: String)
+GET           /eventrequest/:id/unsubscribe                                controllers.EventRequests.unsubscribe(id: String)
 
-GET           /exchangerate                                                controllers.ExchangeRates.rate
-GET           /exchangerate/:target/:amount                                controllers.ExchangeRates.convert(amount: org.joda.money.Money, target: org.joda.money.CurrencyUnit)
-GET           /exchangerates/:base                                         controllers.ExchangeRates.rates(base: org.joda.money.CurrencyUnit, require: List[org.joda.money.CurrencyUnit])
+GET           /member/:id/experiment                                       controllers.Experiments.add(id: Long)
+POST          /member/:id/experiment                                       controllers.Experiments.create(id: Long)
+DELETE        /member/:id/experiment/:experimentId                         controllers.Experiments.delete(id: Long, experimentId: Long)
+DELETE        /member/:id/experiment/:experimentId/picture                 controllers.Experiments.deletePicture(id: Long, experimentId: Long)
+GET           /member/:id/experiment/:experimentId                         controllers.Experiments.edit(id: Long, experimentId: Long)
+GET           /member/:id/experiments                                      controllers.Experiments.experiments(id: Long)
+POST          /member/:id/experiment/:experimentId                         controllers.Experiments.update(id: Long, experimentId: Long)
 
-GET           /member/:id/experiment                                       @controllers.Experiments.add(id: Long)
-POST          /member/:id/experiment                                       @controllers.Experiments.create(id: Long)
-DELETE        /member/:id/experiment/:experimentId                         @controllers.Experiments.delete(id: Long, experimentId: Long)
-DELETE        /member/:id/experiment/:experimentId/picture                 @controllers.Experiments.deletePicture(id: Long, experimentId: Long)
-GET           /member/:id/experiment/:experimentId                         @controllers.Experiments.edit(id: Long, experimentId: Long)
-GET           /member/:id/experiments                                      @controllers.Experiments.experiments(id: Long)
-POST          /member/:id/experiment/:experimentId                         @controllers.Experiments.update(id: Long, experimentId: Long)
+GET           /experiment/:id/picture                                      controllers.Experiments.picture(id: Long, size: String ?= "")
 
-GET           /experiment/:id/picture                                      @controllers.Experiments.picture(id: Long, size: String ?= "")
+POST          /facilitator/:id/country                                     controllers.Facilitators.addCountry(id: Long)
+POST          /facilitator/:id/language                                    controllers.Facilitators.addLanguage(id: Long)
+GET           /facilitator/:id/brand/:brandId/badges                       controllers.Facilitators.badges(id: Long, brandId: Long)
+POST          /facilitator/:id/brand/:brandId/badges                       controllers.Facilitators.updateBadges(id: Long, brandId: Long)
+GET           /facilitator/:id/country/:country/delete                     controllers.Facilitators.deleteCountry(id: Long, country: String)
+GET           /facilitator/:id/language/:lang/delete                       controllers.Facilitators.deleteLanguage(id: Long, lang: String)
+GET           /facilitator/:id/brand/:brandId                              controllers.Facilitators.details(id: Long, brandId: Long)
 
-POST          /facilitator/:id/country                                     @controllers.Facilitators.addCountry(id: Long)
-POST          /facilitator/:id/language                                    @controllers.Facilitators.addLanguage(id: Long)
-GET           /facilitator/:id/brand/:brandId/badges                       @controllers.Facilitators.badges(id: Long, brandId: Long)
-POST          /facilitator/:id/brand/:brandId/badges                       @controllers.Facilitators.updateBadges(id: Long, brandId: Long)
-GET           /facilitator/:id/country/:country/delete                     @controllers.Facilitators.deleteCountry(id: Long, country: String)
-GET           /facilitator/:id/language/:lang/delete                       @controllers.Facilitators.deleteLanguage(id: Long, lang: String)
-GET           /facilitator/:id/brand/:brandId                              @controllers.Facilitators.details(id: Long, brandId: Long)
+GET           /license/:id/edit                                            controllers.Licenses.edit(id: Long)
+POST          /license/:id                                                 controllers.Licenses.update(id: Long)
+POST          /license/:id/brand/:brandId/delete                           controllers.Licenses.delete(brandId: Long, id: Long)
 
-GET           /license/:id/edit                                            @controllers.Licenses.edit(id: Long)
-POST          /license/:id                                                 @controllers.Licenses.update(id: Long)
-POST          /license/:id/brand/:brandId/delete                           @controllers.Licenses.delete(brandId: Long, id: Long)
+GET           /members                                                     controllers.Members.index
+GET           /member/new                                                  controllers.Members.add
+GET           /member/new/organisation                                     controllers.Members.addOrganisation
+GET           /member/new/person                                           controllers.Members.addPerson
+GET           /member/existing/organisation                                controllers.Members.addExistingOrganisation
+GET           /member/existing/person                                      controllers.Members.addExistingPerson
+POST          /member                                                      controllers.Members.create
+POST          /member/organisation                                         controllers.Members.createNewOrganisation
+POST          /member/person                                               controllers.Members.createNewPerson
+POST          /member/existing/organisation/                               controllers.Members.updateExistingOrg
+POST          /member/existing/person/                                     controllers.Members.updateExistingPerson
+GET           /member/:id/edit                                             controllers.Members.edit(id: Long)
+POST          /member/:id                                                  controllers.Members.update(id: Long)
+POST          /member/:personId/reason                                     controllers.Members.updateReason(personId: Long)
+POST          /member/:id/delete                                           controllers.Members.delete(id: Long)
+GET           /membership/welcome                                            controllers.Membership.welcome
+GET           /membership/payment                                            controllers.Membership.payment(orgId: Option[Long] ?= None)
+POST          /membership/payment                                            controllers.Membership.charge
+GET           /membership/congratulations                                    controllers.Membership.congratulations(orgId: Option[Long] ?= None)
 
-GET           /members                                                     @controllers.Members.index
-GET           /member/new                                                  @controllers.Members.add
-GET           /member/new/organisation                                     @controllers.Members.addOrganisation
-GET           /member/new/person                                           @controllers.Members.addPerson
-GET           /member/existing/organisation                                @controllers.Members.addExistingOrganisation
-GET           /member/existing/person                                      @controllers.Members.addExistingPerson
-POST          /member                                                      @controllers.Members.create
-POST          /member/organisation                                         @controllers.Members.createNewOrganisation
-POST          /member/person                                               @controllers.Members.createNewPerson
-POST          /member/existing/organisation/                               @controllers.Members.updateExistingOrg
-POST          /member/existing/person/                                     @controllers.Members.updateExistingPerson
-GET           /member/:id/edit                                             @controllers.Members.edit(id: Long)
-POST          /member/:id                                                  @controllers.Members.update(id: Long)
-POST          /member/:personId/reason                                     @controllers.Members.updateReason(personId: Long)
-POST          /member/:id/delete                                           @controllers.Members.delete(id: Long)
-GET           /membership/welcome                                            @controllers.Membership.welcome
-GET           /membership/payment                                            @controllers.Membership.payment(orgId: Option[Long] ?= None)
-POST          /membership/payment                                            @controllers.Membership.charge
-GET           /membership/congratulations                                    @controllers.Membership.congratulations(orgId: Option[Long] ?= None)
+POST          /organization/:id/activation                                   controllers.Organisations.activation(id: Long)
+GET           /organization/new                                              controllers.Organisations.add
+POST          /organization/:id/cancel                                       controllers.Organisations.cancel(id: Long)
+POST          /organizations                                                 controllers.Organisations.create
+POST          /organizer                                                     controllers.Organisations.createOrganizer
+POST          /organization/:id/delete                                       controllers.Organisations.delete(id: Long)
+DELETE        /organization/:id/logo/delete                                  controllers.Organisations.deleteLogo(id: Long)
+GET           /organization/:id                                              controllers.Organisations.details(id: Long)
+GET           /organization/:id/edit                                         controllers.Organisations.edit(id: Long)
+GET           /organizations                                                 controllers.Organisations.index
+GET           /organization/:id/logo                                         controllers.Organisations.logo(id: Long)
+GET           /organization/:id/name                                         controllers.Organisations.name(id: Long)
+POST          /organization/:id                                              controllers.Organisations.update(id: Long)
+GET           /organizations/search                                          controllers.Organisations.search(query: Option[String])
+POST          /organization/:id/logo                                         controllers.Organisations.uploadLogo(id: Long)
 
-POST          /organization/:id/activation                                   @controllers.Organisations.activation(id: Long)
-GET           /organization/new                                              @controllers.Organisations.add
-POST          /organization/:id/cancel                                       @controllers.Organisations.cancel(id: Long)
-POST          /organizations                                                 @controllers.Organisations.create
-POST          /organizer                                                     @controllers.Organisations.createOrganizer
-POST          /organization/:id/delete                                       @controllers.Organisations.delete(id: Long)
-DELETE        /organization/:id/logo/delete                                  @controllers.Organisations.deleteLogo(id: Long)
-GET           /organization/:id                                              @controllers.Organisations.details(id: Long)
-GET           /organization/:id/edit                                         @controllers.Organisations.edit(id: Long)
-GET           /organizations                                                 @controllers.Organisations.index
-GET           /organization/:id/logo                                         @controllers.Organisations.logo(id: Long)
-GET           /organization/:id/name                                         @controllers.Organisations.name(id: Long)
-POST          /organization/:id                                              @controllers.Organisations.update(id: Long)
-GET           /organizations/search                                          @controllers.Organisations.search(query: Option[String])
-POST          /organization/:id/logo                                         @controllers.Organisations.uploadLogo(id: Long)
+GET           /people                                                        controllers.People.index
 
-GET           /people                                                        @controllers.People.index
+GET           /person/new                                                    controllers.People.add
+POST          /person/new                                                    controllers.People.create
+GET           /person/:id                                                    controllers.People.details(id: Long)
+POST          /person/:id                                                    controllers.People.update(id: Long)
+GET           /person/:id/edit                                               controllers.People.edit(id: Long)
+POST          /person/:id/activation                                         controllers.People.activation(id: Long)
+POST          /person/:id/delete                                             controllers.People.delete(id: Long)
+POST          /person/:id/cancel                                             controllers.People.cancel(id: Long)
+GET           /person/:id/tabs                                               controllers.People.renderTabs(id: Long, tab: String)
 
-GET           /person/new                                                    @controllers.People.add
-POST          /person/new                                                    @controllers.People.create
-GET           /person/:id                                                    @controllers.People.details(id: Long)
-POST          /person/:id                                                    @controllers.People.update(id: Long)
-GET           /person/:id/edit                                               @controllers.People.edit(id: Long)
-POST          /person/:id/activation                                         @controllers.People.activation(id: Long)
-POST          /person/:id/delete                                             @controllers.People.delete(id: Long)
-POST          /person/:id/cancel                                             @controllers.People.cancel(id: Long)
-GET           /person/:id/tabs                                               @controllers.People.renderTabs(id: Long, tab: String)
-
-POST          /person/:id/photo/upload                                       @controllers.ProfilePhotos.upload(id: Long)
-GET           /person/:id/photo                                              @controllers.ProfilePhotos.photo(id: Long)
-DELETE        /person/:id/photo/delete                                       @controllers.ProfilePhotos.delete(id: Long)
-POST          /person/:id/photo                                              @controllers.ProfilePhotos.update(id: Long)
-GET           /person/:id/photo/choose                                       @controllers.ProfilePhotos.choose(id: Long)
+POST          /person/:id/photo/upload                                       controllers.ProfilePhotos.upload(id: Long)
+GET           /person/:id/photo                                              controllers.ProfilePhotos.photo(id: Long)
+DELETE        /person/:id/photo/delete                                       controllers.ProfilePhotos.delete(id: Long)
+POST          /person/:id/photo                                              controllers.ProfilePhotos.update(id: Long)
+GET           /person/:id/photo/choose                                       controllers.ProfilePhotos.choose(id: Long)
 
 
-GET           /person/:id/licenses/new                                       @controllers.Licenses.add(id: Long)
-POST          /person/:id/licenses/new                                       @controllers.Licenses.create(id: Long)
+GET           /person/:id/licenses/new                                       controllers.Licenses.add(id: Long)
+POST          /person/:id/licenses/new                                       controllers.Licenses.create(id: Long)
 
-POST          /person/relation/new                                           @controllers.People.addRelationship
-GET           /person/:personId/relation/:organisationId/delete              @controllers.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
+POST          /person/relation/new                                           controllers.People.addRelationship
+GET           /person/:personId/relation/:organisationId/delete              controllers.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
 
-GET           /products                                                      @controllers.Products.index
-GET           /product/new                                                   @controllers.Products.add
-POST          /product/:id/activation                                        @controllers.Products.activation(id: Long)
-POST          /product/new                                                   @controllers.Products.create
-GET           /product/:id                                                   @controllers.Products.details(id: Long)
-POST          /product/:id                                                   @controllers.Products.update(id: Long)
-GET           /product/:id/edit                                              @controllers.Products.edit(id: Long)
-POST          /product/:id/delete                                            @controllers.Products.delete(id: Long)
+GET           /products                                                      controllers.Products.index
+GET           /product/new                                                   controllers.Products.add
+POST          /product/:id/activation                                        controllers.Products.activation(id: Long)
+POST          /product/new                                                   controllers.Products.create
+GET           /product/:id                                                   controllers.Products.details(id: Long)
+POST          /product/:id                                                   controllers.Products.update(id: Long)
+GET           /product/:id/edit                                              controllers.Products.edit(id: Long)
+POST          /product/:id/delete                                            controllers.Products.delete(id: Long)
 
-GET           /product/:id/picture                                           @controllers.Products.picture(id: Long)
-POST          /product/:id/picture/delete                                    @controllers.Products.deletePicture(id: Long)
+GET           /product/:id/picture                                           controllers.Products.picture(id: Long)
+POST          /product/:id/picture/delete                                    controllers.Products.deletePicture(id: Long)
 
-POST          /product/brand/new                                             @controllers.Products.addBrand
-GET           /product/:productId/brand/:brandId/delete                      @controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+POST          /product/brand/new                                             controllers.Products.addBrand
+GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
-GET           /profile/:id/person/steps/:steps                               @controllers.ProfileStrengths.personWidget(id: Long, steps: Boolean)
+GET           /profile/:id/person/steps/:steps                               controllers.ProfileStrengths.personWidget(id: Long, steps: Boolean)
 
-GET           /registration/welcome                                          @controllers.Registration.welcome
-GET           /registration/step1                                            @controllers.Registration.step1(org: Boolean ?= false)
-GET           /registration/step2                                            @controllers.Registration.step2
-GET           /registration/step3                                            @controllers.Registration.step3
-POST          /registration/save/person                                      @controllers.Registration.savePerson
-POST          /registration/save/org                                         @controllers.Registration.saveOrg
-GET           /registration/payment                                          @controllers.Registration.payment
-POST          /registration/payment                                          @controllers.Registration.charge
-GET           /registration/authenticate/:provider                           @controllers.Registration.authenticate(provider)
-POST          /registration/authenticate                                     @controllers.Registration.authenticateByEmail
-GET           /registration/congratulations                                  @controllers.Registration.congratulations(orgId: Option[Long] ?= None)
+GET           /registration/welcome                                          controllers.Registration.welcome
+GET           /registration/step1                                            controllers.Registration.step1(org: Boolean ?= false)
+GET           /registration/step2                                            controllers.Registration.step2
+GET           /registration/step3                                            controllers.Registration.step3
+POST          /registration/save/person                                      controllers.Registration.savePerson
+POST          /registration/save/org                                         controllers.Registration.saveOrg
+GET           /registration/payment                                          controllers.Registration.payment
+POST          /registration/payment                                          controllers.Registration.charge
+GET           /registration/authenticate/:provider                           controllers.Registration.authenticate(provider)
+POST          /registration/authenticate                                     controllers.Registration.authenticateByEmail
+GET           /registration/congratulations                                  controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
-POST          /person/:personId/signature                                    @controllers.Signatures.upload(personId: Long)
-GET           /person/:personId/signature                                    @controllers.Signatures.signature(personId: Long)
-POST          /person/:personId/signature/delete                             @controllers.Signatures.delete(personId: Long)
+POST          /person/:personId/signature                                    controllers.Signatures.upload(personId: Long)
+GET           /person/:personId/signature                                    controllers.Signatures.signature(personId: Long)
+POST          /person/:personId/signature/delete                             controllers.Signatures.delete(personId: Long)
 
-GET           /brand/:brandId/statistics                                     @controllers.Statistics.index(brandId: Long)
-GET           /brand/:brandId/statistics/type/facilitators/                  @controllers.Statistics.byFacilitators(brandId: Long)
-GET           /brand/:brandId/statistics/type/events/                        @controllers.Statistics.byEvents(brandId: Long)
-GET           /brand/:brandId/statistics/type/countries/                     @controllers.Statistics.byCountries(brandId: Long)
-GET           /brand/:brandId/statistics/type/participants/                  @controllers.Statistics.byParticipants(brandId: Long)
+GET           /brand/:brandId/statistics                                     controllers.Statistics.index(brandId: Long)
+GET           /brand/:brandId/statistics/type/facilitators/                  controllers.Statistics.byFacilitators(brandId: Long)
+GET           /brand/:brandId/statistics/type/events/                        controllers.Statistics.byEvents(brandId: Long)
+GET           /brand/:brandId/statistics/type/countries/                     controllers.Statistics.byCountries(brandId: Long)
+GET           /brand/:brandId/statistics/type/participants/                  controllers.Statistics.byParticipants(brandId: Long)
 
-GET           /template/:id                                                  @controllers.CertificateTemplates.template(id: Long, single: Boolean)
-GET           /template/:brandId/:id/delete                                  @controllers.CertificateTemplates.delete(brandId: Long, id: Long)
+GET           /template/:id                                                  controllers.CertificateTemplates.template(id: Long, single: Boolean)
+GET           /template/:brandId/:id/delete                                  controllers.CertificateTemplates.delete(brandId: Long, id: Long)
 
-POST          /url/:url/validate                                             @controllers.Urls.validate(url)
+POST          /url/:url/validate                                             controllers.Urls.validate(url)
 
-GET           /usage                                                         @controllers.admin.Usage.index
+GET           /usage                                                         controllers.admin.Usage.index
 
-GET           /user/account                                                  @controllers.UserAccounts.account
-POST          /user/newPassword                                              @controllers.UserAccounts.handleNewPassword
-POST          /user/password                                                 @controllers.UserAccounts.changePassword
-GET           /user/switch                                                   @controllers.UserAccounts.switchRole
-POST          /user/email                                                    @controllers.UserAccounts.changeEmail
-GET           /user/email/:token                                             @controllers.UserAccounts.handleEmailChange(token: String)
+GET           /user/account                                                  controllers.UserAccounts.account
+POST          /user/newPassword                                              controllers.UserAccounts.handleNewPassword
+POST          /user/password                                                 controllers.UserAccounts.changePassword
+GET           /user/switch                                                   controllers.UserAccounts.switchRole
+POST          /user/email                                                    controllers.UserAccounts.changeEmail
+GET           /user/email/:token                                             controllers.UserAccounts.handleEmailChange(token: String)
 
 # API (v2)
 GET           /api/v2/brands                                                 controllers.apiv2.BrandsApi.brands
@@ -323,7 +299,7 @@ GET           /api/v2/product/:id                                            con
 GET           /assets/*file                                                  controllers.Assets.at(path="/public", file)
 
 ## SecureSocial
-GET           /login                                                         @controllers.LoginPage.login
-GET           /logout                                                        @controllers.LoginPage.logout(error: Option[String] ?= None, success: Option[String] ?= None)
-GET           /authenticate/:provider                                        @securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
-POST          /authenticate/:provider                                        @securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])
+GET           /login                                                         controllers.LoginPage.login
+GET           /logout                                                        controllers.LoginPage.logout(error: Option[String] ?= None, success: Option[String] ?= None)
+GET           /authenticate/:provider                                        securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
+POST          /authenticate/:provider                                        securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])

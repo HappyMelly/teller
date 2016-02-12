@@ -24,71 +24,80 @@
 
 package controllers.admin
 
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
-import models.{ ActiveUser, Activity }
 import models.UserRole.Role._
-import models.admin.TransactionType
+import models.service.Services
+import models.service.admin.TransactionTypeService
+import play.api.Application
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages
-import play.api.mvc.Controller
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.twirl.api.Html
+import services.TellerRuntimeEnvironment
 
 /**
  * Pages for application configuration and administration.
  */
-class Administration(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller with Security {
+class Administration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                             override val messagesApi: MessagesApi,
+                                             val app: Application,
+                                             val services: Services,
+                                             deadbolt: DeadboltActions,
+                                             handlers: HandlerCache,
+                                             actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with I18nSupport {
 
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
-
+  val service = new TransactionTypeService(app)
   val transactionTypeForm = Form(single("name" -> nonEmptyText))
 
   /**
    * Application settings page.
    */
-  def settings = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.admin.settings(user, TransactionType.findAll, transactionTypeForm))
+  def settings = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    service.findAll flatMap { types =>
+      ok(views.html.admin.settings(user, types, transactionTypeForm))
+    }
   }
 
   /**
    * Adds a new transaction type and redirects to the settings page.
    */
-  def createTransactionType = SecuredRestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
+  def createTransactionType = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    service.findAll flatMap { types =>
       val boundForm = transactionTypeForm.bindFromRequest
       boundForm.fold(
-        formWithErrors ⇒ BadRequest(views.html.admin.settings(user, TransactionType.findAll, formWithErrors)),
+        formWithErrors ⇒ badRequest(views.html.admin.settings(user, types, formWithErrors)),
         value ⇒ {
           val transactionType = value.trim
-          if (TransactionType.exists(transactionType)) {
-            val form = boundForm.withError("name", "constraint.transactionType.exists")
-            BadRequest(views.html.admin.settings(user, TransactionType.findAll, form))
-          } else {
-            TransactionType.insert(transactionType)
-            val activityObject = Messages("models.TransactionType.name", transactionType)
-            val activity = Activity.insert(user.name,
-              Activity.Predicate.Created, activityObject)
-            Redirect(routes.Administration.settings()).
-              flashing("success" -> activity.toString)
+          service.exists(transactionType) flatMap {
+            case true =>
+              val form = boundForm.withError("name", "constraint.transactionType.exists")
+              badRequest(views.html.admin.settings(user, types, form))
+            case false =>
+              service.insert(transactionType) flatMap { _ =>
+                val msg = "Transaction type was added"
+                redirect(routes.Administration.settings(), "success" -> msg)
+              }
           }
         })
+    }
   }
 
   /**
    * Deletes a transaction type and redirects to the settings page.
    */
-  def deleteTransactionType(id: Long) = SecuredRestrictedAction(Admin) { implicit request ⇒
+  def deleteTransactionType(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      TransactionType.find(id).map { transactionType ⇒
-        TransactionType.delete(id)
-        val activityObject = Messages("models.TransactionType.name", transactionType.name)
-        val activity = Activity.insert(user.name,
-          Activity.Predicate.Deleted, activityObject)
-        Redirect(routes.Administration.settings()).
-          flashing("success" -> activity.toString)
-      }.getOrElse(NotFound)
+      service.find(id) flatMap {
+        case None => notFound(Html(""))
+        case Some(transactionType) =>
+          service.delete(id) flatMap { _ =>
+            val msg = "Transaction type was deleted"
+            redirect(routes.Administration.settings(), "success" -> msg)
+          }
+      }
   }
 }

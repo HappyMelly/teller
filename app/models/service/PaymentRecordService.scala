@@ -24,15 +24,22 @@
 
 package models.service
 
-import models.database.PaymentRecords
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.database.PaymentRecordTable
 import models.payment.Record
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
+import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-import play.api.Play.current
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /** Provides operations with database related to payment records */
-class PaymentRecordService {
+class PaymentRecordService(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with PaymentRecordTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
 
   private val records = TableQuery[PaymentRecords]
 
@@ -41,12 +48,8 @@ class PaymentRecordService {
    * @param objectId Object id
    * @param person If true, object is a person, otherwise - org
    */
-  def delete(objectId: Long, person: Boolean): Unit = DB.withSession {
-    implicit session ⇒
-      records.
-        filter(_.objectId === objectId).
-        filter(_.person === person).delete
-  }
+  def delete(objectId: Long, person: Boolean): Unit =
+    db.run(records.filter(_.objectId === objectId).filter(_.person === person).delete)
 
   /**
    * Inserts the given record to database
@@ -54,9 +57,9 @@ class PaymentRecordService {
    * @param r Object to insert
    * @return Returns member object with updated id
    */
-  def insert(r: Record): Record = DB.withSession { implicit session ⇒
-    val id = (records returning records.map(_.id)) += r
-    r.copy(id = Some(id))
+  def insert(r: Record): Future[Record] = {
+    val query = records returning records.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += r)
   }
 
   /**
@@ -64,30 +67,14 @@ class PaymentRecordService {
    * @param personId Person identifier
    * @return
    */
-  def findByPerson(personId: Long): List[Record] = DB.withSession {
-    implicit session ⇒
-      records.
-        filter(_.objectId === personId).
-        filter(_.person === true).
-        sortBy(_.created).list
-  }
+  def findByPerson(personId: Long): Future[List[Record]] =
+    db.run(records.filter(_.objectId === personId).filter(_.person === true).sortBy(_.created).result).map(_.toList)
 
   /**
    * Returns list of payment records made by the given organisation
    * @param orgId Organisation identifier
    * @return
    */
-  def findByOrganisation(orgId: Long): List[Record] = DB.withSession {
-    implicit session ⇒
-      records.
-        filter(_.objectId === orgId).
-        filter(_.person === false).
-        sortBy(_.created).list
-  }
-}
-
-object PaymentRecordService {
-  private val instance: PaymentRecordService = new PaymentRecordService
-
-  def get: PaymentRecordService = instance
+  def findByOrganisation(orgId: Long): Future[List[Record]] =
+    db.run(records.filter(_.objectId === orgId).filter(_.person === false).sortBy(_.created).result).map(_.toList)
 }

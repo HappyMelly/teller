@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2014 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -23,21 +23,31 @@
  */
 package services.integrations
 
-import akka.actor.{Actor, Props}
-import com.typesafe.plugin._
-import models.{Recipient, Person}
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
-import play.api.libs.mailer.AttachmentFile
-import play.api.{Logger, Play}
-import services.integrations.EmailService.EmailMessage
+import javax.inject.{Named, Inject, Singleton}
 
-import scala.util.Try
+import akka.actor.{Actor, ActorRef, Props}
+import models.Recipient
+import play.api.Play.current
+import play.api.libs.mailer._
+import play.api.{Logger, Play}
+
+trait EmailComponent  {
+
+  def send(to: Set[_ <: Recipient],
+           cc: Option[Set[_ <: Recipient]] = None,
+           bcc: Option[Set[_ <: Recipient]] = None,
+           subject: String,
+           body: String,
+           from: String = "Happy Melly",
+           richMessage: Boolean = false,
+           attachment: Option[(String, String)] = None): Unit
+}
 
 /**
  * Service to asynchronously send e-mail using an Akka actor.
  */
-class Email {
+@Singleton
+class Email @Inject() (@Named("email") emailActor: ActorRef) extends EmailComponent {
 
   /**
    * Sends an e-mail message asynchronously using an actor.
@@ -53,18 +63,20 @@ class Email {
     val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.email}>")
     val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.email}>"))
     val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.email}>"))
-    val mailFrom = from + " " + EmailService.from
-    val message = EmailMessage(toAddresses.toList,
+    val mailFrom = from + " " + EmailActor.from
+
+    val message = EmailActor.EmailMessage(toAddresses.toList,
       ccAddresses.map(_.toList).getOrElse(List[String]()),
       bccAddresses.map(_.toList).getOrElse(List[String]()),
       mailFrom, subject, body, richMessage, attachment)
-    EmailService.emailServiceActor ! message
+    emailActor ! message
   }
 
 }
 
-object EmailService {
-  val emailServiceActor = Akka.system.actorOf(Props[EmailServiceActor])
+object EmailActor {
+
+  def props = Props[EmailActor]
   val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
 
   case class EmailMessage(to: List[String],
@@ -76,41 +88,35 @@ object EmailService {
     richMessage: Boolean = false,
     attachment: Option[(String, String)] = None)
 
-  /**
-   * Actor that sends an e-mail message synchronously.
-   */
-  class EmailServiceActor extends Actor {
+}
 
-    def receive = {
-      case message: EmailMessage ⇒ {
+/**
+  * Actor that sends an e-mail message synchronously.
+  */
+@Singleton
+class EmailActor @Inject()(mailerClient: MailerClient) extends Actor {
+  import EmailActor._
 
-        import java.io.File
+  def receive = {
+    case message: EmailMessage ⇒
 
-        import play.api.libs.mailer
+      import java.io.File
 
-        val mail = use[MailerPlugin].email
+      import play.api.libs.mailer
 
-        val emptyMail = mailer.Email(message.subject, message.from, charset = Some("UTF-8"),
-          to = message.to, cc = message.cc, bcc = message.bcc)
-        val withAttachments = message.attachment.map { attachment =>
-          emptyMail.copy(attachments = Seq(
-            AttachmentFile(attachment._2, new File(attachment._1))
-          ))
-        } getOrElse emptyMail
-        val withBody = if (message.richMessage)
-          withAttachments.copy(bodyHtml = Some(message.body.trim))
-        else
-          withAttachments.copy(bodyText = Some(message.body.trim))
+      val emptyMail = mailer.Email(message.subject, message.from, charset = Some("UTF-8"),
+        to = message.to, cc = message.cc, bcc = message.bcc)
+      val withAttachments = message.attachment.map { attachment =>
+        emptyMail.copy(attachments = Seq(
+          AttachmentFile(attachment._2, new File(attachment._1))
+        ))
+      } getOrElse emptyMail
+      val withBody = if (message.richMessage)
+        withAttachments.copy(bodyHtml = Some(message.body.trim))
+      else
+        withAttachments.copy(bodyText = Some(message.body.trim))
 
-        Logger.debug(s"Sending e-mail with subject: ${message.subject}")
-
-        if (Play.isDev && Play.configuration.getBoolean("mail.stub").exists(_ == true)) {
-          Logger.debug(s"${message.body}")
-        } else {
-          Try(mailer.MailerPlugin.send(withBody)).isSuccess
-        }
-      }
+      Logger.debug(s"Sending e-mail with subject: ${message.subject}")
+      mailerClient.send(withBody)
     }
-  }
-
 }

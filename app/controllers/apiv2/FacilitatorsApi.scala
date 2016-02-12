@@ -24,29 +24,48 @@
 package controllers.apiv2
 
 import java.net.URLDecoder
+import java.text.Collator
+import java.util.Locale
+import javax.inject.Inject
+
+import controllers.apiv2.json.PersonConverter
 import controllers.brand.Badges
 import models._
+import models.brand.Badge
+import models.service.Services
+import org.joda.time.LocalDate
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
-import play.mvc.Controller
-import views.Languages
+import views.{Countries, Languages}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Facilitators API
  */
-trait FacilitatorsApi extends Controller with ApiAuthentication {
+class FacilitatorsApi @Inject() (val services: Services,
+                                 override val messagesApi: MessagesApi)
+  extends ApiAuthentication(services, messagesApi) {
 
-  implicit val facilitatorWrites = new Writes[(Person, Float)] {
-    def writes(value: (Person, Float)): JsValue = {
+  case class FacilitatorSummary(person: Person,
+                                address: Address,
+                                languages: List[FacilitatorLanguage],
+                                countries: List[FacilitatorCountry],
+                                rating: Float)
+  
+  implicit val facilitatorWrites = new Writes[FacilitatorSummary] {
+    def writes(value: FacilitatorSummary): JsValue = {
       Json.obj(
-        "id" -> value._1.id.get,
-        "first_name" -> value._1.firstName,
-        "last_name" -> value._1.lastName,
-        "unique_name" -> value._1.uniqueName,
-        "photo" -> value._1.photo.url,
-        "country" -> value._1.address.countryCode,
-        "languages" -> value._1.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
-        "countries" -> value._1.countries.map(_.country).distinct.toList,
-        "rating" -> value._2)
+        "id" -> value.person.id.get,
+        "first_name" -> value.person.firstName,
+        "last_name" -> value.person.lastName,
+        "unique_name" -> value.person.uniqueName,
+        "photo" -> value.person.photo.url,
+        "country" -> value.address.countryCode,
+        "languages" -> value.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
+        "countries" -> value.countries.map(_.country).distinct.toList,
+        "rating" -> value.rating)
     }
   }
 
@@ -55,24 +74,32 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
    *
    * @param code Brand code
    */
-  def facilitators(code: String) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        brandService.find(code) map { brand ⇒
-          val facilitators = Brand.findFacilitators(brand.identifier)
-          PeopleCollection.addresses(facilitators)
-          PeopleCollection.countries(facilitators)
-          PeopleCollection.languages(facilitators)
-          val facilitationData = facilitatorService.findByBrand(brand.id.get)
-          val data = facilitators.
-            map(x ⇒ (x, facilitationData.find(_.personId == x.id.get).get.publicRating))
-          jsonOk(Json.toJson(data))
-        } getOrElse jsonNotFound("Unknown brand")
+  def facilitators(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+    services.brandService.find(code) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(brand) =>
+        (for {
+          f <- services.licenseService.licensees(brand.identifier, LocalDate.now())
+          data <- services.facilitatorService.findByBrand(brand.identifier)
+          c <- services.facilitatorService.countries(f.map(_.identifier))
+          l <- services.facilitatorService.languages(f.map(_.identifier))
+          a <- services.addressService.find(f.map(_.addressId))
+        } yield facilitatorsSummary(f, c, l, a, data)) flatMap { summaries =>
+          val collator = Collator.getInstance(Locale.ENGLISH)
+          val ord = new Ordering[String] {
+            def compare(x: String, y: String) = collator.compare(x, y)
+          }
+          val sorted = summaries.sortBy(_.person.fullName.toLowerCase)(ord)
+          jsonOk(Json.toJson(sorted))
+        }
+    }
   }
 
-  import PeopleApi.addressWrites
   import OrganisationsApi.organisationWrites
-  import PeopleApi.licenseSummaryWrites
+  private val personConverter = new PersonConverter
+  implicit val personWrites = personConverter.personWrites
+  implicit val licenseWrites = personConverter.licenseSummaryWrites
+  implicit val addressWrites = personConverter.addressWrites
 
   implicit val endorsementWrites = new Writes[Endorsement] {
     def writes(endorsement: Endorsement) = {
@@ -106,6 +133,7 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
     materials: List[Material],
+    licenses: List[LicenseView],
     facilitator: Facilitator,
     badges: List[BadgeUrl])
 
@@ -128,8 +156,8 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
         "website" -> view.person.webSite,
         "blog" -> view.person.blog,
         "active" -> view.person.active,
-        "organizations" -> view.person.organisations,
-        "licenses" -> view.person.licenses,
+        "organizations" -> view.person.organisations(services),
+        "licenses" -> view.licenses,
         "endorsements" -> view.endorsements,
         "materials" -> view.materials,
         "years_of_experience" -> view.facilitator.yearsOfExperience,
@@ -151,45 +179,116 @@ trait FacilitatorsApi extends Controller with ApiAuthentication {
 
   /**
    * Returns the facilitator's data
-   * @param identifier Person identifier
+    *
+    * @param identifier Person identifier
    */
   def facilitator(identifier: String, code: Option[String] = None) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒
-      implicit token ⇒
-        val person = try {
-          val id = identifier.toLong
-          personService.find(id)
-        } catch {
-          case e: NumberFormatException ⇒ personService.find(URLDecoder.decode(identifier, "ASCII"))
-        }
-        person map { person =>
-          val brand = code map (x => brandService.find(x)) getOrElse None
-          val filterList = brand map (x => List(0, x.id.get)) getOrElse List(0)
-          val endorsements = personService.endorsements(person.id.get).filter(x => filterList.contains(x.brandId))
-          val materials = personService.materials(person.id.get).filter(x => filterList.contains(x.brandId))
-          val facilitator = brand map {
-            retrieveFacilitatorStat(_, person.id.get)
-          } getOrElse Facilitator(None, 0, 0)
-          val badgeUrls = brand map { x =>
-            brandBadgeService.findByBrand(x.identifier).
-              filter(badge => facilitator.badges.contains(badge.id.get)).
-              map(badge => BadgeUrl(badge.name, Badges.pictureUrl(badge)))
-          } getOrElse List()
+    implicit request ⇒ implicit token ⇒
+      val mayBePerson = try {
+        val id = identifier.toLong
+        services.personService.findComplete(id)
+      } catch {
+        case e: NumberFormatException ⇒ services.personService.find(URLDecoder.decode(identifier, "ASCII"))
+      }
+      val view = (for {
+        person <- mayBePerson
+        brand <- code.map(value => services.brandService.find(value)).getOrElse(Future.successful(None))
+      } yield (person, brand)) flatMap {
+        case (None, _) => Future.successful(None)
+        case (Some(person), None) => withoutBrandData(person).map(value => Some(value))
+        case (Some(person), Some(brand)) => withBrandData(person, brand).map(value => Some(value))
+      }
+      view flatMap {
+        case None => jsonNotFound("Person not found")
+        case Some((person, endorsements, materials, licenses, facilitator, urls)) =>
+          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, licenses, facilitator, urls)))
+      }
+  }
 
-          jsonOk(Json.toJson(FacilitatorView(person, endorsements, materials, facilitator, badgeUrls)))
-        } getOrElse NotFound
+  protected def facilitatorsSummary(facilitators: List[Person],
+                                    countries: List[FacilitatorCountry],
+                                    languages: List[FacilitatorLanguage],
+                                    addresses: List[Address],
+                                    stats: List[Facilitator]): List[FacilitatorSummary] = {
+    val withAddresses = facilitators.sortBy(_.addressId).zip(addresses.sortBy(_.id))
+    val withRating = withAddresses.sortBy(_._1.identifier).zip(stats.sortBy(_.personId))
+    val groupedLanguages = languages.groupBy(_.personId)
+    val groupedCountries = countries.groupBy(_.personId)
+    withRating.map { case ((person, address), stat) =>
+      facilitatorSummary(person, address, stat.publicRating, groupedCountries, groupedLanguages)
+    }
+  }
+
+  protected def facilitatorSummary(person: Person, address: Address, rating: Float,
+                                   countries: Map[Long, List[FacilitatorCountry]],
+                                   languages: Map[Long, List[FacilitatorLanguage]]): FacilitatorSummary = {
+    val language = languages.getOrElse(person.identifier, List())
+    val countryOfResidence = List(FacilitatorCountry(person.identifier, Countries.name(address.countryCode)))
+    val country = countries.get(person.identifier).map(_ ::: countryOfResidence).getOrElse(countryOfResidence).distinct
+    FacilitatorSummary(person, address, language, country, rating)
   }
 
   /**
+    * Returns facilitator-related data when no brand is specified
+    *
+    * @param person Person object
+    */
+  protected def withoutBrandData(person: Person) = {
+    (for {
+      e <- services.personService.endorsements(person.identifier)
+      m <- services.personService.materials(person.identifier)
+      l <- services.licenseService.activeLicenses(person.identifier)
+    } yield (e, m, l)) map { case (endorsements, materials, licenses) =>
+      val filteredEndorsements = endorsements.filter(_.brandId == 0)
+      val filteredMaterials = materials.filter(_.brandId == 0)
+      (person, filteredEndorsements, filteredMaterials, licenses, Facilitator(None, 0, 0), List())
+    }
+  }
+
+  /**
+    * Returns facilitator-related data when brand is specified
+    *
+    * @param person Person
+    * @param brand Brand
+    */
+  protected def withBrandData(person: Person, brand: Brand) = {
+    (for {
+      e <- services.personService.endorsements(person.identifier)
+      m <- services.personService.materials(person.identifier)
+      f <- retrieveFacilitatorStat(brand, person.identifier)
+      b <- services.brandBadgeService.findByBrand(brand.identifier)
+      l <- services.licenseService.activeLicenses(person.identifier)
+    } yield (e, m, f, b, l)) map { case (endorsements, materials, facilitator, badges, licenses) =>
+      val urls = badgeUrls(badges, facilitator.badges)
+      val filteredMaterials = materials.filter(_.brandId == 0) ::: materials.filter(_.brandId == brand.identifier)
+      (person, withBrandEndorsements(endorsements, brand.identifier), filteredMaterials, licenses, facilitator, urls)
+    }
+  }
+
+  /**
+    * Returns name of badges and urls to their images
+ *
+    * @param badges All badges
+    * @param facilitatorBadges Badges for the given facilitator
+    */
+  protected def badgeUrls(badges: List[Badge], facilitatorBadges: List[Long]) =
+    badges.
+      filter(badge => facilitatorBadges.contains(badge.id.get)).
+      map(badge => BadgeUrl(badge.name, Badges.pictureUrl(badge)))
+
+  protected def withBrandEndorsements(endorsements: List[Endorsement], brandId: Long) =
+    endorsements.filter(_.brandId == 0) ::: endorsements.filter(_.brandId == brandId)
+
+  /**
    * Returns brand statistics for the given person
-   * @param brand Brand of interest
+    *
+    * @param brand Brand of interest
    * @param personId Person identifier
    */
-  protected def retrieveFacilitatorStat(brand: Brand, personId: Long): Facilitator = {
-    facilitatorService.
-      find(brand.identifier, personId).
-      getOrElse(Facilitator(None, personId, brand.identifier))
+  protected def retrieveFacilitatorStat(brand: Brand, personId: Long): Future[Facilitator] = {
+    services.facilitatorService.find(brand.identifier, personId) map {
+      case None => Facilitator(None, personId, brand.identifier)
+      case Some(facilitator) => facilitator
+    }
   }
 }
-
-object FacilitatorsApi extends FacilitatorsApi with ApiAuthentication

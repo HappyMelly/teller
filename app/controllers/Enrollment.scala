@@ -42,11 +42,11 @@ case class PaymentData(token: String,
 /**
  * Defines an interface for enrollment classes
  */
-trait Enrollment extends Controller
-    with Services
+trait Enrollment extends AsyncController
     with Integrations
-    with Utilities
     with MemberNotifications {
+
+  val services: Services
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -59,9 +59,7 @@ trait Enrollment extends Controller
    * @param org Organisation which wants to become a member
    * @param member Member data
    */
-  protected def notify(person: Person,
-    org: Option[Organisation],
-    member: Member) = org map {
+  protected def notify(person: Person, org: Option[Organisation], member: Member) = org map {
       notifyAboutOrg(_, member, person)
     } getOrElse
       notifyAboutPerson(person, member)
@@ -88,12 +86,10 @@ trait Enrollment extends Controller
    * @param data Payment data
    * @return Returns customer identifier in the payment system
    */
-  protected def subscribe(person: Person,
-    org: Option[Organisation],
-    data: PaymentData): String = {
+  protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): String = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
-    payment.subscribe(person, org, data.token, data.fee)
+    payment.subscribe(person, org, data.token, data.fee)(services)
   }
 
   private def notifyAboutPerson(person: Person, member: Member) = {
@@ -111,7 +107,7 @@ trait Enrollment extends Controller
   private def sendWelcomeEmail(person: Person, url: String, name: String) = {
     email.send(Set(person),
       subject = "Welcome to Happy Melly network",
-      body = mail.templates.html.welcome(fullUrl(url), url, name).toString(),
+      body = mail.templates.html.welcome(Utilities.fullUrl(url), url, name).toString(),
       richMessage = true)
   }
 

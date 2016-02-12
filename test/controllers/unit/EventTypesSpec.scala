@@ -54,7 +54,7 @@ class EventTypesSpec extends Specification with IsolatedMockFactory {
   "Event type validation should fail" >> {
     "if another event type with the same name already exists" in {
       val anotherType = eventType.copy(id = Some(2L))
-      (eventTypeService.findByBrand _) expects 1L returning List(anotherType)
+      (services.eventTypeService.findByBrand _) expects 1L returning List(anotherType)
 
       val res = controller.callValidatedEventType(1L, eventType)
       res map { x ⇒
@@ -65,7 +65,7 @@ class EventTypesSpec extends Specification with IsolatedMockFactory {
   }
   "Event type validation on update should fail" >> {
     "if the updated event type doesn't exist" in {
-      (eventTypeService.find _) expects 1L returning None
+      (services.eventTypeService.find _) expects 1L returning None
 
       val res = controller.callValidatedUpdatedEventType(1L, eventType)
       res map { x ⇒
@@ -74,8 +74,8 @@ class EventTypesSpec extends Specification with IsolatedMockFactory {
       } getOrElse ko
     }
     "if the updated event type isn't belonged to the given brand" in {
-      (eventTypeService.find _) expects 1L returning Some(eventType)
-      (eventTypeService.findByBrand _) expects 1L returning List()
+      (services.eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.eventTypeService.findByBrand _) expects 1L returning List()
 
       val res = controller.callValidatedUpdatedEventType(1L, eventType)
       res map { x ⇒
@@ -85,8 +85,8 @@ class EventTypesSpec extends Specification with IsolatedMockFactory {
     }
     "if another event type with the same name already exists" in {
       val anotherType = eventType.copy(id = Some(2L))
-      (eventTypeService.find _) expects 1L returning Some(eventType)
-      (eventTypeService.findByBrand _) expects 1L returning List(anotherType, eventType)
+      (services.eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.eventTypeService.findByBrand _) expects 1L returning List(anotherType, eventType)
 
       val res = controller.callValidatedUpdatedEventType(1L, eventType)
       res map { x ⇒
@@ -97,12 +97,12 @@ class EventTypesSpec extends Specification with IsolatedMockFactory {
   }
   "Event type validation should pass" >> {
     "if its brand exists and its name is unique for this brand" in {
-      (eventTypeService.findByBrand _) expects 1L returning List()
+      (services.eventTypeService.findByBrand _) expects 1L returning List()
       controller.callValidatedEventType(1L, eventType) must_== None
     }
     "if it and its brand exists and its name is unique for this brand" in {
-      (eventTypeService.find _) expects 1L returning Some(eventType)
-      (eventTypeService.findByBrand _) expects 1L returning List(eventType)
+      (services.eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.eventTypeService.findByBrand _) expects 1L returning List(eventType)
       controller.callValidatedUpdatedEventType(1L, eventType) must_== None
     }
   }

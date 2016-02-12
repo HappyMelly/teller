@@ -1,5 +1,5 @@
 @(recipient: String, changeUrl: String, oldEmail: String)(implicit request: RequestHeader,
-        env: securesocial.core.RuntimeEnvironment[_])
+        env: securesocial.core.RuntimeEnvironment)
 
 @mail.templates.html.hmTmpl("Confirm your email") {
     <h2>Hi @recipient,</h2>

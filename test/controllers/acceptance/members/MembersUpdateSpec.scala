@@ -59,15 +59,15 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
   val reason = "testblabla"
 
   def e1 = {
-    (personService.member _) expects 1L returning None
+    (services.personService.member _) expects 1L returning None
     val res = controller.updateReason(1L).apply(fakePostRequest())
     status(res) must equalTo(NOT_FOUND)
   }
 
   def e2 = {
-    (personService.member _) expects 1L returning Some(member)
-    (memberService.update _) expects member.copy(reason = Some(reason))
-    (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning None
+    (services.personService.member _) expects 1L returning Some(member)
+    (services.memberService.update _) expects member.copy(reason = Some(reason))
+    (services.profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning None
     val req = fakePostRequest().withFormUrlEncodedBody("reason" -> reason)
     val res = controller.updateReason(1L).apply(req)
     status(res) must equalTo(OK)
@@ -77,10 +77,10 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e3 = {
     val strength = ProfileStrength.forMember(ProfileStrength.empty(1L, false))
-    (personService.member _) expects 1L returning Some(member)
-    (memberService.update _) expects member.copy(reason = Some(reason))
-    (profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
-    (profileStrengthService.update _) expects strength.markComplete("reason")
+    (services.personService.member _) expects 1L returning Some(member)
+    (services.memberService.update _) expects member.copy(reason = Some(reason))
+    (services.profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(strength)
+    (services.profileStrengthService.update _) expects strength.markComplete("reason")
     val req = fakePostRequest().withFormUrlEncodedBody("reason" -> reason)
     val res = controller.updateReason(1L).apply(req)
     status(res) must equalTo(OK)

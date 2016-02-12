@@ -23,58 +23,26 @@
  */
 package controllers
 
-import models.{BrandWithSettings, Brand, UserAccount}
-import models.service.Services
 import play.api.Play
 import play.api.Play.current
-import play.api.mvc._
 
-trait Utilities extends Controller with Services {
+object Utilities {
 
   /**
     * Returns CDN url to image if CDN is set
+    *
     * @param path Path to image in Amazon S3 bucket
     */
-  protected def cdnUrl(path: String): Option[String] = {
+  def cdnUrl(path: String): Option[String] = {
     Play.configuration.getString("cdn.url").map(url => Some(url + path)).getOrElse(None)
   }
 
   /**
-   * Returns an url with domain
-   * @param url Domain-less part of url
-   */
-  protected def fullUrl(url: String): String = {
+    * Returns an url with domain
+    *
+    * @param url Domain-less part of url
+    */
+  def fullUrl(url: String): String = {
     Play.configuration.getString("application.baseUrl").getOrElse("") + url
-  }
-  
-  protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
-                                  (coordinator: (BrandWithSettings, List[Brand]) => Result)
-                                  (facilitator: (Option[BrandWithSettings], List[Brand]) => Result)
-                                  (ordinaryUser: Result): Result = {
-    if (account.isCoordinatorNow) {
-      val brands = brandService.findByCoordinator(account.personId).sortBy(_.brand.name)
-      brandId map { identifier =>
-        brands.find(_.brand.identifier == identifier) map { view =>
-          coordinator(view, brands.map(_.brand))
-        } getOrElse Redirect(routes.Dashboard.index())    
-      } getOrElse {
-        if (brands.nonEmpty) {
-          coordinator(brands.head, brands.map(_.brand))
-        } else Redirect(routes.Dashboard.index())
-      }
-    } else if (account.isFacilitatorNow) {
-      val brands = brandService.findByLicense(account.personId)
-      brandId map { identifier =>
-        brands.find(_.brand.identifier == identifier) map { view =>
-          facilitator(Some(view), brands.map(_.brand))
-        } getOrElse Redirect(routes.Dashboard.index())
-      } getOrElse {
-        brands.length match {
-          case 1 => facilitator(Some(brands.head), brands.map(_.brand))
-          case 0 => Redirect(routes.Dashboard.index())
-          case _ => facilitator(None, brands.map(_.brand))
-        }
-      }
-    } else ordinaryUser
   }
 }

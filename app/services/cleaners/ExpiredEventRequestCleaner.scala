@@ -6,11 +6,11 @@ import org.joda.time.LocalDate
 /**
   * Removes expired event requests from database
   */
-object ExpiredEventRequestCleaner extends Services {
+class ExpiredEventRequestCleaner(services: Services) {
 
   def clean() = {
     println("ExpiredEventRequestClearer: start")
-    eventRequestService.deleteExpired(LocalDate.now())
+    services.eventRequestService.deleteExpired(LocalDate.now())
     println("ExpiredEventRequestClearer: end")
   }
 }

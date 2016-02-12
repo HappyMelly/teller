@@ -24,42 +24,46 @@
 
 package controllers
 
-import models.{ ActiveUser, Person }
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import models.Person
 import models.service.Services
-import play.api.Play
-import play.api.Play.current
-import play.api.data.Form
-import play.api.data.Forms._
-import play.api.libs.json.Json
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.MessagesApi
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Future
 
-class Signatures(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services
-    with Files
-    with Activities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                            override val messagesApi: MessagesApi,
+                            val services: Services,
+                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Files
+  with Activities {
 
   /**
    * Delete signature form submits to this action
    *
    * @param personId Person identifier
    */
-  def delete(personId: Long) = SecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        personService.find(personId).map { person ⇒
-          if (person.signature) {
+  def delete(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.personService.find(personId) flatMap {
+        case None => notFound("Person not found")
+        case Some(person) =>
+          val result = if (person.signature) {
             Person.signature(personId).remove()
-            personService.update(person.copy(signature = false))
+            services.personService.update(person.copy(signature = false))
+          } else {
+            Future.successful(None)
           }
-          val log = activity(person, user.person).deletedSign.insert()
-          val route = routes.People.details(personId).url + "#facilitation"
-          Redirect(route).flashing("success" -> log.toString)
-        } getOrElse NotFound
+          result flatMap { _ =>
+            val route: String = routes.People.details(personId).url + "#facilitation"
+            redirect(route, "success" -> "Signature was deleted")
+          }
+      }
   }
 
   /**
@@ -74,20 +78,18 @@ class Signatures(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param personId Person identifier
    */
-  def upload(personId: Long) = AsyncSecuredProfileAction(personId) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-
-        personService.find(personId).map { person ⇒
-          val route = routes.People.details(personId).url + "#facilitation"
+  def upload(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+    implicit handler ⇒ implicit user ⇒
+      services.personService.find(personId) flatMap {
+        case None => notFound("Person not found")
+        case Some(person) =>
+          val route: String = routes.People.details(personId).url + "#facilitation"
           uploadFile(Person.signature(personId), "signature") map { _ ⇒
-            personService.update(person.copy(signature = true))
-            val log = activity(person, user.person).uploadedSign.insert()
-
-            Redirect(route).flashing("success" -> log.toString)
+            services.personService.update(person.copy(signature = true))
+            Redirect(route).flashing("success" -> "Signature was uploaded")
           } recover {
             case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)
           }
-        } getOrElse Future.successful(NotFound)
+      }
   }
 }

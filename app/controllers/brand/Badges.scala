@@ -23,26 +23,26 @@
  */
 package controllers.brand
 
-import controllers.{Files, JsonController, Security, Utilities}
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers._
+import models.DateStamp
 import models.brand.Badge
 import models.service.Services
-import models.{ActiveUser, DateStamp}
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.MessagesApi
 import play.api.libs.Crypto
-import securesocial.core.RuntimeEnvironment
+import play.twirl.api.Html
+import services.TellerRuntimeEnvironment
 
-import scala.concurrent.Future
-
-class Badges(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Services
-    with Security
-    with Files
-    with Utilities {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                     override val messagesApi: MessagesApi,
+                                     val services: Services,
+                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  with Files {
 
   def form(editorName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -62,7 +62,7 @@ class Badges(environment: RuntimeEnvironment[ActiveUser])
    * @param brandId Brand identifier
    */
   def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    Future.successful(Ok(views.html.v2.badge.form(user, brandId, form(user.name))))
+    ok(views.html.v2.badge.form(user, brandId, form(user.name)))
   }
 
   /**
@@ -73,12 +73,13 @@ class Badges(environment: RuntimeEnvironment[ActiveUser])
   def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val formWithData = form(user.name).bindFromRequest
     formWithData.fold(
-      error ⇒ Future.successful(BadRequest(views.html.v2.badge.form(user, brandId, error))),
+      error ⇒ badRequest(views.html.v2.badge.form(user, brandId, error)),
       badge ⇒ {
         val hash = generatedName
-        uploadImage(Badge.picture(hash), "file") map { _ ⇒
-          brandBadgeService.insert(badge.copy(brandId = brandId, file = hash))
-          Redirect(controllers.routes.Brands.details(brandId).url + "#badges")
+        uploadImage(Badge.picture(hash), "file") flatMap { _ ⇒
+          services.brandBadgeService.insert(badge.copy(brandId = brandId, file = hash)) map { badge =>
+            Redirect(controllers.routes.Brands.details(brandId).url + "#badges")
+          }
         } recover {
           case e: RuntimeException ⇒
             val error = formWithData.withGlobalError(e.getMessage)
@@ -95,8 +96,9 @@ class Badges(environment: RuntimeEnvironment[ActiveUser])
    */
   def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      brandBadgeService.delete(brandId, id)
-      Future.successful(jsonSuccess("ok"))
+      services.brandBadgeService.delete(brandId, id) flatMap { _ =>
+        jsonSuccess("ok")
+      }
   }
 
   /**
@@ -108,10 +110,10 @@ class Badges(environment: RuntimeEnvironment[ActiveUser])
    */
   def edit(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      brandBadgeService.find(id) map { badge ⇒
-        Future.successful(
-          Ok(views.html.v2.badge.form(user, brandId, form(user.name).fill(badge), Some(id))))
-      } getOrElse Future.successful(NotFound("Badge not found"))
+      services.brandBadgeService.find(id) flatMap {
+        case None => notFound(Html("Badge not found"))
+        case Some(badge) => ok(views.html.v2.badge.form(user, brandId, form(user.name).fill(badge), Some(id)))
+      }
   }
 
   /**
@@ -131,38 +133,41 @@ class Badges(environment: RuntimeEnvironment[ActiveUser])
     implicit handler ⇒ implicit user ⇒
       val formWithData = form(user.name).bindFromRequest
       formWithData.fold(
-        error ⇒ Future.successful(BadRequest(views.html.v2.badge.form(user, brandId, error))),
-        badge ⇒ {
-          brandBadgeService.find(id) map { existing ⇒
-            if (existing.brandId == brandId) {
-              val hash = generatedName
-              uploadImage(Badge.picture(hash), "file") map { _ ⇒
-                brandBadgeService.update(badge.copy(id = Some(id), file = hash))
-                Badge.picture(existing.file).remove()
-                Redirect(controllers.routes.Brands.details(brandId) + "#badges")
-              } recover {
-                case e: RuntimeException ⇒
-                  val error = formWithData.withGlobalError(e.getMessage)
-                  BadRequest(views.html.v2.badge.form(user, brandId, error))
+        error ⇒ badRequest(views.html.v2.badge.form(user, brandId, error)),
+        badge ⇒
+          services.brandBadgeService.find(id) flatMap {
+            case None => notFound(Html("Badge not found"))
+            case Some(existing) ⇒
+              if (existing.brandId == brandId) {
+                val hash = generatedName
+                uploadImage(Badge.picture(hash), "file") flatMap { _ ⇒
+                  services.brandBadgeService.update(badge.copy(id = Some(id), file = hash)) map { _ =>
+                    Badge.picture(existing.file).remove()
+                    Redirect(controllers.routes.Brands.details(brandId) + "#badges")
+                  }
+                } recover {
+                  case e: RuntimeException ⇒
+                    services.brandBadgeService.update(badge.copy(id = Some(id), file = existing.file))
+                    Redirect(controllers.routes.Brands.details(brandId) + "#badges")
+                }
+              } else {
+                notFound(Html("Badge not found"))
               }
-            } else {
-              Future.successful(NotFound("Badge not found"))
-            }
-          } getOrElse Future.successful(NotFound("Badge not found"))
         })
   }
 
   protected def generatedName = Crypto.sign(DateTime.now().toString) + ".jpg"
 }
 
-object Badges extends Utilities {
+object Badges {
 
   /**
     * Returns url to an badge's picture
+    *
     * @param badge Badge
     */
   def pictureUrl(badge: Badge, size: String = ""): Option[String] = {
     val picture = Badge.picture(badge.file).file(size)
-    cdnUrl(picture.name).orElse(Some(fullUrl(routes.Badges.picture(badge.file).url)))
+    Utilities.cdnUrl(picture.name).orElse(Some(Utilities.fullUrl(routes.Badges.picture(badge.file).url)))
   }
 }

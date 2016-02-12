@@ -1,10 +1,11 @@
 @(user: ActiveUser,
     id: Option[Long],
     people: List[Person],
-    form: Form[Brand])(implicit flash: Flash,
-    request: Request[Any],
-    handler: AuthorisationHandler,
-    token: play.filters.csrf.CSRF.Token)
+    form: Form[BrandProfileView])(implicit flash: Flash,
+        request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
 
   @import helper.CSRF
   @import views.ViewHelpersV2._
@@ -77,7 +78,7 @@
                     @v2.html.block("") {
                         <div class="errors">
                         @for((error, index) <- form.errors.zipWithIndex) {
-                            @{index + 1}. @play.api.i18n.Messages(error.message)<br/>
+                            @{index + 1}. @Messages(error.message)<br/>
                         }
                         </div>
                     }

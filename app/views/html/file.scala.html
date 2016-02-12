@@ -10,8 +10,8 @@
  * @param args Set of extra attributes.
  * @param handler The field constructor.
  *@
-@(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, lang: play.api.i18n.Lang)
+@(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
 @helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
     <input type="file" id="@id" value="@value" class="form-control" name="@name" @toHtmlArgs(htmlArgs)/>
-}(handler, lang)
+}(handler, messages)

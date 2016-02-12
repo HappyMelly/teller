@@ -28,7 +28,7 @@ import models.{Member, SocialProfile}
 /**
  * Contains methods for notifying members about changes of other members
  */
-trait MemberNotifications extends Utilities {
+trait MemberNotifications {
 
   /**
    * Returns a well-formed Slack notification message
@@ -39,7 +39,7 @@ trait MemberNotifications extends Utilities {
   protected def newMemberMsg(member: Member, name: String, url: String): String = {
     val typeName = if (member.funder) "Funder" else "Supporter"
     "Hooray!! We have *new %s*, %s. <%s|View profile>".format(
-      typeName, name, fullUrl(url))
+      typeName, name, Utilities.fullUrl(url))
   }
 
   /**

@@ -24,18 +24,35 @@
 
 package models
 
-import org.joda.money.{ IllegalCurrencyException, CurrencyUnit, Money }
 import java.math.RoundingMode
-import play.api.data.Mapping
+import java.sql.{ResultSet, PreparedStatement}
+
+import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 import play.api.data.Forms._
+import play.api.data.Mapping
+import slick.driver.JdbcDriver
+
 import scala.Predef._
 import scala.language.implicitConversions
-import scala.slick.driver.JdbcDriver.simple._
+
+class JodaCurrencyMapper(val driver: JdbcDriver) {
+
+  object TypeMapper extends driver.DriverJdbcType[CurrencyUnit] {
+    def sqlType = java.sql.Types.VARCHAR
+    def setValue(v: CurrencyUnit, p: PreparedStatement, idx: Int): Unit = p.setString(idx, v.toString)
+    def getValue(r: ResultSet, idx: Int): CurrencyUnit = CurrencyUnit.of(r.getString(idx))
+    def updateValue(v: CurrencyUnit, r: ResultSet, idx: Int): Unit =
+      r.updateString(idx, v.toString)
+    override def valueToSQLLiteral(value: CurrencyUnit) = value.toString
+  }
+
+}
 
 /**
  * Joda Money conversions
  */
 object JodaMoney {
+  val mapper = new JodaCurrencyMapper(slick.driver.MySQLDriver)
 
   /**
    * Form mapping for Joda Money values, using an implicit conversion from `currency -> amount` to `Money`.
@@ -53,7 +70,7 @@ object JodaMoney {
   def unapply(money: Money): Option[(String, BigDecimal)] =
     Some((money.getCurrencyUnit.getCode, BigDecimal(money.getAmount)))
 
-  implicit val CurrencyMapper = MappedColumnType.base[CurrencyUnit, String](_.toString, CurrencyUnit.of)
+  implicit val CurrencyMapper = mapper.TypeMapper
 
   /**
    * Returns a CurrencyUnit for a currency code

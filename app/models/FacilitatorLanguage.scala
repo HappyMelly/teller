@@ -24,33 +24,9 @@
 
 package models
 
-import models.database.FacilitatorLanguages
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
-
 /**
  * This class represents a language which a facilitator speaks
  * @param personId Facilitator identifier
  * @param language Two-letter language identifier
  */
-case class FacilitatorLanguage(personId: Long, language: String) {
-
-  /**
-   * Insert a new language to DB
-   * @return
-   */
-  def insert: FacilitatorLanguage = DB.withSession { implicit session ⇒
-    TableQuery[FacilitatorLanguages] += this
-    this
-  }
-
-  /**
-   * Delete a language-facilitator connection
-   */
-  def delete(): Unit = DB.withSession { implicit session ⇒
-    TableQuery[FacilitatorLanguages].
-      filter(_.personId === personId).
-      filter(_.language === language).delete
-  }
-}
+case class FacilitatorLanguage(personId: Long, language: String)

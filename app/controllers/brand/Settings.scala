@@ -23,57 +23,64 @@
  */
 package controllers.brand
 
-import controllers.{Security, JsonController}
-import models.ActiveUser
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import models.service.Services
 import play.api.data.Form
 import play.api.data.Forms._
-import securesocial.core.RuntimeEnvironment
+import play.api.i18n.MessagesApi
+import services.TellerRuntimeEnvironment
 
 /**
   * Manages brand settings
   */
-class Settings(environment: RuntimeEnvironment[ActiveUser])
-  extends JsonController
-  with Services
-  with Security {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                       override val messagesApi: MessagesApi,
+                                       val services: Services,
+                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
     * Turns off license expiration reminder for the given brand
+    *
     * @param brandId Brand identifier
     */
-  def turnLicenseExpirationReminderOff(brandId: Long) = SecuredBrandAction(brandId) { implicit request =>
+  def turnLicenseExpirationReminderOff(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
-      brandService.findWithSettings(brandId) map { view =>
-        if (view.settings.licenseExpirationEmail) {
-          brandService.updateSettings(view.settings.copy(licenseExpirationEmail = false))
-        }
-        jsonSuccess("Reminder is turned off")
-      } getOrElse jsonNotFound("Brand not found")
+      services.brandService.findWithSettings(brandId) flatMap {
+        case None => jsonNotFound("Brand not found")
+        case Some(view) =>
+          if (view.settings.licenseExpirationEmail) {
+            services.brandService.updateSettings(view.settings.copy(licenseExpirationEmail = false))
+          }
+          jsonSuccess("Reminder is turned off")
+      }
   }
 
   /**
     * Turns on license expiration reminder for the given brand
+    *
     * @param brandId Brand identifier
     */
-  def turnLicenseExpirationReminderOn(brandId: Long) = SecuredBrandAction(brandId) { implicit request =>
+  def turnLicenseExpirationReminderOn(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
       Form(single("content" -> nonEmptyText)).bindFromRequest().fold(
         errors => jsonBadRequest("Email body is empty"),
         content => {
-          brandService.findWithSettings(brandId) map { view =>
-            if (view.settings.licenseExpirationEmail) {
-              brandService.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
-              jsonSuccess("Reminder email is updated")
-            } else {
-              val settings = view.settings.copy(licenseExpirationEmailBody = Some(content),
-                licenseExpirationEmail = true)
-              brandService.updateSettings(settings)
-              jsonSuccess("Reminder is turned on")
-            }
-          } getOrElse jsonNotFound("Brand not found")
+          services.brandService.findWithSettings(brandId) flatMap {
+            case None => jsonNotFound("Brand not found")
+            case Some(view) =>
+              if (view.settings.licenseExpirationEmail) {
+                services.brandService.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
+                jsonSuccess("Reminder email is updated")
+              } else {
+                val settings = view.settings.copy(licenseExpirationEmailBody = Some(content),
+                  licenseExpirationEmail = true)
+                services.brandService.updateSettings(settings)
+                jsonSuccess("Reminder is turned on")
+              }
+          }
         }
       )
   }

@@ -24,17 +24,12 @@
 
 package models
 
-import models.database.ExchangeRates
-import org.joda.money.{ Money, CurrencyUnit }
-import org.joda.time.{ LocalDate, DateTime }
-import org.joda.time.DateTimeZone.UTC
-import math.BigDecimal.int2bigDecimal
 import java.math.RoundingMode
-import play.api.db.slick.Config.driver.simple._
-import play.api.db.slick.DB
-import play.api.Play.current
-import models.JodaMoney.CurrencyMapper
-import models.database.PortableJodaSupport._
+
+import org.joda.money.{CurrencyUnit, Money}
+import org.joda.time.DateTime
+
+import scala.math.BigDecimal.int2bigDecimal
 
 /**
  * Represents an exchange rate between two currencies at a certain time.
@@ -77,54 +72,7 @@ case class ExchangeRate(id: Option[Long], base: CurrencyUnit, counter: CurrencyU
    */
   def canConvert(amount: Money): Boolean = base.equals(amount.getCurrencyUnit) || counter.equals(amount.getCurrencyUnit)
 
-  def insert: ExchangeRate = DB.withSession { implicit session: Session ⇒
-    val rates = TableQuery[ExchangeRates]
-    val id = (rates returning rates.map(_.id)) += this
-    this.copy(id = Some(id))
-  }
-
   def inverse = ExchangeRate(None, counter, base, inverseRate, timestamp)
 
   override def toString = s"$base/$counter $rate"
-}
-
-object ExchangeRate {
-
-  import play.api.Play.current
-
-  private def today = LocalDate.now(UTC)
-
-  /**
-   * Returns the exchange rate from the database, or inverts a stored rate, for the given base and counter.
-   */
-  def fromDatabase(base: CurrencyUnit, counter: CurrencyUnit, date: LocalDate = today): Option[ExchangeRate] = DB.withSession { implicit session ⇒
-    val query = for {
-      rate ← TableQuery[ExchangeRates]
-      if (rate.base === base && rate.counter === counter) || (rate.base === counter && rate.counter === base)
-      if rate.timestamp >= date.toDateTimeAtStartOfDay(UTC)
-      if rate.timestamp < date.plusDays(1).toDateTimeAtStartOfDay(UTC)
-    } yield rate
-
-    // Invert any rates that were found with base and counter the wrong way around.
-    val results = query.list.map {
-      case rate @ ExchangeRate(_, resultBase, resultCounter, _, _) if resultBase == counter && resultCounter == base ⇒ rate.inverse
-      case rate ⇒ rate
-    }
-    results.headOption
-  }
-
-  def ratesFromDatabase(base: CurrencyUnit, date: LocalDate = today): List[ExchangeRate] = DB.withSession { implicit session: Session ⇒
-    val query = for {
-      rate ← TableQuery[ExchangeRates]
-      if rate.base === base || rate.counter === base
-      if rate.timestamp >= date.toDateTimeAtStartOfDay(UTC)
-      if rate.timestamp < date.plusDays(1).toDateTimeAtStartOfDay(UTC)
-    } yield rate
-
-    // Invert any rates that were found with base and counter the wrong way around.
-    query.list.map {
-      case rate @ ExchangeRate(_, _, resultCounter, _, _) if resultCounter == base ⇒ rate.inverse
-      case rate ⇒ rate
-    }
-  }
 }

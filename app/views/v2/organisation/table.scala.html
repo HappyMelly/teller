@@ -1,4 +1,4 @@
-@(organisations: List[Organisation])(actions: (Organisation) => Html)
+@(organisations: List[Organisation])(actions: (Organisation) => Html)(implicit messages: Messages)
 
 @if(organisations.nonEmpty) {
   <table class="datatables table table-bordered">

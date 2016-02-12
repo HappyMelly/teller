@@ -49,21 +49,11 @@ case class Attendee(
   * This class represent a row in a table with attendees
   * @param attendee Attendee personal data
   * @param event Event info
-  * @param evaluationId Evaluation identifier
-  * @param impression A level of impression (taken from the evaluation)
-  * @param status A status of evaluation (pending, approved or rejected)
-  * @param date Date of the evaluation creation
-  * @param handled Date when the evaluation was approved/rejected
-  * @param confirmationToken Token used in a confirmation url to identify an evaluation
+  * @param evaluation Evaluation
   */
 case class AttendeeView(attendee: Attendee,
                         event: Event,
-                        evaluationId: Option[Long],
-                        impression: Option[Int],
-                        status: Option[EvaluationStatus.Value],
-                        date: Option[DateTime],
-                        handled: Option[LocalDate],
-                        confirmationToken: Option[String]) {
+                        evaluation: Option[Evaluation]) {
 
   override def equals(other: Any): Boolean =
     other match {

@@ -23,19 +23,23 @@
  */
 package controllers
 
-import models.{ ActiveUser, ProfileStrength, Person }
-import models.service.{ ProfileStrengthService, Services }
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
-import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
+import models.service.Services
+import models.{ActiveUser, ProfileStrength}
+import play.api.i18n.MessagesApi
+import services.TellerRuntimeEnvironment
+
 import scala.concurrent.Future
 
-class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
-    extends Controller
-    with Security
-    with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                  override val messagesApi: MessagesApi,
+                                  val services: Services,
+                                  deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+    extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**
    * Returns profile strength widget for a person
@@ -44,42 +48,51 @@ class ProfileStrengths(environment: RuntimeEnvironment[ActiveUser])
    * @param steps If true completion steps are shown
    */
   def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
-    implicit request ⇒
-      implicit handler ⇒ implicit user ⇒
-        profileStrengthService.find(id) map { x ⇒
-          Future.successful(Ok(views.html.v2.profile.widget(id, x, steps)))
-        } getOrElse {
-          if (id == user.person.id.get) {
-            val profileStrength = initializeProfileStrength(user.person)
-            profileStrengthService.insert(profileStrength)
-            Future.successful(Ok(views.html.v2.profile.widget(id, profileStrength, steps)))
+    implicit request ⇒ implicit handler => implicit user ⇒
+      services.profileStrengthService.find(id) flatMap {
+        case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))
+        case None =>
+          if (id == user.person.identifier) {
+            initializeProfileStrength(user) flatMap { profileStrength =>
+              services.profileStrengthService.insert(profileStrength)
+            } flatMap { profileStrength =>
+              ok(views.html.v2.profile.widget(id, profileStrength, steps))
+            }
           } else {
-            Future.successful(BadRequest)
+            badRequest("Widget was requested by a wrong person")
           }
-        }
+      }
   }
 
   /**
    * Returns new profile strength based on the given person data
    *
-   * @param person Person
+   * @param user Active user
    */
-  protected def initializeProfileStrength(person: Person): ProfileStrength = {
-    val id = person.id.get
+  protected def initializeProfileStrength(user: ActiveUser): Future[ProfileStrength] = {
+    val id = user.person.identifier
     val strength = ProfileStrength.empty(id, org = false)
-    val strengthWithMember = if (person.isMember)
+    val strengthWithMember = if (user.member.isDefined)
       ProfileStrength.forMember(strength)
     else
       strength
-    val strengthWithFacilitator = if (licenseService.activeLicenses(id).nonEmpty) {
-      val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
-      if (facilitatorService.languages(person.id.get).nonEmpty)
-        strengthWithLanguages.markComplete("language")
-      else
-        strengthWithLanguages
-    } else {
-      strengthWithMember
+    val query = for {
+      licenses <- services.licenseService.activeLicenses(id)
+      languages <- services.facilitatorService.languages(id)
+    } yield (licenses, languages)
+    val strengthWithFacilitator = query map { case (licenses, languages) =>
+      if (licenses.nonEmpty) {
+        val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
+        if (languages.nonEmpty)
+          strengthWithLanguages.markComplete("language")
+        else
+          strengthWithLanguages
+      } else {
+        strengthWithMember
+      }
     }
-    ProfileStrength.forPerson(strengthWithFacilitator, person)
+    strengthWithFacilitator map { value =>
+      ProfileStrength.forPerson(value, user.person)
+    }
   }
 }

@@ -5,15 +5,14 @@
   withMelly: Boolean = false)(
   content: Html)(implicit request: Request[Any],
     flash: Flash,
-    handler: AuthorisationHandler)
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 <!DOCTYPE html>
 <html>
   <head>
     <title>@title - Happy Melly</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    @head()
+    @v2.head()
   </head>
   <body class='@if(withMelly) { with-melly }'>
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>
@@ -48,7 +47,7 @@
         Made with love at <a href="http://happymelly.com" target="_blank">Happy Melly</a>
       </div>
     </div>
-  </body>
+
   <footer>
     @views.html.jsroutes()
     <script>
@@ -64,4 +63,5 @@
   </footer>
   <script src="@routes.Assets.at("history.js")" type="text/javascript"></script>
 
+  </body>
 </html>

@@ -1,50 +1,59 @@
 package mail.reminder
 
+import javax.inject.Inject
+
 import controllers.routes
 import models._
 import models.event.Attendee
 import models.service.Services
 import org.joda.time.{Duration, LocalDate}
-import services.integrations.Integrations
+import services.integrations._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Contains methods for notifying Teller users about their evaluations
  */
-object EvaluationReminder extends Services with Integrations {
+class EvaluationReminder @Inject() (val email: EmailComponent, val services: Services) extends Integrations {
 
   /**
    * Sends evaluation and confirmation requests to participants of events
    * on the first, the thirds and the sevenths days after the event
    */
-  def sendToAttendees(): Unit = brandService.findAll.foreach { brand ⇒
-    if (brand.evaluationUrl.isDefined) {
-      val today = LocalDate.now().toDate.getTime
-      val events = eventService.
-        findByParameters(brandId = brand.id, future = Some(false)).
-        filter(_.followUp).
-        filter { event =>
+  def sendToAttendees() = services.brandService.findAll map { brands =>
+    brands.foreach { brand ⇒
+      if (brand.evaluationUrl.isDefined) {
+        val today = LocalDate.now().toDate.getTime
+        val unfilteredEvents = services.eventService.findByParameters(brandId = brand.id, future = Some(false))
+        val events = unfilteredEvents.map(_.filter(_.followUp).filter { event =>
           val duration = (new Duration(event.schedule.end.toDate.getTime, today)).getStandardDays
           duration == 1 || duration == 3 || duration == 7
-        }.map(_.id.get)
-      val attendees = evaluationService.findEvaluationsByEvents(events)
-      attendees.filter(view => view.status.isEmpty).foreach { view =>
-        val welcomeMsg = s"Hi ${view.attendee.firstName},"
-        val facilitatorId = view.event.facilitatorIds.head
-        val body = mail.templates.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId, brand.evaluationUrl).toString()
-        sendEvaluationRequest(view.attendee, brand, body)
-      }
-      attendees.filter(_.status.exists(_ == EvaluationStatus.Unconfirmed)).foreach { view =>
-        val defaultHook = routes.Evaluations.confirm("").url
-        view.confirmationToken.foreach { token =>
-          sendConfirmRequest(view.attendee, brand, defaultHook, token)
-        }
+        }.map(_.id.get))
+        val attendees = for {
+          e <- events
+          a <- services.evaluationService.findEvaluationsByEvents(e)
+        } yield a
+        attendees.map(_.filter(_.evaluation.isEmpty).foreach { view =>
+          val welcomeMsg = s"Hi ${view.attendee.firstName},"
+          val facilitatorId = view.event.facilitatorIds(services).head
+          val body = mail.templates.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId, brand.evaluationUrl).toString()
+          sendEvaluationRequest(view.attendee, brand, body)
+        })
+        attendees.map(_.filter(_.evaluation.exists(_.status == EvaluationStatus.Unconfirmed)).foreach { view =>
+          val defaultHook = routes.Evaluations.confirm("").url
+          view.evaluation.get.confirmationId.foreach { token =>
+            sendConfirmRequest(view.attendee, brand, defaultHook, token)
+          }
+        })
       }
     }
   }
 
   /**
    * Sends request to evaluate an event to the given attendee
-   * @param attendee Attendee
+    *
+    * @param attendee Attendee
    * @param brand Brand
    * @param body Message
    */

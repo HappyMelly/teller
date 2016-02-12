@@ -24,8 +24,9 @@
 
 package controllers
 
-import fly.play.s3.{ BucketFile, S3Exception }
-import models.UserRole.DynamicRole
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import fly.play.s3.{BucketFile, S3Exception}
 import models.UserRole.Role._
 import models._
 import models.service.Services
@@ -33,26 +34,25 @@ import org.joda.time._
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Forms._
-import play.api.data.{ FormError, _ }
 import play.api.data.format.Formatter
 import play.api.data.validation.Constraints._
-import play.api.i18n.Messages
+import play.api.data.{FormError, _}
+import play.api.i18n.{MessagesApi, Messages}
 import play.api.mvc._
-import securesocial.core.RuntimeEnvironment
 import services._
 
 import scala.concurrent.Future
 import scala.io.Source
 
-class Products(environment: RuntimeEnvironment[ActiveUser])
-    extends JsonController
-    with Security
-    with Services {
-
-  override implicit val env: RuntimeEnvironment[ActiveUser] = environment
+class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
+                                       override val messagesApi: MessagesApi,
+                                       val services: Services,
+                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   val contentType = "image/jpeg"
   val encoding = "ISO-8859-1"
+  val indexCall: Call = routes.Products.index()
 
   /**
    * Formatter used to define a form mapping for the `ProductCategory` enumeration.
@@ -91,84 +91,87 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
     "updatedBy" -> ignored(user.name))(Product.apply)(Product.unapply))
 
   /** Show all products **/
-  def index = SecuredRestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val products = productService.findAll
-      Ok(views.html.product.index(user, products))
+  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.productService.findAll flatMap { products =>
+      ok(views.html.product.index(user, products))
+    }
   }
 
   /** Add page **/
-  def add = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      Ok(views.html.product.form(user, None, None, productForm))
+  def add = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.productService.findAll flatMap { products =>
+      ok(views.html.product.form(user, None, None, products, productForm))
+    }
   }
 
   /** Add form submits to this action **/
-  def create = AsyncSecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      val form: Form[Product] = productForm.bindFromRequest
+  def create = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val form: Form[Product] = productForm.bindFromRequest
+    services.productService.findAll flatMap { products =>
       form.fold(
-        formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, None, None, formWithErrors))),
+        errors ⇒ badRequest(views.html.product.form(user, None, None, products, errors)),
         product ⇒ {
-          if (productService.titleExists(product.title))
-            Future.successful(BadRequest(views.html.product.form(user, None, None,
-              form.withError("title", "constraint.product.title.exists", product.title))))
-          else {
-            request.body.asMultipartFormData.get.file("picture").map { picture ⇒
-              val filename = Product.generateImageName(picture.filename)
-              val source = Source.fromFile(picture.ref.file.getPath, encoding)
-              val byteArray = source.toArray.map(_.toByte)
-              source.close()
-              S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                product.copy(picture = Some(filename)).insert
-                val activity = Activity.insert(user.name,
-                  Activity.Predicate.Created, product.title)
-                Redirect(routes.Products.index()).flashing("success" -> activity.toString)
-              }.recover {
-                case S3Exception(status, code, message, originalXml) ⇒ BadRequest(views.html.product.form(user, None, None,
-                  form.withError("picture", "Image cannot be temporary saved")))
+          services.productService.titleExists(product.title) flatMap {
+            case true =>
+              badRequest(views.html.product.form(user, None, None, products,
+                form.withError("title", "constraint.product.title.exists", product.title)))
+            case false =>
+              request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+                val filename = Product.generateImageName(picture.filename)
+                val source = Source.fromFile(picture.ref.file.getPath, encoding)
+                val byteArray = source.toArray.map(_.toByte)
+                source.close()
+                S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                  services.productService.insert(product.copy(picture = Some(filename)))
+                  val activity = Activity.insert(user.name,
+                    Activity.Predicate.Created, product.title)(services)
+                  Redirect(indexCall).flashing("success" -> activity.toString)
+                }.recover {
+                  case S3Exception(status, code, message, originalXml) ⇒
+                    BadRequest(views.html.product.form(user, None, None, products,
+                      form.withError("picture", "Image cannot be temporary saved")))
+                }
+              }.getOrElse {
+                services.productService.insert(product) flatMap { _ =>
+                  val activity = Activity.insert(user.name, Activity.Predicate.Created, product.title)(services)
+                  redirect(indexCall, "success" -> "New product was added")
+                }
               }
-            }.getOrElse {
-              product.insert
-              val activity = Activity.insert(user.name,
-                Activity.Predicate.Created, product.title)
-              Future.successful(Redirect(routes.Products.index()).flashing("success" -> activity.toString))
-            }
           }
         })
+    }
   }
 
   /**
    * Assign the product to a brand
    */
-  def addBrand() = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def addBrand() = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
 
-      val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
+    val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
+    assignForm.bindFromRequest.fold(
+      errors ⇒ badRequest("brandId missing"),
+      {
+        case (page, productId, brandId) ⇒ {
+          (for {
+            p <- services.productService.find(productId)
+            b <- services.brandService.find(brandId)
+          } yield (p, b)) flatMap {
+            case (None, _) => notFound("Product not found")
+            case (_, None) => notFound("Brand not found")
+            case (Some(product), Some(brand)) =>
+              services.productService.addBrand(product.id.get, brand.identifier)
+              val activityObject = Messages("activity.relationship.create", product.title, brand.name)
+              val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)(services)
 
-      assignForm.bindFromRequest.fold(
-        errors ⇒ BadRequest("brandId missing"),
-        {
-          case (page, productId, brandId) ⇒ {
-            productService.find(productId) map { product ⇒
-              brandService.find(brandId) map { brand ⇒
-                product.addBrand(brandId)
-                val activityObject = Messages("activity.relationship.create", product.title, brand.name)
-                val activity = Activity.insert(user.name,
-                  Activity.Predicate.Created, activityObject)
-
-                // Redirect to the page we came from - either the product or brand details page.
-                val action = if (page == "product")
-                  routes.Products.details(productId)
-                else
-                  routes.Brands.details(brand.id.get)
-                Redirect(action).flashing("success" -> activity.toString)
-              } getOrElse NotFound
-            } getOrElse NotFound
+              // Redirect to the page we came from - either the product or brand details page.
+              val action: Call = if (page == "product")
+                routes.Products.details(productId)
+              else
+                routes.Brands.details(brand.id.get)
+              redirect(action, "success" -> "Product was assigned to a brand")
           }
-        })
+        }
+      })
   }
 
   /**
@@ -176,151 +179,157 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
    *
    * @param id Product id
    */
-  def activation(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      productService.find(id).map { product ⇒
+  def activation(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.productService.find(id) flatMap {
+      case None => jsonNotFound("Product not found")
+      case Some(product) =>
         Form("active" -> boolean).bindFromRequest.fold(
           error ⇒ jsonBadRequest("'active' parameter is not found"),
           active ⇒ {
             if (active)
-              productService.activate(id)
+              services.productService.activate(id)
             else
-              productService.deactivate(id)
+              services.productService.deactivate(id)
             jsonSuccess("ok")
           })
-      } getOrElse jsonNotFound("Product is not found")
+    }
   }
 
   /**
    * Unassign the product from the brand
    */
-  def deleteBrand(page: String, productId: Long, brandId: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
+  def deleteBrand(page: String, productId: Long, brandId: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      productService.find(productId) map { product: Product ⇒
-        brandService.find(brandId).map { brand ⇒
-          product.deleteBrand(brandId)
+      (for {
+        p <- services.productService.find(productId)
+        b <- services.brandService.find(brandId)
+      } yield (p, b)) flatMap {
+        case (None, _) => notFound("Product not found")
+        case (_, None) => notFound("Brand not found")
+        case (Some(product), Some(brand)) =>
+          services.productService.deleteBrand(product.id.get, brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
-          val activity = Activity.insert(user.name,
-            Activity.Predicate.Deleted, activityObject)
+          val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)(services)
 
           // Redirect to the page we came from - either the product or brand details page.
-          val action = if (page == "product")
+          val action: Call = if (page == "product")
             routes.Products.details(productId)
           else
             routes.Brands.details(brand.id.get)
-          Redirect(action).flashing("success" -> activity.toString)
-        } getOrElse NotFound
-      } getOrElse NotFound
+          redirect(action, "success" -> "Product is not longer assigned to a brand")
+      }
   }
 
   /** Delete a product **/
-  def delete(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      productService.find(id) map { product ⇒
+  def delete(id: Long) = AsyncSecuredDynamicAction(Funder, 0)  { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.productService.find(id) flatMap {
+      case None => notFound("Product not found")
+      case Some(product) ⇒
         product.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Product.cacheId(product.id.get))
         }
-        productService.delete(id)
-        val activity = Activity.insert(user.name,
-          Activity.Predicate.Deleted, product.title)
-        Redirect(routes.Products.index).flashing("success" -> activity.toString)
-      } getOrElse NotFound
+        services.productService.delete(id)
+        val activity = Activity.insert(user.name, Activity.Predicate.Deleted, product.title)(services)
+        redirect(indexCall, "success" -> "Product was deleted")
+    }
   }
 
   /** Delete picture form submits to this action **/
-  def deletePicture(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
+  def deletePicture(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      productService.find(id) map { product ⇒
-        product.picture.foreach { picture ⇒
-          S3Bucket.remove(picture)
-          Cache.remove(Product.cacheId(product.id.get))
-        }
-        product.copy(picture = None).update
-        val activity = Activity.insert(user.name,
-          Activity.Predicate.Deleted, "image from the product " + product.title)
-        Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
-      } getOrElse NotFound
+      services.productService.find(id) flatMap {
+        case None => notFound("Product not found")
+        case Some(product) =>
+          product.picture.foreach { picture ⇒
+            S3Bucket.remove(picture)
+            Cache.remove(Product.cacheId(product.id.get))
+          }
+          services.productService.update(product.copy(picture = None))
+          val activity = Activity.insert(user.name,
+            Activity.Predicate.Deleted, "image from the product " + product.title)(services)
+          val call: Call = routes.Products.details(id)
+          redirect(call, "success" -> "Product's image was deleted")
+      }
   }
 
   /** Details page **/
-  def details(id: Long) = SecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-
-      productService.find(id) map { product ⇒
-        val view = ProductView(product, productService.brands(id))
-        val derivatives = productService.findDerivatives(id)
-        val parent = if (product.parentId.isDefined)
-          productService.find(product.parentId.get)
-        else
-          None
-        val brands = Brand.findAllWithCoordinator
-        val contributors = Contribution.contributors(id)
-        val people = Person.findAll
-        val organisations = orgService.findAll
-
-        Ok(views.html.product.details(user, view, derivatives, parent, brands,
-          contributors, people, organisations))
-      } getOrElse NotFound
+      (for {
+        p <- services.productService.find(id)
+        b <- services.productService.brands(id)
+        d <- services.productService.findDerivatives(id)
+        bs <- services.brandService.findAllWithCoordinator
+        o <- services.orgService.findActive
+        c <- services.contributionService.contributors(id)
+      } yield (p, b, d, bs, o, c)) flatMap {
+        case (None, _, _, _, _, _) => notFound("Product not found")
+        case (Some(product), brand, derivatives, brands, organisations, contributors) =>
+          val view = ProductView(product, brand, contributors)
+          services.personService.findAll flatMap { people =>
+            ok(views.html.product.details(user, view, derivatives, None, brands, people, organisations))
+          }
+      }
 
   }
 
   /** Edit page **/
-  def edit(id: Long) = SecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      productService.find(id) map {
-        product ⇒
-          Ok(views.html.product.form(user, Some(id), Some(product.title), productForm.fill(product)))
-      } getOrElse NotFound
-
+  def edit(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.productService.findAll flatMap { products =>
+      products.find(_.id.contains(id)) match {
+        case None => notFound("Product not found")
+        case Some(product) =>
+          ok(views.html.product.form(user, Some(id), Some(product.title), products, productForm.fill(product)))
+      }
+    }
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = AsyncSecuredDynamicAction(DynamicRole.Funder, 0) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-
-      productService.find(id) map { existingProduct ⇒
-        val form: Form[Product] = productForm.bindFromRequest
-        val title = Some(existingProduct.title)
-        form.fold(
-          formWithErrors ⇒ Future.successful(BadRequest(views.html.product.form(user, Some(id), title, form))),
-          product ⇒ {
-            if (productService.isTitleTaken(product.title, id))
-              Future.successful(BadRequest(views.html.product.form(user, Some(id), title,
-                form.withError("title", "constraint.product.title.exists", product.title))))
-            else {
-              request.body.asMultipartFormData.get.file("picture").map { picture ⇒
-                val filename = Product.generateImageName(picture.filename)
-                val source = Source.fromFile(picture.ref.file.getPath, encoding)
-                val byteArray = source.toArray.map(_.toByte)
-                source.close()
-                S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                  product.copy(id = Some(id)).copy(picture = Some(filename)).update
-                  Cache.remove(Product.cacheId(id))
-                  existingProduct.picture.map { oldPicture ⇒
-                    S3Bucket.remove(oldPicture)
+  def update(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.productService.findAll flatMap { products =>
+      products.find(_.id.contains(id)) match {
+        case None => notFound("Product not found")
+        case Some(existingProduct) =>
+          val form: Form[Product] = productForm.bindFromRequest
+          val title = Some(existingProduct.title)
+          form.fold(
+            formWithErrors ⇒ badRequest(views.html.product.form(user, Some(id), title, products, form)),
+            product ⇒ {
+              services.productService.isTitleTaken(product.title, id) flatMap {
+                case true =>
+                  badRequest(views.html.product.form(user, Some(id), title, products,
+                    form.withError("title", "constraint.product.title.exists", product.title)))
+                case false =>
+                  request.body.asMultipartFormData.get.file("picture").map { picture ⇒
+                    val filename = Product.generateImageName(picture.filename)
+                    val source = Source.fromFile(picture.ref.file.getPath, encoding)
+                    val byteArray = source.toArray.map(_.toByte)
+                    source.close()
+                    S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
+                      services.productService.update(product.copy(id = Some(id)).copy(picture = Some(filename)))
+                      Cache.remove(Product.cacheId(id))
+                      existingProduct.picture.map { oldPicture ⇒
+                        S3Bucket.remove(oldPicture)
+                      }
+                      val activity = Activity.insert(user.name,
+                        Activity.Predicate.Updated, product.title)(services)
+                      Redirect(routes.Products.details(id)).flashing("success" -> "Product was updated")
+                    }.recover {
+                      case S3Exception(status, code, message, originalXml) ⇒
+                        BadRequest(views.html.product.form(user, Some(id), title, products,
+                          form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
+                    }
+                  }.getOrElse {
+                    services.productService.update(product.copy(id = Some(id)).copy(picture = existingProduct.picture))
+                    val activity = Activity.insert(user.name,
+                      Activity.Predicate.Updated, product.title)(services)
+                    Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> "Product was updated"))
                   }
-                  val activity = Activity.insert(user.name,
-                    Activity.Predicate.Updated, product.title)
-                  Redirect(routes.Products.details(id)).flashing("success" -> activity.toString)
-                }.recover {
-                  case S3Exception(status, code, message, originalXml) ⇒
-                    BadRequest(views.html.product.form(user, Some(id), title,
-                      form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
-                }
-              }.getOrElse {
-                product.copy(id = Some(id)).copy(picture = existingProduct.picture).update
-                val activity = Activity.insert(user.name,
-                  Activity.Predicate.Updated, product.title)
-                Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> activity.toString))
               }
-            }
-          })
-      } getOrElse Future.successful(NotFound)
+            })
+      }
+    }
   }
 
   /**
@@ -332,16 +341,18 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
       Future.successful(Ok(cached.get).as(contentType))
     } else {
       val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = productService.find(id) map { entry ⇒
-        entry.picture.map { picture ⇒
-          val result = S3Bucket.get(entry.picture.get)
-          result.map {
-            case BucketFile(name, contentType, content, acl, headers) ⇒ content
-          }.recover {
-            case S3Exception(status, code, message, originalXml) ⇒ empty
-          }
-        } getOrElse Future.successful(empty)
-      } getOrElse Future.successful(empty)
+      val image: Future[Array[Byte]] = services.productService.find(id) flatMap {
+        case None => Future.successful(empty)
+        case Some(entry) =>
+          entry.picture.map { picture ⇒
+            val result = S3Bucket.get(entry.picture.get)
+            result.map {
+              case BucketFile(name, contentType, content, acl, headers) ⇒ content
+            }.recover {
+              case S3Exception(status, code, message, originalXml) ⇒ empty
+            }
+          } getOrElse Future.successful(empty)
+      }
       image.map {
         case value ⇒
           Cache.set(Product.cacheId(id), value)
@@ -352,7 +363,7 @@ class Products(environment: RuntimeEnvironment[ActiveUser])
 
 }
 
-object Products extends Utilities {
+object Products {
 
   /**
     * Returns url to a product's picture
@@ -361,7 +372,7 @@ object Products extends Utilities {
     */
   def pictureUrl(product: Product): Option[String] = {
     product.picture.map { path =>
-      cdnUrl(path).orElse(Some(fullUrl(routes.Products.picture(product.id.get).url)))
+      Utilities.cdnUrl(path).orElse(Some(Utilities.fullUrl(routes.Products.picture(product.id.get).url)))
     } getOrElse None
   }
 }
