@@ -366,12 +366,12 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     *
     * @param person Person
     */
-  protected def account(person: Person, profile: SocialProfile): UserAccount =
+  protected def account(person: Person, remoteUserId: String, providerId: String): UserAccount =
     UserAccount(None, person.identifier, true,
-      profile.twitterHandle,
-      profile.facebookUrl,
-      profile.linkedInUrl,
-      profile.googlePlusUrl,
+      if (providerId == "twitter") Some(remoteUserId) else None,
+      if (providerId == "facebook") Some(remoteUserId) else None,
+      if (providerId == "linkedin") Some(remoteUserId) else None,
+      if (providerId == "google") Some(remoteUserId) else None,
       member = true, registered = true)
 
   /**
@@ -387,7 +387,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                                   providerId: String,
                                   person: Person,
                                   member: Member)(implicit request: RequestHeader) = {
-    val futureInserted = services.userAccountService.insert(account(person, person.socialProfile))
+    val futureInserted = services.userAccountService.insert(account(person, id, providerId))
     if (providerId == UsernamePasswordProvider.UsernamePassword) {
       Logger.info(s"End of registration of a user with ${id} id")
       services.registeringUserService.delete(id, providerId)

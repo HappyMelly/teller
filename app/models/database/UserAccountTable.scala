@@ -51,10 +51,10 @@ private[models] trait UserAccountTable extends PersonTable {
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def personId = column[Long]("PERSON_ID")
     def byEmail = column[Boolean]("BY_EMAIL")
-    def twitterHandle = column[Option[String]]("TWITTER_HANDLE")
-    def facebookUrl = column[Option[String]]("FACEBOOK_URL")
-    def googlePlusUrl = column[Option[String]]("GOOGLE_PLUS_URL")
-    def linkedInUrl = column[Option[String]]("LINKEDIN_URL")
+    def twitter = column[Option[String]]("TWITTER")
+    def facebook = column[Option[String]]("FACEBOOK")
+    def google = column[Option[String]]("GOOGLE")
+    def linkedin = column[Option[String]]("LINKEDIN")
     def coordinator = column[Boolean]("COORDINATOR")
     def facilitator = column[Boolean]("FACILITATOR")
     def admin = column[Boolean]("ADMIN")
@@ -63,16 +63,16 @@ private[models] trait UserAccountTable extends PersonTable {
     def activeRole = column[Boolean]("ACTIVE_ROLE")
     def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
-    def * = (id.?, personId, byEmail, twitterHandle, facebookUrl, linkedInUrl,
-      googlePlusUrl, coordinator, facilitator, admin, member, registered,
+    def * = (id.?, personId, byEmail, twitter, facebook, linkedin,
+      google, coordinator, facilitator, admin, member, registered,
       activeRole) <>((UserAccount.apply _).tupled, UserAccount.unapply)
 
     def uniquePerson = index("IDX_PERSON_ID", personId, unique = true)
     def uniqueEmail = index("IDX_EMAIL_HANDLE", byEmail, unique = true)
-    def uniqueTwitter = index("IDX_TWITTER_HANDLE", twitterHandle, unique = true)
-    def uniqueFacebook = index("IDX_FACEBOOK_URL", facebookUrl, unique = true)
-    def uniqueGooglePlus = index("IDX_GOOGLE_PLUS_URL", googlePlusUrl, unique = true)
-    def uniqueLinkedIn = index("IDX_LINKEDIN_URL", linkedInUrl, unique = true)
+    def uniqueTwitter = index("IDX_TWITTER", twitter, unique = true)
+    def uniqueFacebook = index("IDX_FACEBOOK", facebook, unique = true)
+    def uniqueGooglePlus = index("IDX_GOOGLE", google, unique = true)
+    def uniqueLinkedIn = index("IDX_LINKEDIN", linkedin, unique = true)
   }
 
 }

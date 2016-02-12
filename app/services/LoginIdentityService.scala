@@ -26,7 +26,7 @@ package services
 import _root_.java.util.concurrent.TimeUnit
 
 import models._
-import models.service.{IServices, Services}
+import models.service.IServices
 import play.api.Logger
 import play.api.libs.json.JsObject
 import securesocial.core._
@@ -35,7 +35,7 @@ import securesocial.core.services._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Await, Future}
 
 /**
  * Used by SecureSocial to look up and save authentication data.
@@ -78,10 +78,9 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
       }
       user
     } catch {
-      case _: AuthenticationException => {
+      case _: AuthenticationException =>
         println("Exception got caught")
         Future.failed(new RuntimeException("Bla-bla-test"))
-      }
     }
   }
 
@@ -134,6 +133,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    * @param to the profile that needs to be linked to
    */
   def link(current: ActiveUser, to: BasicProfile): Future[ActiveUser] = {
+    //TODO retrieve social profile url and update user social profile
     Future.successful(current)
   }
 
@@ -181,27 +181,8 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
       }
       futureIdentity.map(identity => user(identity))
     } else {
-      val identity = identityFromProfile(profile)
-      services.identityService.findActiveUserData(identity) map {
-        case Some(userData) =>
-          services.identityService.insert(identity)
-          ActiveUser(identity.profile.userId, identity.profile.providerId, userData._1, userData._2)
-        case None =>
-          unregisteredActiveUser(identity)
-      }
+      Future.successful(unregisteredActiveUser(SocialIdentity(profile)))
     }
-  }
-
-  /**
-   * Returns newly created identity for the given profile
-    *
-    * @param profile User profile
-   */
-  protected def identityFromProfile(profile: BasicProfile): SocialIdentity = profile.providerId match {
-    case FacebookProvider.Facebook ⇒ SocialIdentity.forFacebookUrl(profile, findFacebookUrl(profile))
-    case GoogleProvider.Google ⇒ SocialIdentity.forGooglePlusUrl(profile, findGooglePlusUrl(profile))
-    case LinkedInProvider.LinkedIn ⇒ SocialIdentity.forLinkedInUrl(profile, findLinkedInUrl(profile))
-    case TwitterProvider.Twitter ⇒ SocialIdentity.forTwitterHandle(profile, findTwitterHandle(profile))
   }
 
   /**
@@ -262,10 +243,10 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     val (firstName, lastName) = userNames(identity)
     val person = Person(firstName, lastName, identity.profile.email.getOrElse(""))
     val profile = identity.profile.providerId match {
-      case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = identity.profileUrl)
-      case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = identity.profileUrl)
-      case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = identity.profileUrl)
-      case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = identity.profileUrl)
+      case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = Some(findFacebookUrl(identity.profile)))
+      case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(identity.profile)))
+      case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(identity.profile)))
+      case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(identity.profile)))
     }
     person.socialProfile_=(profile)
     ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)

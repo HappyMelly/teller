@@ -44,8 +44,7 @@ case class ActiveUser(id: String,
  */
 case class SocialIdentity(uid: Option[Long],
                           profile: BasicProfile,
-                          apiToken: String,
-                          profileUrl: Option[String]) {
+                          apiToken: String) {
 
   def name: String = profile.fullName getOrElse {
     profile.firstName.getOrElse("") + " " + profile.lastName.getOrElse("")
@@ -86,37 +85,10 @@ object PasswordIdentity {
 
 object SocialIdentity {
 
-  /**
-   * Factory method to return a Twitter login identity.
-   */
-  def forTwitterHandle(i: GenericProfile, twitterHandle: String): SocialIdentity = SocialIdentity(None,
+  def apply(i: GenericProfile): SocialIdentity = SocialIdentity(None,
     BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
       i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), Some(twitterHandle))
-
-  /**
-   * Factory method to return a Facebook login identity.
-   */
-  def forFacebookUrl(i: GenericProfile, facebookUrl: String): SocialIdentity = SocialIdentity(None,
-    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
-      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), Some(facebookUrl))
-
-  /**
-   * Factory method to return a Facebook login identity.
-   */
-  def forGooglePlusUrl(i: GenericProfile, googlePlusUrl: String): SocialIdentity = SocialIdentity(None,
-    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
-      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), Some(googlePlusUrl))
-
-  /**
-   * Factory method to return a LinkedIn login identity.
-   */
-  def forLinkedInUrl(i: GenericProfile, linkedInUrl: String): SocialIdentity = SocialIdentity(None,
-    BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
-      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
-    generateApiToken(i.userId), Some(linkedInUrl))
+    generateApiToken(i.userId))
 
   private def generateApiToken(userId: String) = {
     Crypto.sign("%s-%s".format(userId, Random.nextInt()))

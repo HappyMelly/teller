@@ -50,6 +50,7 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Returns true if the given email doesn't exist in the set of registered emails
+    *
     * @param email Email to check
     * @param userId User identifier we exclude from an email check
     */
@@ -70,6 +71,7 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Deletes a password identity for the given email
+    *
     * @param email Email
     */
   def delete(email: String): Unit =
@@ -77,6 +79,7 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Returns a password identify for the given email if exists
+    *
     * @param email Email address
     */
   def findByEmail(email: String): Future[Option[PasswordIdentity]] =
@@ -90,6 +93,7 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Returns a password identity for the given user if exists
+    *
     * @param userId User identifier
     */
   def findByUserId(userId: Long): Future[Option[PasswordIdentity]] =
@@ -114,33 +118,29 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
       val members = TableQuery[Members]
       val q = providerId match {
         case TwitterProvider.Twitter ⇒ for {
-          identity ← identities
-          if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.twitterHandle === identity.profileUrl
+          identity ← identities if (identity.userId === userId) && (identity.providerId === providerId)
+          a ← accounts if a.twitter === identity.userId
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           address <- TableQuery[Addresses] if address.id === p.addressId
         } yield (identity, a, p, m, address)
 
         case FacebookProvider.Facebook ⇒ for {
-          identity ← identities
-          if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.facebookUrl === identity.profileUrl
+          identity ← identities if (identity.userId === userId) && (identity.providerId === providerId)
+          a ← accounts if a.facebook === identity.userId
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           address <- TableQuery[Addresses] if address.id === p.addressId
         } yield (identity, a, p, m, address)
 
         case GoogleProvider.Google ⇒ for {
-          identity ← identities
-          if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.googlePlusUrl === identity.profileUrl
+          identity ← identities if (identity.userId === userId) && (identity.providerId === providerId)
+          a ← accounts if a.google === identity.userId
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           address <- TableQuery[Addresses] if address.id === p.addressId
         } yield (identity, a, p, m, address)
 
         case LinkedInProvider.LinkedIn ⇒ for {
-          identity ← identities
-          if (identity.userId === userId) && (identity.providerId === providerId)
-          a ← accounts if a.linkedInUrl === identity.profileUrl
+          identity ← identities if (identity.userId === userId) && (identity.providerId === providerId)
+          a ← accounts if a.linkedin === identity.userId
           (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
           address <- TableQuery[Addresses] if address.id === p.addressId
         } yield (identity, a, p, m, address)
@@ -186,22 +186,22 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
     val members = TableQuery[Members]
     val q = identity.profile.providerId match {
       case TwitterProvider.Twitter ⇒ for {
-        a ← accounts if a.twitterHandle === identity.profileUrl
+        a ← accounts if a.twitter === identity.profile.userId
         (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
       } yield (a, p, m)
 
       case FacebookProvider.Facebook ⇒ for {
-        a ← accounts if a.facebookUrl === identity.profileUrl
+        a ← accounts if a.facebook === identity.profile.userId
         (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
       } yield (a, p, m)
 
       case GoogleProvider.Google ⇒ for {
-        a ← accounts if a.googlePlusUrl === identity.profileUrl
+        a ← accounts if a.google === identity.profile.userId
         (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
       } yield (a, p, m)
 
       case LinkedInProvider.LinkedIn ⇒ for {
-        a ← accounts if a.linkedInUrl === identity.profileUrl
+        a ← accounts if a.linkedin === identity.profile.userId
         (p, m) ← people joinLeft members on ((t1, t2) ⇒ t1.id === t2.objectId && t2.person === true) if p.id === a.personId
       } yield (a, p, m)
     }
@@ -210,7 +210,8 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
    * Inserts the given identity to database
-   * @param identity Identity object
+    *
+    * @param identity Identity object
    * @return The given identity with updated id
    */
   def insert(identity: SocialIdentity): Future[SocialIdentity] = {
@@ -220,6 +221,7 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Inserts the given password identity to database
+    *
     * @param identity Identity object
     * @return The given identity with updated id
     */
@@ -228,6 +230,7 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
     * Updates the given identity in the database
+    *
     * @param identity Identity object
     */
   def update(identity: PasswordIdentity): Future[PasswordIdentity] =
@@ -235,7 +238,8 @@ class IdentityService(app: Application) extends HasDatabaseConfig[JdbcProfile]
 
   /**
    * Updates the given idenitity
-   * @param updated Updated identity
+    *
+    * @param updated Updated identity
    * @param existing Existing identity
    */
   def update(updated: SocialIdentity, existing: SocialIdentity): Future[SocialIdentity] = {

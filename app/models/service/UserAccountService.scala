@@ -78,10 +78,10 @@ class UserAccountService(app: Application) extends HasDatabaseConfig[JdbcProfile
   def updateSocialNetworkProfiles(person: Person): Unit = {
     val query = for {
       account ← accounts if account.personId === person.id
-    } yield (account.twitterHandle,
-      account.facebookUrl,
-      account.googlePlusUrl,
-      account.linkedInUrl)
+    } yield (account.twitter,
+      account.facebook,
+      account.google,
+      account.linkedin)
     val action = query.update(person.socialProfile.twitterHandle,
       person.socialProfile.facebookUrl,
       person.socialProfile.googlePlusUrl,
