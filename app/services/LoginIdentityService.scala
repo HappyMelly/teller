@@ -139,6 +139,7 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
         repos.socialProfile.find(user.person.identifier, ProfileType.Person).flatMap { value =>
           val (account, social) = linkedEntities(to, value, user.account)
           val query = for {
+            _ <- repos.identity.insert(SocialIdentity(to))
             _ <- repos.userAccount.update(account)
             _ <- repos.socialProfile.update(social, ProfileType.Person)
           } yield ()
@@ -240,30 +241,32 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
           (for {
             existance <- repos.registeringUser.exists(profile.userId, profile.providerId)
             identity <- repos.identity.findByEmail(profile.userId)
-          } yield (existance, identity)) map {
-            case (false, _) => throw new AuthenticationException
-            case (true, None) => throw new AuthenticationException
-            case (true, Some(identity)) => user(identity)
+          } yield (existance, identity)) flatMap {
+            case (false, _) => Future.failed(new AuthenticationException)
+            case (true, None) => Future.failed(new AuthenticationException)
+            case (true, Some(identity)) => Future.successful(user(identity))
           }
       }
     } else {
-      repos.identity.findActiveUser(profile.userId, profile.providerId) map {
-        case None => throw new AuthenticationException
-        case Some(user) => user
+      repos.identity.findActiveUser(profile.userId, profile.providerId) flatMap {
+        case None => Future.failed(new AuthenticationException)
+        case Some(user) => Future.successful(user)
       }
     }
   }
 
   protected def updatePassword(profile: BasicProfile): Future[ActiveUser] = {
-    repos.identity.findByEmail(profile.userId) map {
-      case None => throw new AuthenticationException
+    val f = repos.identity.findByEmail(profile.userId) flatMap {
+      case None => Future.failed(new AuthenticationException)
       case Some(identity) =>
       repos.identity.update(identity.copy(password = profile.passwordInfo.get.password,
         hasher = profile.passwordInfo.get.hasher))
     }
-    repos.identity.findActiveUserByEmail(profile.userId) map {
-      case None => throw new AuthenticationException
-      case Some(user) => user
+    f flatMap { _ =>
+      repos.identity.findActiveUserByEmail(profile.userId) flatMap {
+        case None => Future.failed(new AuthenticationException)
+        case Some(user) => Future.successful(user)
+      }
     }
   }
 

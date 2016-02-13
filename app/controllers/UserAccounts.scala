@@ -141,14 +141,18 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
           case LinkedInProvider.LinkedIn ⇒ (user.account.copy(linkedin = None), profil.copy(linkedInUrl = None))
           case TwitterProvider.Twitter ⇒ (user.account.copy(twitter = None), profil.copy(twitterHandle = None))
         }
-        val f = for {
-          _ <- repos.userAccount.update(account)
-          _ <- repos.socialProfile.update(profile, ProfileType.Person)
-          authenticator <- env.authenticatorService.fromRequest
-        } yield authenticator
-        f flatMap { authenticator =>
-          authenticator.get.updateUser(user.copy(account = account))
-          jsonSuccess(s"${profileId.capitalize} profile was disconnected from your account")
+        if (nonEmpty(account)) {
+          val f = for {
+            _ <- repos.userAccount.update(account)
+            _ <- repos.socialProfile.update(profile, ProfileType.Person)
+            authenticator <- env.authenticatorService.fromRequest
+          } yield authenticator
+          f flatMap { authenticator =>
+            authenticator.get.updateUser(user.copy(account = account))
+            jsonSuccess(s"${profileId.capitalize} profile was disconnected from your account")
+          }
+        } else {
+          jsonConflict(s"You cannot disconnect ${profileId.capitalize} profile. It is the only login option you have")
         }
       }
   }
@@ -295,5 +299,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     repos.userAccount.update(user.account.copy(byEmail = true))
   }
 
+  protected def nonEmpty(acc: UserAccount): Boolean =
+    acc.byEmail || acc.facebook.nonEmpty || acc.google.nonEmpty || acc.twitter.nonEmpty || acc.linkedin.nonEmpty
 }
 

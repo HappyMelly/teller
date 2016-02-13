@@ -39,7 +39,10 @@
         $.post(url, {}, function(data) {
             $el.removeClass('state-complete');
             success(data.message);
-        }, "json")
+        }, "json").fail(function(jqXHR, textStatus, errorThrown) {
+            var response = JSON.parse(jqXHR.responseText);
+            error(response.message);
+        });
     };
 
     PersonSocialConnect.prototype.toggleConnect = function($el){
