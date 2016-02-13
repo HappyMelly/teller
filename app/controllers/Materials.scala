@@ -58,7 +58,7 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def create(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.find(personId) flatMap {
         case None => jsonNotFound(Messages("error.person.notFound"))
@@ -84,7 +84,7 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * @param personId Person identifier
    * @param id Material identifier
    */
-  def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) {
+  def remove(personId: Long, id: Long) = ProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.person.deleteMaterial(personId, id) flatMap { _ =>
         jsonSuccess("ok")

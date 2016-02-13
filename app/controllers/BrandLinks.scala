@@ -56,7 +56,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) {  implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(brandId) flatMap {
       case None => jsonNotFound(Messages("error.brand.notFound"))
       case Some(brand) =>
@@ -81,7 +81,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * @param brandId Brand identifier
    * @param id Link identifier
    */
-  def remove(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def remove(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.brand.deleteLink(brandId, id) flatMap { _ =>
         jsonSuccess("ok")

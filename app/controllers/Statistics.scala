@@ -72,7 +72,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param brandId Brand identifier
    */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
+  def index(brandId: Long) = RestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
         ok(views.html.v2.statistics.index(user, view.brand, brands))
@@ -87,7 +87,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byFacilitators(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byFacilitators(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         licenses <- services.license.findByBrand(brandId)
@@ -123,7 +123,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byEvents(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byEvents(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val actions = for {
         events <- services.event.findByParameters(Some(brandId))
@@ -183,7 +183,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byCountries(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byCountries(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.event.findByParameters(Some(brandId), confirmed = Some(true), future = Some(false)) flatMap { events =>
         val perCountry = filterLastSixMonths(events).
@@ -211,7 +211,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byParticipants(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byParticipants(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.attendee.findByBrand(Some(brandId)) flatMap { results =>
         val attendees = results.map(x => (x.attendee, x.event.schedule.start))

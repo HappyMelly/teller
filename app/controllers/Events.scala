@@ -60,7 +60,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   /**
    * Create page.
    */
-  def add = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
+  def add = RestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.brand.findByUser(user.account) flatMap { brands =>
         val defaultDetails = Details(Some(""), Some(""))
@@ -83,7 +83,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     * @param id Event Id
    * @return
    */
-  def duplicate(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
+  def duplicate(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler => implicit user ⇒ implicit event =>
       (for {
         e <- services.event.findWithInvoice(id)
@@ -98,7 +98,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   /**
    * Create form submits to this action.
    */
-  def create = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
+  def create = RestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val form = EventForms.event(services).bindFromRequest
@@ -123,7 +123,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event ID
    */
-  def cancel(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def cancel(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
 
         case class CancellationData(reason: Option[String],
@@ -154,7 +154,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event ID
    */
-  def confirm(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
+  def confirm(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       services.event.confirm(id) flatMap { _ =>
         val log = activity(event, user.person).confirmed.insert(services)
@@ -168,7 +168,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event ID
    */
-  def details(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
+  def details(id: Long) = RestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.event.findWithInvoice(id) flatMap {
         case None => notFound("Event not found")
@@ -203,7 +203,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       }
   }
 
-  def detailsButtons(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
+  def detailsButtons(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       services.attendee.findByEvents(List(id)) flatMap { attendees =>
         ok(views.html.v2.event.detailsButtons(event, attendees.isEmpty))
@@ -216,7 +216,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event ID
    */
-  def edit(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def edit(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       (for {
         e <- services.event.findWithInvoice(id)
@@ -233,7 +233,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param brandId Brand identifier
    */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) { implicit request ⇒
+  def index(brandId: Long) = RestrictedAction(List(Role.Facilitator, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
         services.license.allLicensees(brandId) flatMap { facilitators =>
@@ -258,7 +258,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
              facilitator: Option[Long],
              future: Option[Boolean],
              public: Option[Boolean],
-             archived: Option[Boolean]) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+             archived: Option[Boolean]) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       implicit val personWrites = new Writes[Person] {
         def writes(data: Person): JsValue = {
@@ -352,9 +352,9 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event identifier
    */
-  def reason(id: Long) = SecuredRestrictedAction(Role.Viewer) { implicit request =>
+  def reason(id: Long) = RestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
-      Ok(views.html.v2.event.reason(id))
+      ok(views.html.v2.event.reason(id))
   }
 
   /**
@@ -362,7 +362,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event ID
    */
-  def update(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
+  def update(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
 
       val form = EventForms.event(services).bindFromRequest

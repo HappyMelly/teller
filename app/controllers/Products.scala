@@ -91,21 +91,21 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     "updatedBy" -> ignored(user.name))(Product.apply)(Product.unapply))
 
   /** Show all products **/
-  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def index = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.product.findAll flatMap { products =>
       ok(views.html.product.index(user, products))
     }
   }
 
   /** Add page **/
-  def add = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.product.findAll flatMap { products =>
       ok(views.html.product.form(user, None, None, products, productForm))
     }
   }
 
   /** Add form submits to this action **/
-  def create = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val form: Form[Product] = productForm.bindFromRequest
     services.product.findAll flatMap { products =>
       form.fold(
@@ -145,7 +145,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   /**
    * Assign the product to a brand
    */
-  def addBrand() = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addBrand() = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
 
     val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
     assignForm.bindFromRequest.fold(
@@ -179,7 +179,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    *
    * @param id Product id
    */
-  def activation(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def activation(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.product.find(id) flatMap {
       case None => jsonNotFound("Product not found")
       case Some(product) =>
@@ -198,7 +198,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   /**
    * Unassign the product from the brand
    */
-  def deleteBrand(page: String, productId: Long, brandId: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
+  def deleteBrand(page: String, productId: Long, brandId: Long) = DynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         p <- services.product.find(productId)
@@ -221,7 +221,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Delete a product **/
-  def delete(id: Long) = AsyncSecuredDynamicAction(Funder, 0)  { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def delete(id: Long) = DynamicAction(Funder, 0)  { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.product.find(id) flatMap {
       case None => notFound("Product not found")
       case Some(product) ⇒
@@ -236,7 +236,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Delete picture form submits to this action **/
-  def deletePicture(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
+  def deletePicture(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.product.find(id) flatMap {
         case None => notFound("Product not found")
@@ -254,7 +254,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Details page **/
-  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         p <- services.product.find(id)
@@ -275,7 +275,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Edit page **/
-  def edit(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def edit(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.product.findAll flatMap { products =>
       products.find(_.id.contains(id)) match {
         case None => notFound("Product not found")
@@ -286,7 +286,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.product.findAll flatMap { products =>
       products.find(_.id.contains(id)) match {
         case None => notFound("Product not found")

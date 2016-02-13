@@ -57,7 +57,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * Renders welcome screen for existing users with two options:
    * Become a funder and Become a supporter
    */
-  def welcome = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def welcome = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       o <- services.person.memberships(user.person.identifier)
       m <- services.member.findByObjects(o.map(_.identifier))
@@ -72,7 +72,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param orgId Organisation identifier
    */
-  def congratulations(orgId: Option[Long]) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def congratulations(orgId: Option[Long]) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       ok(views.html.membership.congratulations(user, orgId))
   }
@@ -83,7 +83,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param orgId Organisation identifier
    */
-  def payment(orgId: Option[Long]) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def payment(orgId: Option[Long]) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val welcomeCall: Call = routes.Membership.welcome()
       val publicKey = Play.configuration.getString("stripe.public_key").get
@@ -110,7 +110,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /**
    * Charges card
    */
-  def charge = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def charge = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     paymentForm.bindFromRequest.fold(
       hasError ⇒ badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
       data ⇒ {

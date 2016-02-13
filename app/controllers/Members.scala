@@ -97,7 +97,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
     single("id" -> longNumber))
 
   /** Renders a list of all members */
-  def index() = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def index() = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.member.findAll flatMap { results =>
       val members = results.filter(_.active)
       val fee = members.find(m ⇒ m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
@@ -108,7 +108,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Renders Add form */
-  def add() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.member.form(user, None, form(user.person.identifier)))
   }
 
@@ -116,7 +116,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * Records a first block of data about member to database and redirects
    * users to the next step
    */
-  def create() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     form(user.person.identifier).bindFromRequest.fold(
       formWithErrors ⇒ badRequest(views.html.member.form(user, None, formWithErrors)),
       member ⇒ {
@@ -132,7 +132,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Renders Edit form */
-  def edit(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def edit(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.member.find(id) flatMap {
       case None => notFound("Member not found")
       case Some(member) =>
@@ -146,7 +146,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Member identifier
    */
-  def update(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.member.find(id) flatMap {
       case None => notFound("Member not found")
       case Some(existing) =>
@@ -170,7 +170,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param personId Person identifier
    */
-  def updateReason(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def updateReason(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.member(personId) flatMap {
         case None => jsonNotFound("Member not found")
@@ -197,7 +197,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Member id
    */
-  def delete(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def delete(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.member.find(id) flatMap {
       case None => notFound("Member not found")
       case Some(member) =>
@@ -211,17 +211,17 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Renders Add new person page */
-  def addPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addPerson() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.member.newPerson(user, None, People.personForm(user.name, None, services)))
   }
 
   /** Renders Add new organisation page */
-  def addOrganisation() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addOrganisation() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.member.newOrg(user, None, Organisations.organisationForm))
   }
 
   /** Renders Add existing organisation page */
-  def addExistingOrganisation() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def addExistingOrganisation() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       orgsNonMembers flatMap { orgs =>
         ok(views.html.member.existingOrg(user, orgs, existingOrgForm))
@@ -229,7 +229,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Renders Add existing person page */
-  def addExistingPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def addExistingPerson() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       peopleNonMembers flatMap { people =>
         ok(views.html.member.existingPerson(user, people, existingPersonForm))
@@ -237,7 +237,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Records a new member-organisation to database */
-  def createNewOrganisation() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def createNewOrganisation() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val orgForm = Organisations.organisationForm.bindFromRequest
       orgForm.fold(
@@ -264,7 +264,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Records a new member-person to database */
-  def createNewPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def createNewPerson() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val personForm = People.personForm(user.name, None, services).bindFromRequest
       personForm.fold(
@@ -302,7 +302,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Records an existing member-person to database */
-  def updateExistingPerson() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def updateExistingPerson() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val personForm = existingPersonForm.bindFromRequest
       personForm.fold(
@@ -353,7 +353,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   /** Records an existing organisation-person to database */
-  def updateExistingOrg() = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def updateExistingOrg() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val orgForm = existingOrgForm.bindFromRequest
     orgForm.fold(
       hasErrors ⇒ orgUpdateError(user, hasErrors),

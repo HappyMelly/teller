@@ -71,7 +71,7 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand identifier
    */
-  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(brandId) flatMap {
       case None => redirect(routes.Brands.index(), "error" -> Messages("error.brand.notFound"))
       case Some(brand) =>
@@ -84,7 +84,7 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val form = eventTypeForm.bindFromRequest
     services.brand.find(brandId) flatMap {
       case None => redirect(routes.Brands.index(), "error" -> Messages("error.brand.notFound"))
@@ -109,7 +109,7 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param id Type identifier
    */
-  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         eventType <- services.eventType.find(id)
@@ -132,7 +132,7 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
+  def index(brandId: Long) = RestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.eventType.findByBrand(brandId) flatMap { eventType =>
         ok(Json.toJson(eventType))
@@ -144,7 +144,7 @@ class EventTypes @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param id Event type identifier
    */
-  def update(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def update(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       eventTypeForm.bindFromRequest.fold(
         hasErrors ⇒ jsonBadRequest(Messages("error.eventType.wrongParameters")),

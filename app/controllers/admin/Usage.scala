@@ -53,7 +53,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
   /**
     * Renders Teller usage fee for brands
     */
-  def index() = AsyncSecuredRestrictedAction(Role.Admin) { implicit request => implicit handler => implicit user =>
+  def index() = RestrictedAction(Role.Admin) { implicit request => implicit handler => implicit user =>
     val result = for {
       brands <- services.brand.findAll
       licenses <- licensesInChargeablePeriod() flatMap { licenses =>

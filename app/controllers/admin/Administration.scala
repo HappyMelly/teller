@@ -56,7 +56,7 @@ class Administration @javax.inject.Inject() (override implicit val env: TellerRu
   /**
    * Application settings page.
    */
-  def settings = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def settings = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     service.findAll flatMap { types =>
       ok(views.html.admin.settings(user, types, transactionTypeForm))
     }
@@ -65,7 +65,7 @@ class Administration @javax.inject.Inject() (override implicit val env: TellerRu
   /**
    * Adds a new transaction type and redirects to the settings page.
    */
-  def createTransactionType = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def createTransactionType = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     service.findAll flatMap { types =>
       val boundForm = transactionTypeForm.bindFromRequest
       boundForm.fold(
@@ -89,7 +89,7 @@ class Administration @javax.inject.Inject() (override implicit val env: TellerRu
   /**
    * Deletes a transaction type and redirects to the settings page.
    */
-  def deleteTransactionType(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒
+  def deleteTransactionType(id: Long) = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       service.find(id) flatMap {
         case None => notFound(Html(""))

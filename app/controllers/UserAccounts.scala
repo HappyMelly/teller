@@ -101,7 +101,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
     * Renders form for creating or changing the password
     */
-  def account = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+  def account = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       if (user.account.byEmail) {
         ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
@@ -129,9 +129,10 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
 
   /**
     * Disconnects social profile from the current account
+ *
     * @param profileId Profile identifier
     */
-  def disconnect(profileId: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request => implicit handler =>
+  def disconnect(profileId: String) = RestrictedAction(Viewer) { implicit request => implicit handler =>
     implicit user =>
       repos.socialProfile.find(user.person.identifier, ProfileType.Person) flatMap { profil =>
         val (account, profile) = profileId match {
@@ -185,7 +186,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
     * Creates new password for a current user
     */
-  def handleNewPassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+  def handleNewPassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       newPasswordForm.bindFromRequest().fold(
         errors => badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
@@ -213,7 +214,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
     * Sends confirmation email with a link to change email
     */
-  def changeEmail = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+  def changeEmail = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       val form = changeEmailForm.bindFromRequest()
       form.fold(
@@ -251,7 +252,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
     * Changes the password for the current user
     */
-  def changePassword = AsyncSecuredRestrictedAction(Viewer) { implicit request =>
+  def changePassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
         errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, errors)),
@@ -266,7 +267,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
    * Switches active role to Facilitator if it was Brand Coordinator, and
    *  visa versa
    */
-  def switchRole = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def switchRole = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.account.copy(activeRole = !user.account.activeRole)
       repos.userAccount.updateActiveRole(user.account.personId, account.activeRole)

@@ -54,7 +54,7 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param attendeeId Person identifier
    */
   def create(eventId: Long,
-             attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+             attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       if (event.free) {
         Future.successful(NotFound)

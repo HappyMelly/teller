@@ -56,7 +56,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * Form target for toggling whether an organisation is active.
    */
-  def activation(id: Long) = AsyncSecuredRestrictedAction(Role.Admin) { implicit request ⇒
+  def activation(id: Long) = RestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val index: String = routes.Organisations.index().url
       services.org.find(id) flatMap {
@@ -76,7 +76,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * Create page.
    */
-  def add = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒ implicit handler ⇒
+  def add = RestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒ implicit handler ⇒
     implicit user ⇒
       ok(views.html.v2.organisation.form(user, None, Organisations.organisationForm))
   }
@@ -86,7 +86,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation id
    */
-  def cancel(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) { implicit request ⇒
+  def cancel(id: Long) = DynamicAction(Role.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val url: String = routes.Organisations.details(id).url + "#membership"
       (for {
@@ -120,7 +120,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * Create form submits to this action.
    */
-  def create = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒ implicit handler ⇒
+  def create = RestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒ implicit handler ⇒
     implicit user ⇒
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
@@ -135,7 +135,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * Adds new organization to the system
    */
-  def createOrganizer = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) {
+  def createOrganizer = RestrictedAction(List(Role.Coordinator, Role.Facilitator)) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ badRequest(formWithErrors.errorsAsJson),
@@ -152,7 +152,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def delete(id: Long) = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
+  def delete(id: Long) = RestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.org.find(id) flatMap {
         case None => notFound("Organisation not found")
@@ -168,7 +168,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Organisation identifier
    */
-  def deleteLogo(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) {
+  def deleteLogo(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisation.logo(id).remove()
       services.org.updateLogo(id, false)
@@ -181,7 +181,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def details(id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def details(id: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         o <- services.org.findWithProfile(id)
@@ -210,7 +210,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def edit(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) { implicit request ⇒
+  def edit(id: Long) = DynamicAction(Role.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.org.findWithProfile(id) flatMap {
         case None => notFound("Organisation not found")
@@ -223,7 +223,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
    * List page.
    */
-  def index = AsyncSecuredRestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
+  def index = RestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.org.findAll flatMap { organisations =>
         ok(views.html.v2.organisation.index(user, organisations))
@@ -242,7 +242,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation id
    */
-  def name(id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
+  def name(id: Long) = RestrictedAction(Role.Viewer) {
     implicit request => implicit handler => implicit user =>
       val name = services.org.find(id) map {
         case None => ""
@@ -258,7 +258,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param query Search query
    */
-  def search(query: Option[String]) = AsyncSecuredRestrictedAction(Role.Viewer) {
+  def search(query: Option[String]) = RestrictedAction(Role.Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       implicit val orgWrites = new Writes[Organisation] {
         def writes(data: Organisation): JsValue = {
@@ -284,7 +284,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param id Organisation ID
    */
-  def update(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) {
+  def update(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.org.findWithProfile(id) flatMap {
         case None => notFound("Organisation not found")
@@ -307,7 +307,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Organisation identifier
    */
-  def uploadLogo(id: Long) = AsyncSecuredDynamicAction(Role.OrgMember, id) {
+  def uploadLogo(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       uploadFile(Organisation.logo(id), "logo") flatMap { _ ⇒
         services.org.updateLogo(id, true)

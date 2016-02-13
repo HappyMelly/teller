@@ -48,7 +48,7 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param personId Person identifier
    */
-  def delete(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def delete(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.find(personId) flatMap {
         case None => notFound("Person not found")
@@ -78,7 +78,7 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param personId Person identifier
    */
-  def upload(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def upload(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.find(personId) flatMap {
         case None => notFound("Person not found")

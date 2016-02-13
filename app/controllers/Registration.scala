@@ -199,7 +199,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     *
     * @return
    */
-  def step2 = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def step2 = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       val form = userForm.bind(Map(("firstName", user.person.firstName),
         ("lastName", user.person.lastName),
@@ -211,7 +211,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
    * Renders step 3 page of the registration process
    */
-  def step3 = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def step3 = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       ok(views.html.v2.registration.step3(user, orgForm))
     }
@@ -220,7 +220,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
    * Saves new person to cache
    */
-  def savePerson = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def savePerson = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       userForm.bindFromRequest.fold(
         errForm ⇒ badRequest(views.html.v2.registration.step2(user, errForm)),
@@ -242,7 +242,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
    * Saves new org to cache
    */
-  def saveOrg = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def saveOrg = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       checkPersonData { implicit userData ⇒
         orgForm.bindFromRequest.fold(
@@ -259,7 +259,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
    * Renders Payment page of the registration process
    */
-  def payment = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def payment = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       checkPersonData { implicit userData ⇒
         val publicKey = Play.configuration.getString("stripe.public_key").get
@@ -278,7 +278,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
    * Makes a transaction and creates all objects
    */
-  def charge = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def charge = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
         services.person.insert(unregisteredPerson(userData, user)) flatMap { person =>

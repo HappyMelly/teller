@@ -63,7 +63,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
   val indexCall: Call = routes.Brands.index()
 
   /** Shows all brands **/
-  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def index = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.findAllWithCoordinator flatMap { brands =>
       ok(views.html.v2.brand.index(user, brands))
     }
@@ -74,7 +74,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Product id
     */
-  def activation(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def activation(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(id) flatMap { maybeBrand =>
       maybeBrand map { brand ⇒
         Form("active" -> boolean).bindFromRequest.fold(
@@ -101,7 +101,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @return
     */
-  def add = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.findActive.flatMap { people =>
       ok(views.html.v2.brand.form(user, None, people, brandsForm(user.name)))
     }
@@ -110,7 +110,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /**
     * Create a new brand
     */
-  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val form: Form[BrandProfileView] = brandsForm(user.name).bindFromRequest
     services.person.findActive.flatMap { people =>
       form.fold(
@@ -157,7 +157,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Brand identifier
     */
-  def delete(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def delete(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(id) flatMap { maybeBrand =>
       maybeBrand map { brand =>
         brand.picture.foreach { picture ⇒
@@ -176,7 +176,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Brand string identifier
     */
-  def deletePicture(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def deletePicture(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(id) flatMap { maybeBrand =>
       maybeBrand map { brand ⇒
         brand.picture.foreach { picture ⇒
@@ -196,7 +196,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Brand identifier
     */
-  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(id) flatMap {
       case None => notFound(views.html.notFoundPage(request.path))
       case Some(brand) =>
@@ -217,7 +217,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Brand identifier
     * @param tab Tab identifier
     */
-  def renderTabs(id: Long, tab: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def renderTabs(id: Long, tab: String) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "testimonials" ⇒
@@ -237,7 +237,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Brand identifier
     * @param tab Tab identifier
     */
-  def renderCoordinatorTabs(id: Long, tab: String)  = AsyncSecuredBrandAction(id) { implicit request ⇒
+  def renderCoordinatorTabs(id: Long, tab: String)  = BrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "team" ⇒
@@ -277,7 +277,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Brand identifier
     */
-  def addCoordinator(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addCoordinator(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val data = Form(single("personId" -> longNumber(min = 1)))
     data.bindFromRequest.fold(
       hasErrors ⇒ jsonBadRequest("personId should be a positive number"),
@@ -306,7 +306,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Brand id
     * @param personId Person id
     */
-  def removeCoordinator(id: Long, personId: Long) = AsyncSecuredBrandAction(id) {
+  def removeCoordinator(id: Long, personId: Long) = BrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.brand.find(id) flatMap {
         case None => jsonNotFound(Messages("error.notFound", "brand"))
@@ -338,7 +338,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param personId Person id
     * @param notification Notification type
     */
-  def turnNotificationOff(id: Long, personId: Long, notification: String) = AsyncSecuredBrandAction(id) {
+  def turnNotificationOff(id: Long, personId: Long, notification: String) = BrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.brandCoordinator.update(id, personId, notification, false).flatMap { _ =>
         jsonSuccess("Changes saved")
@@ -352,7 +352,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param personId Person id
     * @param notification Notification type
     */
-  def turnNotificationOn(id: Long, personId: Long, notification: String) = AsyncSecuredBrandAction(id) {
+  def turnNotificationOn(id: Long, personId: Long, notification: String) = BrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.brandCoordinator.update(id, personId, notification, true).flatMap { _ =>
         jsonSuccess("Changes saved")
@@ -364,7 +364,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Brand identifier
     */
-  def edit(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def edit(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       b <- services.brand.find(id)
       p <- services.socialProfile.find(id, ProfileType.Brand)
@@ -427,7 +427,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Brand identifier
     */
-  def update(id: Long) = AsyncSecuredBrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       brand <- services.brand.find(id)
       people <- services.person.findActive
@@ -516,7 +516,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param brandId Brand id
     * @param future If true, returns only future events; if false, only past
     */
-  def events(brandId: Long, future: Option[Boolean] = None) = AsyncSecuredRestrictedAction(Viewer) {
+  def events(brandId: Long, future: Option[Boolean] = None) = RestrictedAction(Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       implicit val eventWrites = new Writes[Event] {
         def writes(data: Event): JsValue = {

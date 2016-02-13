@@ -51,7 +51,7 @@ class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param url Url to check
    */
-  def validate(url: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def validate(url: String) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       WS.url(url).head().flatMap { response =>
         if (response.status >= 200 && response.status < 300)

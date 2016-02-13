@@ -61,7 +61,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    *
    * @param brandId Brand identifier
    */
-  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.v2.badge.form(user, brandId, form(user.name)))
   }
 
@@ -70,7 +70,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val formWithData = form(user.name).bindFromRequest
     formWithData.fold(
       error ⇒ badRequest(views.html.v2.badge.form(user, brandId, error)),
@@ -94,7 +94,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    * @param brandId Brand identifier
    * @param id Badge identifier
    */
-  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) {
+  def delete(brandId: Long, id: Long) = BrandAction(brandId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.brandBadge.delete(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
@@ -108,7 +108,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    * @param brandId Brand identifier
    * @param id Badge identifier
    */
-  def edit(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def edit(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.brandBadge.find(id) flatMap {
         case None => notFound(Html("Badge not found"))
@@ -129,7 +129,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    * @param brandId Member identifier
    * @param id Badge identifier
    */
-  def update(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def update(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val formWithData = form(user.name).bindFromRequest
       formWithData.fold(

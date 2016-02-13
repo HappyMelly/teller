@@ -88,7 +88,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param eventId Event identifier to create evaluation for
    * @param attendeeId Attendee identifier to create evaluation for
    */
-  def add(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Coordinator), eventId) {
+  def add(eventId: Long, attendeeId: Long) = EventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.attendee.find(attendeeId, eventId) flatMap {
         case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
@@ -102,7 +102,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param id Evaluation identifier
    */
-  def approve(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def approve(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.evaluation.findWithAttendee(id) flatMap {
         case None => notFound("")
@@ -133,7 +133,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     * @param eventId Event identifier to create evaluation for
    * @param attendeeId Attendee identifier to create evaluation for
    */
-  def create(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Coordinator), eventId) {
+  def create(eventId: Long, attendeeId: Long) = EventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.attendee.find(attendeeId, eventId) flatMap {
         case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
@@ -156,7 +156,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     *
     * @param id Unique evaluation identifier
    */
-  def delete(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def delete(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.evaluation.find(id) flatMap {
         case None => notFound("")
@@ -176,7 +176,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param id Unique evaluation identifier
    */
-  def details(id: Long) = AsyncSecuredRestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
+  def details(id: Long) = RestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.evaluation.findWithEvent(id) flatMap {
         case None => notFound("")
@@ -209,7 +209,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param id Evaluation identifier
    */
-  def reject(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def reject(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.evaluation.findWithAttendee(id) flatMap {
         case None => notFound("")
@@ -238,7 +238,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     *
     * @param id Evaluation id
    */
-  def sendConfirmationRequest(id: Long) = AsyncSecuredEvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
+  def sendConfirmationRequest(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.evaluation.find(id) flatMap {
         case None => jsonNotFound("Evaluation not found")

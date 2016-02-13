@@ -66,7 +66,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def activation(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def activation(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.find(id) flatMap {
       case None => redirect(indexCall, "error" -> "Person not found")
       case Some(person) =>
@@ -86,14 +86,14 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   /**
    * Render a Create page
    */
-  def add = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.v2.person.form(user, None, People.personForm(user.name, None, services)))
   }
 
   /**
    * Assign a person to an organisation
    */
-  def addRelationship() = AsyncSecuredRestrictedAction(List(Admin, Coordinator)) { implicit request ⇒
+  def addRelationship() = RestrictedAction(List(Admin, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val relationshipForm = Form(tuple("page" -> text,
         "personId" -> longNumber,
@@ -125,7 +125,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   /**
    * Create form submits to this action.
    */
-  def create = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     People.personForm(user.name, None, services).bindFromRequest.fold(
       formWithErrors ⇒ badRequest(views.html.v2.person.form(user, None, formWithErrors)),
       person ⇒ {
@@ -141,7 +141,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def delete(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       p <- services.person.find(id)
       flat <- Person.deletable(id, services)
@@ -163,7 +163,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    * @param personId Person identifier
    * @param organisationId Org identifier
    */
-  def deleteRelationship(page: String, personId: Long, organisationId: Long) = AsyncSecuredProfileAction(personId) {
+  def deleteRelationship(page: String, personId: Long, organisationId: Long) = ProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       (for {
         p <- services.person.find(personId)
@@ -190,7 +190,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       p <- services.person.findComplete(id)
       f <- services.facilitator.findByPerson(id)
@@ -227,7 +227,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def edit(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
+  def edit(id: Long) = DynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.findComplete(id) flatMap {
         case None => notFound("Person not found")
@@ -241,7 +241,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @param id Person identifier
    */
-  def update(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
+  def update(id: Long) = DynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.findComplete(id) flatMap {
         case None => notFound("Person not found")
@@ -282,7 +282,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
     * @param id Person or Member identifier
    * @param tab Tab identifier
    */
-  def renderTabs(id: Long, tab: String) = AsyncSecuredRestrictedAction(Viewer) {
+  def renderTabs(id: Long, tab: String) = RestrictedAction(Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       tab match {
         case "contributions" ⇒
@@ -339,7 +339,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    *
    * @return
    */
-  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def index = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.findAll flatMap { people =>
       ok(views.html.v2.person.index(user, people))
     }
@@ -350,7 +350,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
     *
     * @param id Person id
    */
-  def cancel(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def cancel(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val url: String = routes.People.details(id).url + "#membership"
     (for {
       p <- services.person.find(id)

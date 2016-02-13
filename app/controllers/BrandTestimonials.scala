@@ -61,14 +61,14 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
     "name" -> nonEmptyText,
     "company" -> optional(nonEmptyText))(TestimonialFormData.apply)(TestimonialFormData.unapply))
 
-  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.brand.find(brandId) flatMap {
       case None => notFound(Messages("error.brand.notFound"))
       case Some(brand) ⇒ ok(views.html.v2.testimonial.form(user, brandId, form))
     }
   }
 
-  def edit(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def edit(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         brand <- services.brand.find(brandId)
@@ -87,7 +87,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.brand.find(brandId) flatMap {
         case None => notFound(Messages("error.brand.notFound"))
@@ -114,7 +114,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def remove(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def remove(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.brand.deleteTestimonial(brandId, id) flatMap { _ =>
         jsonSuccess("Testimonial was successfully removed")
@@ -127,7 +127,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def update(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def update(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       form.bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.testimonial.form(user, brandId, error)),

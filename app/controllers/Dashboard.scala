@@ -46,21 +46,21 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   /**
    * About page - credits.
    */
-  def about = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def about = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.about(user))
   }
 
   /**
    * API v2 documentation page.
    */
-  def apiv2 = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def apiv2 = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.apiv2.index(user))
   }
 
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = AsyncSecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
+  def index = RestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.registered) {
         roleDiffirentiator(user.account) { (view, brands) =>
@@ -93,7 +93,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param id Brand identifier
    */
-  def overview(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def overview(id: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
         (for {
@@ -120,7 +120,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
    * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
    */
-  def profile = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def profile = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val currentUser = user.person
     redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }

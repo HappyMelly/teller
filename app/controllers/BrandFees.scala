@@ -42,7 +42,7 @@ class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntime
    *
    * @param brandId Brand identifier
    */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         brand <- services.brand.find(brandId)

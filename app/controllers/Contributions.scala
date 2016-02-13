@@ -59,7 +59,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param page Label of a page where the action happened
    * @return
    */
-  def create(page: String) = AsyncSecuredDynamicAction(Funder, 0)  { implicit request ⇒
+  def create(page: String) = DynamicAction(Funder, 0)  { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
 
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
@@ -95,7 +95,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
    * @param page Label of a page where the action happened
    * @return
    */
-  def delete(id: Long, page: String) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
+  def delete(id: Long, page: String) = DynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.contribution.find(id) flatMap {
         case None => notFound("Contribution not found")

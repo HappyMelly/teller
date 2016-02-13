@@ -56,7 +56,7 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param id Event ID
     */
-  def send(id: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
+  def send(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       case class EvaluationRequestData(attendeeIds: List[Long], body: String)
       val form = Form(mapping(

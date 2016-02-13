@@ -47,7 +47,7 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
    * @param id Person identifier
    * @param steps If true completion steps are shown
    */
-  def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
+  def personWidget(id: Long, steps: Boolean) = RestrictedAction(Viewer) {
     implicit request ⇒ implicit handler => implicit user ⇒
       services.profileStrength.find(id) flatMap {
         case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))

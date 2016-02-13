@@ -46,7 +46,7 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     *
     * @param brandId Brand identifier
     */
-  def turnLicenseExpirationReminderOff(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+  def turnLicenseExpirationReminderOff(brandId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
       services.brand.findWithSettings(brandId) flatMap {
         case None => jsonNotFound("Brand not found")
@@ -63,7 +63,7 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     *
     * @param brandId Brand identifier
     */
-  def turnLicenseExpirationReminderOn(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+  def turnLicenseExpirationReminderOn(brandId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
       Form(single("content" -> nonEmptyText)).bindFromRequest().fold(
         errors => jsonBadRequest("Email body is empty"),

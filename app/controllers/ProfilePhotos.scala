@@ -47,7 +47,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Person identifier
    */
-  def choose(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def choose(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
@@ -62,7 +62,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Person identifier
    */
-  def delete(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def delete(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
@@ -86,7 +86,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Person identifier
    */
-  def update(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val form = Form(single("type" -> nonEmptyText)).bindFromRequest
     form.fold(
       withError ⇒ jsonBadRequest("No option is provided"),
@@ -110,7 +110,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
    *
    * @param id Person identifier
    */
-  def upload(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def upload(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     uploadFile(Person.photo(id), "photo") flatMap { _ ⇒
       val route = routes.People.details(id).url
       jsonOk(Json.obj("link" -> routes.ProfilePhotos.photo(id).url))

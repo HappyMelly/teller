@@ -51,7 +51,7 @@ class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Event ID
     * @return
     */
-  def update(id: Long) = AsyncSecuredEventAction(List(Role.Coordinator), id) {
+  def update(id: Long) = EventAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       services.event.findWithInvoice(id) flatMap {
         case None => notFound("")

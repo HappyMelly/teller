@@ -75,7 +75,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     *
     * @param id Person identifier
     */
-  def addCountry(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addCountry(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val membershipForm = Form(single("country" -> nonEmptyText))
 
     membershipForm.bindFromRequest.fold(
@@ -102,7 +102,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param id Person identifier
    */
-  def addLanguage(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addLanguage(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
 
     val membershipForm = Form(single("language" -> nonEmptyText))
     membershipForm.bindFromRequest.fold(
@@ -136,7 +136,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
     */
-  def badges(personId: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request =>
+  def badges(personId: Long, brandId: Long) = RestrictedAction(Role.Viewer) { implicit request =>
     implicit handler => implicit user =>
       (for {
         f <- services.facilitator.find(brandId, personId)
@@ -155,7 +155,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     * @param id Person identifier
     * @param country Two-letters country identifier
     */
-  def deleteCountry(id: Long, country: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
+  def deleteCountry(id: Long, country: String) = ProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.facilitator.deleteCountry(id, country) flatMap { _ =>
         val url: String = routes.People.details(id).url + "#facilitation"
@@ -169,7 +169,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param id Person identifier
    * @param language Two-letters language identifier
    */
-  def deleteLanguage(id: Long, language: String) = AsyncSecuredProfileAction(id) { implicit request ⇒
+  def deleteLanguage(id: Long, language: String) = ProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.facilitator.deleteLanguage(id, language) flatMap { _ =>
         services.profileStrength.find(id, org = false) map {
@@ -182,7 +182,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       }
   }
 
-  def details(id: Long, brandId: Long) = AsyncSecuredRestrictedAction(Role.Coordinator) { implicit request ⇒
+  def details(id: Long, brandId: Long) = RestrictedAction(Role.Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         facilitator <- services.facilitator.find(brandId, id)
@@ -199,7 +199,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     *
     * @param brandId Brand identifier
     */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
+  def index(brandId: Long) = RestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user =>
       (for {
         licenses <- services.license.findByBrand(brandId)
@@ -243,7 +243,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     * Returns a list of facilitators for the given brand on today,
     * including the coordinator of the brand
     */
-  def list(brandId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def list(brandId: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val collator = Collator.getInstance(Locale.ENGLISH)
       val ord = new Ordering[String] {
@@ -263,7 +263,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     * @param personId Facilitator identifier
     * @param brandId Brand identifier
     */
-  def updateBadges(personId: Long, brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+  def updateBadges(personId: Long, brandId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
       val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
       form.bindFromRequest.fold(

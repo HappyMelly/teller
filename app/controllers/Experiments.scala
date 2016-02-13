@@ -71,7 +71,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member identifier
    */
-  def add(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
+  def add(memberId: Long) = RestrictedAction(Role.Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Future.successful(
         Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
@@ -82,7 +82,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
+  def create(memberId: Long) = DynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
@@ -117,7 +117,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) { implicit request ⇒
+  def delete(memberId: Long, id: Long) = DynamicAction(Role.Member, memberId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.experiment.delete(memberId, id) flatMap { _ =>
         jsonSuccess("ok")
@@ -132,7 +132,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
+  def deletePicture(memberId: Long, id: Long) = DynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       services.experiment.find(id) flatMap {
         case None => jsonNotFound("Experiment not found")
@@ -152,7 +152,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def edit(memberId: Long, id: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.experiment.find(id) flatMap {
         case None => notFound("Experiment not found")
@@ -166,7 +166,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member
    */
-  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def experiments(memberId: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.experiment.findByMember(memberId) flatMap { experiments =>
         ok(views.html.v2.experiment.list(memberId, experiments))
@@ -188,7 +188,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
+  def update(memberId: Long, id: Long) = DynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),

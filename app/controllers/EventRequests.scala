@@ -26,7 +26,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param brandId Brand identifier
     * @param requestId Request identifier
     */
-  def details(brandId: Long, requestId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
+  def details(brandId: Long, requestId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
       services.eventRequest.find(requestId) flatMap {
         case None => jsonBadRequest("Event request not found")
@@ -39,7 +39,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     *
     * @param brandId Brand identifier
     */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
+  def index(brandId: Long) = RestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user =>
       services.eventRequest.findByBrand(brandId) flatMap { requests =>
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>

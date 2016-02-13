@@ -54,7 +54,7 @@ class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * @param status  filter events by their statuses
    * @return
    */
-  def create(brandId: Long, eventId: Long, status: Int) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def create(brandId: Long, eventId: Long, status: Int) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.brand.find(brandId) flatMap {
         case None => notFound("Brand not found")

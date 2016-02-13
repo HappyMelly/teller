@@ -73,7 +73,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
     *
     * @param personId Person identifier
    */
-  def add(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def add(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         person <- services.person.find(personId)
@@ -90,7 +90,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person id
    */
-  def renderSelectForm(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request =>
+  def renderSelectForm(personId: Long) = ProfileAction(personId) { implicit request =>
     implicit handler => implicit user =>
       (for {
         brands <- services.brand.findAll
@@ -123,7 +123,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
     * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def edit(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def edit(personId: Long, id: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         person <- services.person.find(personId)
@@ -144,7 +144,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def create(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       form.bindFromRequest.fold(
         error ⇒ brands(personId) flatMap { brands =>
@@ -174,7 +174,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person identifier
    */
-  def createFromSelected(personId: Long) = AsyncSecuredProfileAction(personId) {
+  def createFromSelected(personId: Long) = ProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       val form = Form(single("evaluations" -> nonEmptyText))
       form.bindFromRequest.fold(
@@ -211,7 +211,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param evaluationId Evaluation identifier
    */
   def createFromEvaluation(eventId: Long, evaluationId: Long) =
-    AsyncSecuredEventAction(List(Role.Facilitator), eventId) {
+    EventAction(List(Role.Facilitator), eventId) {
       implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
         val personId = user.person.identifier
         if (event.facilitatorIds(services).contains(personId)) {
@@ -240,7 +240,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    *
    * @param personId Person identifier
    */
-  def updatePositions(personId: Long) = AsyncSecuredProfileAction(personId) {
+  def updatePositions(personId: Long) = ProfileAction(personId) {
     implicit request => implicit handler => implicit user =>
       val form = Form(single("positions" -> nonEmptyText))
       form.bindFromRequest.fold(
@@ -266,7 +266,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param personId Person identifier
    * @param id endorsement identifier
    */
-  def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def remove(personId: Long, id: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.deleteEndorsement(personId, id) flatMap { _ =>
         jsonSuccess("ok")
@@ -279,7 +279,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param personId Person identifier
    * @param id Endorsement identifier
    */
-  def update(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def update(personId: Long, id: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       form.bindFromRequest.fold(
         error ⇒ brands(personId) flatMap { brands =>

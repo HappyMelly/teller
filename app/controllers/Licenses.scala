@@ -82,7 +82,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    *
    * @param personId Person identifier
    */
-  def add(personId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
+  def add(personId: Long) = RestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val form = licenseForm.fill(License.blank(personId))
       coordinatedBrands(user.account.personId) flatMap { brands =>
@@ -96,7 +96,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * @param attendeeId Attendee identifier
     * @param eventId Event identifier
     */
-  def addForAttendee(attendeeId: Long, eventId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
+  def addForAttendee(attendeeId: Long, eventId: Long) = RestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         attendee <- services.attendee.find(attendeeId, eventId)
@@ -117,7 +117,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    *
    * @param personId Person identifier
    */
-  def create(personId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
+  def create(personId: Long) = RestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         person <- services.person.find(personId)
@@ -163,7 +163,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     *
     * @param attendeeId Attendee identifier
     */
-  def createFromAttendee(attendeeId: Long, eventId: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒
+  def createFromAttendee(attendeeId: Long, eventId: Long) = RestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
         a <- services.attendee.find(attendeeId, eventId)
@@ -213,7 +213,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * @param brandId Brand identifier
    * @param id License identifier
    */
-  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.license.findWithBrandAndLicensee(id) flatMap {
         case None => notFound("License not found")
@@ -239,7 +239,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     *
     * @param id License identifier
     */
-  def edit(id: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def edit(id: Long) = RestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       license <- services.license.find(id)
       brands <- coordinatedBrands(user.account.personId)
@@ -259,7 +259,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    *
    * @param id License identifier
    */
-  def update(id: Long) = AsyncSecuredRestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def update(id: Long) = RestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       l <- services.license.findWithBrandAndLicensee(id)
       b <- coordinatedBrands(user.account.personId)
