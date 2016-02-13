@@ -27,7 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Brands
 import helpers._
-import models.service.{ BrandService, ProductService }
+import models.repository.{ BrandRepository, ProductRepository }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import stubs._
@@ -48,12 +48,12 @@ class BrandsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestBrands extends Brands(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestBrands
-  val brandService = mock[BrandService]
-  val productService = mock[ProductService]
+  val brandService = mock[BrandRepository]
+  val productService = mock[ProductRepository]
   controller.productService_=(productService)
   controller.brandService_=(brandService)
 

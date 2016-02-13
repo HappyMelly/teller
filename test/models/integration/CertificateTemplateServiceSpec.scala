@@ -26,7 +26,7 @@ package models.integration
 
 import integration.PlayAppSpec
 import models.brand.CertificateTemplate
-import models.service.brand.CertificateTemplateService
+import models.repository.brand.CertificateTemplateRepository
 
 class CertificateTemplateServiceSpec extends PlayAppSpec {
 
@@ -38,7 +38,7 @@ class CertificateTemplateServiceSpec extends PlayAppSpec {
       CertificateTemplate(None, 3L, "EN", Array[Byte](), Array[Byte]())).foreach(x ⇒ x.insert)
   }
 
-  val service = new CertificateTemplateService
+  val service = new CertificateTemplateRepository
 
   "The service " should {
     "all templates for the brand TEST, available in database" in {

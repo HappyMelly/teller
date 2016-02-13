@@ -1,4 +1,4 @@
-@import models.service.Services
+@import models.repository.Repositories
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
@@ -12,7 +12,7 @@
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
-        services: Services)
+        services: Repositories)
 
 @import templates.Formatters._
 @import views.Countries

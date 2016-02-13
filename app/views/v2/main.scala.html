@@ -17,6 +17,11 @@
   <body class='@if(withMelly) { with-melly }'>
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>
     <div id="wrapper">
+
+      @views.html.v2.element.notification(routes.People.edit(user.person.identifier).url, "Reconnect my profiles"){
+        Hi there! We’ve made some changes to stabilize login through social networks. You need to reconnect some networks you were using to login, otherwise they will not work.
+      }
+
       <div class="navbar navbar-inverse" role="nagivation">
           <div class="container">
               <a class="navbar-brand" href="/">Happy Melly</a>
@@ -33,7 +38,7 @@
               <script type="text/javascript">
                 noty({text: '@message', layout: 'bottom', theme: 'relax',
                   timeout: @if(alertType == "error") { false } else { 2000 },
-                  type: @if(alertType == "error") {'alert'} else {'@alertType'}});
+                  type: '@alertType' });
               </script>
             }
           }

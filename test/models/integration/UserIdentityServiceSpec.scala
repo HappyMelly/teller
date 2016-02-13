@@ -26,7 +26,7 @@ package models.integration
 
 import _root_.integration.PlayAppSpec
 import helpers.PersonHelper
-import models.service.{UserAccountService, IdentityService}
+import models.repository.{UserAccountRepository, IdentityRepository}
 import models.{UserAccount, SocialIdentity}
 import securesocial.core.{AuthenticationMethod, BasicProfile}
 
@@ -34,8 +34,8 @@ class UserIdentityServiceSpec extends PlayAppSpec {
 
   val userId = "1"
   val providerId = "twitter"
-  val service = new IdentityService
-  val accountService = new UserAccountService
+  val service = new IdentityRepository
+  val accountService = new UserAccountRepository
 
   "Method findActiveUser" should {
     "return None if account data are not available" in {

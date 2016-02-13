@@ -1,6 +1,6 @@
 package controllers
 
-import models.service.Services
+import models.repository.Repositories
 import models.{ActiveUser, PasswordIdentity, Person}
 import play.api.mvc.Controller
 import securesocial.controllers.BasePasswordReset
@@ -13,10 +13,11 @@ import scala.util.Random
   */
 trait PasswordIdentities extends BasePasswordReset with AsyncController {
 
-  val services: Services
+  val services: Repositories
 
   /**
     * Creates dummy password and adds all required records to resetting password for newly created account
+    *
     * @param person Person
     * @param token Token
     */
@@ -27,7 +28,7 @@ trait PasswordIdentities extends BasePasswordReset with AsyncController {
       dummyPassword.password,
       Some(person.firstName),
       Some(person.lastName), dummyPassword.hasher)
-    services.identityService.insert(identity)
+    services.identity.insert(identity)
     env.userService.saveToken(token)
   }
 

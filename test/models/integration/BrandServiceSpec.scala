@@ -27,8 +27,8 @@ package models.integration
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.brand._
-import models.service.BrandService
-import models.service.brand.BrandCoordinatorService
+import models.repository.BrandRepository
+import models.repository.brand.BrandCoordinatorRepository
 
 /**
  * Tests for BrandService class
@@ -54,7 +54,7 @@ class BrandServiceSpec extends PlayAppSpec {
     testimonials.foreach(BrandService.get.insertTestimonial(_))
   }
 
-  val service = new BrandService
+  val service = new BrandRepository
 
   "Method find(_: String)" should {
     "return a brand with code TEST" in {

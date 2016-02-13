@@ -26,7 +26,7 @@ package security
 import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
 import models.{UserRole, ActiveUser}
 import models.UserRole.Role._
-import models.service.{IServices, Services}
+import models.repository.{IRepositories, Repositories}
 import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,12 +37,12 @@ import scala.concurrent.Future
  *
  * The system supports three roles - Viewer, Editor and Admin.
  */
-class ResourceHandler(user: ActiveUser, services: IServices) extends DynamicResourceHandler {
+class ResourceHandler(user: ActiveUser, services: IRepositories) extends DynamicResourceHandler {
 
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong
     UserRole.forName(name).role match {
-      case Coordinator => services.brandService.isCoordinator(objectId, user.account.personId)
+      case Coordinator => services.brand.isCoordinator(objectId, user.account.personId)
       case Member ⇒ checkMemberPermission(user, objectId)
       case Funder => Future.successful(user.account.admin || user.member.exists(_.funder))
       case ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)
@@ -65,7 +65,7 @@ class ResourceHandler(user: ActiveUser, services: IServices) extends DynamicReso
     if (user.account.admin || user.member.exists(_.identifier == memberId))
       Future.successful(true)
     else
-      services.memberService.find(memberId) flatMap {
+      services.member.find(memberId) flatMap {
         case None => Future.successful(false)
         case Some(member) =>
           if (member.person)
@@ -82,7 +82,7 @@ class ResourceHandler(user: ActiveUser, services: IServices) extends DynamicReso
     * @param personId Person identifier
     */
   private def orgMember(orgId: Long, personId: Long): Future[Boolean] =
-    services.orgService.people(orgId) map { people =>
+    services.org.people(orgId) map { people =>
       people.exists(_.identifier == personId)
     }
 }

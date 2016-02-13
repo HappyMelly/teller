@@ -25,7 +25,7 @@
 package controllers
 
 import models.{SocialProfile, Member, Organisation, Person}
-import models.service.Services
+import models.repository.Repositories
 import models.payment.Payment
 import org.joda.money.Money
 import play.api.Play
@@ -46,7 +46,7 @@ trait Enrollment extends AsyncController
     with Integrations
     with MemberNotifications {
 
-  val services: Services
+  val services: Repositories
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -55,7 +55,8 @@ trait Enrollment extends AsyncController
 
   /**
    * Sends Slack and email notifications
-   * @param person Person making all membership-related actions
+    *
+    * @param person Person making all membership-related actions
    * @param org Organisation which wants to become a member
    * @param member Member data
    */
@@ -66,7 +67,8 @@ trait Enrollment extends AsyncController
 
   /**
    * Subscribes the given person to a membership list
-   * @param person Person
+    *
+    * @param person Person
    * @param member Member data
    * @return Returns true if the person is successfully subscribed
    */
@@ -114,7 +116,7 @@ trait Enrollment extends AsyncController
   private def personSlackMsg(person: Person, member: Member, url: String): String = {
     val headline = newMemberMsg(member, person.fullName, url)
     val dummy = SocialProfile()
-    connectMeMessage(dummy, person.socialProfile) map { value =>
+    connectMeMessage(dummy, person.profile) map { value =>
       headline + " " + value
     } getOrElse
       headline

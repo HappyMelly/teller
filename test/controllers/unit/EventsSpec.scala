@@ -27,17 +27,17 @@ package controllers.unit
 import controllers.Events
 import helpers.EventHelper
 import models.brand.EventType
-import models.service.LicenseService
-import models.service.brand.EventTypeService
+import models.repository.LicenseRepository
+import models.repository.brand.EventTypeRepository
 import models.{Event, UserAccount}
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable._
-import stubs.{FakeRuntimeEnvironment, FakeServices}
+import stubs.{FakeRuntimeEnvironment, FakeRepositories}
 
 class EventsSpec extends Specification with IsolatedMockFactory {
 
-  class TestEvents extends Events(FakeRuntimeEnvironment) with FakeServices {
+  class TestEvents extends Events(FakeRuntimeEnvironment) with FakeRepositories {
     def callValidateEvent(event: Event, user: UserAccount): Option[List[(String, String)]] =
       validateEvent(event, user)
 
@@ -53,8 +53,8 @@ class EventsSpec extends Specification with IsolatedMockFactory {
   val controller = new TestEvents
   val user = UserAccount.empty(1L)
   //  user.roles_=(List(UserRole.forName("editor")))
-  val licenseService = mock[LicenseService]
-  val eventTypeService = mock[EventTypeService]
+  val licenseService = mock[LicenseRepository]
+  val eventTypeService = mock[EventTypeRepository]
   controller.licenseService_=(licenseService)
   controller.eventTypeService_=(eventTypeService)
 

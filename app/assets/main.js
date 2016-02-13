@@ -47,6 +47,11 @@ App.pages.Common = {
         if ($completionWidget.length){
             new App.widgets.CompletionWidget('.js-completion-widget');
         }
+
+        var $notificationWidget = $('.js-notification-widget');
+        if ($notificationWidget.length){
+            new App.widgets.TopNotification('.js-notification-widget');
+        }
     }
 };
 

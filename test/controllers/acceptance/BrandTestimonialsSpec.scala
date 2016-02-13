@@ -29,7 +29,7 @@ import controllers.BrandTestimonials
 import helpers._
 import models.Brand
 import models.brand.BrandTestimonial
-import models.service.BrandService
+import models.repository.BrandRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -65,11 +65,11 @@ class BrandTestimonialsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestBrandTestimonials extends BrandTestimonials(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestBrandTestimonials
-  val brandService = mock[BrandService]
+  val brandService = mock[BrandRepository]
   controller.brandService_=(brandService)
   val brand = BrandHelper.one
 

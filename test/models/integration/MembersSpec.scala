@@ -27,7 +27,7 @@ package models.integration
 import controllers.Members
 import helpers.{ OrganisationHelper, PersonHelper, MemberHelper }
 import integration.PlayAppSpec
-import models.service.{ OrganisationService, PersonService, MemberService }
+import models.repository.{ OrganisationRepository, PersonRepository, MemberRepository }
 import models._
 import org.joda.money.{ CurrencyUnit, Money }
 import org.joda.time.{ DateTime, LocalDate }
@@ -40,7 +40,7 @@ import stubs.services.{ FakeIntegrations, FakeSlack, FakeEmail }
 
 class TestMembers() extends Members(FakeRuntimeEnvironment)
     with FakeSecurity
-    with FakeServices {
+    with FakeRepositories {
 
   val slackInstance = new FakeSlack
   val emailInstance = new FakeEmail
@@ -64,9 +64,9 @@ class MembersSpec extends PlayAppSpec {
   val profile = SocialProfile(0, ProfileType.Organisation)
 
   trait WithStubs extends MockContext {
-    val personService = mock[PersonService]
-    val memberService = mock[MemberService]
-    val orgService = mock[OrganisationService]
+    val personService = mock[PersonRepository]
+    val memberService = mock[MemberRepository]
+    val orgService = mock[OrganisationRepository]
     controller.orgService_=(orgService)
     controller.personService_=(personService)
     controller.memberService_=(memberService)

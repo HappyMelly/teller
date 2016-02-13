@@ -27,12 +27,12 @@ package models.integration
 import helpers.MemberHelper
 import integration.PlayAppSpec
 import models._
-import models.service._
+import models.repository._
 import org.joda.time.DateTime
 
 class ExperimentServiceSpec extends PlayAppSpec {
 
-  val service = new ExperimentService
+  val service = new ExperimentRepository
 
   override def setupDb() = {
     MemberService.get.insert(MemberHelper.make(Some(1L), 1, false, true))

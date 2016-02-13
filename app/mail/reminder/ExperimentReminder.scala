@@ -25,7 +25,7 @@ package mail.reminder
 
 import javax.inject.Inject
 
-import models.service.Services
+import models.repository.Repositories
 import play.api.Play
 import play.api.Play.current
 import services.integrations.{Email, Integrations}
@@ -36,12 +36,12 @@ import scala.concurrent.Future
 /**
  * Contains methods for notifying Teller users about their experiments
  */
-class ExperimentReminder @Inject() (val email: Email, val services: Services) extends Integrations {
+class ExperimentReminder @Inject() (val email: Email, val services: Repositories) extends Integrations {
 
   def sendStatus(): Unit = {
     (for {
-      experiments <- services.experimentService.findAll()
-      members <- services.memberService.findAll
+      experiments <- services.experiment.findAll()
+      members <- services.member.findAll
     } yield (experiments.groupBy(_.memberId), members)) map { case (experiments, unfilteredMembers) =>
       val members = unfilteredMembers.map(member =>
           (member, experiments.find(_._1 == member.identifier).map(_._2).getOrElse(List()))).
@@ -57,7 +57,7 @@ class ExperimentReminder @Inject() (val email: Email, val services: Services) ex
         val recipient = if (member._1.person)
           Future.successful(member._1.memberObj._1.get)
         else
-          services.orgService.people(member._1.objectId).map(_.head)
+          services.org.people(member._1.objectId).map(_.head)
         recipient map { value =>
           email.send(Set(value), None, None, subject, body, richMessage = true)
         }

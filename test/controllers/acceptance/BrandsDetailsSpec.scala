@@ -28,10 +28,10 @@ import controllers.Brands
 import helpers.{PersonHelper, ProductHelper}
 import integration.PlayAppSpec
 import models.brand.{BrandCoordinator, CertificateTemplate, EventType}
-import models.service.brand.{CertificateTemplateService, EventTypeService}
-import models.service.{BrandService, ProductService}
+import models.repository.brand.{CertificateTemplateRepository, EventTypeRepository}
+import models.repository.{BrandRepository, ProductRepository}
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.{FakeRuntimeEnvironment, FakeSecurity, FakeServices, FakeSocialIdentity}
+import stubs.{FakeRuntimeEnvironment, FakeSecurity, FakeRepositories, FakeSocialIdentity}
 
 /**
  * Tests Brands controller methods, rendering Details page
@@ -61,16 +61,16 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestBrands extends Brands(FakeRuntimeEnvironment)
-    with FakeServices with FakeSecurity
+    with FakeRepositories with FakeSecurity
 
   val controller = new TestBrands
-  val eventTypeService = mock[EventTypeService]
+  val eventTypeService = mock[EventTypeRepository]
   controller.eventTypeService_=(eventTypeService)
-  val productService = mock[ProductService]
+  val productService = mock[ProductRepository]
   controller.productService_=(productService)
-  val certificateService = mock[CertificateTemplateService]
+  val certificateService = mock[CertificateTemplateRepository]
   controller.certificateService_=(certificateService)
-  val brandService = mock[BrandService]
+  val brandService = mock[BrandRepository]
   controller.brandService_=(brandService)
 
   def e1 = {

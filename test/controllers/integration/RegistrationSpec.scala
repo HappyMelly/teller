@@ -26,7 +26,7 @@ package controllers.integration
 
 import controllers.{ OrgData, PaymentData, Registration, UserData }
 import integration.{ PlayAppSpec, TruncateBefore }
-import models.service.{ OrganisationService, PersonService }
+import models.repository.{ OrganisationRepository, PersonRepository }
 import models.{ Member, Organisation, Person }
 import org.joda.money.Money
 import play.api.Play.current

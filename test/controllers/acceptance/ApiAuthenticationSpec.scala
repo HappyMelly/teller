@@ -27,12 +27,12 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.apiv2.ApiAuthentication
 import models.admin.ApiToken
-import models.service.admin.ApiTokenService
+import models.repository.admin.ApiTokenRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.mvc.Results._
 import play.api.mvc.{ AnyContent, Request, Result }
 import play.api.test.FakeRequest
-import stubs.FakeServices
+import stubs.FakeRepositories
 
 class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
   override def is = s2"""
@@ -46,7 +46,7 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestApiAuthentication extends ApiAuthentication
-      with FakeServices {
+      with FakeRepositories {
 
     def readOnly = TokenSecuredAction(readWrite = false) { implicit request ⇒
       implicit token ⇒
@@ -64,7 +64,7 @@ class ApiAuthenticationSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   val controller = new TestApiAuthentication
-  val apiTokenService = mock[ApiTokenService]
+  val apiTokenService = mock[ApiTokenRepository]
   controller.apiTokenService_=(apiTokenService)
 
   def e1 = {

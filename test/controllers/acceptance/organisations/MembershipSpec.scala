@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Organisations
 import helpers.{MemberHelper, OrganisationHelper}
 import models.payment.Record
-import models.service._
+import models.repository._
 import models.{OrgView, ProfileType, SocialProfile}
 import org.joda.money.Money
 import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
@@ -67,14 +67,14 @@ class MembershipSpec extends PlayAppSpec with IsolatedMockFactory {
 
   class TestOrganisations()
     extends Organisations(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
-  val personService = mock[PersonService]
-  val orgService = mock[OrganisationService]
-  val productService = mock[ProductService]
-  val contributionService = mock[ContributionService]
-  val paymentService = mock[PaymentRecordService]
+  val personService = mock[PersonRepository]
+  val orgService = mock[OrganisationRepository]
+  val productService = mock[ProductRepository]
+  val contributionService = mock[ContributionRepository]
+  val paymentService = mock[PaymentRecordRepository]
   val org = OrganisationHelper.one
   val id = 1L
   val profile = SocialProfile(0, ProfileType.Organisation)

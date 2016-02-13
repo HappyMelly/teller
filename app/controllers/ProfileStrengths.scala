@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
-import models.service.Services
+import models.repository.Repositories
 import models.{ActiveUser, ProfileStrength}
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 
 class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                   override val messagesApi: MessagesApi,
-                                  val services: Services,
+                                  val services: Repositories,
                                   deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
     extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
@@ -47,14 +47,14 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
    * @param id Person identifier
    * @param steps If true completion steps are shown
    */
-  def personWidget(id: Long, steps: Boolean) = AsyncSecuredRestrictedAction(Viewer) {
+  def personWidget(id: Long, steps: Boolean) = RestrictedAction(Viewer) {
     implicit request ⇒ implicit handler => implicit user ⇒
-      services.profileStrengthService.find(id) flatMap {
+      services.profileStrength.find(id) flatMap {
         case Some(strength) ⇒ ok(views.html.v2.profile.widget(id, strength, steps))
         case None =>
           if (id == user.person.identifier) {
             initializeProfileStrength(user) flatMap { profileStrength =>
-              services.profileStrengthService.insert(profileStrength)
+              services.profileStrength.insert(profileStrength)
             } flatMap { profileStrength =>
               ok(views.html.v2.profile.widget(id, profileStrength, steps))
             }
@@ -77,8 +77,8 @@ class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnviro
     else
       strength
     val query = for {
-      licenses <- services.licenseService.activeLicenses(id)
-      languages <- services.facilitatorService.languages(id)
+      licenses <- services.license.activeLicenses(id)
+      languages <- services.facilitator.languages(id)
     } yield (licenses, languages)
     val strengthWithFacilitator = query map { case (licenses, languages) =>
       if (licenses.nonEmpty) {

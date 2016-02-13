@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.payment.{Payment, PaymentException, RequestException}
-import models.service.Services
+import models.repository.Repositories
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Play.current
@@ -45,7 +45,7 @@ import scala.concurrent.Future
 
 class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
-                            val services: Services,
+                            val services: Repositories,
                             val email: Email,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
@@ -57,10 +57,10 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * Renders welcome screen for existing users with two options:
    * Become a funder and Become a supporter
    */
-  def welcome = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def welcome = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      o <- services.personService.memberships(user.person.identifier)
-      m <- services.memberService.findByObjects(o.map(_.identifier))
+      o <- services.person.memberships(user.person.identifier)
+      m <- services.member.findByObjects(o.map(_.identifier))
     } yield (o, m.filterNot(_.person))) flatMap { case (orgs, members) =>
       ok(views.html.membership.welcome(user, orgs.filterNot(x => members.exists(_.objectId == x.identifier))))
     }
@@ -72,7 +72,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param orgId Organisation identifier
    */
-  def congratulations(orgId: Option[Long]) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def congratulations(orgId: Option[Long]) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       ok(views.html.membership.congratulations(user, orgId))
   }
@@ -83,15 +83,15 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param orgId Organisation identifier
    */
-  def payment(orgId: Option[Long]) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def payment(orgId: Option[Long]) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val welcomeCall: Call = routes.Membership.welcome()
       val publicKey = Play.configuration.getString("stripe.public_key").get
       orgId map { id ⇒
-        services.orgService.find(id) flatMap {
+        services.org.find(id) flatMap {
           case None => redirect(welcomeCall, "error" -> Messages("error.organisation.notExist"))
           case Some(org) ⇒
-            services.personService.memberships(user.person.identifier) flatMap { orgs =>
+            services.person.memberships(user.person.identifier) flatMap { orgs =>
               if (orgs.exists(_.id == org.id)) {
                 val fee = Payment.countryBasedFees(org.countryCode)
                 ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
@@ -110,13 +110,13 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /**
    * Charges card
    */
-  def charge = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def charge = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     paymentForm.bindFromRequest.fold(
       hasError ⇒ badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
       data ⇒ {
         try {
           data.orgId map { orgId =>
-            services.orgService.find(orgId) flatMap {
+            services.org.find(orgId) flatMap {
               case None => badRequest(Json.obj("message" -> "Organisation not found"))
               case Some(org) => processOrganisationMember(data, user, org) flatMap { _ =>
                 ok(Json.obj("redirect" -> routes.Membership.congratulations(data.orgId).url))
@@ -147,7 +147,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     val customerId = subscribe(user.person, Some(org), data)
     val fee = Money.of(EUR, data.fee)
     (for {
-      _ <- services.orgService.update(org.copy(customerId = Some(customerId)))
+      _ <- services.org.update(org.copy(customerId = Some(customerId)))
       m <- org.becomeMember(funder = false, fee, user.person.identifier, services)
     } yield m) map { member =>
       notify(user.person, Some(org), member)
@@ -172,7 +172,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     val customerId = subscribe(person, None, data)
     val fee = Money.of(EUR, data.fee)
     (for {
-      _ <- services.personService.update(person.copy(customerId = Some(customerId)))
+      _ <- services.person.update(person.copy(customerId = Some(customerId)))
       m <- person.becomeMember(funder = false, fee, services)
     } yield m) map { member =>
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {

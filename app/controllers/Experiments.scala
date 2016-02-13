@@ -29,7 +29,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import models.UserRole.Role
-import models.service.Services
+import models.repository.Repositories
 import models.{DateStamp, Experiment, Member}
 import org.joda.time.DateTime
 import play.api.Play
@@ -44,7 +44,7 @@ import scala.concurrent.Future
 
 class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment,
                              override val messagesApi: MessagesApi,
-                             val services: Services,
+                             val services: Repositories,
                              val email: Email,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
@@ -71,7 +71,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member identifier
    */
-  def add(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) {
+  def add(memberId: Long) = RestrictedAction(Role.Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Future.successful(
         Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
@@ -82,17 +82,17 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member identifier
    */
-  def create(memberId: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
+  def create(memberId: Long) = DynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
         experiment ⇒ {
-          services.memberService.find(memberId) flatMap {
+          services.member.find(memberId) flatMap {
             case None => notFound("Member not found")
             case Some(member) ⇒
-              services.experimentService.insert(experiment.copy(memberId = memberId)) flatMap { inserted =>
+              services.experiment.insert(experiment.copy(memberId = memberId)) flatMap { inserted =>
                 uploadImage(Experiment.picture(inserted.id.get), "file") map { _ ⇒
-                  services.experimentService.update(inserted.copy(picture = true))
+                  services.experiment.update(inserted.copy(picture = true))
                 } recover {
                   case e: RuntimeException ⇒ Unit
                 } map { _ ⇒
@@ -117,9 +117,9 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def delete(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) { implicit request ⇒
+  def delete(memberId: Long, id: Long) = DynamicAction(Role.Member, memberId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.experimentService.delete(memberId, id) flatMap { _ =>
+      services.experiment.delete(memberId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }
@@ -132,13 +132,13 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def deletePicture(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
+  def deletePicture(memberId: Long, id: Long) = DynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      services.experimentService.find(id) flatMap {
+      services.experiment.find(id) flatMap {
         case None => jsonNotFound("Experiment not found")
         case Some(experiment) =>
           Experiment.picture(id).remove()
-          services.experimentService.update(experiment.copy(picture = false))
+          services.experiment.update(experiment.copy(picture = false))
           jsonSuccess("ok")
       }
   }
@@ -152,9 +152,9 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def edit(memberId: Long, id: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def edit(memberId: Long, id: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.experimentService.find(id) flatMap {
+      services.experiment.find(id) flatMap {
         case None => notFound("Experiment not found")
         case Some(experiment) =>
           ok(views.html.v2.experiment.form(user, memberId, form(user.name).fill(experiment), Some(id)))
@@ -166,9 +166,9 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    *
    * @param memberId Member
    */
-  def experiments(memberId: Long) = AsyncSecuredRestrictedAction(Role.Viewer) { implicit request ⇒
+  def experiments(memberId: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.experimentService.findByMember(memberId) flatMap { experiments =>
+      services.experiment.findByMember(memberId) flatMap { experiments =>
         ok(views.html.v2.experiment.list(memberId, experiments))
       }
   }
@@ -188,23 +188,23 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param memberId Member identifier
    * @param id Experiment identifier
    */
-  def update(memberId: Long, id: Long) = AsyncSecuredDynamicAction(Role.Member, memberId) {
+  def update(memberId: Long, id: Long) = DynamicAction(Role.Member, memberId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       form(user.name).bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.experiment.form(user, memberId, error)),
         experiment ⇒ {
           (for {
-            existing <- services.experimentService.find(id)
-            member <- services.memberService.find(memberId)
+            existing <- services.experiment.find(id)
+            member <- services.member.find(memberId)
           } yield (existing, member)) flatMap {
             case (None, _) => notFound("Experiment not found")
             case (_, None) => notFound("Member not found")
             case (Some(existing), Some(member)) =>
               uploadImage(Experiment.picture(existing.id.get), "file") map { _ ⇒
-                services.experimentService.update(experiment.copy(id = Some(id),
+                services.experiment.update(experiment.copy(id = Some(id),
                   memberId = memberId, picture = true))
               } recover {
-                case e: RuntimeException ⇒ services.experimentService.update(experiment.copy(id = Some(id),
+                case e: RuntimeException ⇒ services.experiment.update(experiment.copy(id = Some(id),
                   memberId = memberId, picture = existing.picture))
               } map { _ ⇒
                 val url = if (member.person)

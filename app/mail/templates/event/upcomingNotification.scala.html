@@ -1,5 +1,5 @@
-@import models.service.Services
-@(events: List[Event], brand: Brand, request: models.event.EventRequest, unsubscribeLink: String)(implicit services: Services)
+@import models.repository.Repositories
+@(events: List[Event], brand: Brand, request: models.event.EventRequest, unsubscribeLink: String)(implicit services: Repositories)
 
 @import views.ViewHelpersV2._
 @import views.{Countries, Languages}

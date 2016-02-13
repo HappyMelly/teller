@@ -27,7 +27,7 @@ package controllers.acceptance.people
 import _root_.integration.PlayAppSpec
 import controllers.People
 import helpers._
-import models.service._
+import models.repository._
 import models.{License, LicenseView, SocialProfile}
 import org.joda.money.Money
 import org.joda.time.LocalDate
@@ -56,11 +56,11 @@ class PeopleSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestPeople() extends People(FakeRuntimeEnvironment)
-    with FakeSecurity with FakeServices
+    with FakeSecurity with FakeRepositories
 
-  val personService = mock[PersonService]
-  val orgService = mock[OrganisationService]
-  val licenseService = mock[LicenseService]
+  val personService = mock[PersonRepository]
+  val orgService = mock[OrganisationRepository]
+  val licenseService = mock[LicenseRepository]
   val controller = new TestPeople()
   controller.personService_=(personService)
   controller.orgService_=(orgService)

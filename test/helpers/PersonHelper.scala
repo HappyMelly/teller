@@ -53,7 +53,7 @@ object PersonHelper {
       signature, address.id.get, bio, interests,
       webSite, blog, Some("customer"), virtual, active, dateStamp)
     person.address_=(address)
-    person.socialProfile_=(new SocialProfile())
+    person.profile_=(new SocialProfile())
     person
   }
 

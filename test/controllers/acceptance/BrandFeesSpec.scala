@@ -28,8 +28,8 @@ import _root_.integration.PlayAppSpec
 import controllers.BrandFees
 import helpers._
 import models.brand.BrandFee
-import models.service.BrandService
-import models.service.brand.BrandFeeService
+import models.repository.BrandRepository
+import models.repository.brand.BrandFeeRepository
 import org.joda.money.Money
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -48,12 +48,12 @@ class BrandFeesSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestBrandFees
-      extends BrandFees(FakeRuntimeEnvironment) with FakeServices with FakeSecurity {
+      extends BrandFees(FakeRuntimeEnvironment) with FakeRepositories with FakeSecurity {
   }
 
   val controller = new TestBrandFees
-  val brandService = mock[BrandService]
-  val feeService = mock[BrandFeeService]
+  val brandService = mock[BrandRepository]
+  val feeService = mock[BrandFeeRepository]
   controller.feeService_=(feeService)
   controller.brandService_=(brandService)
 

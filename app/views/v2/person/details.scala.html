@@ -28,7 +28,7 @@
 
             }
         </h2>
-        @views.html.v2.element.profiles(person.socialProfile, member)
+        @views.html.v2.element.profiles(person.profile, member)
 
         <div class="actions pull-right">
           @restrict(handler, List(as(Role.Admin.toString))) {

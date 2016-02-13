@@ -30,14 +30,14 @@ import integration.PlayAppSpec
 import models.{ Member, Organisation, Person }
 import org.joda.money.Money
 import play.api.mvc.Action
-import stubs.FakeServices
+import stubs.FakeRepositories
 import stubs.services.FakeIntegrations
 
 class EnrollmentSpec extends PlayAppSpec {
 
   class TestEnrollment extends Enrollment
       with FakeIntegrations
-      with FakeServices {
+      with FakeRepositories {
 
     /**
      * Renders welcome screen for existing users with two options:

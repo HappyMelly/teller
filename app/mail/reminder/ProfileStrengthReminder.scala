@@ -2,7 +2,7 @@ package mail.reminder
 
 import javax.inject.Inject
 
-import models.service.Services
+import models.repository.Repositories
 import models.{Activity, ProfileStrength}
 import play.api.Play
 import play.api.Play.current
@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * Contains methods for notifying Teller users about the quality of their
  * profile
  */
-class ProfileStrengthReminder @Inject() (val email: Email, val services: Services) extends Integrations {
+class ProfileStrengthReminder @Inject() (val email: Email, val services: Repositories) extends Integrations {
 
   /**
    * Sends profile strength reminders to all facilitators with profile strength
@@ -22,8 +22,8 @@ class ProfileStrengthReminder @Inject() (val email: Email, val services: Service
    */
   def sendToFacilitators() = {
     val queries = for {
-      l <- services.licenseService.findActive
-      p <- services.profileStrengthService.find(l.map(_.licenseeId).distinct, org = false)
+      l <- services.license.findActive
+      p <- services.profileStrength.find(l.map(_.licenseeId).distinct, org = false)
     } yield p
     val withRanks = queries map { profiles =>
       ProfileStrength.calculateRanks(profiles).
@@ -33,7 +33,7 @@ class ProfileStrengthReminder @Inject() (val email: Email, val services: Service
     }
     val peopleWithRanks = for {
       r <- withRanks
-      p <- services.personService.find(r.map(_._1.objectId))
+      p <- services.person.find(r.map(_._1.objectId))
     } yield p.sortBy(_.identifier).zip(r)
     peopleWithRanks map { people =>
       for ((person, (strength, rank)) <- people) {

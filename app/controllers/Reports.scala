@@ -32,7 +32,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.event.Attendee
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time._
 import play.api.Play.current
 import play.api.i18n.MessagesApi
@@ -42,7 +42,7 @@ import scala.concurrent.Future
 
 class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
                          override val messagesApi: MessagesApi,
-                         val services: Services,
+                         val services: Repositories,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
@@ -54,9 +54,9 @@ class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * @param status  filter events by their statuses
    * @return
    */
-  def create(brandId: Long, eventId: Long, status: Int) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def create(brandId: Long, eventId: Long, status: Int) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brandService.find(brandId) flatMap {
+      services.brand.find(brandId) flatMap {
         case None => notFound("Brand not found")
         case Some(brand) ⇒
           val personId = user.account.personId
@@ -66,8 +66,8 @@ class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
             events(brand, personId)
           (for {
             eventIds <- filteredEvents.map(_.map(e ⇒ e.id.get))
-            evaluations <- services.evaluationService.findByEventsWithAttendees(eventIds)
-            participants <- services.attendeeService.findByEvents(eventIds)
+            evaluations <- services.evaluation.findByEventsWithAttendees(eventIds)
+            participants <- services.attendee.findByEvents(eventIds)
           } yield (evaluations, participants)) flatMap { case (evaluations, participants) =>
             val attendees = if (status >= 0) {
               // no attendee without an evaluation
@@ -93,12 +93,12 @@ class Reports @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   private def events(brand: Brand, personId: Long): Future[List[Event]] = {
     if (brand.ownerId == personId)
-      services.eventService.findByParameters(brand.id)
+      services.event.findByParameters(brand.id)
     else
-      services.licenseService.activeLicense(brand.identifier, personId) flatMap {
+      services.license.activeLicense(brand.identifier, personId) flatMap {
         case None => Future.successful(List())
         case Some(_) =>
-          services.eventService.findByFacilitator(personId, brand.id, archived = Some(false))
+          services.event.findByFacilitator(personId, brand.id, archived = Some(false))
       }
   }
 

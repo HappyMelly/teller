@@ -28,12 +28,12 @@ import controllers.Statistics
 import helpers.EventHelper
 import integration.PlayAppSpec
 import models.License
-import models.service.{ EventService, LicenseService }
+import models.repository.{ EventRepository, LicenseRepository }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSocialIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSocialIdentity, FakeSecurity }
 
 class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 
@@ -48,13 +48,13 @@ class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   """
   class TestStatistics extends Statistics(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestStatistics
-  val licenseService = mock[LicenseService]
+  val licenseService = mock[LicenseRepository]
   controller.licenseService_=(licenseService)
-  val eventService = mock[EventService]
+  val eventService = mock[EventRepository]
   controller.eventService_=(eventService)
 
   val default = License(None, 1L, 1L, "1", LocalDate.parse("2011-01-01"),

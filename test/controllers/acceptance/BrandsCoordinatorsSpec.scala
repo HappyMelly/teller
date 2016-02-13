@@ -29,10 +29,10 @@ import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.BrandWithSettings
 import models.brand.{Settings, BrandCoordinator, BrandNotifications}
-import models.service.{ BrandService, PersonService }
-import models.service.brand.BrandCoordinatorService
+import models.repository.{ BrandRepository, PersonRepository }
+import models.repository.brand.BrandCoordinatorRepository
 import org.scalamock.specs2.IsolatedMockFactory
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSocialIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSocialIdentity, FakeSecurity }
 
 /**
  * Tests Brands controller methods, managing brand coordinators
@@ -66,15 +66,15 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestBrands extends Brands(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestBrands
-  val brandTeamMemberService = mock[BrandCoordinatorService]
+  val brandTeamMemberService = mock[BrandCoordinatorRepository]
   controller.brandCoordinatorService_=(brandTeamMemberService)
-  val brandService = mock[BrandService]
+  val brandService = mock[BrandRepository]
   controller.brandService_=(brandService)
-  val personService = mock[PersonService]
+  val personService = mock[PersonRepository]
   controller.personService_=(personService)
 
   def e1 = {

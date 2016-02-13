@@ -29,7 +29,7 @@ import controllers.BrandLinks
 import helpers._
 import models.Brand
 import models.brand.BrandLink
-import models.service.BrandService
+import models.repository.BrandRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -53,11 +53,11 @@ class BrandLinksSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestBrandLinks extends BrandLinks(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestBrandLinks
-  val brandService = mock[BrandService]
+  val brandService = mock[BrandRepository]
   controller.brandService_=(brandService)
 
   def e1 = {

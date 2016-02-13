@@ -25,7 +25,7 @@
 package models
 
 import be.objectify.deadbolt.core.models.{Permission, Subject}
-import models.service.Services
+import models.repository.Repositories
 import play.libs.Scala
 
 import scala.collection.JavaConversions._
@@ -37,10 +37,10 @@ import scala.collection.mutable.ListBuffer
 case class UserAccount(id: Option[Long],
                        personId: Long,
                        byEmail: Boolean,
-                       twitterHandle: Option[String],
-                       facebookUrl: Option[String],
-                       linkedInUrl: Option[String],
-                       googlePlusUrl: Option[String],
+                       twitter: Option[String],
+                       facebook: Option[String],
+                       linkedin: Option[String],
+                       google: Option[String],
                        coordinator: Boolean = false,
                        facilitator: Boolean = false,
                        admin: Boolean = false,

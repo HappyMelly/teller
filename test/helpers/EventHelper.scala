@@ -25,7 +25,7 @@ package helpers
 
 import models._
 import org.joda.time.{ DateTime, LocalDate }
-import models.service.EventService
+import models.repository.EventRepository
 import play.api.libs.json.{ Json, JsValue }
 
 object EventHelper {

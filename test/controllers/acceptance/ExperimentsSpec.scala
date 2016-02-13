@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Experiments
 import helpers.MemberHelper
 import models.{DateStamp, Experiment, Member}
-import models.service.{ ExperimentService, MemberService }
+import models.repository.{ ExperimentRepository, MemberRepository }
 import org.joda.time.DateTime
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -94,7 +94,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestExperiments extends Experiments(FakeRuntimeEnvironment)
-      with FakeServices with FakeSecurity with FakeIntegrations with FakeFiles {
+      with FakeRepositories with FakeSecurity with FakeIntegrations with FakeFiles {
 
     override def notifyMembers(member: Member,
                                experiment: Experiment,
@@ -102,8 +102,8 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   val controller = new TestExperiments
-  val experimentService = mock[ExperimentService]
-  val memberService = mock[MemberService]
+  val experimentService = mock[ExperimentRepository]
+  val memberService = mock[MemberRepository]
   controller.memberService_=(memberService)
   controller.experimentService_=(experimentService)
   val recordInfo = DateStamp(createdBy = "Tester", updated = DateTime.now(), updatedBy = "Tester")
@@ -233,6 +233,7 @@ class ExperimentsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   /**
     * Returns true if two experiments are equal for all fields except date stamps
+    *
     * @param left Experiment
     * @param right Experiment
     */

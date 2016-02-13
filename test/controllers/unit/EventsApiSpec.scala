@@ -27,15 +27,15 @@ package controllers.unit
 import controllers.apiv2.{ ApiAuthentication, EventsApi }
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models.Event
-import models.service.{ BrandService, EventService }
-import models.service.brand.EventTypeService
+import models.repository.{ BrandRepository, EventRepository }
+import models.repository.brand.EventTypeRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable._
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeApiAuthentication, FakeServices }
+import stubs.{ FakeApiAuthentication, FakeRepositories }
 
 import scala.concurrent.Future
 
@@ -44,16 +44,16 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
   /** Test controller without api authentication and with stubbed services */
   class TestEventsApi() extends EventsApi
     with FakeApiAuthentication
-    with FakeServices
+    with FakeRepositories
 
   /** Test controller with api authentication and with stubbed services */
   class AnotherTestEventsApi() extends EventsApi
     with ApiAuthentication
-    with FakeServices
+    with FakeRepositories
 
-  val brandService = mock[BrandService]
-  val eventService = mock[EventService]
-  val eventTypeService = mock[EventTypeService]
+  val brandService = mock[BrandRepository]
+  val eventService = mock[EventRepository]
+  val eventTypeService = mock[EventTypeRepository]
   val controller = new TestEventsApi()
   controller.eventService_=(eventService)
   controller.brandService_=(brandService)

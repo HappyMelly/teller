@@ -30,12 +30,12 @@ import models.{ License, Event }
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.specs2.mutable.Specification
-import stubs.{ FakeRuntimeEnvironment, FakeServices }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories }
 
 class StatisticsSpec extends Specification {
 
   class TestStatistics extends Statistics(FakeRuntimeEnvironment)
-      with FakeServices {
+      with FakeRepositories {
     def callQuarterStatsByFacilitators(licenses: List[License]): List[(LocalDate, Int)] =
       quarterStatsByFacilitators(licenses)
 

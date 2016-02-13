@@ -26,16 +26,16 @@ package models.unit
 
 import helpers.{MemberHelper, PersonHelper}
 import models._
-import models.service.{MemberService, OrganisationService}
+import models.repository.{MemberRepository, OrganisationRepository}
 import org.scalamock.specs2.{IsolatedMockFactory, MockContext}
 import org.specs2.mutable.Specification
 import security.ResourceHandler
-import stubs.{FakeServices, FakeSocialIdentity}
+import stubs.{FakeRepositories, FakeSocialIdentity}
 
 class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
 
   class TestResourceHandler(user: ActiveUser)
-    extends ResourceHandler(user) with FakeServices {
+    extends ResourceHandler(user) with FakeRepositories {
 
 
     def callCheckMemberPermission(user: ActiveUser, objectId: Long): Boolean =
@@ -52,7 +52,7 @@ class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
   val activeUser = ActiveUser(identity.profile.userId, identity.profile.providerId, viewer, person)
 
   val handler = new TestResourceHandler(activeUser)
-  val memberService = mock[MemberService]
+  val memberService = mock[MemberRepository]
   handler.memberService_=(memberService)
 
   "When brand permissions are checked for coordinator" >> {
@@ -83,7 +83,7 @@ class ResourceHandlerSpec extends Specification with IsolatedMockFactory {
     "and the user is an employee of an organisation which is a member and checks the profile of this organisation then permission should be granted" in {
       val member = MemberHelper.make(Some(1L), 3L, person = false, funder = true)
       (services.memberService.find(_: Long)) expects 3L returning Some(member)
-      val orgService = mock[OrganisationService]
+      val orgService = mock[OrganisationRepository]
       handler.orgService_=(orgService)
       (services.orgService.people _) expects 3L returning List(person)
       handler.callCheckMemberPermission(activeUser, 3L) must_== true

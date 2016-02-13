@@ -26,7 +26,7 @@ package models.integration
 
 import integration.PlayAppSpec
 import _root_.models.payment.Record
-import _root_.models.service.PaymentRecordService
+import _root_.models.repository.PaymentRecordRepository
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.DateTime
