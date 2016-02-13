@@ -54,7 +54,7 @@ case class Person(
   active: Boolean = true,
   dateStamp: DateStamp) extends Recipient with ActivityRecorder {
 
-  private var _socialProfile: Option[SocialProfile] = None
+  private var _profile: Option[SocialProfile] = None
   private var _address: Option[Address] = None
   private var _organisations: Option[List[Organisation]] = None
 
@@ -79,8 +79,8 @@ case class Person(
       signature, addressId, bio, interests, webSite, blog,
       customerId, virtual, active, dateStamp)
 
-    this._socialProfile foreach { p ⇒
-      person.socialProfile_=(this.socialProfile)
+    this._profile foreach { p ⇒
+      person.profile_=(this.profile)
     }
 
     this._address foreach { a ⇒
@@ -89,10 +89,10 @@ case class Person(
     person
   }
 
-  def socialProfile: SocialProfile = _socialProfile.get
+  def profile: SocialProfile = _profile.get
 
-  def socialProfile_=(socialProfile: SocialProfile): Unit = {
-    _socialProfile = Some(socialProfile)
+  def profile_=(socialProfile: SocialProfile): Unit = {
+    _profile = Some(socialProfile)
   }
 
   def address: Address = _address.get
@@ -133,7 +133,7 @@ case class Person(
   /**
    * Returns true if it is possible to grant log in access to this user.
    */
-  def canHaveUserAccount: Boolean = socialProfile.defined
+  def canHaveUserAccount: Boolean = profile.defined
 
   /**
    * Deletes a relationship between this person and the given organisation
@@ -165,7 +165,8 @@ case class Person(
 
   /**
    * Adds member record to database
-   * @param funder Defines if this person becomes a funder
+    *
+    * @param funder Defines if this person becomes a funder
    * @param fee Amount of membership fee this person paid
    * @return Returns member object
    */

@@ -148,7 +148,7 @@ class PersonService(app: Application, services: Services) extends HasDatabaseCon
       val query = people returning people.map(_.id) into ((value, id) => value.copy(id = Some(id)))
       val futureInserted = db.run(query += person.copy(addressId = address.id.get))
       futureInserted.map { inserted =>
-        services.socialProfileService.insert(person.socialProfile.copy(objectId = inserted.identifier))
+        services.socialProfileService.insert(person.profile.copy(objectId = inserted.identifier))
         services.profileStrengthService.insert(ProfileStrength.empty(inserted.identifier, false))
         inserted.address_=(address)
         inserted
@@ -202,7 +202,7 @@ class PersonService(app: Application, services: Services) extends HasDatabaseCon
       address <- TableQuery[Addresses] if address.id === person.addressId
     } yield (person, social, address)
     db.run(query.result).map(_.headOption.map { result =>
-      result._1.socialProfile_=(result._2)
+      result._1.profile_=(result._2)
       result._1.address_=(result._3)
       result._1
     })
@@ -288,7 +288,7 @@ class PersonService(app: Application, services: Services) extends HasDatabaseCon
       address <- TableQuery[Addresses] if address.id === person.addressId
     } yield (person, social, address)
     db.run(query.result).map(_.headOption.map { result =>
-      result._1.socialProfile_=(result._2)
+      result._1.profile_=(result._2)
       result._1.address_=(result._3)
       result._1
     })
@@ -367,10 +367,10 @@ class PersonService(app: Application, services: Services) extends HasDatabaseCon
 
     import SocialProfilesStatic.profileTypeMapper
     val socialQuery = for {
-      p ← TableQuery[SocialProfiles] if p.objectId === person.id.get && p.objectType === person.socialProfile.objectType
+      p ← TableQuery[SocialProfiles] if p.objectId === person.id.get && p.objectType === person.profile.objectType
     } yield p
 
-    db.run(socialQuery.update(person.socialProfile.copy(objectId = person.id.get)))
+    db.run(socialQuery.update(person.profile.copy(objectId = person.id.get)))
 
     val personUpdateTuple = (person.firstName, person.lastName, person.email, person.birthday,
       person.photo.url, person.signature, person.bio, person.interests,

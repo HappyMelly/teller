@@ -1,4 +1,6 @@
 @(form: Form[Person],
+    account: UserAccount,
+    id: Long = 0,
     disabledEmail: Boolean = false,
     connectProfiles: Boolean = false)(implicit messages: Messages,
         request: RequestHeader,
@@ -38,40 +40,58 @@
 
 @if(connectProfiles) {
     @v2.html.block("Connect Profiles", Some("grey")) {
-        <div class="row">
+        <div class="row" id="profiles">
             <label class="control-label col-md-2">
                 Social Profiles
             </label>
             <div class="col-md-10">
                 <div class="b-connect js-social-connect">
-                    <div class="b-connect-i type-tw" data-social="twitter" data-url="@env.routes.authenticationUrl("twitter")">
-                        <i class="b-connect-i__img"></i>
-                        <a href="#" class="btn b-connect-i__btn" data-social-connect>
-                            <span class="text">Connect</span>
-                            <span class="complete">Connected</span>
-                        </a>
-                    </div>
-                    <div class="b-connect-i type-fb" data-social="facebook">
-                        <i class="b-connect-i__img type-fb"></i>
-                        <a href="@env.routes.authenticationUrl("facebook")" class="btn b-connect-i__btn" data-social-connect>
-                            <span class="text">Connect</span>
-                            <span class="complete">Connected</span>
-                        </a>
-                    </div>
-                    <div class="b-connect-i type-linkedin" data-social="linkedin">
-                        <i class="b-connect-i__img "></i>
-                        <a href="@env.routes.authenticationUrl("linkedin")" class="btn b-connect-i__btn" data-social-connect>
-                            <span class="text">Connect</span>
-                            <span class="complete">Connected</span>
-                        </a>
-                    </div>
-                    <div class="b-connect-i type-gp" data-social="googleplus" data-url="@env.routes.authenticationUrl("google")">
-                        <i class="b-connect-i__img "></i>
-                        <a href="#" class="btn b-connect-i__btn" data-social-connect>
-                            <span class="text">Connect</span>
-                            <span class="complete">Connected</span>
-                        </a>
-                    </div>
+                    @defining(Some(routes.People.edit(id).url + "#profiles")) { redirectTo =>
+                        <div class="b-connect-i type-tw" data-social="twitter"
+                            data-url="@env.routes.authenticationUrl("twitter", redirectTo)">
+                            <i class="b-connect-i__img"></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                @account.twitter.map { _ =>
+                                    <span class="text">Disconnect</span>
+                                }.getOrElse {
+                                    <span class="text">Connect</span>
+                                }
+                            </a>
+                        </div>
+                        <div class="b-connect-i type-fb" data-social="facebook"
+                            data-url="@env.routes.authenticationUrl("facebook", redirectTo)">
+                            <i class="b-connect-i__img type-fb"></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                @account.facebook.map { _ =>
+                                    <span class="text">Disconnect</span>
+                                }.getOrElse {
+                                    <span class="text">Connect</span>
+                                }
+                            </a>
+                        </div>
+                        <div class="b-connect-i type-linkedin" data-social="linkedin"
+                            data-url="@env.routes.authenticationUrl("linkedin", redirectTo)">
+                            <i class="b-connect-i__img "></i>
+                            <a href="#" class="btn b-connect-i__btn complete" data-social-connect>
+                                @account.linkedin.map { _ =>
+                                    <span class="text">Disconnect</span>
+                                }.getOrElse {
+                                    <span class="text">Connect</span>
+                                }
+                            </a>
+                        </div>
+                        <div class="b-connect-i type-gp" data-social="googleplus"
+                            data-url="@env.routes.authenticationUrl("google", redirectTo)">
+                            <i class="b-connect-i__img "></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                @account.google.map { _ =>
+                                    <span class="text">Disconnect</span>
+                                }.getOrElse {
+                                    <span class="text">Connect</span>
+                                }
+                            </a>
+                        </div>
+                    }
                 </div>
             </div>
         </div>

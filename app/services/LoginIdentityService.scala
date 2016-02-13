@@ -129,12 +129,26 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
   /**
    * Links the current user to another profile
    *
-   * @param current The current user instance
+   * @param user The current user instance
    * @param to the profile that needs to be linked to
    */
-  def link(current: ActiveUser, to: BasicProfile): Future[ActiveUser] = {
-    //TODO retrieve social profile url and update user social profile
-    Future.successful(current)
+  def link(user: ActiveUser, to: BasicProfile): Future[ActiveUser] = {
+    services.identityService.findByUserId(to.userId, to.providerId) flatMap {
+      case None =>
+        services.socialProfileService.find(user.person.identifier, ProfileType.Person).flatMap { value =>
+          val (account, social) = linkedEntities(to, value, user.account)
+          val query = for {
+            _ <- services.userAccountService.update(account)
+            _ <- services.socialProfileService.update(social, ProfileType.Person)
+          } yield ()
+          query map { _ =>
+            val person = user.person
+            person.profile_=(social)
+            user.copy(account = account, person = person)
+          }
+        }
+      case Some(_) => throw new AuthenticationException
+    }
   }
 
   /**
@@ -185,6 +199,32 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     }
   }
 
+  protected def linkedEntities(to: BasicProfile, profil: SocialProfile, acc: UserAccount): (UserAccount, SocialProfile) = {
+    val withLink = profile(to)
+    to.providerId match {
+      case FacebookProvider.Facebook ⇒
+        (acc.copy(facebook = Some(to.userId)), profil.copy(facebookUrl = withLink.facebookUrl))
+      case GoogleProvider.Google ⇒
+        (acc.copy(google = Some(to.userId)), profil.copy(googlePlusUrl = withLink.googlePlusUrl))
+      case LinkedInProvider.LinkedIn ⇒
+        (acc.copy(linkedin = Some(to.userId)), profil.copy(linkedInUrl = withLink.linkedInUrl))
+      case TwitterProvider.Twitter ⇒
+        (acc.copy(twitter = Some(to.userId)), profil.copy(twitterHandle = withLink.twitterHandle))
+    }
+  }
+
+  /**
+    * Returns a social profile for the given basic profile
+    *
+    * @param profile Basic profile
+    */
+  protected def profile(profile: BasicProfile): SocialProfile = profile.providerId match {
+    case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = Some(findFacebookUrl(profile)))
+    case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(profile)))
+    case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(profile)))
+    case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(profile)))
+  }
+
   /**
    * Returns active user for the given profile
     *
@@ -229,7 +269,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
   protected def user(identity: PasswordIdentity): ActiveUser = {
     val account = UserAccount.empty(0)
     val person = Person("", "", identity.email)
-    person.socialProfile_=(SocialProfile())
+    person.profile_=(SocialProfile())
     ActiveUser(identity.email, UsernamePasswordProvider.UsernamePassword, account, person)
   }
 
@@ -242,13 +282,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     val account = UserAccount.empty(0)
     val (firstName, lastName) = userNames(identity)
     val person = Person(firstName, lastName, identity.profile.email.getOrElse(""))
-    val profile = identity.profile.providerId match {
-      case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = Some(findFacebookUrl(identity.profile)))
-      case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(identity.profile)))
-      case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(identity.profile)))
-      case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(identity.profile)))
-    }
-    person.socialProfile_=(profile)
+    person.profile_=(profile(identity.profile))
     ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 

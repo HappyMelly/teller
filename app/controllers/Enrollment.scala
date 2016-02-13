@@ -114,7 +114,7 @@ trait Enrollment extends AsyncController
   private def personSlackMsg(person: Person, member: Member, url: String): String = {
     val headline = newMemberMsg(member, person.fullName, url)
     val dummy = SocialProfile()
-    connectMeMessage(dummy, person.socialProfile) map { value =>
+    connectMeMessage(dummy, person.profile) map { value =>
       headline + " " + value
     } getOrElse
       headline

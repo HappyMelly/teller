@@ -313,7 +313,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     val person = Person(attendee.firstName, attendee.lastName, attendee.email).copy(birthday = attendee.dateOfBirth)
     person.address_=(Address(None, attendee.street_1, attendee.street_2, attendee.city, attendee.province,
       attendee.postcode, attendee.countryCode.getOrElse("XX")))
-    person.socialProfile_=(SocialProfile(objectType = ProfileType.Person))
+    person.profile_=(SocialProfile(objectType = ProfileType.Person))
     services.personService.insert(person) map { inserted =>
       services.attendeeService.update(attendee.copy(personId = inserted.id))
       inserted

@@ -29,11 +29,11 @@
     };
 
     PersonSocialConnect.prototype.setConnect = function($el){
-        var self = this,
-            socialType = $el.data('social'),
-            authWindow = self.createWindow('http://www.happymelly.com/');
+        //var self = this,
+        //    socialType = $el.data('social'),
+        //    authWindow = self.createWindow($el.data('url'));
 
-        authWindow.location = "http://buffer.com";
+        window.location = $el.data('url');
     };
 
     PersonSocialConnect.prototype.unSetConnect = function($el){

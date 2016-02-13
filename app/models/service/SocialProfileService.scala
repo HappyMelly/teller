@@ -108,7 +108,7 @@ class SocialProfileService(app: Application) extends HasDatabaseConfig[JdbcProfi
   def insert(socialProfile: SocialProfile): Future[SocialProfile] =
     db.run(profiles += socialProfile).map(_ => socialProfile)
 
-  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Unit = {
+  def update(socialProfile: SocialProfile, objectType: ProfileType.Value): Future[Int] = {
     import SocialProfilesStatic._
 
     val query = profiles.filter(_.objectId === socialProfile.objectId).filter(_.objectType === objectType)
@@ -132,7 +132,6 @@ class SocialProfileService(app: Application) extends HasDatabaseConfig[JdbcProfi
    *
    * Requires session object so it can be used inside withTransaction
    * @param profile Profile object
-   * @param session Session
    */
   def _insert(profile: SocialProfile): SocialProfile = {
     profiles += profile

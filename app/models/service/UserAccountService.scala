@@ -82,10 +82,10 @@ class UserAccountService(app: Application) extends HasDatabaseConfig[JdbcProfile
       account.facebook,
       account.google,
       account.linkedin)
-    val action = query.update(person.socialProfile.twitterHandle,
-      person.socialProfile.facebookUrl,
-      person.socialProfile.googlePlusUrl,
-      person.socialProfile.linkedInUrl)
+    val action = query.update(person.profile.twitterHandle,
+      person.profile.facebookUrl,
+      person.profile.googlePlusUrl,
+      person.profile.linkedInUrl)
     db.run(action)
   }
 }

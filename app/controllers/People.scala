@@ -255,7 +255,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                   val modified = resetReadOnlyAttributes(person, oldPerson)
 
                   services.personService.member(id).filter(_.isDefined) map { _ =>
-                    val msg = connectMeMessage(oldPerson.socialProfile, modified.socialProfile)
+                    val msg = connectMeMessage(oldPerson.profile, modified.profile)
                     msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
                   }
                   services.personService.update(modified) flatMap { _ =>
@@ -387,7 +387,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   protected def checkDuplication(person: Person, id: Long, editorName: String)(
     implicit user: ActiveUser): Future[Option[Form[Person]]] = {
-    val base = person.socialProfile.copy(objectId = id, objectType = ProfileType.Person)
+    val base = person.profile.copy(objectId = id, objectType = ProfileType.Person)
     services.socialProfileService.findDuplicate(base) map {
       case None => None
       case Some(duplicate) ⇒

@@ -473,7 +473,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       dateStamp = dateStamp)
     val address = new Address(countryCode = userData.country)
     person.address_=(address)
-    person.socialProfile_=(user.person.socialProfile)
+    person.profile_=(user.person.profile)
     person
   }
 
