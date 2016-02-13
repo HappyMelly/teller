@@ -25,7 +25,7 @@
 package models
 
 import models.brand.Settings
-import models.service._
+import models.repository._
 import play.api.libs.Crypto
 
 import scala.concurrent.{Await, Future}

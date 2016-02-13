@@ -26,7 +26,7 @@ package controllers.apiv2
 import javax.inject.Inject
 
 import models.event.EventRequest
-import models.service.Services
+import models.repository.Repositories
 import models.{APIError, DateStamp}
 import org.joda.time.DateTime
 import play.api.data.Form
@@ -40,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * API for adding event requests
  */
-class EventRequestsApi @Inject() (val services: Services,
+class EventRequestsApi @Inject() (val services: Repositories,
                                   override val messagesApi: MessagesApi)
   extends ApiAuthentication(services, messagesApi) {
 
@@ -73,7 +73,7 @@ class EventRequestsApi @Inject() (val services: Services,
   def create(brandCode: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
     val name = token.appName
 
-    services.brandService.find(brandCode) flatMap {
+    services.brand.find(brandCode) flatMap {
       case None => jsonNotFound(s"Brand $brandCode not found")
       case Some(brand) =>
         val requestData = form(brand.identifier, name).bindFromRequest()
@@ -83,7 +83,7 @@ class EventRequestsApi @Inject() (val services: Services,
             badRequest(Json.prettyPrint(json))
           },
           eventRequest =>
-            services.eventRequestService.insert(eventRequest) flatMap { value =>
+            services.eventRequest.insert(eventRequest) flatMap { value =>
               jsonOk(Json.obj("request_id" -> value.id))
             }
         )

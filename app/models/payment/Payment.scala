@@ -24,7 +24,7 @@
 
 package models.payment
 
-import models.service.Services
+import models.repository.Repositories
 import models.{ Organisation, Person }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -47,7 +47,7 @@ case class Payment(key: String) {
    */
   def subscribe(person: Person,
                 org: Option[Organisation],
-                token: String, amount: Int)(implicit services: Services): String = {
+                token: String, amount: Int)(implicit services: Repositories): String = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }
@@ -64,7 +64,7 @@ case class Payment(key: String) {
       "Internal error. Please inform the support stuff"
     val userId = person.id.get
     val record = Record(invoiceId, userId, customerId, person = org.isEmpty, Payment.DESC, fee)
-    services.paymentRecordService.insert(record)
+    services.paymentRecord.insert(record)
     val msg = org map { o ⇒
       "Organisation %s (id = %s) paid membership fee EUR %s".format(
         customerName, customerId, fee)

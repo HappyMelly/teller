@@ -4,7 +4,7 @@ import javax.inject.Singleton
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{DeadboltHandler, HandlerKey}
-import models.service.IServices
+import models.repository.IRepositories
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -15,7 +15,7 @@ import services.TellerRuntimeEnvironment
 @Singleton
 class TellerHandlerCache  @javax.inject.Inject() (implicit val env: TellerRuntimeEnvironment,
                                                   val messagesApi: MessagesApi,
-                                                  val services: IServices) extends HandlerCache {
+                                                  val services: IRepositories) extends HandlerCache {
 
   val defaultHandler: DeadboltHandler = new AuthorisationHandler()(env, messagesApi, services)
 

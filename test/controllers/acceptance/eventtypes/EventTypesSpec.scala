@@ -28,20 +28,20 @@ import controllers.EventTypes
 import helpers.BrandHelper
 import integration.PlayAppSpec
 import models.brand.EventType
-import models.service.BrandService
-import models.service.brand.EventTypeService
+import models.repository.BrandRepository
+import models.repository.brand.EventTypeRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test._
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSocialIdentity, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSocialIdentity, FakeSecurity }
 
 import scala.concurrent.Future
 
 class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
 
   class TestEventTypes extends EventTypes(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   override def is = s2"""
@@ -60,8 +60,8 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   val controller = new TestEventTypes()
-  val eventTypeService = mock[EventTypeService]
-  val brandService = mock[BrandService]
+  val eventTypeService = mock[EventTypeRepository]
+  val brandService = mock[BrandRepository]
   controller.brandService_=(brandService)
   controller.eventTypeService_=(eventTypeService)
   val brand = BrandHelper.one

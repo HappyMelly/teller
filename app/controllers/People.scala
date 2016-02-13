@@ -29,7 +29,7 @@ import controllers.Forms._
 import models.UserRole.Role._
 import models._
 import models.payment.{GatewayWrapper, PaymentException, RequestException}
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.data.Forms._
@@ -49,7 +49,7 @@ case class PeopleDetailConfig(facilitator: Boolean, deletable: Boolean, member: 
 
 class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvironment,
                                     override val messagesApi: MessagesApi,
-                                    val services: Services,
+                                    val services: Repositories,
                                     val email: Email,
                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
@@ -67,13 +67,13 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    * @param id Person identifier
    */
   def activation(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.personService.find(id) flatMap {
+    services.person.find(id) flatMap {
       case None => redirect(indexCall, "error" -> "Person not found")
       case Some(person) =>
         Form("active" -> boolean).bindFromRequest.fold(
           form ⇒ badRequest("invalid form data"),
           active ⇒ {
-            services.personService.activate(id, active)
+            services.person.activate(id, active)
             val log = if (active)
               activity(person, user.person).activated.insert(services)
             else
@@ -103,8 +103,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         errors ⇒ badRequest("organisationId missing"),
         { case (page, personId, organisationId) ⇒
           (for {
-            p <- services.personService.find(personId)
-            o <- services.orgService.find(organisationId)
+            p <- services.person.find(personId)
+            o <- services.org.find(organisationId)
           } yield (p, o)) flatMap {
             case (None, _) => notFound("Person not found")
             case (_, None) => notFound("Organisation not found")
@@ -129,7 +129,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
     People.personForm(user.name, None, services).bindFromRequest.fold(
       formWithErrors ⇒ badRequest(views.html.v2.person.form(user, None, formWithErrors)),
       person ⇒ {
-        services.personService.insert(person) flatMap { updatedPerson =>
+        services.person.insert(person) flatMap { updatedPerson =>
           val log = activity(updatedPerson, user.person).created.insert(services)
           redirect(indexCall, "success" -> "New person was added")
         }
@@ -143,14 +143,14 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def delete(id: Long) = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      p <- services.personService.find(id)
+      p <- services.person.find(id)
       flat <- Person.deletable(id, services)
     } yield (p, flat)) flatMap {
       case (None, _) => notFound("Person not found")
       case (Some(person), false) =>
         redirect(indexCall, "error" -> Messages("error.person.nonDeletable"))
       case (Some(person), true) =>
-        services.personService.delete(person)
+        services.person.delete(person)
         val log = activity(person, user.person).deleted.insert(services)
         redirect(indexCall, "success" -> "Person was deleted")
     }
@@ -166,8 +166,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   def deleteRelationship(page: String, personId: Long, organisationId: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       (for {
-        p <- services.personService.find(personId)
-        o <- services.orgService.find(organisationId)
+        p <- services.person.find(personId)
+        o <- services.org.find(organisationId)
       } yield (p, o)) flatMap {
         case (None, _) => notFound("Person not found")
         case (_, None) => notFound("Organisation not found")
@@ -192,12 +192,12 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      p <- services.personService.findComplete(id)
-      f <- services.facilitatorService.findByPerson(id)
-      m <- services.personService.memberships(id)
-      o <- services.orgService.findActive
+      p <- services.person.findComplete(id)
+      f <- services.facilitator.findByPerson(id)
+      m <- services.person.memberships(id)
+      o <- services.org.findActive
       deletable <- Person.deletable(id, services)
-      member <- services.personService.member(id)
+      member <- services.person.member(id)
     } yield (p, f, m, o, deletable, member)) flatMap {
       case (None, _, _, _, _, _) => redirect(indexCall, "error" -> "Person not found")
       case (Some(person), facilitators, memberships, orgs, deletable, member) =>
@@ -205,8 +205,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         val otherOrganisations = orgs.filterNot(organisation ⇒ memberships.contains(organisation))
         val badgesInfo = if (conf.facilitator) {
           val query = for {
-            badges <- services.brandBadgeService.find(facilitators.flatMap(_.badges))
-            brands <- services.brandService.find(badges.map(_.brandId).distinct)
+            badges <- services.brandBadge.find(facilitators.flatMap(_.badges))
+            brands <- services.brand.find(badges.map(_.brandId).distinct)
           } yield (badges, brands)
           query map { case (badges, brands) =>
             badges.map { badge =>
@@ -229,7 +229,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def edit(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.findComplete(id) flatMap {
+      services.person.findComplete(id) flatMap {
         case None => notFound("Person not found")
         case Some(person) ⇒
           ok(views.html.v2.person.form(user, Some(id), People.personForm(user.name, None, services).fill(person)))
@@ -243,7 +243,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   def update(id: Long) = AsyncSecuredDynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.findComplete(id) flatMap {
+      services.person.findComplete(id) flatMap {
         case None => notFound("Person not found")
         case Some(oldPerson) ⇒
           People.personForm(user.name, Some(id), services).bindFromRequest.fold(
@@ -254,16 +254,16 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                 case None =>
                   val modified = resetReadOnlyAttributes(person, oldPerson)
 
-                  services.personService.member(id).filter(_.isDefined) map { _ =>
+                  services.person.member(id).filter(_.isDefined) map { _ =>
                     val msg = connectMeMessage(oldPerson.profile, modified.profile)
                     msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
                   }
-                  services.personService.update(modified) flatMap { _ =>
+                  services.person.update(modified) flatMap { _ =>
                     if (modified.email != oldPerson.email) {
-                      services.identityService.findByEmail(oldPerson.email).filter(_.isDefined) map { identity =>
+                      services.identity.findByEmail(oldPerson.email).filter(_.isDefined) map { identity =>
                         if (identity.get.userId.exists(_ == id)) {
-                          services.identityService.delete(oldPerson.email)
-                          services.identityService.insert(identity.get.copy(email = modified.email))
+                          services.identity.delete(oldPerson.email)
+                          services.identity.insert(identity.get.copy(email = modified.email))
                         }
                       }
                     }
@@ -286,15 +286,15 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       tab match {
         case "contributions" ⇒
-          services.contributionService.contributions(id, isPerson = true) flatMap { contributions =>
+          services.contribution.contributions(id, isPerson = true) flatMap { contributions =>
             ok(views.html.v2.element.contributions("person", contributions))
           }
         case "experience" ⇒
           (for {
-            person <- services.personService.find(id)
+            person <- services.person.find(id)
             experience <- retrieveByBrandStatistics(id)
-            endorsements <- services.personService.endorsements(id)
-            materials <- services.personService.materials(id)
+            endorsements <- services.person.endorsements(id)
+            materials <- services.person.materials(id)
           } yield (person, experience, endorsements, materials)) flatMap {
             case (None, _, _, _) => notFound("Person not found")
             case (Some(person), experience, endorsements, materials) =>
@@ -306,11 +306,11 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
           }
         case "facilitation" ⇒
           (for {
-            p <- services.personService.find(id)
-            l <- services.licenseService.licensesWithBrands(id)
-            f <- services.facilitatorService.findByPerson(id)
-            langs <- services.facilitatorService.languages(id)
-            c <- services.facilitatorService.countries(id)
+            p <- services.person.find(id)
+            l <- services.license.licensesWithBrands(id)
+            f <- services.facilitator.findByPerson(id)
+            langs <- services.facilitator.languages(id)
+            c <- services.facilitator.countries(id)
           } yield (p, l, f, langs, c)) flatMap {
             case (None, _, _, _, _) => notFound("Person not found")
             case (Some(person), licenses, facilitation, languages, countries) =>
@@ -320,9 +320,9 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
           }
         case "membership" ⇒
           (for {
-            person <- services.personService.find(id)
-            payments <- services.paymentRecordService.findByPerson(id)
-            member <- services.personService.member(id)
+            person <- services.person.find(id)
+            payments <- services.paymentRecord.findByPerson(id)
+            member <- services.person.member(id)
           } yield (person, payments, member)) flatMap {
             case (_, _, None) => ok("Person is not a member")
             case (None, _, _) => notFound("Person not found")
@@ -340,7 +340,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    * @return
    */
   def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.personService.findAll flatMap { people =>
+    services.person.findAll flatMap { people =>
       ok(views.html.v2.person.index(user, people))
     }
   }
@@ -353,8 +353,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   def cancel(id: Long) = AsyncSecuredProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val url: String = routes.People.details(id).url + "#membership"
     (for {
-      p <- services.personService.find(id)
-      m <- services.personService.member(id)
+      p <- services.person.find(id)
+      m <- services.person.member(id)
     } yield (p, m)) flatMap {
       case (None, _) => notFound("Person not found")
       case (_, None) => redirect(url, "error" -> Messages("error.membership.noSubscription"))
@@ -364,7 +364,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
           val gateway = new GatewayWrapper(key)
           try {
             gateway.cancel(person.customerId.get)
-            services.memberService.update(member.copy(renewal = false))
+            services.member.update(member.copy(renewal = false))
           } catch {
             case e: PaymentException ⇒
               Redirect(url).flashing("error" -> Messages(e.msg))
@@ -388,7 +388,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   protected def checkDuplication(person: Person, id: Long, editorName: String)(
     implicit user: ActiveUser): Future[Option[Form[Person]]] = {
     val base = person.profile.copy(objectId = id, objectType = ProfileType.Person)
-    services.socialProfileService.findDuplicate(base) map {
+    services.socialProfile.findDuplicate(base) map {
       case None => None
       case Some(duplicate) ⇒
         var form = People.personForm(editorName, None, services).fill(person)
@@ -431,8 +431,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
    */
   protected def retrieveByBrandStatistics(id: Long) = {
     (for {
-      l <- services.licenseService.licensesWithBrands(id)
-      f <- services.facilitatorService.findByPerson(id)
+      l <- services.license.licensesWithBrands(id)
+      f <- services.facilitator.findByPerson(id)
     } yield (l, f)) map { case (licenses, facilitations) =>
       licenses.sortBy(_.brand.name).map { view ⇒
         val facilitator = facilitations.find(_.brandId == view.brand.identifier).get
@@ -498,14 +498,14 @@ object People {
   /**
    * HTML form mapping for creating and editing.
    */
-  def personForm(editorName: String, userId: Option[Long] = None, services: Services)(implicit user: ActiveUser) = {
+  def personForm(editorName: String, userId: Option[Long] = None, services: Repositories)(implicit user: ActiveUser) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "emailAddress" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(services.identityService.checkEmail(suppliedEmail, userId), 10.seconds)
+        Await.result(services.identity.checkEmail(suppliedEmail, userId), 10.seconds)
       }),
       "birthday" -> optional(jodaLocalDate),
       "signature" -> boolean,

@@ -29,7 +29,7 @@ import javax.inject.Inject
 import controllers.apiv2.json.{ContributionConverter, PersonConverter}
 import controllers.{Experiments, Organisations}
 import models._
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import views.Countries
@@ -38,7 +38,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class MembersApi @Inject() (val services: Services,
+class MembersApi @Inject() (val services: Repositories,
                             override val messagesApi: MessagesApi)
   extends ApiAuthentication(services, messagesApi) {
 
@@ -158,7 +158,7 @@ class MembersApi @Inject() (val services: Services,
    */
   def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) { implicit request ⇒
     implicit token ⇒
-      services.memberService.findAll flatMap { members =>
+      services.member.findAll flatMap { members =>
         val activeMembers = members.filter(_.active)
         val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse members
         val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
@@ -174,10 +174,10 @@ class MembersApi @Inject() (val services: Services,
   def membersByNames(query: String) = TokenSecuredAction(readWrite = false) { implicit request => implicit token =>
     val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
     (for {
-      p <- services.personService.findByNames(names.toList)
-      m <- services.memberService.findByObjects(p.map(_.identifier))
+      p <- services.person.findByNames(names.toList)
+      m <- services.member.findByObjects(p.map(_.identifier))
     } yield (p, m)) flatMap { case (people, members) =>
-      services.personService.collection.addresses(people) flatMap { _ =>
+      services.person.collection.addresses(people) flatMap { _ =>
         val filteredMembers = members.filter(_.person)
         val views = filteredMembers.map { member =>
           people.find(_.identifier == member.objectId) map { person =>
@@ -201,12 +201,12 @@ class MembersApi @Inject() (val services: Services,
       findMemberByIdentifier(identifier, isPerson) flatMap {
         case None => jsonNotFound("Member not found")
         case Some(member) =>
-          services.experimentService.findByMember(member.identifier) flatMap { experiments =>
+          services.experiment.findByMember(member.identifier) flatMap { experiments =>
             if (member.person) {
               (for {
-                p <- services.personService.findComplete(member.objectId)
-                o <- services.personService.memberships(member.objectId)
-                c <- services.contributionService.contributions(member.objectId, isPerson = true)
+                p <- services.person.findComplete(member.objectId)
+                o <- services.person.memberships(member.objectId)
+                c <- services.contribution.contributions(member.objectId, isPerson = true)
               } yield (p, o, c)) flatMap {
                 case (None, _, _) => jsonNotFound("Person not found")
                 case (Some(person), organisations, contributions) =>
@@ -215,9 +215,9 @@ class MembersApi @Inject() (val services: Services,
               }
             } else {
               (for {
-                o <- services.orgService.findWithProfile(member.objectId)
-                m <- services.orgService.people(member.objectId)
-                c <- services.contributionService.contributions(member.objectId, isPerson = false)
+                o <- services.org.findWithProfile(member.objectId)
+                m <- services.org.people(member.objectId)
+                c <- services.contribution.contributions(member.objectId, isPerson = false)
               } yield (o, m, c)) flatMap {
                 case (None, _, _) => jsonNotFound("Organisation not found")
                 case (Some(view), members, contributions) =>
@@ -240,14 +240,14 @@ class MembersApi @Inject() (val services: Services,
   protected def findMemberByIdentifier(identifier: String, person: Boolean): Future[Option[Member]] = {
     try {
       val id = identifier.toLong
-      services.memberService.find(id)
+      services.member.find(id)
     } catch {
       case e: NumberFormatException ⇒ {
         if (person)
-          services.personService.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
+          services.person.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
             case None => Future.successful(None)
             case Some(value) =>
-              services.memberService.findByObject(value.identifier, person = true) flatMap {
+              services.member.findByObject(value.identifier, person = true) flatMap {
                 case None => Future.successful(None)
                 case Some(member) =>
                   member.memberObj_=(value)
@@ -255,10 +255,10 @@ class MembersApi @Inject() (val services: Services,
               }
           }
         else
-          services.orgService.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
+          services.org.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
             case None => Future.successful(None)
             case Some(org) =>
-              services.memberService.findByObject(org.identifier, person = false) flatMap {
+              services.member.findByObject(org.identifier, person = false) flatMap {
                 case None => Future.successful(None)
                 case Some(member) =>
                   member.memberObj_=(org)

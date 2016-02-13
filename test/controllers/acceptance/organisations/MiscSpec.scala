@@ -27,10 +27,10 @@ package controllers.acceptance.organisations
 import _root_.integration.PlayAppSpec
 import controllers.Organisations
 import helpers.OrganisationHelper
-import models.service.OrganisationService
+import models.repository.OrganisationRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.{ JsArray, Json }
-import stubs.{ FakeRuntimeEnvironment, FakeServices, FakeSecurity }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSecurity }
 
 class MiscSpec extends PlayAppSpec with IsolatedMockFactory {
 
@@ -46,10 +46,10 @@ class MiscSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestOrganisations extends Organisations(FakeRuntimeEnvironment)
-    with FakeServices with FakeSecurity
+    with FakeRepositories with FakeSecurity
 
   val controller = new TestOrganisations
-  val orgService = mock[OrganisationService]
+  val orgService = mock[OrganisationRepository]
   controller.orgService_=(orgService)
 
   def e1 = {

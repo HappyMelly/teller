@@ -25,7 +25,7 @@ package helpers
 
 import models.{ DateStamp, Organisation }
 import org.joda.time.DateTime
-import stubs.FakeServices
+import stubs.FakeRepositories
 
 class TestOrganisation(
   id: Option[Long],
@@ -44,7 +44,7 @@ class TestOrganisation(
   active: Boolean = true,
   dateStamp: DateStamp) extends Organisation(id, name, street1, street2, city,
   province, postCode, countryCode, vatNumber, registrationNumber, webSite,
-  blog, None, customerId, None, true, active, dateStamp) with FakeServices
+  blog, None, customerId, None, true, active, dateStamp) with FakeRepositories
 
 object OrganisationHelper {
 

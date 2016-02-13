@@ -26,7 +26,7 @@ package controllers.apiv2
 import javax.inject.Inject
 
 import models.brand.EventType
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
@@ -35,7 +35,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Event types API
  */
-class EventTypesApi @Inject() (val services: Services,
+class EventTypesApi @Inject() (val services: Repositories,
                                override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
   implicit val eventTypeWrites = new Writes[(EventType, String)] {
@@ -54,10 +54,10 @@ class EventTypesApi @Inject() (val services: Services,
    * @param code Brand code
    */
   def types(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.brandService.find(code) flatMap {
+    services.brand.find(code) flatMap {
       case None => jsonNotFound("Brand not found")
       case Some(brand) =>
-        services.eventTypeService.findByBrand(brand.identifier) flatMap { eventTypes =>
+        services.eventType.findByBrand(brand.identifier) flatMap { eventTypes =>
           jsonOk(Json.toJson(eventTypes.map(x => (x, code))))
         }
     }

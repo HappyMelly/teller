@@ -26,7 +26,7 @@ package controllers.apiv2
 import javax.inject.Inject
 
 import models._
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.data.Form
@@ -40,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Evaluations API
  */
-class EvaluationsApi @Inject() (val services: Services,
+class EvaluationsApi @Inject() (val services: Repositories,
                                 override val messagesApi: MessagesApi,
                                 val email: EmailComponent) extends ApiAuthentication(services, messagesApi) {
 
@@ -119,8 +119,8 @@ class EvaluationsApi @Inject() (val services: Services,
       },
       evaluation ⇒ {
         (for {
-          mayBeEvaluation <- services.evaluationService.findByAttendee(evaluation.attendeeId)
-          attendee <- services.attendeeService.find(evaluation.attendeeId, evaluation.eventId)
+          mayBeEvaluation <- services.evaluation.findByAttendee(evaluation.attendeeId)
+          attendee <- services.attendee.find(evaluation.attendeeId, evaluation.eventId)
         } yield (mayBeEvaluation, attendee)) flatMap {
           case (Some(existingEvaluation), _) =>
             val json = Json.toJson(new APIError(ErrorCode.DuplicateObjectError, "error.evaluation.exist"))
@@ -147,7 +147,7 @@ class EvaluationsApi @Inject() (val services: Services,
     * @param confirmationId Confirmation unique id
    */
   def confirm(confirmationId: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
-    services.evaluationService.findByConfirmationId(confirmationId) flatMap {
+    services.evaluation.findByConfirmationId(confirmationId) flatMap {
       case None => jsonNotFound("Unknown evaluation")
       case Some(x) =>
         x.confirm(email, services)

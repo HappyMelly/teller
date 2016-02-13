@@ -25,21 +25,21 @@
 package services
 
 import models.{ SocialIdentity }
-import models.service.IdentityService
+import models.repository.IdentityRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable.Specification
 import securesocial.core._
 import securesocial.core.providers._
 import securesocial.core.services._
-import stubs.FakeServices
+import stubs.FakeRepositories
 
 class LoginIdentityServiceSpec extends Specification with IsolatedMockFactory {
 
-  class TestLoginIdentityService extends LoginIdentityService with FakeServices {
+  class TestLoginIdentityService extends LoginIdentityService with FakeRepositories {
     def callUserNames(identity: SocialIdentity) = userNames(identity)
   }
   val service = new TestLoginIdentityService
-  val userIdentityService = mock[IdentityService]
+  val userIdentityService = mock[IdentityRepository]
   service.identityService_=(userIdentityService)
 
   "Method 'userNames'" should {

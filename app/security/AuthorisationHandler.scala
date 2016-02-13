@@ -28,7 +28,7 @@ import be.objectify.deadbolt.core.models.Subject
 import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
 import controllers.routes
 import models.ActiveUser
-import models.service.{IServices, Services}
+import models.repository.{IRepositories, Repositories}
 import play.api.i18n.{MessagesApi, I18nSupport, Messages}
 import play.api.mvc.{Request, Result}
 import securesocial.core.SecureSocial
@@ -41,7 +41,7 @@ import scala.concurrent.Future
  */
 class AuthorisationHandler @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                                    val messagesApi: MessagesApi,
-                                                   val services: IServices)
+                                                   val services: IRepositories)
   extends DeadboltHandler
   with I18nSupport
   with SecureSocial {

@@ -26,7 +26,7 @@ package models.integration
 
 import integration.PlayAppSpec
 import models.brand.BrandFee
-import models.service.brand.BrandFeeService
+import models.repository.brand.BrandFeeRepository
 import org.joda.money.Money
 
 class BrandFeeServiceSpec extends PlayAppSpec {
@@ -44,7 +44,7 @@ class BrandFeeServiceSpec extends PlayAppSpec {
             BrandFee(None, brand, country, fee).insert()
         }
 
-      val service = new BrandFeeService
+      val service = new BrandFeeRepository
       val result = service.findByBrand(1L)
       result.length must_== 2
       result.exists(x ⇒ x.country == "RU" && x.fee == m1) must_== true

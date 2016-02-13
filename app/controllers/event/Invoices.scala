@@ -29,7 +29,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import controllers.{Activities, Security}
 import models.UserRole.Role
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -38,7 +38,7 @@ import services.TellerRuntimeEnvironment
   */
 class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
-                          val services: Services,
+                          val services: Repositories,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Activities
@@ -53,18 +53,18 @@ class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def update(id: Long) = AsyncSecuredEventAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.eventService.findWithInvoice(id) flatMap {
+      services.event.findWithInvoice(id) flatMap {
         case None => notFound("")
         case Some(view) =>
           EventForms.invoice.bindFromRequest.fold(
             formWithErrors ⇒ error(id, "Invoice data are wrong. Please try again"),
             invoiceData ⇒ {
               val (invoiceBy, number) = invoiceData
-              services.orgService.find(invoiceBy) flatMap {
+              services.org.find(invoiceBy) flatMap {
                 case None => notFound("Organisation not found")
                 case Some(_) =>
                   val invoice = view.invoice.copy(invoiceBy = Some(invoiceBy), number = number)
-                  services.eventInvoiceService.update(invoice)
+                  services.eventInvoice.update(invoice)
                   activity(view.event, user.person).updated.insert(services)
                   success(id, "Invoice data was successfully updated")
               }

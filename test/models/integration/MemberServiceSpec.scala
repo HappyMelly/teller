@@ -27,7 +27,7 @@ package models.integration
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.{ Member, OrgView, ProfileType, SocialProfile }
-import models.service.{ MemberService, OrganisationService }
+import models.repository.{ MemberRepository, OrganisationRepository }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }

@@ -32,7 +32,7 @@ import mail.reminder.EvaluationReminder
 import models.Activity
 import models.UserRole.Role
 import models.event.Attendee
-import models.service.Services
+import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
@@ -45,7 +45,7 @@ import services.integrations.EmailComponent
 class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
                           val email: EmailComponent,
-                          val services: Services,
+                          val services: Repositories,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Activities
@@ -73,8 +73,8 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
           redirect(controllers.routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
         requestData ⇒ {
           (for {
-            a <- services.attendeeService.findByEvents(List(event.identifier))
-            b <- services.brandService.get(event.brandId)
+            a <- services.attendee.findByEvents(List(event.identifier))
+            b <- services.brand.get(event.brandId)
           } yield (a, b)) flatMap { case (unfilteredAttendees, brand) =>
             val attendees = unfilteredAttendees.map(_._2).filter(a => requestData.attendeeIds.contains(a.identifier))
             if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {

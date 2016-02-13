@@ -24,7 +24,7 @@
 
 package models
 
-import models.service.{ContributionService, ProductService}
+import models.repository.{ContributionRepository, ProductRepository}
 import org.joda.time.DateTime
 import play.api.libs.Crypto
 

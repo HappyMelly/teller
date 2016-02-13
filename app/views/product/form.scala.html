@@ -9,7 +9,7 @@
         messages: Messages)
 
 @import helper.CSRF
-@import models.service.ProductService
+@import models.repository.ProductRepository
 @import views.ViewHelpers._
 
 @defining(if (title) "Product %s".format(title.get) else "Add product") { productName =>

@@ -26,7 +26,7 @@ package services
 import _root_.java.util.concurrent.TimeUnit
 
 import models._
-import models.service.IServices
+import models.repository.IRepositories
 import play.api.Logger
 import play.api.libs.json.JsObject
 import securesocial.core._
@@ -40,7 +40,7 @@ import scala.concurrent.{Await, Future}
 /**
  * Used by SecureSocial to look up and save authentication data.
  */
-class LoginIdentityService(services: IServices) extends UserService[ActiveUser] {
+class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser] {
 
   /**
    * Returns login identity if it exists, otherwise - None
@@ -51,12 +51,12 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    */
   def find(providerId: String, userId: String): Future[Option[BasicProfile]] = {
     if (providerId == UsernamePasswordProvider.UsernamePassword)
-      services.identityService.findByEmail(userId) map {
+      repos.identity.findByEmail(userId) map {
         case None => None
         case Some(identity) => Some(identity.profile)
       }
     else
-      services.identityService.findByUserId(userId, providerId) map {
+      repos.identity.findByUserId(userId, providerId) map {
         case None => None
         case Some(identity) => Some(identity.profile)
       }
@@ -91,7 +91,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     * @param providerId Provider identifier is not checked
     */
   def findByEmailAndProvider(email: String, providerId: String): Future[Option[BasicProfile]] =
-    services.identityService.findByEmail(email) map {
+    repos.identity.findByEmail(email) map {
       case None => None
       case Some(identity) => Some(identity.profile)
     }
@@ -102,7 +102,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     *
     * @param token The token to save
     */
-  def saveToken(token: MailToken): Future[MailToken] = services.mailTokenService.insert(token)
+  def saveToken(token: MailToken): Future[MailToken] = repos.mailToken.insert(token)
 
 
   /**
@@ -110,7 +110,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     *
     * @param token the token id
     */
-  def findToken(token: String): Future[Option[MailToken]] = services.mailTokenService.find(token)
+  def findToken(token: String): Future[Option[MailToken]] = repos.mailToken.find(token)
 
   /**
     * Deletes a token
@@ -118,12 +118,12 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
     * @param uuid the token id
     */
   def deleteToken(uuid: String): Future[Option[MailToken]] = Future.successful {
-    services.mailTokenService.delete(uuid)
+    repos.mailToken.delete(uuid)
     None
   }
 
   def deleteExpiredTokens(): Unit = {
-    services.mailTokenService.deleteExpiredTokens()
+    repos.mailToken.deleteExpiredTokens()
   }
 
   /**
@@ -133,13 +133,13 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    * @param to the profile that needs to be linked to
    */
   def link(user: ActiveUser, to: BasicProfile): Future[ActiveUser] = {
-    services.identityService.findByUserId(to.userId, to.providerId) flatMap {
+    repos.identity.findByUserId(to.userId, to.providerId) flatMap {
       case None =>
-        services.socialProfileService.find(user.person.identifier, ProfileType.Person).flatMap { value =>
+        repos.socialProfile.find(user.person.identifier, ProfileType.Person).flatMap { value =>
           val (account, social) = linkedEntities(to, value, user.account)
           val query = for {
-            _ <- services.userAccountService.update(account)
-            _ <- services.socialProfileService.update(social, ProfileType.Person)
+            _ <- repos.userAccount.update(account)
+            _ <- repos.socialProfile.update(social, ProfileType.Person)
           } yield ()
           query map { _ =>
             val person = user.person
@@ -158,7 +158,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    * @return returns an optional PasswordInfo
    */
   def passwordInfoFor(user: ActiveUser): Future[Option[PasswordInfo]] =
-    services.identityService.findByEmail(user.person.email) map {
+    repos.identity.findByEmail(user.person.email) map {
       case None => None
       case Some(identity) => Some(PasswordInfo(identity.hasher, identity.password))
     }
@@ -171,10 +171,10 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    * @return
    */
   def updatePasswordInfo(user: ActiveUser, info: PasswordInfo): Future[Option[BasicProfile]] = {
-    services.identityService.findByEmail(user.person.email) flatMap {
+    repos.identity.findByEmail(user.person.email) flatMap {
       case None => Future.successful(None)
       case Some(identity) =>
-        services.identityService.update(identity.copy(password = info.password, hasher = info.hasher)).map(_ => None)
+        repos.identity.update(identity.copy(password = info.password, hasher = info.hasher)).map(_ => None)
     }
   }
 
@@ -186,12 +186,12 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    */
   protected def createUser(profile: BasicProfile): Future[ActiveUser] = {
     if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
-      val futureIdentity = services.identityService.findByEmail(profile.userId) flatMap {
-        case Some(_) => services.identityService.update(PasswordIdentity.fromProfile(profile))
+      val futureIdentity = repos.identity.findByEmail(profile.userId) flatMap {
+        case Some(_) => repos.identity.update(PasswordIdentity.fromProfile(profile))
         case None =>
           Logger.info(s"Start of registration of a user with ${profile.userId} id")
-          services.registeringUserService.insert(profile.userId, profile.providerId)
-          services.identityService.insert(PasswordIdentity.fromProfile(profile))
+          repos.registeringUser.insert(profile.userId, profile.providerId)
+          repos.identity.insert(PasswordIdentity.fromProfile(profile))
       }
       futureIdentity.map(identity => user(identity))
     } else {
@@ -233,12 +233,12 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
    */
   protected def retrieveLoggedInUser(profile: BasicProfile): Future[ActiveUser] = {
     if (profile.providerId == UsernamePasswordProvider.UsernamePassword) {
-      services.identityService.findActiveUserByEmail(profile.userId) flatMap {
+      repos.identity.findActiveUserByEmail(profile.userId) flatMap {
         case Some(user) => Future.successful(user)
         case None =>
           (for {
-            existance <- services.registeringUserService.exists(profile.userId, profile.providerId)
-            identity <- services.identityService.findByEmail(profile.userId)
+            existance <- repos.registeringUser.exists(profile.userId, profile.providerId)
+            identity <- repos.identity.findByEmail(profile.userId)
           } yield (existance, identity)) map {
             case (false, _) => throw new AuthenticationException
             case (true, None) => throw new AuthenticationException
@@ -246,7 +246,7 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
           }
       }
     } else {
-      services.identityService.findActiveUser(profile.userId, profile.providerId) map {
+      repos.identity.findActiveUser(profile.userId, profile.providerId) map {
         case None => throw new AuthenticationException
         case Some(user) => user
       }
@@ -254,13 +254,13 @@ class LoginIdentityService(services: IServices) extends UserService[ActiveUser] 
   }
 
   protected def updatePassword(profile: BasicProfile): Future[ActiveUser] = {
-    services.identityService.findByEmail(profile.userId) map {
+    repos.identity.findByEmail(profile.userId) map {
       case None => throw new AuthenticationException
       case Some(identity) =>
-      services.identityService.update(identity.copy(password = profile.passwordInfo.get.password,
+      repos.identity.update(identity.copy(password = profile.passwordInfo.get.password,
         hasher = profile.passwordInfo.get.hasher))
     }
-    services.identityService.findActiveUserByEmail(profile.userId) map {
+    repos.identity.findActiveUserByEmail(profile.userId) map {
       case None => throw new AuthenticationException
       case Some(user) => user
     }

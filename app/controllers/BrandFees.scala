@@ -26,14 +26,14 @@ package controllers
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 import views.Countries
 
 class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
-                                        val services: Services,
+                                        val services: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
@@ -45,8 +45,8 @@ class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntime
   def index(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brandService.find(brandId)
-        fees <- services.feeService.findByBrand(brandId)
+        brand <- services.brand.find(brandId)
+        fees <- services.fee.findByBrand(brandId)
       } yield (brand, fees)) flatMap {
         case (None, _) => notFound("Brand not found")
         case (Some(brand), fees) =>

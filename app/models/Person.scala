@@ -25,7 +25,7 @@
 
 package models
 
-import models.service._
+import models.repository._
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
@@ -104,8 +104,8 @@ case class Person(
   /**
    * Returns a list of organisations this person is a member of
    */
-  def organisations(implicit services: Services): List[Organisation] = if (_organisations.isEmpty) {
-    val orgs = Await.result(services.personService.memberships(identifier), 3.seconds)
+  def organisations(implicit services: Repositories): List[Organisation] = if (_organisations.isEmpty) {
+    val orgs = Await.result(services.person.memberships(identifier), 3.seconds)
     organisations_=(orgs)
     _organisations.get
   } else {
@@ -127,8 +127,8 @@ case class Person(
   /**
    * Associates this person with given organisation.
    */
-  def addRelation(organisationId: Long, services: Services): Unit =
-    services.personService.addRelation(this.id.get, organisationId)
+  def addRelation(organisationId: Long, services: Repositories): Unit =
+    services.person.addRelation(this.id.get, organisationId)
 
   /**
    * Returns true if it is possible to grant log in access to this user.
@@ -140,8 +140,8 @@ case class Person(
    *
    * @param organisationId Organisation identifier
    */
-  def deleteRelation(organisationId: Long, services: Services): Unit =
-    services.personService.deleteRelation(this.id.get, organisationId)
+  def deleteRelation(organisationId: Long, services: Repositories): Unit =
+    services.person.deleteRelation(this.id.get, organisationId)
 
   /**
    * Returns identifier of the object
@@ -170,10 +170,10 @@ case class Person(
    * @param fee Amount of membership fee this person paid
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money, services: Services): Future[Member] = {
-    val m = services.memberService.insert(membership(funder, fee))
-    services.profileStrengthService.find(id.get, false).filter(_.isDefined) foreach { x ⇒
-      services.profileStrengthService.update(ProfileStrength.forMember(x.get))
+  def becomeMember(funder: Boolean, fee: Money, services: Repositories): Future[Member] = {
+    val m = services.member.insert(membership(funder, fee))
+    services.profileStrength.find(id.get, false).filter(_.isDefined) foreach { x ⇒
+      services.profileStrength.update(ProfileStrength.forMember(x.get))
     }
     m
   }
@@ -208,10 +208,10 @@ object Person {
 
   def cacheId(id: Long): String = s"signatures.$id"
 
-  def deletable(id: Long, services: Services): Future[Boolean] = for {
-    c <- services.contributionService.contributions(id, isPerson = true)
-    l <- services.licenseService.licensesWithBrands(id)
-    o <- services.personService.memberships(id)
+  def deletable(id: Long, services: Repositories): Future[Boolean] = for {
+    c <- services.contribution.contributions(id, isPerson = true)
+    l <- services.license.licensesWithBrands(id)
+    o <- services.person.memberships(id)
   } yield c.isEmpty && l.isEmpty && o.isEmpty
 
 

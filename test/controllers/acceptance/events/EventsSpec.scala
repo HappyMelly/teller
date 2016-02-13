@@ -26,8 +26,8 @@ package controllers.acceptance.events
 import _root_.integration.PlayAppSpec
 import controllers.Events
 import helpers.{EventHelper, OrganisationHelper}
-import models.service.event.EventInvoiceService
-import models.service.{EventService, OrganisationService}
+import models.repository.event.EventInvoiceRepository
+import models.repository.{EventRepository, OrganisationRepository}
 import models.{EventInvoice, EventView}
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -51,11 +51,11 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   class TestEvents extends Events(FakeRuntimeEnvironment)
     with FakeActivities
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestEvents
-  val eventService = mock[EventService]
+  val eventService = mock[EventRepository]
   controller.eventService_=(eventService)
 
   def e2 = {
@@ -75,10 +75,10 @@ class EventsSpec extends PlayAppSpec with IsolatedMockFactory {
     val invoice = EventInvoice(Some(1L), Some(id), 5L, None, None)
     val view = EventView(EventHelper.one, invoice)
     (services.eventService.findWithInvoice _) expects id returning Some(view)
-    val invoiceService = mock[EventInvoiceService]
+    val invoiceService = mock[EventInvoiceRepository]
     (invoiceService.update _) expects invoice.copy(invoiceBy = Some(6L), number = Some("31"))
     controller.eventInvoiceService_=(invoiceService)
-    val orgService = mock[OrganisationService]
+    val orgService = mock[OrganisationRepository]
     (services.orgService.find(_: Long)) expects 6L returning Some(OrganisationHelper.one)
     controller.orgService_=(orgService)
     val request = fakePostRequest().

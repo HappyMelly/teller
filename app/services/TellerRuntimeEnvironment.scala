@@ -26,7 +26,7 @@ package services
 
 import javax.inject.Inject
 
-import models.service.{IServices, Services}
+import models.repository.{IRepositories, Repositories}
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
 import play.twirl.api.{Html, Txt}
@@ -45,7 +45,7 @@ import scala.collection.immutable.ListMap
   */
 class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
                                           val email: EmailComponent,
-                                          val services: IServices) extends RuntimeEnvironment.Default {
+                                          val services: IRepositories) extends RuntimeEnvironment.Default {
   type U = ActiveUser
 
   override lazy val routes: RoutesService = new TellerRoutesService()

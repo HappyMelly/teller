@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.Certificate
 import models.UserRole.Role
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
@@ -42,7 +42,7 @@ import scala.concurrent.Future
 class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment,
                               override val messagesApi: MessagesApi,
                               val email: EmailComponent,
-                              val services: Services,
+                              val services: Repositories,
                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Files {
@@ -60,8 +60,8 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
         Future.successful(NotFound)
       } else {
         (for {
-          attendee <- services.attendeeService.find(attendeeId, eventId)
-          brand <- services.brandService.findWithCoordinators(event.brandId)
+          attendee <- services.attendee.find(attendeeId, eventId)
+          brand <- services.brand.findWithCoordinators(event.brandId)
         } yield (attendee, brand)) flatMap {
           case (None, _) => Future.successful(NotFound)
           case (_, None) => notFound("Brand not found")
@@ -70,7 +70,7 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
             val certificate = new Certificate(Some(issued), event, attendee, renew = true)
             certificate.generateAndSend(brand, user.person, email, services)
             val withCertificate = attendee.copy(certificate = Some(certificate.id), issued = Some(issued))
-            services.attendeeService.updateCertificate(withCertificate) flatMap { _ =>
+            services.attendee.updateCertificate(withCertificate) flatMap { _ =>
               jsonOk(Json.obj("certificate" -> certificate.id))
             }
         }

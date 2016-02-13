@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Material
-import models.service.Services
+import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{MessagesApi, I18nSupport, Messages}
@@ -37,7 +37,7 @@ import services.TellerRuntimeEnvironment
 
 class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
                            override val messagesApi: MessagesApi,
-                           val services: Services,
+                           val services: Repositories,
                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with I18nSupport {
@@ -60,7 +60,7 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def create(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.find(personId) flatMap {
+      services.person.find(personId) flatMap {
         case None => jsonNotFound(Messages("error.person.notFound"))
         case Some(person) =>
           val form = Form(tuple("brandId" -> longNumber, "type" -> nonEmptyText, "url" -> nonEmptyText))
@@ -68,7 +68,7 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
             error ⇒ jsonBadRequest("Link cannot be empty"),
             materialData ⇒ {
               val material = Material(None, personId, materialData._1, materialData._2, materialData._3)
-              services.personService.insertMaterial(Material.updateType(material)) flatMap { link =>
+              services.person.insertMaterial(Material.updateType(material)) flatMap { link =>
                 jsonOk(Json.toJson(link))
               }
             })
@@ -86,7 +86,7 @@ class Materials @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def remove(personId: Long, id: Long) = AsyncSecuredProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      services.personService.deleteMaterial(personId, id) flatMap { _ =>
+      services.person.deleteMaterial(personId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }

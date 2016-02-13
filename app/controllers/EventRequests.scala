@@ -5,7 +5,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
@@ -15,7 +15,7 @@ import services.TellerRuntimeEnvironment
   */
 class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
-                               val services: Services,
+                               val services: Repositories,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with BrandAware {
@@ -28,7 +28,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def details(brandId: Long, requestId: Long) = AsyncSecuredBrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
-      services.eventRequestService.find(requestId) flatMap {
+      services.eventRequest.find(requestId) flatMap {
         case None => jsonBadRequest("Event request not found")
         case Some(eventRequest) => ok(views.html.v2.eventRequest.details(eventRequest))
       }
@@ -41,7 +41,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user =>
-      services.eventRequestService.findByBrand(brandId) flatMap { requests =>
+      services.eventRequest.findByBrand(brandId) flatMap { requests =>
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           ok(views.html.v2.eventRequest.index(user, view.brand, brands, requests))
         } { (brand, brands) =>
@@ -58,10 +58,10 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param hashedId Hashed unique id
     */
   def unsubscribe(hashedId: String) = Action.async { implicit request ⇒
-    services.eventRequestService.find(hashedId) flatMap {
+    services.eventRequest.find(hashedId) flatMap {
       case None => notFound(views.html.v2.eventRequest.notfound())
       case Some(eventRequest) =>
-        services.eventRequestService.update(eventRequest.copy(unsubscribed = true)) flatMap { _ =>
+        services.eventRequest.update(eventRequest.copy(unsubscribed = true)) flatMap { _ =>
           ok(views.html.v2.eventRequest.unsubscribed())
         }
     }

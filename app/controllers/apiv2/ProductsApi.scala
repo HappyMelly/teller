@@ -28,7 +28,7 @@ import javax.inject.Inject
 
 import controllers.apiv2.json.ProductConverter
 import models.ProductView
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json._
 
@@ -37,7 +37,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Products API.
  */
-class ProductsApi @Inject() (val services: Services,
+class ProductsApi @Inject() (val services: Repositories,
                              override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi)
   with I18nSupport {
 
@@ -52,9 +52,9 @@ class ProductsApi @Inject() (val services: Services,
    */
   def product(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      p <- services.productService.find(id)
-      b <- services.productService.brands(id)
-      c <- services.contributionService.contributors(id)
+      p <- services.product.find(id)
+      b <- services.product.brands(id)
+      c <- services.contribution.contributors(id)
     } yield (p, b, c)) flatMap {
       case (None, _, _) => jsonNotFound("Product not found")
       case (Some(product), brands, contributors) =>
@@ -68,8 +68,8 @@ class ProductsApi @Inject() (val services: Services,
    */
   def products = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      products <- services.productService.findAll
-      withBrands <- services.productService.collection.brands(products)
+      products <- services.product.findAll
+      withBrands <- services.product.collection.brands(products)
     } yield withBrands) flatMap { products =>
       jsonOk(Json.toJson(products))
     }

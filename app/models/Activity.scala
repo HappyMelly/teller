@@ -23,7 +23,7 @@
  */
 package models
 
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 
@@ -56,7 +56,7 @@ abstract class BaseActivity {
   def becameSupporter: BaseActivity
 
   def description()(implicit messages: Messages): String
-  def insert(services: Services): BaseActivity
+  def insert(services: Repositories): BaseActivity
 }
 /**
  * An activity stream entry, with is essentially a triple of (subject, predicate, object), in the grammatical sense of the words,
@@ -126,10 +126,10 @@ case class Activity(id: Option[Long],
   override def made: Activity = this.copy(predicate = Activity.Predicate.Made)
   override def becameSupporter: Activity = this.copy(predicate = Activity.Predicate.BecameSupporter)
 
-  override def insert(services: Services): Activity = if (predicate == Activity.Predicate.None)
+  override def insert(services: Repositories): Activity = if (predicate == Activity.Predicate.None)
     throw new InvalidActivityPredicate
   else
-    Await.result(services.activityService.insert(this), 3.seconds)
+    Await.result(services.activity.insert(this), 3.seconds)
 }
 
 /**
@@ -206,7 +206,7 @@ object Activity {
     val Translation = "translation"
   }
 
-  def insert(subject: String, predicate: String)(implicit services: Services): Activity = {
+  def insert(subject: String, predicate: String)(implicit services: Repositories): Activity = {
     insert(0L, subject, predicate, None)
   }
 
@@ -217,16 +217,16 @@ object Activity {
    * @param predicate Action name
    * @param activityObject Action description
    */
-  def insert(subject: Person, predicate: String, activityObject: String)(implicit services: Services): Activity = {
+  def insert(subject: Person, predicate: String, activityObject: String)(implicit services: Repositories): Activity = {
     insert(subject.id.get, subject.fullName, predicate, Some(activityObject))
   }
 
-  def insert(subject: String, predicate: String, activityObject: String)(implicit services: Services): Activity = {
+  def insert(subject: String, predicate: String, activityObject: String)(implicit services: Repositories): Activity = {
     insert(0L, subject, predicate, Some(activityObject))
   }
 
   /** Returns new activity record */
-  def create(subject: String, predicate: String, activityObject: String)(implicit services: Services): Activity = {
+  def create(subject: String, predicate: String, activityObject: String)(implicit services: Repositories): Activity = {
     new Activity(None, 0L, subject, predicate, "null", 0L, Some(activityObject))
   }
 
@@ -234,10 +234,10 @@ object Activity {
    * Inserts a new activity stream entry.
    */
   private def insert(subjectId: Long, subject: String, predicate: String, activityObject: Option[String])(
-    implicit services: Services): Activity = {
+    implicit services: Repositories): Activity = {
 
     val activity = Activity(None, subjectId, subject, predicate, "null", 0L, activityObject)
-    Await.result(services.activityService.insert(activity), 3.seconds)
+    Await.result(services.activity.insert(activity), 3.seconds)
   }
 }
 

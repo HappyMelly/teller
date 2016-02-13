@@ -25,12 +25,12 @@ package models.integration
 
 import integration.PlayAppSpec
 import models.brand.EventType
-import models.service.brand.EventTypeService
+import models.repository.brand.EventTypeRepository
 import helpers.{ BrandHelper, PersonHelper }
 
 class EventTypeServiceSpec extends PlayAppSpec {
 
-  val service = new EventTypeService
+  val service = new EventTypeRepository
 
   override def setupDb() {
     PersonHelper.one().insert

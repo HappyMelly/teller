@@ -26,16 +26,16 @@ package controllers.unit
 import controllers.EventTypes
 import helpers.BrandHelper
 import models.brand.EventType
-import models.service.BrandService
-import models.service.brand.EventTypeService
+import models.repository.BrandRepository
+import models.repository.brand.EventTypeRepository
 import org.specs2.mutable._
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.http.Status._
-import stubs.{ FakeRuntimeEnvironment, FakeServices }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories }
 
 class EventTypesSpec extends Specification with IsolatedMockFactory {
 
-  class TestEventTypes extends EventTypes(FakeRuntimeEnvironment) with FakeServices {
+  class TestEventTypes extends EventTypes(FakeRuntimeEnvironment) with FakeRepositories {
 
     def callValidatedEventType(brandId: Long,
       value: EventType): Option[(String, String)] =
@@ -47,7 +47,7 @@ class EventTypesSpec extends Specification with IsolatedMockFactory {
   }
 
   val controller = new TestEventTypes
-  val eventTypeService = mock[EventTypeService]
+  val eventTypeService = mock[EventTypeRepository]
   controller.eventTypeService_=(eventTypeService)
   val eventType = EventType(Some(1L), 1L, "one", None, 8, false)
 

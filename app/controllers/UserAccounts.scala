@@ -30,11 +30,11 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role.Viewer
 import models._
-import models.service.Services
+import models.repository.IRepositories
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
 import securesocial.core.PasswordInfo
@@ -49,9 +49,9 @@ import scala.concurrent.{Await, Future}
  */
 class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                            override val messagesApi: MessagesApi,
-                                           val services: Services,
+                                           val repos: IRepositories,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with I18nSupport {
 
   val CurrentPassword = "currentPassword"
@@ -65,7 +65,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     mapping(
       "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(services.identityService.checkEmail(suppliedEmail), 10.seconds)
+        Await.result(repos.identity.checkEmail(suppliedEmail), 10.seconds)
       }),
       "password" -> nonEmptyText
     )((email, password) => (email, password))((data: (String, String)) => Some(data._1, "")))
@@ -134,23 +134,23 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     * @param tokenId Token
     */
   def handleEmailChange(tokenId: String) = Action.async { implicit request =>
-    services.emailToken.find(tokenId) flatMap {
+    repos.emailToken.find(tokenId) flatMap {
       case None => redirect(routes.Dashboard.index(), "error" -> "Requested token is not found")
       case Some(token) =>
         if (token.isExpired) {
           redirect(routes.Dashboard.index(), "error" -> "The confirmation link has expired")
         } else {
           (for {
-            i <- services.identityService.findByUserId(token.userId)
-            p <- services.personService.find(token.userId)
+            i <- repos.identity.findByUserId(token.userId)
+            p <- repos.person.find(token.userId)
           } yield (i, p)) flatMap {
             case (None, _) => redirect(routes.Dashboard.index(), "error" -> "Internal error. Please contact support")
             case (_, None) => redirect(routes.Dashboard.index(), "error" -> "Internal error. Please contact support")
             case (Some(identity), Some(person)) =>
-              services.identityService.delete(identity.email)
-              services.identityService.insert(identity.copy(email = token.email))
-              services.emailToken.delete(tokenId)
-              services.personService.update(person.copy(email = token.email))
+              repos.identity.delete(identity.email)
+              repos.identity.insert(identity.copy(email = token.email))
+              repos.emailToken.delete(tokenId)
+              repos.person.update(person.copy(email = token.email))
               val msg = "Your email was successfully updated. Please log in with your new email"
               redirect(routes.LoginPage.logout(success = Some(msg)))
           }
@@ -166,7 +166,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
       newPasswordForm.bindFromRequest().fold(
         errors => badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
         password => {
-          services.identityService.checkEmail(user.person.email) flatMap {
+          repos.identity.checkEmail(user.person.email) flatMap {
             case true =>
               createPasswordInfo(user, env.currentHasher.hash(password)) flatMap { account =>
                 env.mailer.sendEmail("New password", user.person.email,
@@ -195,7 +195,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
       form.fold(
         errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm)),
         info => {
-          services.identityService.findByEmail(user.person.email) flatMap { maybeIdentity =>
+          repos.identity.findByEmail(user.person.email) flatMap { maybeIdentity =>
             val response = for (
               identity <- maybeIdentity;
               pinfo <- identity.profile.passwordInfo;
@@ -203,7 +203,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             ) yield {
               val now = DateTime.now
               val token = EmailToken(UUID.randomUUID().toString, info._1, user.person.identifier, now, now.plusMinutes(60))
-              services.emailToken.insert(token)
+              repos.emailToken.insert(token)
               env.mailer.sendEmail("Confirm your email", info._1,
                 (None, Some(mail.templates.password.html.confirmEmail(
                   user.person.firstName,
@@ -245,7 +245,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def switchRole = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.account.copy(activeRole = !user.account.activeRole)
-      services.userAccountService.updateActiveRole(user.account.personId, account.activeRole)
+      repos.userAccount.updateActiveRole(user.account.personId, account.activeRole)
       env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
         _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.member))
       }).flatMap(_ => Future.successful(Redirect(request.headers("referer"))) )
@@ -261,13 +261,13 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     val email = user.person.email
     val identity = PasswordIdentity(user.person.id, email, info.password, Some(user.person.firstName),
       Some(user.person.lastName), info.hasher)
-    services.identityService.findByEmail(email) flatMap {
-      case None => services.identityService.insert(identity)
+    repos.identity.findByEmail(email) flatMap {
+      case None => repos.identity.insert(identity)
       case Some(existingIdentity) =>
-        services.registeringUserService.delete(email, UsernamePasswordProvider.UsernamePassword)
-        services.identityService.update(identity)
+        repos.registeringUser.delete(email, UsernamePasswordProvider.UsernamePassword)
+        repos.identity.update(identity)
     }
-    services.userAccountService.update(user.account.copy(byEmail = true))
+    repos.userAccount.update(user.account.copy(byEmail = true))
   }
 
 }

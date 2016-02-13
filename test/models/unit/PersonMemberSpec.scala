@@ -25,12 +25,12 @@ package models.unit
 
 import helpers.{ MemberHelper, PersonHelper }
 import models._
-import models.service.{ ProfileStrengthService, MemberService }
+import models.repository.{ ProfileStrengthRepository, MemberRepository }
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.FakeServices
+import stubs.FakeRepositories
 
 class PersonMemberSpec extends Specification {
 
@@ -39,7 +39,7 @@ class PersonMemberSpec extends Specification {
     lastName: String) extends Person(id, firstName, lastName, "test@test.com", None,
     Photo.empty, false, 1L, None, None, None, None, None, false, true,
     DateStamp(DateTime.now(), "", DateTime.now(), ""))
-      with FakeServices {
+      with FakeRepositories {
 
     def callMembership(funder: Boolean, fee: Money): Member =
       membership(funder, fee)
@@ -74,7 +74,7 @@ class PersonMemberSpec extends Specification {
     lastName: String) extends Person(id, firstName, lastName, "test@test.com", None,
     Photo.empty, false, 1L, None, None, None, None, None, false, true,
     DateStamp(DateTime.now(), "", DateTime.now(), ""))
-      with FakeServices {
+      with FakeRepositories {
 
     /**
      * We need to override 'membership' function to remove ambiguity of
@@ -96,8 +96,8 @@ class PersonMemberSpec extends Specification {
     val fee = Money.parse("EUR 200")
     val member = person.membership(true, fee)
     "the membership data should be saved to database" in new MockContext {
-      val memberService = mock[MemberService]
-      val profileStrengthService = mock[ProfileStrengthService]
+      val memberService = mock[MemberRepository]
+      val profileStrengthService = mock[ProfileStrengthRepository]
       (services.profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning None
       //the line of interest
       (services.memberService.insert _) expects member returning member
@@ -108,8 +108,8 @@ class PersonMemberSpec extends Specification {
     }
     "additional profile strength steps should be added" in new MockContext {
       val profileStength = ProfileStrength.empty(1L, false)
-      val profileStrengthService = mock[ProfileStrengthService]
-      val memberService = mock[MemberService]
+      val profileStrengthService = mock[ProfileStrengthRepository]
+      val memberService = mock[MemberRepository]
       (services.memberService.insert _) expects member returning member
       (services.profileStrengthService.find(_: Long, _: Boolean)) expects (1L, false) returning Some(profileStength)
       //the line of interest

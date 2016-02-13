@@ -5,7 +5,7 @@ import javax.inject.Inject
 import controllers.routes
 import models._
 import models.event.Attendee
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
 import services.integrations._
 
@@ -15,24 +15,24 @@ import scala.concurrent.Future
 /**
  * Contains methods for notifying Teller users about their evaluations
  */
-class EvaluationReminder @Inject() (val email: EmailComponent, val services: Services) extends Integrations {
+class EvaluationReminder @Inject() (val email: EmailComponent, val services: Repositories) extends Integrations {
 
   /**
    * Sends evaluation and confirmation requests to participants of events
    * on the first, the thirds and the sevenths days after the event
    */
-  def sendToAttendees() = services.brandService.findAll map { brands =>
+  def sendToAttendees() = services.brand.findAll map { brands =>
     brands.foreach { brand ⇒
       if (brand.evaluationUrl.isDefined) {
         val today = LocalDate.now().toDate.getTime
-        val unfilteredEvents = services.eventService.findByParameters(brandId = brand.id, future = Some(false))
+        val unfilteredEvents = services.event.findByParameters(brandId = brand.id, future = Some(false))
         val events = unfilteredEvents.map(_.filter(_.followUp).filter { event =>
           val duration = (new Duration(event.schedule.end.toDate.getTime, today)).getStandardDays
           duration == 1 || duration == 3 || duration == 7
         }.map(_.id.get))
         val attendees = for {
           e <- events
-          a <- services.evaluationService.findEvaluationsByEvents(e)
+          a <- services.evaluation.findEvaluationsByEvents(e)
         } yield a
         attendees.map(_.filter(_.evaluation.isEmpty).foreach { view =>
           val welcomeMsg = s"Hi ${view.attendee.firstName},"

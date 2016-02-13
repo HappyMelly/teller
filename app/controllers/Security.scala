@@ -28,7 +28,7 @@ import _root_.services.TellerRuntimeEnvironment
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import models.UserRole.Role._
-import models.service.Services
+import models.repository.{IRepositories, Repositories}
 import models.{ActiveUser, UserAccount, UserRole}
 import play.api.i18n.MessagesApi
 import play.api.mvc._
@@ -44,7 +44,7 @@ import scala.concurrent.Future
 class Security(deadbolt: DeadboltActions,
                handlers: HandlerCache,
                actionBuilder: ActionBuilders,
-               services: Services)
+               services: IRepositories)
               (val messagesApi: MessagesApi, override implicit val env: TellerRuntimeEnvironment)
   extends MailTokenBasedOperations with AsyncController {
 
@@ -128,7 +128,7 @@ class Security(deadbolt: DeadboltActions,
   def AsyncSecuredEvaluationAction(roles: List[UserRole.Role.Role], evaluationId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      services.eventService.findByEvaluation(evaluationId) flatMap {
+      services.event.findByEvaluation(evaluationId) flatMap {
         case None => notFound("Evaluation not found")
         case Some(event) =>
           eventManager(user.account, roles, event) flatMap {
@@ -149,7 +149,7 @@ class Security(deadbolt: DeadboltActions,
   def AsyncSecuredEventAction(roles: List[UserRole.Role.Role], eventId: Long)(
     f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      services.eventService.find(eventId) flatMap {
+      services.event.find(eventId) flatMap {
         case None => notFound("Event not found")
         case Some(event) =>
           eventManager(user.account, roles, event) flatMap {
@@ -240,7 +240,7 @@ class Security(deadbolt: DeadboltActions,
   protected def eventManager(account: UserAccount,
                              roles: List[UserRole.Role.Role], event: models.Event): Future[Boolean] = {
     if (account.isCoordinatorNow && roles.contains(UserRole.Role.Coordinator))
-      services.brandService.isCoordinator(event.brandId, account.personId)
+      services.brand.isCoordinator(event.brandId, account.personId)
     else if (account.isFacilitatorNow && roles.contains(UserRole.Role.Facilitator))
       Future.successful(event.isFacilitator(account.personId, services))
     else

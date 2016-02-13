@@ -27,15 +27,15 @@ package controllers.unit
 import controllers.{ Membership, PaymentData }
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import models.{ Organisation, Person }
-import models.service.OrganisationService
+import models.repository.OrganisationRepository
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.{ FakeRuntimeEnvironment, FakeServices }
+import stubs.{ FakeRuntimeEnvironment, FakeRepositories }
 
 class MembershipSpec extends Specification {
 
   class TestMembership() extends Membership(FakeRuntimeEnvironment)
-      with FakeServices {
+      with FakeRepositories {
 
     def call(data: PaymentData, person: Person, org: Option[Organisation]) = {
       validatePaymentData(data, person, org)
@@ -76,7 +76,7 @@ class MembershipSpec extends Specification {
       val person = PersonHelper.one()
       person.organisations_=(List())
       val org = OrganisationHelper.one
-      val orgService = mock[OrganisationService]
+      val orgService = mock[OrganisationRepository]
       (services.orgService.member _).expects(*).returning(None)
       org.orgService_=(orgService)
 

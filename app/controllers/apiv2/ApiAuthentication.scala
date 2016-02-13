@@ -26,7 +26,7 @@ package controllers.apiv2
 
 import controllers.AsyncController
 import models.admin.ApiToken
-import models.service.Services
+import models.repository.Repositories
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.i18n.MessagesApi
@@ -38,7 +38,7 @@ import scala.concurrent.Future
 /**
  * Provides token-based authentication for API actions.
  */
-class ApiAuthentication(services: Services,
+class ApiAuthentication(services: Repositories,
                         val messagesApi: MessagesApi) extends AsyncController {
 
   val ApiTokenParam = "api_token"
@@ -55,7 +55,7 @@ class ApiAuthentication(services: Services,
         Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
           authorize(readWrite, token)(f)
         } getOrElse {
-          services.apiTokenService.find(value) flatMap {
+          services.apiToken.find(value) flatMap {
             case None => jsonUnauthorized
             case Some(token) => authorize(readWrite, token)(f)
           }

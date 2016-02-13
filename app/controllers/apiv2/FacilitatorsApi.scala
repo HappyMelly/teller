@@ -32,7 +32,7 @@ import controllers.apiv2.json.PersonConverter
 import controllers.brand.Badges
 import models._
 import models.brand.Badge
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -44,7 +44,7 @@ import scala.concurrent.Future
 /**
  * Facilitators API
  */
-class FacilitatorsApi @Inject() (val services: Services,
+class FacilitatorsApi @Inject() (val services: Repositories,
                                  override val messagesApi: MessagesApi)
   extends ApiAuthentication(services, messagesApi) {
 
@@ -75,15 +75,15 @@ class FacilitatorsApi @Inject() (val services: Services,
    * @param code Brand code
    */
   def facilitators(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.brandService.find(code) flatMap {
+    services.brand.find(code) flatMap {
       case None => jsonNotFound("Brand not found")
       case Some(brand) =>
         (for {
-          f <- services.licenseService.licensees(brand.identifier, LocalDate.now())
-          data <- services.facilitatorService.findByBrand(brand.identifier)
-          c <- services.facilitatorService.countries(f.map(_.identifier))
-          l <- services.facilitatorService.languages(f.map(_.identifier))
-          a <- services.addressService.find(f.map(_.addressId))
+          f <- services.license.licensees(brand.identifier, LocalDate.now())
+          data <- services.facilitator.findByBrand(brand.identifier)
+          c <- services.facilitator.countries(f.map(_.identifier))
+          l <- services.facilitator.languages(f.map(_.identifier))
+          a <- services.address.find(f.map(_.addressId))
         } yield facilitatorsSummary(f, c, l, a, data)) flatMap { summaries =>
           val collator = Collator.getInstance(Locale.ENGLISH)
           val ord = new Ordering[String] {
@@ -186,13 +186,13 @@ class FacilitatorsApi @Inject() (val services: Services,
     implicit request ⇒ implicit token ⇒
       val mayBePerson = try {
         val id = identifier.toLong
-        services.personService.findComplete(id)
+        services.person.findComplete(id)
       } catch {
-        case e: NumberFormatException ⇒ services.personService.find(URLDecoder.decode(identifier, "ASCII"))
+        case e: NumberFormatException ⇒ services.person.find(URLDecoder.decode(identifier, "ASCII"))
       }
       val view = (for {
         person <- mayBePerson
-        brand <- code.map(value => services.brandService.find(value)).getOrElse(Future.successful(None))
+        brand <- code.map(value => services.brand.find(value)).getOrElse(Future.successful(None))
       } yield (person, brand)) flatMap {
         case (None, _) => Future.successful(None)
         case (Some(person), None) => withoutBrandData(person).map(value => Some(value))
@@ -235,9 +235,9 @@ class FacilitatorsApi @Inject() (val services: Services,
     */
   protected def withoutBrandData(person: Person) = {
     (for {
-      e <- services.personService.endorsements(person.identifier)
-      m <- services.personService.materials(person.identifier)
-      l <- services.licenseService.activeLicenses(person.identifier)
+      e <- services.person.endorsements(person.identifier)
+      m <- services.person.materials(person.identifier)
+      l <- services.license.activeLicenses(person.identifier)
     } yield (e, m, l)) map { case (endorsements, materials, licenses) =>
       val filteredEndorsements = endorsements.filter(_.brandId == 0)
       val filteredMaterials = materials.filter(_.brandId == 0)
@@ -253,11 +253,11 @@ class FacilitatorsApi @Inject() (val services: Services,
     */
   protected def withBrandData(person: Person, brand: Brand) = {
     (for {
-      e <- services.personService.endorsements(person.identifier)
-      m <- services.personService.materials(person.identifier)
+      e <- services.person.endorsements(person.identifier)
+      m <- services.person.materials(person.identifier)
       f <- retrieveFacilitatorStat(brand, person.identifier)
-      b <- services.brandBadgeService.findByBrand(brand.identifier)
-      l <- services.licenseService.activeLicenses(person.identifier)
+      b <- services.brandBadge.findByBrand(brand.identifier)
+      l <- services.license.activeLicenses(person.identifier)
     } yield (e, m, f, b, l)) map { case (endorsements, materials, facilitator, badges, licenses) =>
       val urls = badgeUrls(badges, facilitator.badges)
       val filteredMaterials = materials.filter(_.brandId == 0) ::: materials.filter(_.brandId == brand.identifier)
@@ -286,7 +286,7 @@ class FacilitatorsApi @Inject() (val services: Services,
    * @param personId Person identifier
    */
   protected def retrieveFacilitatorStat(brand: Brand, personId: Long): Future[Facilitator] = {
-    services.facilitatorService.find(brand.identifier, personId) map {
+    services.facilitator.find(brand.identifier, personId) map {
       case None => Facilitator(None, personId, brand.identifier)
       case Some(facilitator) => facilitator
     }

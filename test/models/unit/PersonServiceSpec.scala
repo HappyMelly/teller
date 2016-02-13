@@ -26,7 +26,7 @@ package models.unit
 
 import helpers._
 import models.{ Person, ProfileStrength, CompletionStep }
-import models.service.{ PersonService, ProfileStrengthService }
+import models.repository.{ PersonRepository, ProfileStrengthRepository }
 import org.specs2.mutable._
 import org.scalamock.specs2.{ IsolatedMockFactory, MockContext }
 import play.api.libs.json._
@@ -34,14 +34,14 @@ import stubs._
 
 class PersonServiceSpec extends Specification with IsolatedMockFactory {
 
-  class TestPersonService extends PersonService with FakeServices {
+  class TestPersonRepository extends PersonRepository with FakeRepositories {
 
     def callUpdateProfileStrength(person: Person): Unit =
       updateProfileStrength(person)
   }
 
-  val service = new TestPersonService
-  val profileStrengthService = mock[ProfileStrengthService]
+  val service = new TestPersonRepository
+  val profileStrengthService = mock[ProfileStrengthRepository]
   service.profileStrengthService_=(profileStrengthService)
 
   override def is = s2"""

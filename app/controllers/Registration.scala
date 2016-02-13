@@ -28,7 +28,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
 import models.payment.{Payment, PaymentException, RequestException}
-import models.service.Services
+import models.repository.Repositories
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.DateTime
@@ -85,7 +85,7 @@ case class AuthenticationInfo(email: String, password: String)
  */
 class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                            override val messagesApi: MessagesApi,
-                                           val services: Services,
+                                           val services: Repositories,
                                            val email: Email,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
@@ -102,7 +102,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     "lastName" -> nonEmptyText,
     "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
       import scala.concurrent.duration._
-      Await.result(services.identityService.checkEmail(suppliedEmail), 10.seconds)
+      Await.result(services.identity.checkEmail(suppliedEmail), 10.seconds)
     }),
     "country" -> nonEmptyText.verifying(
       "error.unknown_country",
@@ -120,7 +120,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     mapping(
       "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(services.identityService.checkEmail(suppliedEmail), 10.seconds)
+        Await.result(services.identity.checkEmail(suppliedEmail), 10.seconds)
       }),
       "password" ->
         tuple(
@@ -281,10 +281,10 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   def charge = AsyncSecuredRestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
-        services.personService.insert(unregisteredPerson(userData, user)) flatMap { person =>
+        services.person.insert(unregisteredPerson(userData, user)) flatMap { person =>
           val futureOrg = if (userData.org) {
             val profile = SocialProfile(0, ProfileType.Organisation)
-            services.orgService.insert(OrgView(unregisteredOrg(userData), profile)).map(x => Some(x.org))
+            services.org.insert(OrgView(unregisteredOrg(userData), profile)).map(x => Some(x.org))
           } else {
             Future.successful(None)
           }
@@ -298,11 +298,11 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                   }
                   val customerId = subscribe(person, org, data)
                   org map { x ⇒
-                    services.orgService.update(x.copy(customerId = Some(customerId), active = true))
-                    services.personService.update(person.copy(active = true))
+                    services.org.update(x.copy(customerId = Some(customerId), active = true))
+                    services.person.update(person.copy(active = true))
                     person.addRelation(x.id.get, services)
                   } getOrElse {
-                    services.personService.update(person.copy(customerId = Some(customerId), active = true))
+                    services.person.update(person.copy(customerId = Some(customerId), active = true))
                   }
                   val fee = Money.of(EUR, data.fee)
                   val futureMember = org map { x ⇒
@@ -387,16 +387,16 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                                   providerId: String,
                                   person: Person,
                                   member: Member)(implicit request: RequestHeader) = {
-    val futureInserted = services.userAccountService.insert(account(person, id, providerId))
+    val futureInserted = services.userAccount.insert(account(person, id, providerId))
     if (providerId == UsernamePasswordProvider.UsernamePassword) {
       Logger.info(s"End of registration of a user with ${id} id")
-      services.registeringUserService.delete(id, providerId)
-      services.identityService.findByEmail(id) flatMap {
+      services.registeringUser.delete(id, providerId)
+      services.identity.findByEmail(id) flatMap {
         case None =>
           Logger.error(s"$id wasn't found in PasswordIdentity table on the final stage of registration")
           throw new RuntimeException("Internal error. Please contact support")
         case Some(identity) =>
-          services.identityService.update(identity.copy(userId = person.id,
+          services.identity.update(identity.copy(userId = person.id,
             firstName = Some(person.firstName),
             lastName = Some(person.lastName)))
       }
@@ -498,7 +498,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    * @param org Organisation
    */
   private def clean(person: Person, org: Option[Organisation]) = {
-    services.personService.delete(person)
-    org foreach { x ⇒ services.orgService.delete(x.id.get) }
+    services.person.delete(person)
+    org foreach { x ⇒ services.org.delete(x.id.get) }
   }
 }

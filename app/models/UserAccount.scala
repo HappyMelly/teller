@@ -25,7 +25,7 @@
 package models
 
 import be.objectify.deadbolt.core.models.{Permission, Subject}
-import models.service.Services
+import models.repository.Repositories
 import play.libs.Scala
 
 import scala.collection.JavaConversions._
