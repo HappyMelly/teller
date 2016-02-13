@@ -45,6 +45,8 @@ resolvers += "Kaliber Internal Repository" at "https://jars.kaliber.io/artifacto
 
 resolvers += "Spy Repository" at "http://files.couchbase.com/maven2"
 
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+
 routesImport += "binders._"
 
 herokuAppName in Compile := Map(
