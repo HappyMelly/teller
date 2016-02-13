@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -28,6 +28,7 @@ import models.database.UserAccountTable
 import models.{Person, UserAccount}
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import securesocial.core.providers.{LinkedInProvider, GoogleProvider, TwitterProvider, FacebookProvider}
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,7 +47,23 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
     db.run(accounts.filter(_.personId === personId).delete)
 
   /**
+    * Returns user account for the given remote user id and profile if exists
+    * @param remoteUserId Remote user id
+    * @param profileId Profile identifier e.g. facebook, google, etc
+    */
+  def find(remoteUserId: String, profileId: String): Future[Option[UserAccount]] = {
+    val query = profileId match {
+      case FacebookProvider.Facebook => accounts.filter(_.facebook === remoteUserId)
+      case TwitterProvider.Twitter => accounts.filter(_.twitter === remoteUserId)
+      case GoogleProvider.Google => accounts.filter(_.google === remoteUserId)
+      case LinkedInProvider.LinkedIn => accounts.filter(_.linkedin === remoteUserId)
+    }
+    db.run(query.result).map(_.headOption)
+  }
+
+  /**
     * Returns an account for the given person if exists
+ *
     * @param personId Person identifier
     */
   def findByPerson(personId: Long): Future[Option[UserAccount]] =
@@ -54,6 +71,7 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
 
   /**
    * Inserts the given account to database
+ *
    * @param account Account object
    * @return The given account with updated id
    */
@@ -61,6 +79,7 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
 
   /**
     * Updates the given account in database
+ *
     * @param account User account
     */
   def update(account: UserAccount) = db.run(userAccountActions.update(account)).map(_ => account)

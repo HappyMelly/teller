@@ -6,6 +6,7 @@
         request: RequestHeader,
         env: securesocial.core.RuntimeEnvironment)
 
+@import securesocial.core.providers._
 @import views.Countries
 @import views.ViewHelpersV2._
 
@@ -47,48 +48,40 @@
             <div class="col-md-10">
                 <div class="b-connect js-social-connect">
                     @defining(Some(routes.People.edit(id).url + "#profiles")) { redirectTo =>
-                        <div class="b-connect-i type-tw" data-social="twitter"
-                            data-url="@env.routes.authenticationUrl("twitter", redirectTo)">
+                        <div class="b-connect-i type-tw @if(account.twitter.nonEmpty){state-complete}"
+                            data-social="@TwitterProvider.Twitter"
+                            data-url="@env.routes.authenticationUrl(TwitterProvider.Twitter, redirectTo)">
                             <i class="b-connect-i__img"></i>
                             <a href="#" class="btn b-connect-i__btn" data-social-connect>
-                                @account.twitter.map { _ =>
-                                    <span class="text">Disconnect</span>
-                                }.getOrElse {
-                                    <span class="text">Connect</span>
-                                }
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
                             </a>
                         </div>
-                        <div class="b-connect-i type-fb" data-social="facebook"
-                            data-url="@env.routes.authenticationUrl("facebook", redirectTo)">
+                        <div class="b-connect-i type-fb @if(account.facebook.nonEmpty){state-complete}"
+                            data-social="@FacebookProvider.Facebook"
+                            data-url="@env.routes.authenticationUrl(FacebookProvider.Facebook, redirectTo)">
                             <i class="b-connect-i__img type-fb"></i>
                             <a href="#" class="btn b-connect-i__btn" data-social-connect>
-                                @account.facebook.map { _ =>
-                                    <span class="text">Disconnect</span>
-                                }.getOrElse {
-                                    <span class="text">Connect</span>
-                                }
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
                             </a>
                         </div>
-                        <div class="b-connect-i type-linkedin" data-social="linkedin"
-                            data-url="@env.routes.authenticationUrl("linkedin", redirectTo)">
+                        <div class="b-connect-i type-linkedin @if(account.linkedin.nonEmpty){state-complete}"
+                            data-social="@LinkedInProvider.LinkedIn"
+                            data-url="@env.routes.authenticationUrl(LinkedInProvider.LinkedIn, redirectTo)">
                             <i class="b-connect-i__img "></i>
                             <a href="#" class="btn b-connect-i__btn complete" data-social-connect>
-                                @account.linkedin.map { _ =>
-                                    <span class="text">Disconnect</span>
-                                }.getOrElse {
-                                    <span class="text">Connect</span>
-                                }
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
                             </a>
                         </div>
-                        <div class="b-connect-i type-gp" data-social="googleplus"
-                            data-url="@env.routes.authenticationUrl("google", redirectTo)">
+                        <div class="b-connect-i type-gp @if(account.google.nonEmpty){state-complete} "
+                            data-social="@GoogleProvider.Google"
+                            data-url="@env.routes.authenticationUrl(GoogleProvider.Google, redirectTo)">
                             <i class="b-connect-i__img "></i>
                             <a href="#" class="btn b-connect-i__btn" data-social-connect>
-                                @account.google.map { _ =>
-                                    <span class="text">Disconnect</span>
-                                }.getOrElse {
-                                    <span class="text">Connect</span>
-                                }
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
                             </a>
                         </div>
                     }

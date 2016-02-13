@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,7 +21,6 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers
 
 import java.util.UUID
@@ -38,7 +37,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
 import securesocial.core.PasswordInfo
-import securesocial.core.providers.UsernamePasswordProvider
+import securesocial.core.providers._
 import securesocial.core.providers.utils.PasswordValidator
 import services.TellerRuntimeEnvironment
 
@@ -119,13 +118,38 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     * @return a future boolean
     */
   def checkCurrentPassword(suppliedPassword: String)(implicit user: ActiveUser): Future[Boolean] = {
-    env.userService.passwordInfoFor(user).map {
+    env.userService.passwordInfoFor(user) map {
       case Some(info) =>
-        env.passwordHashers.get(info.hasher).exists {
+        env.passwordHashers.get(info.hasher) exists {
           _.matches(info, suppliedPassword)
         }
       case None => false
     }
+  }
+
+  /**
+    * Disconnects social profile from the current account
+    * @param profileId Profile identifier
+    */
+  def disconnect(profileId: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request => implicit handler =>
+    implicit user =>
+      repos.socialProfile.find(user.person.identifier, ProfileType.Person) flatMap { profil =>
+        val (account, profile) = profileId match {
+          case FacebookProvider.Facebook => (user.account.copy(facebook = None), profil.copy(facebookUrl = None))
+          case GoogleProvider.Google ⇒ (user.account.copy(google = None), profil.copy(googlePlusUrl = None))
+          case LinkedInProvider.LinkedIn ⇒ (user.account.copy(linkedin = None), profil.copy(linkedInUrl = None))
+          case TwitterProvider.Twitter ⇒ (user.account.copy(twitter = None), profil.copy(twitterHandle = None))
+        }
+        val f = for {
+          _ <- repos.userAccount.update(account)
+          _ <- repos.socialProfile.update(profile, ProfileType.Person)
+          authenticator <- env.authenticatorService.fromRequest
+        } yield authenticator
+        f flatMap { authenticator =>
+          authenticator.get.updateUser(user.copy(account = account))
+          jsonSuccess(s"${profileId.capitalize} profile was disconnected from your account")
+        }
+      }
   }
 
   /**

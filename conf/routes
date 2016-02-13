@@ -257,6 +257,7 @@ POST          /url/:url/validate                                             con
 GET           /usage                                                         controllers.admin.Usage.index
 
 GET           /user/account                                                  controllers.UserAccounts.account
+POST          /user/disconnect/:profileId                                    controllers.UserAccounts.disconnect(profileId: String)
 POST          /user/newPassword                                              controllers.UserAccounts.handleNewPassword
 POST          /user/password                                                 controllers.UserAccounts.changePassword
 GET           /user/switch                                                   controllers.UserAccounts.switchRole
@@ -301,5 +302,5 @@ GET           /assets/*file                                                  con
 ## SecureSocial
 GET           /login                                                         controllers.LoginPage.login
 GET           /logout                                                        controllers.LoginPage.logout(error: Option[String] ?= None, success: Option[String] ?= None)
-GET           /authenticate/:provider                                        securesocial.controllers.ProviderController.authenticate(provider, redirectTo: Option[String])
-POST          /authenticate/:provider                                        securesocial.controllers.ProviderController.authenticateByPost(provider, redirectTo: Option[String])
+GET           /authenticate/:provider                                        controllers.security.ProviderController.authenticate(provider, redirectTo: Option[String])
+POST          /authenticate/:provider                                        controllers.security.ProviderController.authenticateByPost(provider, redirectTo: Option[String])

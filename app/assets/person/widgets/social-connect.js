@@ -29,21 +29,17 @@
     };
 
     PersonSocialConnect.prototype.setConnect = function($el){
-        //var self = this,
-        //    socialType = $el.data('social'),
-        //    authWindow = self.createWindow($el.data('url'));
-
         window.location = $el.data('url');
     };
 
     PersonSocialConnect.prototype.unSetConnect = function($el){
         var socialType = $el.data('social');
+        var url = jsRoutes.controllers.UserAccounts.disconnect(socialType).url;
 
-        $.post('/unsetSocialConntect', {
-            social: socialType
-        }, function(){
+        $.post(url, {}, function(data) {
             $el.removeClass('state-complete');
-        })
+            success(data.message);
+        }, "json")
     };
 
     PersonSocialConnect.prototype.toggleConnect = function($el){
@@ -55,7 +51,7 @@
     };
 
     PersonSocialConnect.prototype.createWindow = function(url){
-        var windowParams = "menubar=no,location=yes,resizable=yes,scrollbars=yes,status=no,width=500,height=300"
+        var windowParams = "menubar=no,location=yes,resizable=yes,scrollbars=yes,status=no,width=500,height=300";
 
         return window.open(url, "HMT_authorization", windowParams);
     };

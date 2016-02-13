@@ -38,7 +38,7 @@
               <script type="text/javascript">
                 noty({text: '@message', layout: 'bottom', theme: 'relax',
                   timeout: @if(alertType == "error") { false } else { 2000 },
-                  type: @if(alertType == "error") {'alert'} else {'@alertType'}});
+                  type: '@alertType' });
               </script>
             }
           }

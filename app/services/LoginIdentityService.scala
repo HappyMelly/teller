@@ -25,6 +25,7 @@ package services
 
 import _root_.java.util.concurrent.TimeUnit
 
+import controllers.security.LinkedAccountException
 import models._
 import models.repository.IRepositories
 import play.api.Logger
@@ -133,7 +134,7 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
    * @param to the profile that needs to be linked to
    */
   def link(user: ActiveUser, to: BasicProfile): Future[ActiveUser] = {
-    repos.identity.findByUserId(to.userId, to.providerId) flatMap {
+    repos.userAccount.find(to.userId, to.providerId) flatMap {
       case None =>
         repos.socialProfile.find(user.person.identifier, ProfileType.Person).flatMap { value =>
           val (account, social) = linkedEntities(to, value, user.account)
@@ -147,7 +148,7 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
             user.copy(account = account, person = person)
           }
         }
-      case Some(_) => throw new AuthenticationException
+      case Some(_) => Future.failed(new LinkedAccountException)
     }
   }
 

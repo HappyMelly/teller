@@ -41,7 +41,6 @@ class SocialProfileRepository(app: Application) extends HasDatabaseConfig[JdbcPr
   private val profiles = TableQuery[SocialProfiles]
 
   /**
-   * @TEST
    * @param objectId
    * @param objectType
    * @return
