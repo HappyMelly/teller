@@ -27,7 +27,7 @@ package models.integration
 import helpers.{ MemberHelper, OrganisationHelper }
 import integration.PlayAppSpec
 import models.{ Member, SocialProfile, ProfileType, OrgView }
-import models.service.{ OrganisationService, SocialProfileService }
+import models.repository.{ OrganisationRepository, SocialProfileRepository }
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{ DateTime, LocalDate }
@@ -40,7 +40,7 @@ class OrganisationServiceSpec extends PlayAppSpec with DataTables {
     add()
   }
 
-  val service = new OrganisationService
+  val service = new OrganisationRepository
 
   "Method findNonMembers" should {
     "return 4 non members" in {

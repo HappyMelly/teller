@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.event.Attendee
-import models.service.Services
+import models.repository.Repositories
 import models.{Event, License}
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.i18n.MessagesApi
@@ -47,7 +47,7 @@ import scala.util.Random
  */
 class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
-                            val services: Services,
+                            val services: Repositories,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with BrandAware {
@@ -72,7 +72,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
     *
     * @param brandId Brand identifier
    */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
+  def index(brandId: Long) = RestrictedAction(List(Facilitator, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
         ok(views.html.v2.statistics.index(user, view.brand, brands))
@@ -87,11 +87,11 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byFacilitators(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byFacilitators(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        licenses <- services.licenseService.findByBrand(brandId)
-        profiles <- services.profileStrengthService.find(licenses.map(_.licenseeId), false)
+        licenses <- services.license.findByBrand(brandId)
+        profiles <- services.profileStrength.find(licenses.map(_.licenseeId), false)
       } yield (licenses, profiles)) flatMap { case (licenses, profiles) =>
         val (joined, left) = calculatedJoinedLeftNumbers(licenses)
         val goodProfiles = profiles.filter(_.progress >= 80)
@@ -123,10 +123,10 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byEvents(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byEvents(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val actions = for {
-        events <- services.eventService.findByParameters(Some(brandId))
+        events <- services.event.findByParameters(Some(brandId))
         monthlyNumbers <- calculateLastMonthNumbers(events)
         cancelledEvents <- calculatedCanceledEventsNumbers(brandId)
       } yield (events, monthlyNumbers, cancelledEvents)
@@ -183,9 +183,9 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byCountries(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byCountries(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.eventService.findByParameters(Some(brandId), confirmed = Some(true), future = Some(false)) flatMap { events =>
+      services.event.findByParameters(Some(brandId), confirmed = Some(true), future = Some(false)) flatMap { events =>
         val perCountry = filterLastSixMonths(events).
           groupBy(_.location.countryCode).
           map(x ⇒ (Countries.name(x._1), x._2.length)).
@@ -211,9 +211,9 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param brandId Brand id
    */
-  def byParticipants(brandId: Long) = AsyncSecuredRestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
+  def byParticipants(brandId: Long) = RestrictedAction(List(Coordinator, Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.attendeeService.findByBrand(Some(brandId)) flatMap { results =>
+      services.attendee.findByBrand(Some(brandId)) flatMap { results =>
         val attendees = results.map(x => (x.attendee, x.event.schedule.start))
         val statsByRoles = attendees.
           filter(_._1.role.exists(_.nonEmpty)).
@@ -266,7 +266,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param brandId Brand identifier
    */
   protected def calculatedCanceledEventsNumbers(brandId: Long): Future[(Int, Int)] = {
-    services.eventCancellationService.findByBrands(List(brandId)) map { results =>
+    services.eventCancellation.findByBrands(List(brandId)) map { results =>
       val cancellations = results.filter(x => lastMonth.contains(x.start.toDate.getTime) ||
         lastMonth.contains(x.end.toDate.getTime))
       (cancellations.count(!_.free), cancellations.count(_.free))
@@ -292,7 +292,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def activityRangeNumbers(events: List[Event]): (Int, List[(Long, String, Int)], Int) = {
     val filtered = filterByActivityRange(events)
     val organizers = filtered.map(_.organizer.id).distinct.length
-    services.eventService.applyFacilitators(filtered)
+    services.event.applyFacilitators(filtered)
     val activeFacilitators = filtered.map(_.facilitators(services).map(_.id.get)).distinct.length
     (activeFacilitators, findTopFacilitators(filtered), organizers)
   }
@@ -344,7 +344,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param events List of events
    */
   protected def calculateNPS(events: List[Event]): Future[Float] = {
-    services.evaluationService.findByEvents(events.map(_.id.get)) map { evaluations =>
+    services.evaluation.findByEvents(events.map(_.id.get)) map { evaluations =>
       if (evaluations.nonEmpty) {
         val promoters = evaluations.count(_.impression >= 9)
         val detractors = evaluations.count(_.impression <= 6)

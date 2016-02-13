@@ -28,12 +28,12 @@ import _root_.integration.PlayAppSpec
 import helpers.{ EvaluationHelper, BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
-import models.service.{ ActivityService, EvaluationService, BrandService, EventService }
-import models.service.brand.EventTypeService
+import models.repository.{ ActivityRepository, EvaluationRepository, BrandRepository, EventRepository }
+import models.repository.brand.EventTypeRepository
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import services.integrations.Email
-import stubs.FakeServices
+import stubs.FakeRepositories
 
 class EventServiceSpec extends PlayAppSpec {
 
@@ -43,7 +43,7 @@ class EventServiceSpec extends PlayAppSpec {
     PersonHelper.make(Some(3L), "Three", "Tester").insert
     PersonHelper.make(Some(4L), "Four", "Tester").insert
     BrandHelper.one.insert
-    val service = new EventTypeService
+    val service = new EventTypeRepository
     service.insert(new EventType(None, 1L, "Type 1", None, 16, false))
     service.insert(new EventType(None, 1L, "Type 2", None, 16, false))
     EventHelper.addEvents(1L)
@@ -55,7 +55,7 @@ class EventServiceSpec extends PlayAppSpec {
     city = Some("spb"),
     startDate = Some(LocalDate.parse("2014-05-12")))
 
-  val service = new EventService
+  val service = new EventRepository
 
   "Method findByParameters" should {
     "return 6 events for default brand" in {

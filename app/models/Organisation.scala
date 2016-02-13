@@ -24,7 +24,7 @@
 
 package models
 
-import models.service.Services
+import models.repository.Repositories
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
@@ -65,12 +65,12 @@ case class Organisation(
    * @param userId Id of the user executing the action
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money, userId: Long, services: Services): Future[Member] = {
+  def becomeMember(funder: Boolean, fee: Money, userId: Long, services: Repositories): Future[Member] = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       renewal = true, since = LocalDate.now(),
       until = LocalDate.now().plusYears(1), existingObject = true,
       reason = None, created = DateTime.now(), userId, DateTime.now(), userId)
-    services.memberService.insert(m)
+    services.member.insert(m)
   }
 
   /**

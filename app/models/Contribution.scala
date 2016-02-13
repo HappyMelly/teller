@@ -24,7 +24,7 @@
 
 package models
 
-import models.service.ProductService
+import models.repository.ProductRepository
 
 /**
  * A contribution - an impact made by a person or an organisation to

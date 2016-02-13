@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import models.brand.BrandTestimonial
-import models.service.Services
+import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{MessagesApi, I18nSupport, Messages}
@@ -41,7 +41,7 @@ case class TestimonialFormData(content: String,
 
 class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                    override val messagesApi: MessagesApi,
-                                   val services: Services,
+                                   val services: Repositories,
                                    deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
@@ -61,18 +61,18 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
     "name" -> nonEmptyText,
     "company" -> optional(nonEmptyText))(TestimonialFormData.apply)(TestimonialFormData.unapply))
 
-  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.brandService.find(brandId) flatMap {
+  def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.brand.find(brandId) flatMap {
       case None => notFound(Messages("error.brand.notFound"))
       case Some(brand) ⇒ ok(views.html.v2.testimonial.form(user, brandId, form))
     }
   }
 
-  def edit(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def edit(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brandService.find(brandId)
-        testimonial <- services.brandService.findTestimonial(id)
+        brand <- services.brand.find(brandId)
+        testimonial <- services.brand.findTestimonial(id)
       } yield (brand, testimonial)) flatMap {
         case (None, _) => notFound(Messages("error.brand.notFound"))
         case (_, None) => notFound("Testimonial not found")
@@ -87,9 +87,9 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    *
    * @param brandId Brand identifier
    */
-  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brandService.find(brandId) flatMap {
+      services.brand.find(brandId) flatMap {
         case None => notFound(Messages("error.brand.notFound"))
         case Some(brand) =>
           form.bindFromRequest.fold(
@@ -98,7 +98,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
               val testimonial = BrandTestimonial(None, brandId,
                 testimonialData.content, testimonialData.name,
                 testimonialData.company)
-              services.brandService.insertTestimonial(testimonial) flatMap { _ =>
+              services.brand.insertTestimonial(testimonial) flatMap { _ =>
                 redirect(routes.Brands.details(brandId).url + "#testimonials")
               }
             })
@@ -114,9 +114,9 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def remove(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def remove(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brandService.deleteTestimonial(brandId, id) flatMap { _ =>
+      services.brand.deleteTestimonial(brandId, id) flatMap { _ =>
         jsonSuccess("Testimonial was successfully removed")
       }
   }
@@ -127,14 +127,14 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    * @param brandId Brand identifier
    * @param id Testimonial identifier
    */
-  def update(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def update(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       form.bindFromRequest.fold(
         error ⇒ badRequest(views.html.v2.testimonial.form(user, brandId, error)),
         testimonialData ⇒ {
           val testimonial = BrandTestimonial(Some(id), brandId, testimonialData.content, testimonialData.name,
             testimonialData.company)
-          services.brandService.updateTestimonial(testimonial) flatMap { _ =>
+          services.brand.updateTestimonial(testimonial) flatMap { _ =>
             redirect(routes.Brands.details(brandId).url + "#testimonials")
           }
         })

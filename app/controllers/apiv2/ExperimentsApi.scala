@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import controllers.Experiments
 import models.Experiment
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Experiments API
  */
-class ExperimentsApi @Inject() (val services: Services,
+class ExperimentsApi @Inject() (val services: Repositories,
                                 override val messagesApi: MessagesApi)
   extends ApiAuthentication(services, messagesApi) {
 
@@ -33,10 +33,10 @@ class ExperimentsApi @Inject() (val services: Services,
    */
   def experiments() = TokenSecuredAction(readWrite = false) { implicit request =>  implicit token =>
     (for {
-      experiments <- services.experimentService.findAll()
-      members <- services.memberService.find(experiments.map(_.memberId).distinct)
-      people <- services.personService.find(members.filter(_.person).map(_.objectId))
-      orgs <- services.orgService.find(members.filterNot(_.person).map(_.objectId))
+      experiments <- services.experiment.findAll()
+      members <- services.member.find(experiments.map(_.memberId).distinct)
+      people <- services.person.find(members.filter(_.person).map(_.objectId))
+      orgs <- services.org.find(members.filterNot(_.person).map(_.objectId))
     } yield (experiments, members, people, orgs)) flatMap { case (experiments, members, people, orgs) =>
       val filteredExperiments = experiments.sortBy(_.recordInfo.updated.toString).reverse
       jsonOk(JsArray(Json.toJson(filteredExperiments).as[List[JsObject]].map { experiment =>

@@ -27,7 +27,7 @@ import laika.api._
 import laika.parse.markdown.Markdown
 import laika.render.HTML
 import models.EventView
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.Messages
 import views.Languages
 
@@ -36,7 +36,7 @@ import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.concurrent.duration._
 
-class Comparator(services: Services) {
+class Comparator(services: Repositories) {
 
   import Comparator._
 
@@ -56,8 +56,8 @@ class Comparator(services: Services) {
 
     protected def names: Future[(String, String)] = {
       (for {
-        o <- services.brandService.get(oldValue)
-        n <- services.brandService.get(newValue)
+        o <- services.brand.get(oldValue)
+        n <- services.brand.get(newValue)
       } yield (o, n)) map { case (oldBrand, newBrand) =>
         (oldBrand.name, newBrand.name)
       }
@@ -76,8 +76,8 @@ class Comparator(services: Services) {
 
     protected def names: Future[(String, String)] = {
       (for {
-        o <- services.eventTypeService.get(oldValue)
-        n <- services.eventTypeService.get(newValue)
+        o <- services.eventType.get(oldValue)
+        n <- services.eventType.get(newValue)
       } yield (o, n)) map { case (oldEventType, newEventType) =>
         (oldEventType.name, newEventType.name)
       }
@@ -96,8 +96,8 @@ class Comparator(services: Services) {
 
     protected def names: Future[(String, String)] = {
       (for {
-        o <- services.orgService.get(oldValue)
-        n <- services.orgService.get(newValue)
+        o <- services.org.get(oldValue)
+        n <- services.org.get(newValue)
       } yield (o, n)) map { case (oldEventType, newEventType) =>
         (oldEventType.name, newEventType.name)
       }
@@ -116,8 +116,8 @@ class Comparator(services: Services) {
 
     protected def facilitators: Future[(String, String)] = {
       (for {
-        o <- services.personService.find(oldValue.diff(newValue))
-        n <- services.personService.find(newValue.diff(oldValue))
+        o <- services.person.find(oldValue.diff(newValue))
+        n <- services.person.find(newValue.diff(oldValue))
       } yield (o, n)) map { case (removed, added) =>
         (added.map(_.fullName).mkString(", "), removed.map(_.fullName).mkString(", "))
       }

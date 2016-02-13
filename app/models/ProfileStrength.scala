@@ -174,7 +174,7 @@ object ProfileStrength {
       strength.markComplete("about")
     else
       strength.markIncomplete("about")
-    val strengthWithSocial = if (person.socialProfile.complete)
+    val strengthWithSocial = if (person.profile.complete)
       strengthWithDesc.markComplete("social")
     else
       strengthWithDesc.markIncomplete("social")

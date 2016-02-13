@@ -31,7 +31,7 @@ import models.UserRole.Role._
 import models._
 import models.brand.Settings
 import models.event.{Attendee, AttendeeView}
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -48,7 +48,7 @@ import scala.concurrent.Future
   */
 class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
-                                        val services: Services,
+                                        val services: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Activities
@@ -88,7 +88,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param eventId An identifier of the event to add participant to
     */
-  def add(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def add(eventId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       ok(views.html.v2.attendee.form(user, None, eventId, form(eventId, user.person.fullName)))
   }
@@ -98,12 +98,12 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param eventId Event identifier
     */
-  def create(eventId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def create(eventId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       form(eventId, user.name).bindFromRequest.fold(
         errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
         data => {
-          services.attendeeService.insert(data)
+          services.attendee.insert(data)
           redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was added")
         }
       )
@@ -115,12 +115,12 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
-  def delete(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def delete(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.attendeeService.find(attendeeId, eventId) flatMap {
+      services.attendee.find(attendeeId, eventId) flatMap {
         case None => jsonNotFound("Unknown attendee")
         case Some(attendee) =>
-          services.attendeeService.delete(attendeeId, eventId) flatMap { _ =>
+          services.attendee.delete(attendeeId, eventId) flatMap { _ =>
             jsonSuccess("Attendee was deleted")
           }
       }
@@ -132,9 +132,9 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
-  def details(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def details(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
-      services.attendeeService.find(attendeeId, eventId) flatMap {
+      services.attendee.find(attendeeId, eventId) flatMap {
         case None => badRequest(Html("Attendee not found"))
         case Some(attendee) =>
           findEvaluation(attendee.evaluationId) flatMap {
@@ -153,9 +153,9 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
-  def edit(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def edit(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.attendeeService.find(attendeeId, eventId) flatMap {
+      services.attendee.find(attendeeId, eventId) flatMap {
         case None => notFound(Html("Attendee not found"))
         case Some(attendee) =>
           if (attendee.personId.isEmpty) {
@@ -172,7 +172,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param brandId Brand identifier
     */
-  def index(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def index(brandId: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
         ok(views.html.v2.attendee.forBrandCoordinators(user, view.brand, brands))
@@ -189,10 +189,10 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param brandId Brand identifier
     */
-  def list(brandId: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def list(brandId: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      withCoordinators <- services.brandService.findWithCoordinators(brandId)
-      withSettings <- services.brandService.findWithSettings(brandId)
+      withCoordinators <- services.brand.findWithCoordinators(brandId)
+      withSettings <- services.brand.findWithSettings(brandId)
     } yield (withCoordinators, withSettings)) flatMap {
       case (None, _) => ok(Json.toJson(List[String]()))
       case (_, None) => ok(Json.toJson(List[String]()))
@@ -229,13 +229,13 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         }
         val personId = account.personId
         val result = if (coordinator & user.account.isCoordinatorNow)
-          services.attendeeService.findByBrand(withSettings.brand.id)
+          services.attendee.findByBrand(withSettings.brand.id)
         else
-          services.licenseService.activeLicense(brandId, personId) flatMap {
+          services.license.activeLicense(brandId, personId) flatMap {
             case None => Future.successful(List[AttendeeView]())
             case Some(_) =>
-              services.eventService.findByFacilitator(personId, withSettings.brand.id) flatMap { events =>
-                services.evaluationService.findEvaluationsByEvents(events.map(_.identifier))
+              services.event.findByFacilitator(personId, withSettings.brand.id) flatMap { events =>
+                services.evaluation.findEvaluationsByEvents(events.map(_.identifier))
               }
           }
         result flatMap { attendees =>
@@ -247,11 +247,11 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
   /**
     * Returns JSON data about participants together with their evaluations
     */
-  def listByEvent(eventId: Long) = AsyncSecuredEventAction(List(Role.Coordinator, Role.Facilitator), eventId) { implicit request ⇒
+  def listByEvent(eventId: Long) = EventAction(List(Role.Coordinator, Role.Facilitator), eventId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       (for {
-        view <- services.brandService.findWithSettings(event.brandId)
-        participants <- services.evaluationService.findEvaluationsByEvents(List(eventId))
+        view <- services.brand.findWithSettings(event.brandId)
+        participants <- services.evaluation.findEvaluationsByEvents(List(eventId))
       } yield (view, participants)) flatMap {
         case (None, participants) => ok(Json.toJson(List[String]()))
         case (Some(view), participants) =>
@@ -281,18 +281,18 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param eventId Event identifier
     * @param attendeeId Attendee identifier
     */
-  def update(eventId: Long, attendeeId: Long) = AsyncSecuredEventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def update(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
       form(eventId, user.name).bindFromRequest.fold(
         errors => badRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors)),
         data =>
-          services.attendeeService.find(attendeeId, eventId) flatMap {
+          services.attendee.find(attendeeId, eventId) flatMap {
             case None => redirect(controllers.routes.Events.details(eventId), "error" -> "Unknown person")
             case Some(attendee) =>
               if (attendee.personId.nonEmpty)
                 redirect(controllers.routes.Events.details(eventId), "error" -> "You are not allowed to update this attendee")
               else
-                services.attendeeService.update(data.copy(id = attendee.id, personId = attendee.personId)) flatMap { _ =>
+                services.attendee.update(data.copy(id = attendee.id, personId = attendee.personId)) flatMap { _ =>
                   redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was successfully updated")
                 }
 
@@ -306,7 +306,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param evaluationId Evaluation identifier
     */
   protected def findEvaluation(evaluationId: Option[Long]): Future[Option[Evaluation]] = evaluationId map { id =>
-      services.evaluationService.findWithEvent(id).map {
+      services.evaluation.findWithEvent(id).map {
         case None => None
         case Some(view) => Some(view.eval)
       }

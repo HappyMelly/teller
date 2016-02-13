@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Materials
 import helpers._
 import models.Material
-import models.service.PersonService
+import models.repository.PersonRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import stubs._
@@ -51,11 +51,11 @@ class MaterialsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestMaterials extends Materials(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestMaterials
-  val personService = mock[PersonService]
+  val personService = mock[PersonRepository]
   controller.personService_=(personService)
 
   def e1 = {

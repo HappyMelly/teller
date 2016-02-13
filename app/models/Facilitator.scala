@@ -23,7 +23,7 @@
  */
 package models
 
-import models.service.Services
+import models.repository.Repositories
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -51,13 +51,13 @@ object Facilitator {
   /**
    * Update number of events and years of experience for all facilitators
    */
-  def updateFacilitatorExperience(services: Services): Unit = services.licenseService.findAll map { licenses =>
+  def updateFacilitatorExperience(services: Repositories): Unit = services.license.findAll map { licenses =>
     licenses.foreach { license =>
       val yearsOfExperience = license.length.getStandardDays / 365
       calculateNumberOfEvents(license, services) map { number =>
         val facilitator = Facilitator(None, license.licenseeId, license.brandId,
           yearsOfExperience.toInt, number)
-        services.facilitatorService.updateExperience(facilitator)
+        services.facilitator.updateExperience(facilitator)
       }
     }
   }
@@ -67,6 +67,6 @@ object Facilitator {
     *
     * @param license License
    */
-  protected def calculateNumberOfEvents(license: License, services: Services): Future[Int] =
-    services.eventService.findByFacilitator(license.licenseeId, Some(license.brandId)).map(_.count(_.confirmed))
+  protected def calculateNumberOfEvents(license: License, services: Repositories): Future[Int] =
+    services.event.findByFacilitator(license.licenseeId, Some(license.brandId)).map(_.count(_.confirmed))
 }

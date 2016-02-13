@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.People
 import helpers.{MemberHelper, PersonHelper}
 import models.payment.Record
-import models.service.{PaymentRecordService, PersonService}
+import models.repository.{PaymentRecordRepository, PersonRepository}
 import org.joda.money.Money
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._
@@ -81,11 +81,11 @@ class TabsSpec extends PlayAppSpec with IsolatedMockFactory {
       then membership related buttons should be visible                     $e10
   """
   class TestPeople() extends People(FakeRuntimeEnvironment)
-    with FakeSecurity with FakeServices
+    with FakeSecurity with FakeRepositories
 
   val controller = new TestPeople()
-  val personService = mock[PersonService]
-  val paymentService = mock[PaymentRecordService]
+  val personService = mock[PersonRepository]
+  val paymentService = mock[PaymentRecordRepository]
   controller.personService_=(personService)
   controller.paymentRecordService_=(paymentService)
 

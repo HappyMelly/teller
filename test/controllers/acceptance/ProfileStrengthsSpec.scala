@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.ProfileStrengths
 import helpers._
 import models.ProfileStrength
-import models.service.ProfileStrengthService
+import models.repository.ProfileStrengthRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.{ Json, JsArray }
 import play.api.test.FakeRequest
@@ -65,10 +65,10 @@ class ProfileStrengthsSpec extends PlayAppSpec with IsolatedMockFactory {
 
   class TestProfileStrengths() extends ProfileStrengths(FakeRuntimeEnvironment)
     with FakeSecurity
-    with FakeServices
+    with FakeRepositories
 
   val controller = new TestProfileStrengths()
-  val service = mock[ProfileStrengthService]
+  val service = mock[ProfileStrengthRepository]
   controller.profileStrengthService_=(service)
 
   def e1 = {

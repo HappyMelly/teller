@@ -29,7 +29,7 @@ import controllers.apiv2.json.{PersonConverter, ProductConverter}
 import controllers.{Products, Brands}
 import models.brand.{BrandLink, BrandTestimonial}
 import models._
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.{MessagesApi, Messages}
 import play.api.libs.json._
 
@@ -39,7 +39,7 @@ import scala.concurrent.Future
 /**
  * Brands API
  */
-class BrandsApi @Inject() (val services: Services,
+class BrandsApi @Inject() (val services: Repositories,
                            override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
   implicit val brandWrites = new Writes[(Brand, Int)] {
@@ -133,10 +133,10 @@ class BrandsApi @Inject() (val services: Services,
     * @param code Brand code
    */
   def brand(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    val view = services.brandService.find(code) flatMap {
+    val view = services.brand.find(code) flatMap {
       case Some(brand) => fullView(brand)
       case None =>
-        services.brandService.findByName(code) flatMap {
+        services.brand.findByName(code) flatMap {
           case None => Future.successful(None)
           case Some(brand) => fullView(brand)
         }
@@ -152,8 +152,8 @@ class BrandsApi @Inject() (val services: Services,
    */
   def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      brands <- services.brandService.findAll
-      products <- services.productService.findNumberPerBrand
+      brands <- services.brand.findAll
+      products <- services.product.findNumberPerBrand
     } yield (brands, products)) flatMap { case (brands, products) =>
       val brandsWithProducts = brands.filter(_.active).map(brand => (brand, products.getOrElse(brand.identifier, 0)))
       jsonOk(Json.toJson(brandsWithProducts))
@@ -168,13 +168,13 @@ class BrandsApi @Inject() (val services: Services,
   protected def fullView(brand: Brand): Future[Option[BrandFullView]] = {
     val id = brand.identifier
     (for {
-      owner <- services.personService.findComplete(brand.ownerId)
-      member <- services.memberService.findByObject(brand.ownerId, person = true)
-      events <- services.eventService.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
-      links <- services.brandService.links(id)
-      testimonials <- services.brandService.testimonials(id)
-      products <- services.productService.findByBrand(id)
-      profile <- services.socialProfileService.find(id, ProfileType.Brand)
+      owner <- services.person.findComplete(brand.ownerId)
+      member <- services.member.findByObject(brand.ownerId, person = true)
+      events <- services.event.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
+      links <- services.brand.links(id)
+      testimonials <- services.brand.testimonials(id)
+      products <- services.product.findByBrand(id)
+      profile <- services.socialProfile.find(id, ProfileType.Brand)
     } yield (owner, member, events, links, testimonials, products, profile)) map {
       case (None, _, _, _, _, _, _) => None
       case (Some(owner), None, events, links, testimonials, products, profile) =>

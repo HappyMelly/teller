@@ -29,7 +29,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.Person
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 
 class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
-                            val services: Services,
+                            val services: Repositories,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with Files
@@ -48,14 +48,14 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param personId Person identifier
    */
-  def delete(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def delete(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.find(personId) flatMap {
+      services.person.find(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
           val result = if (person.signature) {
             Person.signature(personId).remove()
-            services.personService.update(person.copy(signature = false))
+            services.person.update(person.copy(signature = false))
           } else {
             Future.successful(None)
           }
@@ -78,14 +78,14 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param personId Person identifier
    */
-  def upload(personId: Long) = AsyncSecuredProfileAction(personId) { implicit request ⇒
+  def upload(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.personService.find(personId) flatMap {
+      services.person.find(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
           val route: String = routes.People.details(personId).url + "#facilitation"
           uploadFile(Person.signature(personId), "signature") map { _ ⇒
-            services.personService.update(person.copy(signature = true))
+            services.person.update(person.copy(signature = true))
             Redirect(route).flashing("success" -> "Signature was uploaded")
           } recover {
             case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)

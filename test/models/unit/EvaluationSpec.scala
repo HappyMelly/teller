@@ -24,12 +24,12 @@
 
 package models.unit
 
-import models.service.EvaluationService
+import models.repository.EvaluationRepository
 import models.{DateStamp, EvaluationStatus, Evaluation, Activity}
 import org.joda.time.{ LocalDate, DateTime }
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._
-import stubs.FakeServices
+import stubs.FakeRepositories
 import stubs.services.FakeIntegrations
 
 class EvaluationSpec extends Specification {
@@ -54,7 +54,7 @@ class EvaluationSpec extends Specification {
     eventId, personId, question1, question2, question3, question4,
     question5, question6, question7, question8, contentImpression,
     hostImpression, status, handled,
-    confirmationId, recordInfo) with FakeServices {
+    confirmationId, recordInfo) with FakeRepositories {
 
     var newEvalCallCount = 0
     var confirmEvalCallCount = 0
@@ -89,7 +89,7 @@ class EvaluationSpec extends Specification {
       val eval = new TestEvaluation(id, eventId, personId, question1, question2, question3,
         question4, question5, question6, question7, question8, contentImpression,
         hostImpression, status, handled, confirmationId, recordInfo)
-      eval.evaluationService_=(this.evaluationService)
+      eval.evaluationService_=(this.evaluation)
       eval
     }
   }
@@ -99,7 +99,7 @@ class EvaluationSpec extends Specification {
    * It allows us to check that evaluations are changed before being passed
    * to the service.
    */
-  class TestEvaluationService extends EvaluationService {
+  class TestEvaluationService extends EvaluationRepository {
     override def add(eval: Evaluation): Evaluation = eval
     override def update(eval: Evaluation): Evaluation = eval
   }
@@ -157,7 +157,7 @@ class EvaluationSpec extends Specification {
   }
   "When a confirmation is NOT requested" >> {
     "the evaluation should be added as Pending & the email notification should be sent to facilitator" in new MockContext {
-      val evalService = mock[EvaluationService]
+      val evalService = mock[EvaluationRepository]
       val pending = eval.copy(status = EvaluationStatus.Pending)
       (evalService.add(_)).expects(pending).returning(pending)
       val approved = eval.copy(status = EvaluationStatus.Approved)

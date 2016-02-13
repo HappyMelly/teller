@@ -25,12 +25,12 @@
 package controllers.acceptance
 
 import controllers.apiv2.EvaluationsApi
-import models.service.EvaluationService
+import models.repository.EvaluationRepository
 import org.scalamock.specs2.MockContext
 import org.specs2.Specification
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import stubs.{ FakeServices, FakeApiAuthentication, FakeSecurity }
+import stubs.{ FakeRepositories, FakeApiAuthentication, FakeSecurity }
 
 class EvaluationsApiSpec extends Specification {
   def is = s2"""
@@ -41,10 +41,10 @@ class EvaluationsApiSpec extends Specification {
 
   class TestEvaluationsApi extends EvaluationsApi
     with FakeApiAuthentication
-    with FakeServices
+    with FakeRepositories
 
   def e1 = new MockContext {
-    val evalService = mock[EvaluationService]
+    val evalService = mock[EvaluationRepository]
     val id = "test"
     (evalService.findByConfirmationId(_: String)).expects(id).returning(None)
     val controller = new TestEvaluationsApi

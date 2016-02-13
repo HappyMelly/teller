@@ -28,7 +28,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.{I18nSupport, MessagesApi}
 import services.TellerRuntimeEnvironment
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 
 class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
-                                        val services: Services,
+                                        val services: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
   with BrandAware
@@ -46,33 +46,33 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   /**
    * About page - credits.
    */
-  def about = AsyncSecuredRestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def about = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.about(user))
   }
 
   /**
    * API v2 documentation page.
    */
-  def apiv2 = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def apiv2 = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.apiv2.index(user))
   }
 
   /**
    * Dashboard page - logged-in home page.
    */
-  def index = AsyncSecuredRestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
+  def index = RestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.registered) {
         roleDiffirentiator(user.account) { (view, brands) =>
           (for {
-            l <- services.licenseService.expiring(List(view.brand.identifier))
+            l <- services.license.expiring(List(view.brand.identifier))
             e <- unbilledEvents(view.brand)
           } yield (l, e)) flatMap { case (licenses, events) =>
             ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands, licenses, events))
           }
         } { (view, brands) =>
           (for {
-            events <- services.eventService.findByFacilitator(user.account.personId, brandId = None)
+            events <- services.event.findByFacilitator(user.account.personId, brandId = None)
             evals <- unhandledEvaluations(events, brands)
           } yield (events, evals)) flatMap { case (events, evaluations) =>
             ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
@@ -93,11 +93,11 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
     *
     * @param id Brand identifier
    */
-  def overview(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def overview(id: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
         (for {
-          l <- services.licenseService.expiring(List(view.brand.identifier))
+          l <- services.license.expiring(List(view.brand.identifier))
           e <- unbilledEvents(view.brand)
         } yield (l, e)) flatMap { case (licenses, events) =>
           ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
@@ -105,7 +105,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
         }
       } { (view, brands) =>
         (for {
-          events <- services.eventService.findByFacilitator(user.account.personId, brandId = Some(id))
+          events <- services.event.findByFacilitator(user.account.personId, brandId = Some(id))
           evaluations <- unhandledEvaluations(events, brands)
         } yield (events, evaluations)) flatMap { case (events, evaluations) =>
           ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
@@ -120,7 +120,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
    * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
    */
-  def profile = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def profile = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val currentUser = user.person
     redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
@@ -146,7 +146,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param events List of events
    */
   protected def unhandledEvaluations(events: List[Event], brands: List[Brand]) = {
-    services.evaluationService.findUnhandled(events) map { evaluations =>
+    services.evaluation.findUnhandled(events) map { evaluations =>
       evaluations.sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
         .map(value => (value, brands.find(_.identifier == value._1.brandId)))
 
@@ -172,8 +172,8 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
    */
   protected def unbilledEvents(brand: Brand): Future[List[Event]] = {
     (for {
-      e <- services.eventService.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
-      i <- services.eventService.withInvoices(e)
+      e <- services.event.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
+      i <- services.event.withInvoices(e)
     } yield i) map { withInvoices =>
       val TELLER_LAUNCHED_DATE = LocalDate.parse("2015-01-01")
       withInvoices.filter(_.invoice.invoiceBy.isEmpty).

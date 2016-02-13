@@ -24,7 +24,7 @@
 
 package models.payment
 
-import models.service.Services
+import models.repository.Repositories
 import org.joda.money.Money
 import org.joda.time.DateTime
 import scala.concurrent.Future

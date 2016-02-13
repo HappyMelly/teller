@@ -29,14 +29,14 @@ import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models._
 import models.brand.EventType
 import models.event.EventCancellation
-import models.service._
-import models.service.brand.EventTypeService
-import models.service.event.EventCancellationService
+import models.repository._
+import models.repository.brand.EventTypeRepository
+import models.repository.event.EventCancellationRepository
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
 import org.specs2.execute._
-import _root_.stubs.FakeServices
+import _root_.stubs.FakeRepositories
 
 class EventSpec extends PlayAppSpec {
 
@@ -158,7 +158,7 @@ class EventSpec extends PlayAppSpec {
         details: models.Details,
         organizer: Organizer,
         schedule: Schedule) extends Event(id, eventTypeId, brandId, title,
-        language, location, details, organizer, schedule) with FakeServices {}
+        language, location, details, organizer, schedule) with FakeRepositories {}
 
       val now = LocalDate.now()
       val schedule = Schedule(now, now.plusDays(1), 8, 8)
@@ -168,15 +168,15 @@ class EventSpec extends PlayAppSpec {
       val location = Location("Berlin", "DE")
       val one = new EventTest(Some(1L), 1L, 1L, "Cancel", lang, location,
         details, organizer, schedule)
-      val eventService = mock[EventService]
+      val eventService = mock[EventRepository]
       (services.eventService.delete _) expects 1L
-      val eventCancellationService = mock[EventCancellationService]
+      val eventCancellationService = mock[EventCancellationRepository]
       val cancellation = EventCancellation(None, 1L, 3L, "Cancel", "Regular event",
         "Berlin", "DE", now, now.plusDays(1), false,
         Some("Small number of participants"),
         Some(2), Some("some data"))
       (services.eventCancellationService.insert _) expects cancellation returning cancellation
-      val eventTypeService = mock[EventTypeService]
+      val eventTypeService = mock[EventTypeRepository]
       val eventType = EventType(Some(1L), 1L, "Regular event", None, 8, false)
       (services.eventTypeService.find _) expects 1L returning Some(eventType)
       one.eventService_=(eventService)

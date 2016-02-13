@@ -26,7 +26,7 @@ package models.integration
 
 import helpers.{ PersonHelper, ProductHelper, BrandHelper }
 import integration.PlayAppSpec
-import models.service.ProductService
+import models.repository.ProductRepository
 
 /**
  * Contains a set of function for managing products in database
@@ -49,7 +49,7 @@ class ProductServiceSpec extends PlayAppSpec {
       }
   }
 
-  val service = new ProductService
+  val service = new ProductRepository
   "When findByBrand method is called, the service" should {
     "return 3 products available in database for brand id = 1" in {
       val products = service.findByBrand(1L)

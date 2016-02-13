@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models.brand.CertificateTemplate
-import models.service.Services
+import models.repository.Repositories
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.{MessagesApi, I18nSupport}
@@ -49,7 +49,7 @@ case class FakeCertificateTemplate(language: String,
 
 class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                       override val messagesApi: MessagesApi,
-                                      val services: Services,
+                                      val services: Repositories,
                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
     with Activities
@@ -70,11 +70,11 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
    * @todo change access rights to all brand managers
    * @param brandId Unique text brand identifier
    */
-  def add(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brandService.find(brandId)
-        templates <- services.certificateService.findByBrand(brandId)
+        brand <- services.brand.find(brandId)
+        templates <- services.certificate.findByBrand(brandId)
       } yield (brand, templates)) flatMap {
         case (None, _) => Future.successful(NotFound)
         case (Some(brand), templates) =>
@@ -88,11 +88,11 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
    *
    * @param brandId Unique brand identifier
    */
-  def create(brandId: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brandService.find(brandId)
-        templates <- services.certificateService.findByBrand(brandId)
+        brand <- services.brand.find(brandId)
+        templates <- services.certificate.findByBrand(brandId)
       } yield (brand, templates)) flatMap {
         case (None, _) => Future.successful(NotFound)
         case (Some(brand), templates) =>
@@ -125,7 +125,7 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
                     secondSource.toArray.map(_.toByte))
                   firstSource.close()
                   secondSource.close()
-                  services.certificateService.insert(tpl) flatMap { _ =>
+                  services.certificate.insert(tpl) flatMap { _ =>
                     redirect(routes.Brands.details(brandId).url + "#templates", "success" -> "Template was added")
                   }
                 }
@@ -141,10 +141,10 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
    * @param single Type of template to return: true - for single facilitator, false - for multiple facilitators
    * @return
    */
-  def template(id: Long, single: Boolean) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def template(id: Long, single: Boolean) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val contentType = "image/jpeg"
-      services.certificateService.find(id) flatMap {
+      services.certificate.find(id) flatMap {
         case None => Future.successful(Ok(Array[Byte]()).as(contentType))
         case Some(template) =>
           if (single) {
@@ -161,12 +161,12 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
    * @param brandId Brand identifier
    * @param id Unique template identifier
    */
-  def delete(brandId: Long, id: Long) = AsyncSecuredBrandAction(brandId) { implicit request ⇒
+  def delete(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.certificateService.find(id) flatMap {
+      services.certificate.find(id) flatMap {
         case None => notFound("Template not found")
         case Some(template) =>
-          services.certificateService.delete(id) flatMap { _ =>
+          services.certificate.delete(id) flatMap { _ =>
             redirect(routes.Brands.details(template.brandId).url + "#templates", "success" -> "Template was deleted")
           }
       }

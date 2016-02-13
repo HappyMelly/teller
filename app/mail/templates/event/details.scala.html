@@ -4,7 +4,7 @@
     changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader,
         messages: Messages)
 
-@import models.service.brand.EventTypeService
+@import models.repository.brand.EventTypeRepository
 @import laika.api._
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML

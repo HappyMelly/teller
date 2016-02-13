@@ -29,7 +29,7 @@ import controllers.Endorsements
 import helpers._
 import models.Person
 import models.Endorsement
-import models.service.PersonService
+import models.repository.PersonRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -65,11 +65,11 @@ class EndorsementsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestEndorsements extends Endorsements(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestEndorsements
-  val personService = mock[PersonService]
+  val personService = mock[PersonRepository]
   controller.personService_=(personService)
   val person = PersonHelper.one
 

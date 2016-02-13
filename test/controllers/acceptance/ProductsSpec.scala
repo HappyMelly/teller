@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Products
 import helpers._
 import models.Product
-import models.service.ProductService
+import models.repository.ProductRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest
@@ -47,11 +47,11 @@ class ProductsSpec extends PlayAppSpec with IsolatedMockFactory {
   """
 
   class TestProducts extends Products(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestProducts
-  val productService = mock[ProductService]
+  val productService = mock[ProductRepository]
   controller.productService_=(productService)
 
   def e1 = {

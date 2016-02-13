@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 import models._
 import models.event.Attendee
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
@@ -40,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Participants API
  */
-class ParticipantsApi @Inject() (val services: Services,
+class ParticipantsApi @Inject() (val services: Repositories,
                                  override val messagesApi: MessagesApi)
   extends ApiAuthentication(services, messagesApi) {
 
@@ -85,7 +85,7 @@ class ParticipantsApi @Inject() (val services: Services,
         badRequest(Json.prettyPrint(json))
       },
       data ⇒ {
-        services.attendeeService.insert(data) flatMap { attendee =>
+        services.attendee.insert(data) flatMap { attendee =>
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
         }
       })
@@ -108,7 +108,7 @@ class ParticipantsApi @Inject() (val services: Services,
    * @param eventId Event identifier
    */
   def attendees(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.attendeeService.findByEvents(List(eventId)) flatMap { attendees =>
+    services.attendee.findByEvents(List(eventId)) flatMap { attendees =>
       jsonOk(Json.toJson(attendees.map(_._2)))
     }
   }

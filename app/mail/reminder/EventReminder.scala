@@ -28,7 +28,7 @@ import javax.inject.Inject
 
 import models.Activity
 import models.event.EventRequest
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
 import play.api.Play
 import play.api.Play.current
@@ -39,15 +39,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Contains methods for notifying Teller users about the status of their events
  */
-class EventReminder @Inject() (val email: Email, val services: Services) extends Integrations {
+class EventReminder @Inject() (val email: Email, val services: Repositories) extends Integrations {
 
   /**
    * Sends email notifications to facilitators asking to confirm or delete
    *  past events which are unconfirmed
    */
-  def sendPostFactumConfirmation() = services.brandService.findAll map { brands =>
+  def sendPostFactumConfirmation() = services.brand.findAll map { brands =>
     brands.foreach { brand ⇒
-      services.eventService.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
+      services.event.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
         events.foreach { event ⇒
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
@@ -72,11 +72,11 @@ class EventReminder @Inject() (val email: Email, val services: Services) extends
   /**
     * Sends email notifications about upcoming events to the users who left
     */
-  def sendUpcomingEventsNotification() = services.eventRequestService.findWithOneParticipant map { results =>
+  def sendUpcomingEventsNotification() = services.eventRequest.findWithOneParticipant map { results =>
     results.groupBy(_.brandId).foreach { case (brandId, requests) =>
       val endOfPeriod = LocalDate.now().plusMonths(3)
-      services.brandService.get(brandId).foreach { brand =>
-        val futureEvents = services.eventService.findByParameters(Some(brandId), public = Some(true), future = Some(true),
+      services.brand.get(brandId).foreach { brand =>
+        val futureEvents = services.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
           archived = Some(false))
         futureEvents map { unfilteredEvents =>
           val events = unfilteredEvents.filter(_.schedule.start.isBefore(endOfPeriod))
@@ -98,10 +98,10 @@ class EventReminder @Inject() (val email: Email, val services: Services) extends
    * Sends email notifications to facilitators asking to confirm
    *  upcoming events which are unconfirmed
    */
-  def sendUpcomingConfirmation() = services.brandService.findAll map { brands =>
+  def sendUpcomingConfirmation() = services.brand.findAll map { brands =>
     brands.foreach { brand ⇒
       val today = LocalDate.now().toDate.getTime
-      services.eventService.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
+      services.event.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
         events.filter { x =>
           val duration = new Duration(today, x.schedule.start.toDate.getTime)
           duration.getStandardDays == 7 || duration.getStandardDays == 30

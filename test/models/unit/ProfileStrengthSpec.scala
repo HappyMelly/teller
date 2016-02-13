@@ -201,14 +201,14 @@ class ProfileStrengthSpec extends Specification {
     }
     "when a person has 1 social network" in {
       val person = PersonHelper.one().copy(bio = None)
-      person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test")))
+      person.profile_=(person.profile.copy(twitterHandle = Some("test")))
       incompleteStep("social", profileStrength(social = true), person) must_== true
     }
   }
   "A social step should be marked as Complete" >> {
     "when a person has at least 2 social networks" in {
       val person = PersonHelper.one().copy(bio = None)
-      person.socialProfile_=(person.socialProfile.copy(twitterHandle = Some("test"),
+      person.profile_=(person.profile.copy(twitterHandle = Some("test"),
         facebookUrl = Some("test")))
       incompleteStep("social", profileStrength(), person) must_== false
     }

@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers._
 import helpers._
 import models.ProfileStrength
-import models.service.{ MemberService, PersonService, ProfileStrengthService }
+import models.repository.{ MemberRepository, PersonRepository, ProfileStrengthRepository }
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import stubs._
@@ -45,13 +45,13 @@ class MembersUpdateSpec extends PlayAppSpec with IsolatedMockFactory {
     then the system should complete 'Reason' step                          $e3
   """
   class TestMembers extends Members(FakeRuntimeEnvironment)
-    with FakeServices
+    with FakeRepositories
     with FakeSecurity
 
   val controller = new TestMembers
-  val personService = mock[PersonService]
-  val memberService = mock[MemberService]
-  val profileStrengthService = mock[ProfileStrengthService]
+  val personService = mock[PersonRepository]
+  val memberService = mock[MemberRepository]
+  val profileStrengthService = mock[ProfileStrengthRepository]
   controller.personService_=(personService)
   controller.memberService_=(memberService)
   controller.profileStrengthService_=(profileStrengthService)

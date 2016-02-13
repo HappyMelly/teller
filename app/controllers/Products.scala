@@ -29,7 +29,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import fly.play.s3.{BucketFile, S3Exception}
 import models.UserRole.Role._
 import models._
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time._
 import play.api.Play.current
 import play.api.cache.Cache
@@ -46,7 +46,7 @@ import scala.io.Source
 
 class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                        override val messagesApi: MessagesApi,
-                                       val services: Services,
+                                       val services: Repositories,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
@@ -91,27 +91,27 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     "updatedBy" -> ignored(user.name))(Product.apply)(Product.unapply))
 
   /** Show all products **/
-  def index = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.productService.findAll flatMap { products =>
+  def index = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.product.findAll flatMap { products =>
       ok(views.html.product.index(user, products))
     }
   }
 
   /** Add page **/
-  def add = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.productService.findAll flatMap { products =>
+  def add = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.product.findAll flatMap { products =>
       ok(views.html.product.form(user, None, None, products, productForm))
     }
   }
 
   /** Add form submits to this action **/
-  def create = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def create = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val form: Form[Product] = productForm.bindFromRequest
-    services.productService.findAll flatMap { products =>
+    services.product.findAll flatMap { products =>
       form.fold(
         errors ⇒ badRequest(views.html.product.form(user, None, None, products, errors)),
         product ⇒ {
-          services.productService.titleExists(product.title) flatMap {
+          services.product.titleExists(product.title) flatMap {
             case true =>
               badRequest(views.html.product.form(user, None, None, products,
                 form.withError("title", "constraint.product.title.exists", product.title)))
@@ -122,7 +122,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                 val byteArray = source.toArray.map(_.toByte)
                 source.close()
                 S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                  services.productService.insert(product.copy(picture = Some(filename)))
+                  services.product.insert(product.copy(picture = Some(filename)))
                   val activity = Activity.insert(user.name,
                     Activity.Predicate.Created, product.title)(services)
                   Redirect(indexCall).flashing("success" -> activity.toString)
@@ -132,7 +132,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       form.withError("picture", "Image cannot be temporary saved")))
                 }
               }.getOrElse {
-                services.productService.insert(product) flatMap { _ =>
+                services.product.insert(product) flatMap { _ =>
                   val activity = Activity.insert(user.name, Activity.Predicate.Created, product.title)(services)
                   redirect(indexCall, "success" -> "New product was added")
                 }
@@ -145,7 +145,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   /**
    * Assign the product to a brand
    */
-  def addBrand() = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+  def addBrand() = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
 
     val assignForm = Form(tuple("page" -> text, "productId" -> longNumber, "brandId" -> longNumber))
     assignForm.bindFromRequest.fold(
@@ -153,13 +153,13 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       {
         case (page, productId, brandId) ⇒ {
           (for {
-            p <- services.productService.find(productId)
-            b <- services.brandService.find(brandId)
+            p <- services.product.find(productId)
+            b <- services.brand.find(brandId)
           } yield (p, b)) flatMap {
             case (None, _) => notFound("Product not found")
             case (_, None) => notFound("Brand not found")
             case (Some(product), Some(brand)) =>
-              services.productService.addBrand(product.id.get, brand.identifier)
+              services.product.addBrand(product.id.get, brand.identifier)
               val activityObject = Messages("activity.relationship.create", product.title, brand.name)
               val activity = Activity.insert(user.name, Activity.Predicate.Created, activityObject)(services)
 
@@ -179,17 +179,17 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    *
    * @param id Product id
    */
-  def activation(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.productService.find(id) flatMap {
+  def activation(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.product.find(id) flatMap {
       case None => jsonNotFound("Product not found")
       case Some(product) =>
         Form("active" -> boolean).bindFromRequest.fold(
           error ⇒ jsonBadRequest("'active' parameter is not found"),
           active ⇒ {
             if (active)
-              services.productService.activate(id)
+              services.product.activate(id)
             else
-              services.productService.deactivate(id)
+              services.product.deactivate(id)
             jsonSuccess("ok")
           })
     }
@@ -198,16 +198,16 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   /**
    * Unassign the product from the brand
    */
-  def deleteBrand(page: String, productId: Long, brandId: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
+  def deleteBrand(page: String, productId: Long, brandId: Long) = DynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        p <- services.productService.find(productId)
-        b <- services.brandService.find(brandId)
+        p <- services.product.find(productId)
+        b <- services.brand.find(brandId)
       } yield (p, b)) flatMap {
         case (None, _) => notFound("Product not found")
         case (_, None) => notFound("Brand not found")
         case (Some(product), Some(brand)) =>
-          services.productService.deleteBrand(product.id.get, brandId)
+          services.product.deleteBrand(product.id.get, brandId)
           val activityObject = Messages("activity.relationship.delete", product.title, brand.name)
           val activity = Activity.insert(user.name, Activity.Predicate.Deleted, activityObject)(services)
 
@@ -221,31 +221,31 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Delete a product **/
-  def delete(id: Long) = AsyncSecuredDynamicAction(Funder, 0)  { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.productService.find(id) flatMap {
+  def delete(id: Long) = DynamicAction(Funder, 0)  { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.product.find(id) flatMap {
       case None => notFound("Product not found")
       case Some(product) ⇒
         product.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Product.cacheId(product.id.get))
         }
-        services.productService.delete(id)
+        services.product.delete(id)
         val activity = Activity.insert(user.name, Activity.Predicate.Deleted, product.title)(services)
         redirect(indexCall, "success" -> "Product was deleted")
     }
   }
 
   /** Delete picture form submits to this action **/
-  def deletePicture(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒
+  def deletePicture(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.productService.find(id) flatMap {
+      services.product.find(id) flatMap {
         case None => notFound("Product not found")
         case Some(product) =>
           product.picture.foreach { picture ⇒
             S3Bucket.remove(picture)
             Cache.remove(Product.cacheId(product.id.get))
           }
-          services.productService.update(product.copy(picture = None))
+          services.product.update(product.copy(picture = None))
           val activity = Activity.insert(user.name,
             Activity.Predicate.Deleted, "image from the product " + product.title)(services)
           val call: Call = routes.Products.details(id)
@@ -254,20 +254,20 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Details page **/
-  def details(id: Long) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        p <- services.productService.find(id)
-        b <- services.productService.brands(id)
-        d <- services.productService.findDerivatives(id)
-        bs <- services.brandService.findAllWithCoordinator
-        o <- services.orgService.findActive
-        c <- services.contributionService.contributors(id)
+        p <- services.product.find(id)
+        b <- services.product.brands(id)
+        d <- services.product.findDerivatives(id)
+        bs <- services.brand.findAllWithCoordinator
+        o <- services.org.findActive
+        c <- services.contribution.contributors(id)
       } yield (p, b, d, bs, o, c)) flatMap {
         case (None, _, _, _, _, _) => notFound("Product not found")
         case (Some(product), brand, derivatives, brands, organisations, contributors) =>
           val view = ProductView(product, brand, contributors)
-          services.personService.findAll flatMap { people =>
+          services.person.findAll flatMap { people =>
             ok(views.html.product.details(user, view, derivatives, None, brands, people, organisations))
           }
       }
@@ -275,8 +275,8 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Edit page **/
-  def edit(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.productService.findAll flatMap { products =>
+  def edit(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.product.findAll flatMap { products =>
       products.find(_.id.contains(id)) match {
         case None => notFound("Product not found")
         case Some(product) =>
@@ -286,8 +286,8 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   }
 
   /** Edit form submits to this action **/
-  def update(id: Long) = AsyncSecuredDynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.productService.findAll flatMap { products =>
+  def update(id: Long) = DynamicAction(Funder, 0) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    services.product.findAll flatMap { products =>
       products.find(_.id.contains(id)) match {
         case None => notFound("Product not found")
         case Some(existingProduct) =>
@@ -296,7 +296,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           form.fold(
             formWithErrors ⇒ badRequest(views.html.product.form(user, Some(id), title, products, form)),
             product ⇒ {
-              services.productService.isTitleTaken(product.title, id) flatMap {
+              services.product.isTitleTaken(product.title, id) flatMap {
                 case true =>
                   badRequest(views.html.product.form(user, Some(id), title, products,
                     form.withError("title", "constraint.product.title.exists", product.title)))
@@ -307,7 +307,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                     val byteArray = source.toArray.map(_.toByte)
                     source.close()
                     S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                      services.productService.update(product.copy(id = Some(id)).copy(picture = Some(filename)))
+                      services.product.update(product.copy(id = Some(id)).copy(picture = Some(filename)))
                       Cache.remove(Product.cacheId(id))
                       existingProduct.picture.map { oldPicture ⇒
                         S3Bucket.remove(oldPicture)
@@ -321,7 +321,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                           form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                     }
                   }.getOrElse {
-                    services.productService.update(product.copy(id = Some(id)).copy(picture = existingProduct.picture))
+                    services.product.update(product.copy(id = Some(id)).copy(picture = existingProduct.picture))
                     val activity = Activity.insert(user.name,
                       Activity.Predicate.Updated, product.title)(services)
                     Future.successful(Redirect(routes.Products.details(id)).flashing("success" -> "Product was updated"))
@@ -341,7 +341,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       Future.successful(Ok(cached.get).as(contentType))
     } else {
       val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = services.productService.find(id) flatMap {
+      val image: Future[Array[Byte]] = services.product.find(id) flatMap {
         case None => Future.successful(empty)
         case Some(entry) =>
           entry.picture.map { picture ⇒

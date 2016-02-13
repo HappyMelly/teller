@@ -28,7 +28,7 @@ import javax.inject.{Inject, Singleton}
 
 import mail.reminder._
 import models.Facilitator
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment
 import play.libs.Akka
@@ -44,7 +44,7 @@ trait IScheduler
   * Schedules a set of actions to run on the application start
   */
 @Singleton
-class Scheduler @Inject() (val env: Environment, val email: Email, val services: Services) extends IScheduler {
+class Scheduler @Inject() (val env: Environment, val email: Email, val services: Repositories) extends IScheduler {
   start
 
   private def start = {

@@ -1,5 +1,12 @@
-@(form: Form[Person], disabledEmail: Boolean = false)(implicit messages: Messages)
+@(form: Form[Person],
+    account: UserAccount,
+    id: Long = 0,
+    disabledEmail: Boolean = false,
+    connectProfiles: Boolean = false)(implicit messages: Messages,
+        request: RequestHeader,
+        env: securesocial.core.RuntimeEnvironment)
 
+@import securesocial.core.providers._
 @import views.Countries
 @import views.ViewHelpersV2._
 
@@ -32,27 +39,57 @@
 <input type="hidden" value="@form("photo").value.getOrElse("")" id="photo" name="photo"/>
 <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
-@v2.html.block("Social Profiles", Some("grey")) {
-  @defining(form("profile.twitterHandle")) { field =>
-    <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
-      <label for="@field.id" class="col-md-2 control-label">Twitter username</label>
-      <div class="col-md-7">
-        <div class="input-group">
-          <span class="input-group-addon">@@</span>
-          <input type="text" id="@field.id" name="@field.name"
-          value="@field.value.getOrElse("")"
-          placeholder="MyTwitter"
-          class="form-control">
+@if(connectProfiles) {
+    @v2.html.block("Connect Profiles", Some("grey")) {
+        <div class="row" id="profiles">
+            <label class="control-label col-md-2">
+                Social Profiles
+            </label>
+            <div class="col-md-10">
+                <div class="b-connect js-social-connect">
+                    @defining(Some(routes.People.edit(id).url + "#profiles")) { redirectTo =>
+                        <div class="b-connect-i type-tw @if(account.twitter.nonEmpty){state-complete}"
+                            data-social="@TwitterProvider.Twitter"
+                            data-url="@env.routes.authenticationUrl(TwitterProvider.Twitter, redirectTo)">
+                            <i class="b-connect-i__img"></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
+                            </a>
+                        </div>
+                        <div class="b-connect-i type-fb @if(account.facebook.nonEmpty){state-complete}"
+                            data-social="@FacebookProvider.Facebook"
+                            data-url="@env.routes.authenticationUrl(FacebookProvider.Facebook, redirectTo)">
+                            <i class="b-connect-i__img type-fb"></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
+                            </a>
+                        </div>
+                        <div class="b-connect-i type-linkedin @if(account.linkedin.nonEmpty){state-complete}"
+                            data-social="@LinkedInProvider.LinkedIn"
+                            data-url="@env.routes.authenticationUrl(LinkedInProvider.LinkedIn, redirectTo)">
+                            <i class="b-connect-i__img "></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
+                            </a>
+                        </div>
+                        <div class="b-connect-i type-gp @if(account.google.nonEmpty){state-complete} "
+                            data-social="@GoogleProvider.Google"
+                            data-url="@env.routes.authenticationUrl(GoogleProvider.Google, redirectTo)">
+                            <i class="b-connect-i__img "></i>
+                            <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                                <span class="complete">Disconnect</span>
+                                <span class="text">Connect</span>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  }
-  @v2.html.text(form("profile.facebookUrl"), '_label -> "Facebook profile",
-    'placeholder -> "http://www.facebook.com/my.profile", '_help -> "")
-  @v2.html.text(form("profile.linkedInUrl"), '_label -> "LinkedIn profile",
-    'placeholder -> "https://www.linkedin.com/in/my.profile", '_help -> "")
-  @v2.html.text(form("profile.googlePlusUrl"), '_label -> "Google+ profile",
-    'placeholder -> "https://plus.google.com/0123456789", '_help -> "")
+
+    }
 }
 
 @v2.html.block("On The Web", Some("yellow")) {
@@ -61,3 +98,8 @@
   @v2.html.text(form("blog"), '_label -> "Blog",
     'placeholder -> "http://", '_help -> "")
 }
+
+
+  <script src='@routes.Assets.at("person/widgets/social-connect.js")' type="text/javascript"></script>
+  <script src='@routes.Assets.at("person/edit.js")' type="text/javascript"></script>
+

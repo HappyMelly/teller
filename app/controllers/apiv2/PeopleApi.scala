@@ -28,13 +28,13 @@ import java.net.URLDecoder
 import javax.inject.Inject
 
 import controllers.apiv2.json.PersonConverter
-import models.service.Services
+import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PeopleApi @Inject() (val services: Services,
+class PeopleApi @Inject() (val services: Repositories,
                            override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
 
   private val converter = new PersonConverter
@@ -50,8 +50,8 @@ class PeopleApi @Inject() (val services: Services,
   def people(active: Option[Boolean], query: Option[String]) = TokenSecuredAction(readWrite = false) { 
     implicit request ⇒ implicit token ⇒
       (for {
-        p <- services.personService.findByParameters(active, query)
-        _ <- services.personService.collection.addresses(p)
+        p <- services.person.findByParameters(active, query)
+        _ <- services.person.collection.addresses(p)
       } yield p) flatMap { people =>
         ok(Json.prettyPrint(Json.toJson(people)))
       }
@@ -66,17 +66,17 @@ class PeopleApi @Inject() (val services: Services,
   def person(identifier: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     val mayBePerson = try {
       val id = identifier.toLong
-      services.personService.findComplete(id)
+      services.person.findComplete(id)
     } catch {
-      case e: NumberFormatException ⇒ services.personService.find(URLDecoder.decode(identifier, "ASCII"))
+      case e: NumberFormatException ⇒ services.person.find(URLDecoder.decode(identifier, "ASCII"))
     }
     mayBePerson flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
         (for {
-          l <- services.licenseService.activeLicenses(person.identifier)
-          c <- services.contributionService.contributions(person.identifier, isPerson = true)
-          o <- services.personService.memberships(person.identifier)
+          l <- services.license.activeLicenses(person.identifier)
+          c <- services.contribution.contributions(person.identifier, isPerson = true)
+          o <- services.person.memberships(person.identifier)
         } yield (l, c, o)) flatMap { case (licenses, contributions, organisations) =>
           ok(Json.prettyPrint(Json.toJson((person, licenses, contributions, organisations))(converter.personDetailsWrites)))
         }

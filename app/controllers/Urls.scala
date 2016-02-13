@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
-import models.service.Services
+import models.repository.Repositories
 import play.api.Play.current
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
@@ -42,7 +42,7 @@ import scala.util.Try
 
 class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
                       override val messagesApi: MessagesApi,
-                      val services: Services,
+                      val services: Repositories,
                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
@@ -51,7 +51,7 @@ class Urls @Inject() (override implicit val env: TellerRuntimeEnvironment,
    *
    * @param url Url to check
    */
-  def validate(url: String) = AsyncSecuredRestrictedAction(Viewer) { implicit request ⇒
+  def validate(url: String) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       WS.url(url).head().flatMap { response =>
         if (response.status >= 200 && response.status < 300)

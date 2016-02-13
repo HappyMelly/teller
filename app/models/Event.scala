@@ -23,13 +23,10 @@
  */
 package models
 
-import akka.actor.{Actor, Props}
 import models.event.{Attendee, EventCancellation}
-import models.service.Services
+import models.repository.{IRepositories, Repositories}
 import org.joda.money.Money
 import org.joda.time.{Days, LocalDate}
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
 import views.Languages
 
 import scala.concurrent.Await
@@ -138,8 +135,8 @@ case class Event(
   def objectType: String = Activity.Type.Event
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
-  def facilitators(services: Services): List[Person] = if (_facilitators.isEmpty) {
-    val data = Await.result(services.eventService.facilitators(identifier), 3.seconds)
+  def facilitators(services: IRepositories): List[Person] = if (_facilitators.isEmpty) {
+    val data = Await.result(services.event.facilitators(identifier), 3.seconds)
     facilitators_=(data)
     data
   } else {
@@ -150,8 +147,8 @@ case class Event(
     _facilitators = Some(facilitators)
   }
 
-  def facilitatorIds(services: Services): List[Long] = if (_facilitatorIds.isEmpty) {
-    val ids = Await.result(services.eventService.facilitatorIds(identifier), 3.seconds)
+  def facilitatorIds(services: IRepositories): List[Long] = if (_facilitatorIds.isEmpty) {
+    val ids = Await.result(services.event.facilitatorIds(identifier), 3.seconds)
     facilitatorIds_=(ids)
     _facilitatorIds.get
   } else {
@@ -184,12 +181,12 @@ case class Event(
     List(Languages.all.getOrElse(language.spoken, ""),
       Languages.all.getOrElse(language.secondSpoken.get, ""))
 
-  def attendees(services: Services): List[Attendee] =
-    Await.result(services.attendeeService.findByEvents(List(identifier)), 3.seconds).map(_._2).toList
+  def attendees(services: Repositories): List[Attendee] =
+    Await.result(services.attendee.findByEvents(List(identifier)), 3.seconds).map(_._2).toList
 
-  def deletable(services: Services): Boolean = attendees(services).isEmpty
+  def deletable(services: Repositories): Boolean = attendees(services).isEmpty
 
-  def isFacilitator(personId: Long, services: Services): Boolean = facilitatorIds(services).contains(personId)
+  def isFacilitator(personId: Long, services: IRepositories): Boolean = facilitatorIds(services).contains(personId)
 
   /**
    * Cancels the event
@@ -203,14 +200,14 @@ case class Event(
              reason: Option[String],
              participants: Option[Int],
              details: Option[String],
-             services: Services): Unit = {
-    services.eventTypeService.find(this.eventTypeId) map { types =>
+             services: Repositories): Unit = {
+    services.eventType.find(this.eventTypeId) map { types =>
       val eventType = types.map(_.name).getOrElse("")
       val cancellation = EventCancellation(None, this.brandId, facilitatorId,
         this.title, eventType, this.location.city, this.location.countryCode,
         this.schedule.start, this.schedule.end, this.free, reason, participants, details)
-      services.eventCancellationService.insert(cancellation)
-      services.eventService.delete(this.id.get)
+      services.eventCancellation.insert(cancellation)
+      services.event.delete(this.id.get)
     }
   }
 

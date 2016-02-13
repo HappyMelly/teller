@@ -25,7 +25,7 @@ package controllers.event
 
 import controllers.Forms._
 import models._
-import models.service.Services
+import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.data._
 import play.api.data.FormError
@@ -75,7 +75,7 @@ object EventForms {
   /**
     * HTML form mapping for creating and editing.
     */
-  def event(services: Services)(implicit messages: Messages) = Form(mapping(
+  def event(services: Repositories)(implicit messages: Messages) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventTypeId" -> longNumber.verifying("Wrong event type", _ > 0),
     "brandId" -> longNumber.verifying("Wrong brand", _ > 0),
