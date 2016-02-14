@@ -574,7 +574,7 @@
         $.get('/notiflist/gullgetlist', function(data){
             self.$list.append(data.html);
             self.$count.text(data.html);
-            self.$root.removeClass('b-notiflist_load_all');
+            self.$root.addClass('b-notiflist_load_all');
         })
     }
 
