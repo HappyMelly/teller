@@ -481,3 +481,110 @@
     App.widgets.TopNotification = TopNotification;
 
 })(jQuery, App);
+
+
+/**
+ *  Notification list
+ */
+(function ($, App) {
+    'use strict';
+
+    function NotificationList(selector, options){
+        var self = this;
+
+        self.$root = $(selector);
+        self.options = $.extend({}, options, self.$root.data());
+        self.isVisible = null;
+        self.isLoaded = null;
+
+        self.locals = {
+            $list: self.$root.find('[data-notif-list]'),
+            $close: self.$root.find('[data-notif-close]'),
+            $link: self.$root.find('[data-notif-show]'),
+            $load: self.$root.find('[data-notif-load]'),
+            $count: self.$root.find('[data-notif-count]')
+        };
+
+        self.assignEvents();
+    }
+
+    NotificationList.prototype.assignEvents = function(){
+        var self = this;
+
+        self.$root
+            .on('click', '[data-notif-show]', function (e) {
+                self.togglePopup();
+                self.setIsReaded();
+                self.getList();
+                e.preventDefault();
+            })
+            .on('click', '[data-notif-load]', function (e) {
+                self.getFullList();
+                e.preventDefault();
+            })
+            .on('click', '[data-notif-close]', function (e) {
+                self.togglePopup();
+                e.preventDefault();
+            });
+    };
+
+    NotificationList.prototype.showPopup = function(){
+        var self = this;
+
+        if (self.isVisible) return;
+
+        self.isVisible = true;
+        self.$root.addClass('b-notiflist_show');
+    }
+
+    NotificationList.prototype.hidePopup = function(){
+        var self = this;
+
+        if (!self.isVisible) return;
+
+        self.isVisible = false;
+        self.$root.removeClass('b-notiflist_show');
+    }
+
+    NotificationList.prototype.togglePopup = function(){
+        this.isVisible? this.hidePopup(): this.showPopup();
+    }
+
+    NotificationList.prototype.getList = function(){
+        var self = this;
+
+        if (self.isLoaded) return;
+
+        $.get('/notiflist/getlist', function(data){
+            self.$list.html(data);
+            self.isLoaded = true;
+            self.$root.removeClass('b-notiflist_state_load');
+        })
+    };
+
+    NotificationList.prototype.getFullList = function(){
+        var self = this;
+
+        /*
+        data: {
+            count: 10,
+            html: html-list
+        }
+         */
+        $.get('/notiflist/gullgetlist', function(data){
+            self.$list.append(data.html);
+            self.$count.text(data.html);
+            self.$root.removeClass('b-notiflist_load_all');
+        })
+    }
+
+    NotificationList.prototype.setIsReaded = function(){
+        var self = this;
+
+        $.post('/notiflist/setIsreader', function(){
+            self.$root.removeClass('b-notiflist_have_notification');
+        })
+    }
+
+    App.widgets.NotificationList = NotificationList;
+})(jQuery, App);
