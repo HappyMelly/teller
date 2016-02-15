@@ -48,6 +48,8 @@ class Scheduler @Inject() (val env: Environment, val email: Email, val services:
   start
 
   private def start = {
+    scheduleDailyAlerts
+    scheduleMonthlyAlerts
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleMonthlyAlerts
