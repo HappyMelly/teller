@@ -26,12 +26,12 @@ package configuration
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
+import akka.actor.ActorSystem
 import mail.reminder._
 import models.Facilitator
 import models.repository.Repositories
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment
-import play.libs.Akka
 import services.cleaners.ExpiredEventRequestCleaner
 import services.integrations.Email
 
@@ -44,12 +44,13 @@ trait IScheduler
   * Schedules a set of actions to run on the application start
   */
 @Singleton
-class Scheduler @Inject() (val env: Environment, val email: Email, val services: Repositories) extends IScheduler {
+class Scheduler @Inject() (val env: Environment,
+                           val email: Email,
+                           val services: Repositories,
+                           val actors: ActorSystem) extends IScheduler {
   start
 
   private def start = {
-    scheduleDailyAlerts
-    scheduleMonthlyAlerts
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
       scheduleDailyAlerts
       scheduleMonthlyAlerts
@@ -64,7 +65,7 @@ class Scheduler @Inject() (val env: Environment, val email: Email, val services:
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    Akka.system.scheduler.schedule(
+    actors.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
       println("INFO: Start of daily routines")
@@ -84,7 +85,7 @@ class Scheduler @Inject() (val env: Environment, val email: Email, val services:
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    Akka.system.scheduler.schedule(
+    actors.scheduler.schedule(
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
       if (now.getDayOfMonth == 1) {
