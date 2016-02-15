@@ -249,28 +249,24 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
           People.personForm(user.name, Some(id), services).bindFromRequest.fold(
             errors ⇒ badRequest(views.html.v2.person.form(user, Some(id), errors)),
             person ⇒ {
-              checkDuplication(person, id, user.name) flatMap {
-                case Some(form) => badRequest(views.html.v2.person.form(user, Some(id), form))
-                case None =>
-                  val modified = resetReadOnlyAttributes(person, oldPerson)
+              val modified = resetReadOnlyAttributes(person, oldPerson)
 
-                  services.person.member(id).filter(_.isDefined) map { _ =>
-                    val msg = connectMeMessage(oldPerson.profile, modified.profile)
-                    msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
-                  }
-                  services.person.update(modified) flatMap { _ =>
-                    if (modified.email != oldPerson.email) {
-                      services.identity.findByEmail(oldPerson.email).filter(_.isDefined) map { identity =>
-                        if (identity.get.userId.exists(_ == id)) {
-                          services.identity.delete(oldPerson.email)
-                          services.identity.insert(identity.get.copy(email = modified.email))
-                        }
-                      }
+              services.person.member(id).filter(_.isDefined) map { _ =>
+                val msg = connectMeMessage(oldPerson.profile, modified.profile)
+                msg foreach { x => slack.send(updateMsg(modified.fullName, x)) }
+              }
+              services.person.update(modified) flatMap { _ =>
+                if (modified.email != oldPerson.email) {
+                  services.identity.findByEmail(oldPerson.email).filter(_.isDefined) map { identity =>
+                    if (identity.get.userId.exists(_ == id)) {
+                      services.identity.delete(oldPerson.email)
+                      services.identity.insert(identity.get.copy(email = modified.email))
                     }
-                    val log = activity(modified, user.person).updated.insert(services)
-                    val url: String = routes.People.details(id).url
-                    redirect(url, "success" -> log.toString)
                   }
+                }
+                val log = activity(modified, user.person).updated.insert(services)
+                val url: String = routes.People.details(id).url
+                redirect(url, "success" -> "Person was updated")
               }
             })
       }
@@ -376,25 +372,6 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         } else {
           redirect(url, "error" -> Messages("error.membership.noSubscription"))
         }    }
-  }
-
-  /**
-   * Returns form with errors if a person with identical social networks exists
-   *
-   * @param person Person object with incomplete social profile
-   * @param id Identifier of a person which is updated
-   * @param editorName Name of a user who adds changes
-   */
-  protected def checkDuplication(person: Person, id: Long, editorName: String)(
-    implicit user: ActiveUser): Future[Option[Form[Person]]] = {
-    val base = person.profile.copy(objectId = id, objectType = ProfileType.Person)
-    services.socialProfile.findDuplicate(base) map {
-      case None => None
-      case Some(duplicate) ⇒
-        var form = People.personForm(editorName, None, services).fill(person)
-        compareSocialProfiles(duplicate, base).foreach(err ⇒ form = form.withError(err))
-        Some(form)
-    }
   }
 
   /**

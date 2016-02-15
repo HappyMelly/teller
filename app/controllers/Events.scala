@@ -490,11 +490,14 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     (for {
       b <- services.brand.findWithCoordinators(event.brandId) if b.isDefined
       e <- services.eventType.get(event.eventTypeId)
-    } yield (b.get, e)) map { case (x, eventType) =>
-      val recipients = x.coordinators.filter(_._2.notification.event).map(_._1)
-      val subject = s"${activity.description} event"
-      email.send(recipients.toSet, None, None, subject,
-        mail.templates.event.html.details(event, eventType.name, x.brand, changes).toString, richMessage = true)
+      f <- services.event.facilitators(event.identifier)
+    } yield (b.get, e, f)) map { case (x, eventType, facilitators) =>
+      val recipients = x.coordinators.filter(_._2.notification.event).map(_._1) ::: facilitators
+      if (recipients.nonEmpty) {
+        val subject = s"${activity.description} event"
+        email.send(recipients.toSet, None, None, subject,
+          mail.templates.event.html.details(event, eventType.name, x.brand, changes).toString, richMessage = true)
+      }
     }
   }
 }

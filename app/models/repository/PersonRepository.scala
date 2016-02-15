@@ -365,13 +365,6 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
     } yield address
     db.run(addressQuery.update(person.address.copy(id = Some(person.addressId))))
 
-    import SocialProfilesStatic.profileTypeMapper
-    val socialQuery = for {
-      p ← TableQuery[SocialProfiles] if p.objectId === person.id.get && p.objectType === person.profile.objectType
-    } yield p
-
-    db.run(socialQuery.update(person.profile.copy(objectId = person.id.get)))
-
     val personUpdateTuple = (person.firstName, person.lastName, person.email, person.birthday,
       person.photo.url, person.signature, person.bio, person.interests,
       person.webSite, person.blog, person.customerId, person.virtual,
@@ -379,7 +372,6 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
     val updateQuery = people.filter(_.id === person.id).map(_.forUpdate)
     db.run(updateQuery.update(personUpdateTuple))
 
-    services.userAccount.updateSocialNetworkProfiles(person)
     updateProfileStrength(person)
 
     Future.successful(person)
