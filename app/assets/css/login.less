@@ -21,13 +21,68 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+@import "./settings";
 
-.remind-me {
+.b-login__remind{
+  position: relative;
+}
+
+.b-login__remfade,
+.b-login__remtext{
   position: absolute;
   top: 0;
   right: 0;
+}
+
+.b-login__remfade{
+  visibility: hidden;
+  opacity: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background-color: #eeeeee;
+  font-size: 14px;
+  line-height: 45px;
+  padding-left: 10px;
+  .transition(all .15s ease);
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.b-login__remtext{
+  opacity: 0;
+  visibility: hidden;
   text-align: right;
   bottom: 0;
   padding: 0 15px;
   line-height: 45px;
+  .transition(all .15s ease);
+}
+
+.b-login__enter{
+  display: none;
+}
+
+
+/*== States ==*/
+.b-login_remind_show{
+  .b-login__remtext{
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.b-login_remind_disabled{
+  .b-login__remfade{
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .b-login__remlink{
+    display: none;
+  }
+
+  .b-login__enter{
+    display: inline;
+  }
 }

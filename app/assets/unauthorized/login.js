@@ -21,58 +21,70 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-function activateLoginForm() {
-    var obj = $('#passwordReset');
-    $(obj).on('click', function(e) {
-        e.preventDefault();
-        $('#password').removeAttr('disabled').attr('type', 'password').val('');
-        $('[type=submit]').removeAttr('disabled');
-        $(obj).text('Reset password');
-        $(obj).off('click');
-        activateResetForm();
-    });
+
+function LoginForm(selector, options){
+    var self = this;
+
+    self.$root = $(selector);
+    self.locals = {
+        $email: self.$root.find('[data-login-email]'),
+        $password: self.$root.find('[data-login-password]'),
+        $resetLink: self.$root.find('[data-login-reset]'),
+        $enterLink: self.$root.find('[data-login-enter]'),
+        $submit: self.$root.find('[data-login-submit]')
+    };
+
+    self.assignEvents();
 }
 
-function activateResetForm() {
-    var obj = $('#passwordReset');
-    $(obj).on('click', function(e) {
-        e.preventDefault();
-        $.post(
-            $(obj).attr('href'),
-            { 'email': $('#email').val() },
-            function(data) {
-                $('#password').attr('disabled', 'disabled').attr('type', 'text').val('Check your inbox');
-                $(obj).text('Enter');
-                $('[type=submit]').attr('disabled', 'disabled');
-                $(obj).off('click');
-                activateLoginForm();
-                success(data.message)
-            },
-            "json"
-        );
-        return true;
-    });
-}
+LoginForm.prototype.assignEvents = function(){
+    var self = this;
 
-function showHideRemindMeLink() {
-    var $remindMe = $('.remind-me');
-    var $email = $('#email');
-    var $password = $('#password');
+    self.$root
+        .on('click', '[data-login-reset]', function(e){
+            e.preventDefault();
+            self.sendRequest();
+        })
+        .on('click', '[data-login-enter]', function(e){
+            e.preventDefault();
+            self.activateLoginForm();
+        })
+        .on('keyup', '[data-login-input], [data-login-password]', function(){
+            self.toggleShowLink();
+        })
+};
 
-    function showHide() {
-        if ($email.val().length > 0 && $password.val().length == 0) {
-            $remindMe.show();
-        } else {
-            $remindMe.hide();
-        }
-    }
+LoginForm.prototype.toggleShowLink = function(){
+    var self = this,
+        locals = self.locals,
+        isShowRemind = null;
 
-    $email.on('keyup', showHide );
-    $password.on('keyup', showHide );
-}
+    isShowRemind = (locals.$email.val().length > 0 && locals.$password.val().length == 0);
+    self.$root.toggleClass('b-login_remind_show', isShowRemind);
+};
+
+LoginForm.prototype.sendRequest = function(){
+    var self = this,
+        locals = self.locals;
+
+    $.post(
+        locals.$resetLink.attr('href'),
+        {'email': locals.$email.val()},
+        function (data) {
+            self.$root.addClass('b-login_remind_disabled');
+            locals.$submit.attr('disabled', 'disabled');
+            success(data.message)
+        },
+        "json"
+    );
+};
+
+LoginForm.prototype.activateLoginForm = function(){
+    this.$root.removeClass('b-login_remind_disabled');
+    this.locals.$submit.removeAttr('disabled');
+    this.locals.$password.trigger('focus');
+};
 
 $(document).ready( function() {
-    $('.remind-me').hide();
-    showHideRemindMeLink();
-    activateResetForm();
+    new LoginForm('.js-login-form');
 });
