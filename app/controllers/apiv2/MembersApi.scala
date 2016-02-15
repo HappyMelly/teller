@@ -218,6 +218,7 @@ class MembersApi @Inject() (val services: Repositories,
                 o <- services.org.findWithProfile(member.objectId)
                 m <- services.org.people(member.objectId)
                 c <- services.contribution.contributions(member.objectId, isPerson = false)
+                _ <- services.person.collection.addresses(m)
               } yield (o, m, c)) flatMap {
                 case (None, _, _) => jsonNotFound("Organisation not found")
                 case (Some(view), members, contributions) =>
