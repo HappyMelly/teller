@@ -91,7 +91,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     form.fold(
       withError ⇒ jsonBadRequest("No option is provided"),
       photoType ⇒
-        services.person.find(id) flatMap {
+        services.person.findComplete(id) flatMap {
           case None => notFound("Person not found")
           case Some(person) =>
             val photo = photoType match {
