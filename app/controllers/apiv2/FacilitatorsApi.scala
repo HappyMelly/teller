@@ -223,7 +223,7 @@ class FacilitatorsApi @Inject() (val services: Repositories,
                                    countries: Map[Long, List[FacilitatorCountry]],
                                    languages: Map[Long, List[FacilitatorLanguage]]): FacilitatorSummary = {
     val language = languages.getOrElse(person.identifier, List())
-    val countryOfResidence = List(FacilitatorCountry(person.identifier, Countries.name(address.countryCode)))
+    val countryOfResidence = List(FacilitatorCountry(person.identifier, address.countryCode))
     val country = countries.get(person.identifier).map(_ ::: countryOfResidence).getOrElse(countryOfResidence).distinct
     FacilitatorSummary(person, address, language, country, rating)
   }

@@ -162,7 +162,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   protected def upcomingEvents(events: List[Event], brands: List[Brand]) = {
     events
       .filter(_.schedule.end.toString >= LocalDate.now().toString)
-      .slice(0, 3).map(event => (event, brands.find(_.identifier == event.brandId)))
+      .slice(0, 4).map(event => (event, brands.find(_.identifier == event.brandId)))
   }
 
   /**
