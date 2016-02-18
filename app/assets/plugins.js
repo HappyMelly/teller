@@ -107,10 +107,15 @@
 (function ($, markedPlugin) {
     'use strict';
 
-    var PreviewMarkdown = function (el) {
+    var PreviewMarkdown = function (el, options) {
+        var defaults = {
+           markdownposition: "fixed"
+        };
+
         this.el = el;
         this.$el = $(el);
-        this.customClass = this.$el.attr('markdownpreview');
+
+        this.options = $.extend({}, defaults, options);
 
         if (!this.isValidDevepdencies()) return;
 
@@ -162,13 +167,10 @@
                 self.hidePopover();
             });
 
-        $(window).resize(function(){
-            var $popover = self.$popover;
-
-            $popover && $popover.css({
-                left: self.$el.offset().left + self.$el.outerWidth()
-            })
-        })
+        $(window)
+            .resize(function () {
+                self.$popover && self.$popover.css(self.getPosition());
+            });
     };
 
     PreviewMarkdown.prototype.compileMarkdown = function(content){
@@ -185,19 +187,27 @@
         }
 
         var $popover = $('<div />', {
-            'class': 'popover-bl',
+            'class': 'popover-bl ' + self.options.markdownclass,
             html: content,
-            css: {
-                top: $el.offset().top,
-                left: $el.offset().left + $el.outerWidth()
-            }
+            css:  self.getPosition()
         });
 
-        $popover
-            .appendTo('body')
-            .addClass(self.customClass);
+        if (self.options.markdownposition == "fixed"){
+            $popover.appendTo('body');
+        } else {
+            self.$el.after($popover)
+        }
 
         self.$popover = $popover;
+    };
+
+    PreviewMarkdown.prototype.getPosition = function(){
+        var positionFixed = {
+            top: this.$el.offset().top,
+            left: this.$el.offset().left + this.$el.outerWidth()
+        };
+
+        return this.options.markdownposition == "fixed"? positionFixed: {};
     };
 
     PreviewMarkdown.prototype.showPopover = function () {
@@ -222,9 +232,10 @@
     function Plugin(option) {
         return this.each(function () {
             var $this = $(this),
-                data  = $this.data('hmt.PreviewMarkdown');
+                data  = $this.data('hmt.PreviewMarkdown'),
+                options = $.extend({}, option, $this.data());
 
-            if (!data) $this.data('hmt.PreviewMarkdown', (data = new PreviewMarkdown(this)))
+            if (!data) $this.data('hmt.PreviewMarkdown', (data = new PreviewMarkdown(this, options)))
             if (typeof option == 'string') data[option].call($this)
         })
     }
