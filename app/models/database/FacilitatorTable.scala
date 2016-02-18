@@ -69,7 +69,7 @@ private[models] trait FacilitatorTable extends BrandTable {
       )
 
     def forUpdate = (publicRating, privateRating, publicMedian, privateMedian,
-      publicNps, privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations, badges)
+      publicNps, privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations)
   }
 
 }

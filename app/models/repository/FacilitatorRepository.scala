@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -172,8 +172,20 @@ class FacilitatorRepository(app: Application) extends HasDatabaseConfig[JdbcProf
         facilitator.publicMedian, facilitator.privateMedian,
         facilitator.publicNps, facilitator.privateNps,
         facilitator.numberOfPublicEvaluations,
-        facilitator.numberOfPrivateEvaluations,
-        if (facilitator.badges.isEmpty) None else Option[String](facilitator.badges.mkString(","))))
+        facilitator.numberOfPrivateEvaluations))
+    db.run(action).map(_ => facilitator)
+  }
+
+  /**
+    * Updates badges for the given facilitator in the database
+    * @param facilitator Facilitator
+    */
+  def updateBadges(facilitator: Facilitator): Future[Facilitator] = {
+    val badges = if (facilitator.badges.isEmpty) None else Option[String](facilitator.badges.mkString(","))
+    val action = facilitators.
+      filter(_.personId === facilitator.personId).
+      filter(_.brandId === facilitator.brandId).
+      map(_.badges).update(badges)
     db.run(action).map(_ => facilitator)
   }
 

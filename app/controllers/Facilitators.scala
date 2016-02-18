@@ -276,7 +276,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
             case (None, _) => jsonNotFound("Facilitator not found")
             case (Some(facilitator), brandBadges) =>
               val valueToUpdate = facilitator.copy(badges = badges.filter(x => brandBadges.contains(x)))
-              services.facilitator.update(valueToUpdate) flatMap { _ =>
+              services.facilitator.updateBadges(valueToUpdate) flatMap { _ =>
                 jsonSuccess("Badges were updated")
               }
 
