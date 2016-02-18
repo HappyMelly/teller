@@ -22,58 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-/**
- * Draw a table containing all participants of the event
- */
-function drawRequestEvaluationTable(table) {
-    var rows = table._('tr', {});
-    var body = $('#participantList').find('tbody');
-    body.empty();
-    var tr = null;
-    for (var i = 0; i < rows.length; i++) {
-        var column = i % 2;
-        if (column == 0) {
-            tr = $('<tr>');
-            body.append(tr);
-        }
-        var input = $('<input type="checkbox" class="participant">')
-            .attr('name', 'participantIds[' + i + ']')
-            .attr('value', rows[i].person.id);
-        var label = $('<label>')
-            .text(rows[i].person.name + "  ")
-            .append(input);
-        var div = $('<div class="checkbox">').append(label);
-        div.append(rows[i].evaluation.status);
-        var td = $('<td>').append(div);
-        tr.append(td);
-    }
-    if (rows.length % 2 > 0) {
-        tr.append($('<td>'));
-    }
-}
 
-/**
- * Disable/enable 'Send' button by checking if the participants are selected
- *  and the letter's body contains an url
- */
-function toggleSentButton() {
-    var noParticipants = true;
-    $('.participant').each(function() {
-        if (this.checked) {
-            noParticipants = false;
-        }
-    });
-    var wrongBody = true;
-    var body = $('textarea[name=body]').val();
-    if (/https?:/i.test(body)) {
-        wrongBody = false;
-    }
-    if (noParticipants || wrongBody) {
-        $('#requestButton').attr('disabled', 'disabled');
-    } else {
-        $('#requestButton').removeAttr('disabled');
-    }
-}
 
 /**
  * Loads organizer's name
@@ -100,15 +49,10 @@ function afterEventCancellation() {
 
 $(document).ready( function() {
 
-    $('#details a').click(function (e) {
-      e.preventDefault();
-      $(this).tab('show');
-    });
-    var hash = window.location.hash.substring(1);
-    if (!hash) {
-        hash = 'description';
+    var $requestDlg = $('.js-request-evaluation');
+    if ($requestDlg.length){
+        new App.widgets.RequestEvaluationDlg('.js-request-evaluation');
     }
-    $('#details a[href="#' + hash + '"]').tab('show');
 
     // Datatables
     $.extend( $.fn.dataTableExt.oStdClasses, {
@@ -174,14 +118,17 @@ $(document).ready( function() {
     $('#filter-containter').empty();
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
-        drawRequestEvaluationTable(participantTable);
+
+        $requestDlg.trigger('hmt.requestDlg.render', {
+            table: participantTable
+        });
+
         initializeParticipantActions("table");
     });
     $('#exportLink').on('click', function() {
         buildExportLink(true)
     });
-    $('#participantList').on('change', '.participant', toggleSentButton);
-    $('textarea[name=body]').on('input propertychange', toggleSentButton);
+
     $('[data-toggle="tooltip"]').tooltip();
 
     updateOrganizer($('#organizer').data('id'));
