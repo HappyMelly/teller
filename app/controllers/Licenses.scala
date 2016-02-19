@@ -33,7 +33,7 @@ import models.event.Attendee
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import services.TellerRuntimeEnvironment
@@ -106,7 +106,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
         case (None, _, _) => notFound("Attendee not found")
         case (_, None, _) => notFound("Event not found")
         case (Some(attendee), Some(event), brands) =>
-          val filteredBrands = brands.filter(_._1 == event.brandId)
+          val filteredBrands = brands.filter(_.identifier == event.brandId)
           val form = licenseForm.fill(License.blank(attendeeId))
           ok(views.html.v2.license.attendeeForm(user, form, brands, attendee))
       }
@@ -129,7 +129,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           form.fold(
             formWithErrors ⇒ badRequest(views.html.v2.license.addForm(user, formWithErrors, brands, personId)),
             license ⇒ {
-              brands.find(_._1 == license.brandId) map { brand =>
+              brands.find(_.identifier == license.brandId) map { brand =>
                 checkOtherAccountEmail(person) flatMap { result =>
                   if (!result) {
                     services.license.add(license.copy(licenseeId = personId)) flatMap { addedLicense =>
@@ -139,9 +139,9 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       query.map { strength =>
                         services.profileStrength.update(ProfileStrength.forFacilitator(strength))
                       }
-                      createFacilitatorAccount(person, brand._2)
+                      createFacilitatorAccount(person, brand)
                       val route: String = routes.People.details(personId).url + "#facilitation"
-                      redirect(route, "success" -> "License for brand %s was added".format(brand._2))
+                      redirect(route, "success" -> "License for brand %s was added".format(brand.name))
                     }
                   } else {
                     val msg = "The email of this facilitator is used in another account. This facilitator won't be able to login" +
@@ -172,12 +172,12 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       } yield (a, e, b)) flatMap {
         case (None, _, _) => notFound("Attendee not found")
         case (Some(attendee), event, unfilteredBrands) =>
-          val brands = unfilteredBrands.filter(_._1 == event.brandId)
+          val brands = unfilteredBrands.filter(_.identifier == event.brandId)
           val form = licenseForm.bindFromRequest
           form.fold(
             formWithErrors ⇒ badRequest(views.html.v2.license.attendeeForm(user, formWithErrors, brands, attendee)),
             license ⇒ {
-              brands.find(_._1 == license.brandId) map { brand =>
+              brands.find(_.identifier == license.brandId) map { brand =>
                 services.identity.findByEmail(attendee.email) flatMap {
                   case Some(_) =>
                     val msg = "The email of this facilitator is used in another account. This facilitator won't be able to login" +
@@ -193,10 +193,10 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       services.profileStrength.find(person.identifier, org = false).filter(_.isDefined) map { x ⇒
                         services.profileStrength.update(ProfileStrength.forFacilitator(x.get))
                       }
-                      createFacilitatorAccount(person, brand._2)
+                      createFacilitatorAccount(person, brand)
                       activity(license, user.person).created.insert(services)
                       val route: String = routes.People.details(person.identifier).url + "#facilitation"
-                      redirect(route, "success" -> "License for brand %s was added".format(brand._2))
+                      redirect(route, "success" -> "License for brand %s was added".format(brand.name))
                     }
                 }
               } getOrElse {
@@ -246,8 +246,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     } yield (license, brands)) flatMap {
       case (None, _) => notFound("License not found")
       case (Some(license), brands) =>
-        brands.find(_._1 == license.brandId) map { brand =>
-          ok(views.html.v2.license.editForm(user, license.id.get, licenseForm.fill(license), brands, brand._1))
+        brands.find(_.identifier == license.brandId) map { brand =>
+          ok(views.html.v2.license.editForm(user, license.id.get, licenseForm.fill(license), brands, brand.identifier))
         } getOrElse {
           redirect(routes.Dashboard.index(), "error" -> "You are not a coordinator of the selected brand")
         }
@@ -271,7 +271,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           formWithErrors ⇒
             badRequest(views.html.v2.license.editForm(user, id, formWithErrors, brands, view.brand.identifier)),
           license ⇒ {
-            brands.find(_._1 == license.brandId) map { brand =>
+            brands.find(_.identifier == license.brandId) map { brand =>
               val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
               services.license.update(editedLicense)
 
@@ -291,9 +291,9 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     *
     * @param coordinatorId Coordinator identifier
     */
-  protected def coordinatedBrands(coordinatorId: Long): Future[List[(Long, String)]] =
+  protected def coordinatedBrands(coordinatorId: Long): Future[List[Brand]] =
     services.brand.findByCoordinator(coordinatorId) map { brands =>
-      brands.map(x => (x.brand.identifier, x.brand.name))
+      brands.map(_.brand)
     }
 
   /**
@@ -325,24 +325,26 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * It also sends an email to the user inviting to create new password
     *
     * @param person Person
-    * @param brand Brand name
+    * @param brand Brand
     */
-  protected def createFacilitatorAccount(person: Person, brand: String)(implicit request: RequestHeader): Unit = {
+  protected def createFacilitatorAccount(person: Person, brand: Brand)(implicit request: RequestHeader): Unit = {
     createToken(person.email, isSignUp = false).map { token =>
       services.userAccount.findByPerson(person.identifier) map {
         case None =>
           val account = UserAccount.empty(person.identifier).copy(byEmail = true, facilitator = true, registered = true)
           services.userAccount.insert(account)
           setupLoginByEmailEnvironment(person, token)
-          sendFacilitatorWelcomeEmail(person, brand, token.uuid)
+          sendFacilitatorWelcomeEmail(person, brand.name, token.uuid)
         case Some(account) =>
           if (!account.byEmail) {
             services.userAccount.update(account.copy(byEmail = true, facilitator = true, registered = true))
             setupLoginByEmailEnvironment(person, token)
-            sendFacilitatorWelcomeEmail(person, brand, token.uuid)
+            sendFacilitatorWelcomeEmail(person, brand.name, token.uuid)
           } else {
             services.userAccount.update(account.copy(facilitator = true, registered = true))
           }
+      } map { _ =>
+        sendNewFacilitatorNotification(person, brand)
       }
     }
   }
@@ -361,4 +363,10 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     )
   }
 
+  protected def sendNewFacilitatorNotification(person: Person, brand: Brand) = {
+    val channels = Seq(brand.channels.coordinators, brand.channels.facilitators)
+    val message = Notification.newFacilitator(person, brand.name)
+    implicit val writer = new NotificationWriter
+    env.pusher.trigger(channels, Notification.Events.facilitator, message)
+  }
 }

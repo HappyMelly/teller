@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,7 +21,6 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models
 
 import models.brand.Settings
@@ -70,6 +69,11 @@ case class Brand(id: Option[Long],
    * Returns type of this object
    */
   def objectType: String = Activity.Type.Brand
+
+  object channels {
+    def coordinators: String = s"$hashedId-coordinators"
+    def facilitators: String = s"$hashedId-facilitators"
+  }
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])

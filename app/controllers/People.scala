@@ -502,7 +502,7 @@ object People {
           {
             val person = Person(id, firstName, lastName, emailAddress, birthday, Photo.empty,
               signature, address.id.getOrElse(0), bio, interests,
-              webSite, blog, customerId = None, virtual = false, active, dateStamp)
+              webSite, blog, customerId = None, virtual = false, active = active, dateStamp = dateStamp)
             person.address_=(address)
             person
           }

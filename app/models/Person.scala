@@ -32,6 +32,7 @@ import org.joda.time.{DateTime, LocalDate}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.Random
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -52,6 +53,7 @@ case class Person(
   customerId: Option[String] = None,
   virtual: Boolean = false,
   active: Boolean = true,
+  hashedId: String = Random.alphanumeric.take(64).mkString,
   dateStamp: DateStamp) extends Recipient with ActivityRecorder {
 
   private var _profile: Option[SocialProfile] = None
@@ -73,11 +75,12 @@ case class Person(
     customerId: Option[String] = customerId,
     virtual: Boolean = virtual,
     active: Boolean = active,
+    hashedId: String = hashedId,
     dateStamp: DateStamp = dateStamp): Person = {
 
     val person = Person(id, firstName, lastName, email, birthday, photo,
       signature, addressId, bio, interests, webSite, blog,
-      customerId, virtual, active, dateStamp)
+      customerId, virtual, active, hashedId, dateStamp)
 
     this._profile foreach { p ⇒
       person.profile_=(this.profile)
@@ -193,6 +196,10 @@ case class Person(
       existingObject = true, reason = None,
       created = DateTime.now(), id.get,
       DateTime.now(), id.get)
+
+  object channels {
+    def personal: String = hashedId
+  }
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

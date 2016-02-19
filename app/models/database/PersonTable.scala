@@ -54,6 +54,7 @@ private[models] trait PersonTable extends AddressTable {
     def customerId = column[Option[String]]("CUSTOMER_ID")
     def virtual = column[Boolean]("VIRTUAL")
     def active = column[Boolean]("ACTIVE")
+    def hashedId = column[String]("HASHED_ID")
     def created = column[DateTime]("CREATED")
     def createdBy = column[String]("CREATED_BY")
     def updated = column[DateTime]("UPDATED")
@@ -62,19 +63,20 @@ private[models] trait PersonTable extends AddressTable {
 
     type PeopleFields = (Option[Long], String, String, String,
       Option[LocalDate], Option[String], Boolean, Long, Option[String], Option[String], Option[String],
-      Option[String], Option[String], Boolean, Boolean, DateTime, String, DateTime, String)
+      Option[String], Option[String], Boolean, Boolean, String,
+      DateTime, String, DateTime, String)
 
     def * = (id.?, firstName, lastName, email, birthday, photo, signature, addressId,
-      bio, interests, webSite, blog, customerId, virtual, active,
+      bio, interests, webSite, blog, customerId, virtual, active, hashedId,
       created, createdBy, updated, updatedBy) <>(
       (p: PeopleFields) ⇒
         Person(p._1, p._2, p._3, p._4, p._5, Photo.parse(p._6), p._7, p._8,
-          p._9, p._10, p._11, p._12, p._13, p._14, p._15,
-          DateStamp(p._16, p._17, p._18, p._19)),
+          p._9, p._10, p._11, p._12, p._13, p._14, p._15, p._16,
+          DateStamp(p._17, p._18, p._19, p._20)),
       (p: Person) ⇒
         Some((p.id, p.firstName, p.lastName, p.email, p.birthday, p.photo.url,
           p.signature, p.addressId, p.bio, p.interests, p.webSite, p.blog,
-          p.customerId, p.virtual, p.active, p.dateStamp.created,
+          p.customerId, p.virtual, p.active, p.hashedId, p.dateStamp.created,
           p.dateStamp.createdBy, p.dateStamp.updated, p.dateStamp.updatedBy)))
 
     def forUpdate = (firstName, lastName, email, birthday, photo, signature, bio, interests,

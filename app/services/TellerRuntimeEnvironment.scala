@@ -26,7 +26,9 @@ package services
 
 import javax.inject.Inject
 
-import models.repository.{IRepositories, Repositories}
+import akka.actor.ActorSystem
+import com.github.dtaniwaki.akka_pusher.PusherClient
+import models.repository.IRepositories
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
 import play.twirl.api.{Html, Txt}
@@ -35,7 +37,7 @@ import securesocial.core.RuntimeEnvironment
 import securesocial.core.providers._
 import securesocial.core.providers.utils.Mailer
 import securesocial.core.services.RoutesService
-import services.integrations.{EmailComponent, Email}
+import services.integrations.EmailComponent
 import templates.{MailTemplates, SecureSocialTemplates}
 
 import scala.collection.immutable.ListMap
@@ -45,7 +47,8 @@ import scala.collection.immutable.ListMap
   */
 class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
                                           val email: EmailComponent,
-                                          val services: IRepositories) extends RuntimeEnvironment.Default {
+                                          val services: IRepositories,
+                                          val actors: ActorSystem) extends RuntimeEnvironment.Default {
   type U = ActiveUser
 
   override lazy val routes: RoutesService = new TellerRoutesService()
@@ -60,6 +63,7 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
     include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
     include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
   )
+  lazy val pusher: PusherClient = new PusherClient()
 }
 
 class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: EmailComponent) extends Mailer.Default(mailTemplates) {

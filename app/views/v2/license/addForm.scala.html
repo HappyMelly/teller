@@ -1,6 +1,6 @@
 @(user: ActiveUser,
     form: Form[License],
-    brands: List[(Long, String)],
+    brands: List[Brand],
     personId: Long)(implicit flash: Flash,
         request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,

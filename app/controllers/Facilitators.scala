@@ -32,6 +32,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
 import models._
+import models.brand.Badge
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.data.Form
@@ -268,15 +269,23 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       val form = Form(single("badges" -> play.api.data.Forms.list(longNumber)))
       form.bindFromRequest.fold(
         errors => jsonBadRequest("'badges' field doesn't exist"),
-        badges =>
+        badgeIds =>
           (for {
             f <- services.facilitator.find(brandId, personId)
-            b <- services.brandBadge.findByBrand(brandId)
-          } yield (f, b.map(_.id.get))) flatMap {
-            case (None, _) => jsonNotFound("Facilitator not found")
-            case (Some(facilitator), brandBadges) =>
-              val valueToUpdate = facilitator.copy(badges = badges.filter(x => brandBadges.contains(x)))
+            badges <- services.brandBadge.findByBrand(brandId)
+            brand <- services.brand.get(brandId)
+            person <- services.person.find(personId)
+          } yield (f, badges, brand, person)) flatMap {
+            case (None, _, _, _) => jsonNotFound("Facilitator not found")
+            case (_, _, _, None) => jsonNotFound("Person not found")
+            case (Some(facilitator), badges, brand, Some(person)) =>
+              val validBadges = badges.filter(x => badgeIds.contains(x.id.get))
+              val valueToUpdate = facilitator.copy(badges = validBadges.map(_.id.get))
+              val newBadges = validBadges.filterNot(x => facilitator.badges.contains(x.id.get))
               services.facilitator.updateBadges(valueToUpdate) flatMap { _ =>
+                for(badge <- newBadges) {
+                  sendNewBadgeNotification(person, badge, brand)
+                }
                 jsonSuccess("Badges were updated")
               }
 
@@ -286,5 +295,12 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {
     left.getYear == right.getYear && left.getMonthOfYear == right.getMonthOfYear
+  }
+
+  protected def sendNewBadgeNotification(person: Person, badge: Badge, brand: Brand) = {
+    implicit val writer = new NotificationWriter
+    val channels = Seq(brand.channels.coordinators, brand.channels.facilitators)
+    env.pusher.trigger(channels, Notification.Events.badge, Notification.badge(person, badge))
+    env.pusher.trigger(person.channels.personal, Notification.Events.badge, Notification.personalBadge(person, badge))
   }
 }

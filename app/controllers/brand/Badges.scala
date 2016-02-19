@@ -166,8 +166,8 @@ object Badges {
     *
     * @param badge Badge
     */
-  def pictureUrl(badge: Badge, size: String = ""): Option[String] = {
+  def pictureUrl(badge: Badge, size: String = ""): String = {
     val picture = Badge.picture(badge.file).file(size)
-    Utilities.cdnUrl(picture.name).orElse(Some(Utilities.fullUrl(routes.Badges.picture(badge.file).url)))
+    Utilities.cdnUrl(picture.name).getOrElse(Utilities.fullUrl(routes.Badges.picture(badge.file).url))
   }
 }

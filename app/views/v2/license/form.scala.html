@@ -1,9 +1,9 @@
-@(form: Form[License], brands: List[(Long, String)])(implicit messages: Messages)
+@(form: Form[License], brands: List[Brand])(implicit messages: Messages)
 
 @import views.ViewHelpersV2._
 
     @v2.html.block("License") {
-        @v2.html.select(form("brandId"), brands.map(x => (x._1.toString, x._2)), '_label -> "Brand", '_help -> "", '_required -> true)
+        @v2.html.select(form("brandId"), brands.map(x => (x.identifier.toString, x.name)), '_label -> "Brand", '_help -> "", '_required -> true)
         @v2.html.text(form("version"), '_label -> "Version", '_help -> "", '_required -> true)
         @v2.html.date(form("signed"), '_label -> "Date signed", '_required -> true)
         @v2.html.date(form("start"), '_label -> "Start date", '_required -> true)

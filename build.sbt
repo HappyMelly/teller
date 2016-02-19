@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
     "be.objectify" %% "deadbolt-scala" % "2.4.2",
     "com.andersen-gott" %% "scravatar" % "1.0.3", //gravatar support
     "com.sksamuel.scrimage" %% "scrimage-core" % "2.1.0", //image resizing
+    "com.github.dtaniwaki" %% "akka-pusher" % "0.2.12",
     "com.github.mumoshu" %% "play2-memcached-play24" % "0.7.0",
     "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
     "com.typesafe.play" %% "play-slick" % "1.1.1",

@@ -128,7 +128,7 @@ class FacilitatorsApi @Inject() (val services: Repositories,
   }
 
   case class BrandStatistics(eventsNumber: Int, yearsOfExperience: Int, rating: Float)
-  case class BadgeUrl(name: String, url: Option[String])
+  case class BadgeUrl(name: String, url: String)
 
   case class FacilitatorView(person: Person,
     endorsements: List[Endorsement],
