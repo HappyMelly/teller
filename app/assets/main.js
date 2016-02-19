@@ -52,11 +52,13 @@ App.pages.Common = {
         if ($notificationWidget.length){
             new App.widgets.TopNotification('.js-notification-widget');
         }
+
+        var $notificationListWidget = $('.js-notification-list');
+        if ($notificationListWidget.length){
+            new App.widgets.NotificationList('.js-notification-list');
+        }
     }
 };
-
-
-
 
 function getPersonId() {
     return $('#personId').val();
