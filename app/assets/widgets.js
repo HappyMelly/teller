@@ -623,7 +623,9 @@
         })
 
         if (viewedNotif.length){
-            $.post('/', function(){
+            $.post('/send-viewed', {
+                data: viewedNotif
+            }, function(){
 
             })
         }
@@ -633,7 +635,10 @@
         var self = this,
             locals = self.locals;
 
-        self.$root.addClass('b-notiflist_load_all');
+        $.get('/get-previous-notification', function(data){
+            self.$root.addClass('b-notiflist_load_all');
+            self.locals.$listOld.html(data);
+        })
     }
 
     NotificationList.prototype.setCountForNewNotification = function(){
