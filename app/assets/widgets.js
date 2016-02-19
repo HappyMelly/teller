@@ -526,16 +526,16 @@
             self.channels.forEach(function(item){
                 self.pusher.subscribe(item);
             });
-            self.initChannelsEvents();
+            self.bindChannelEvents();
         })
     }
 
-    NotificationList.prototype.initChannelsEvents = function(){
+    NotificationList.prototype.bindChannelEvents = function(){
         var self = this;
 
-        self.pusher.bind('new_notification', function(data) {
-            self.addNotification(data);
-        })
+        self.pusher.bind('new_notification', function (data) {
+                self.addNotification(data);
+            })
     }
 
     NotificationList.prototype.addNotification = function(data){
@@ -547,40 +547,24 @@
         if (~exceptId.indexOf(personalId)) return;
 
         $notification
-            .data({
-                "id": data.id,
-                "viewed": data.viewed || false
-            })
+            .data('id', data.id)
+            .toggleClass('is-new', data.viewed === "false")
             .appendTo(this.locals.$list);
 
-        self.$root.trigger('update_widget');
+        self.updateWidget();
     }
 
     NotificationList.prototype.assignEvents = function(){
         var self = this;
 
         self.$root
-            .on('click', '[data-notiflist-show]', function (e) {
+            .on('click', '[data-notiflist-show], [data-notiflist-close]', function (e) {
                 self.togglePopup();
                 e.preventDefault();
             })
             .on('click', '[data-notiflist-load]', function (e) {
-                self.loadPreviousNotification();
+                self.retrieveHistory();
                 e.preventDefault();
-            })
-            .on('click', '[data-notiflist-close]', function (e) {
-                self.togglePopup();
-                e.preventDefault();
-            })
-            .on('update_widget', function(){
-                if (self.isPopupVisible){
-                    self.setNoHighLightLink();
-                    self.sendViewedNotification();
-                } else {
-                    self.setHighLightLink();
-                }
-
-                self.setCountForNewNotification();
             })
     };
 
@@ -591,8 +575,7 @@
 
         self.isPopupVisible = true;
         self.$root.addClass('b-notiflist_show');
-
-        self.$root.trigger('update_widget');
+        self.updateWidget();
     }
 
     NotificationList.prototype.hidePopup = function(){
@@ -608,30 +591,18 @@
         this.isPopupVisible? this.hidePopup(): this.showPopup();
     }
 
-    NotificationList.prototype.sendViewedNotification = function(){
-        var self = this,
-            locals = self.locals,
-            viewedNotif = [];
-
-        locals.$list.children().each( function(index, el){
-            var $el = $(el);
-
-            if ($el.data('viewed')) return;
-
-            $el.data('viewed', 'true');
-            viewedNotif.push($el.data('id'));
-        })
-
-        if (viewedNotif.length){
-            $.post('/send-viewed', {
-                data: viewedNotif
-            }, function(){
-
-            })
+    NotificationList.prototype.updateWidget = function(){
+        if (this.isPopupVisible){
+            this.setNotificationViewed();
+            this.setNoHighLightLink();
+        } else {
+            this.setHighLightLink();
         }
+
+        this.updateCount();
     }
 
-    NotificationList.prototype.loadPreviousNotification = function(){
+    NotificationList.prototype.retrieveHistory = function(){
         var self = this,
             locals = self.locals;
 
@@ -641,15 +612,18 @@
         })
     }
 
-    NotificationList.prototype.setCountForNewNotification = function(){
-        var $newNotification = this.locals.$list.children(),
-            count = 0;
+    NotificationList.prototype.setNotificationViewed = function(){
+        var self = this,
+            locals = self.locals,
+            $notifications = locals.$list.children();
 
-        $newNotification.each(function(index, el){
-            if (!$(el).data('viewed')){
-                count += 1;
-            }
-        })
+        $notifications.removeClass('is-new');
+    }
+
+    NotificationList.prototype.updateCount = function(){
+        var $notifications = this.locals.$list.children(),
+            count = $notifications.filter('.is-new').length;
+
         this.locals.$count.text(count);
     }
 
