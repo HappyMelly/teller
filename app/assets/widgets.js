@@ -486,7 +486,7 @@
 /**
  *  Notification list
  */
-(function ($, App) {
+(function ($, App, Pusher) {
     'use strict';
 
     function NotificationList(selector, options){
@@ -494,97 +494,167 @@
 
         self.$root = $(selector);
         self.options = $.extend({}, options, self.$root.data());
-        self.isVisible = null;
+        self.isPopupVisible = false;
         self.isLoaded = null;
+        self.pusher = null;
+        self.channels = null;
 
         self.locals = {
-            $list: self.$root.find('[data-notif-list]'),
-            $close: self.$root.find('[data-notif-close]'),
-            $link: self.$root.find('[data-notif-show]'),
-            $load: self.$root.find('[data-notif-load]'),
-            $count: self.$root.find('[data-notif-count]')
+            $list: self.$root.find('[data-notiflist-list]'),
+            $close: self.$root.find('[data-notiflist-close]'),
+            $link: self.$root.find('[data-notiflist-show]'),
+            $load: self.$root.find('[data-notiflist-load]'),
+            $count: self.$root.find('[data-notiflist-count]'),
+            $listOld: self.$root.find('[data-notiflist-old-list]')
         };
 
+        self.initChannels();
         self.assignEvents();
+    }
+
+    NotificationList.prototype.initChannels = function(){
+        var self = this,
+            dataChannels;
+
+        self.pusher = new Pusher('f10cdadb6c85fb8a5dd8', {
+            encrypted: true
+        });
+
+        $.get('/user/channels', function(data){
+            self.channels = $.parseJSON(data).channels;
+
+            self.channels.forEach(function(item){
+                self.pusher.subscribe(item);
+            });
+            self.initChannelsEvents();
+        })
+    }
+
+    NotificationList.prototype.initChannelsEvents = function(){
+        var self = this;
+
+        self.pusher.bind('new_notification', function(data) {
+            self.addNotification(data);
+        })
+    }
+
+    NotificationList.prototype.addNotification = function(data){
+        var self = this,
+            $notification = $(data.template),
+            personalId = getPersonId(),
+            exceptId = data.except || [];
+
+        if (~exceptId.indexOf(personalId)) return;
+
+        $notification
+            .data({
+                "id": data.id,
+                "viewed": data.viewed || false
+            })
+            .appendTo(this.locals.$list);
+
+        self.$root.trigger('update_widget');
     }
 
     NotificationList.prototype.assignEvents = function(){
         var self = this;
 
         self.$root
-            .on('click', '[data-notif-show]', function (e) {
-                self.togglePopup();
-                self.setIsReaded();
-                self.getList();
-                e.preventDefault();
-            })
-            .on('click', '[data-notif-load]', function (e) {
-                self.getFullList();
-                e.preventDefault();
-            })
-            .on('click', '[data-notif-close]', function (e) {
+            .on('click', '[data-notiflist-show]', function (e) {
                 self.togglePopup();
                 e.preventDefault();
-            });
+            })
+            .on('click', '[data-notiflist-load]', function (e) {
+                self.loadPreviousNotification();
+                e.preventDefault();
+            })
+            .on('click', '[data-notiflist-close]', function (e) {
+                self.togglePopup();
+                e.preventDefault();
+            })
+            .on('update_widget', function(){
+                if (self.isPopupVisible){
+                    self.setNoHighLightLink();
+                    self.sendViewedNotification();
+                } else {
+                    self.setHighLightLink();
+                }
+
+                self.setCountForNewNotification();
+            })
     };
 
     NotificationList.prototype.showPopup = function(){
         var self = this;
 
-        if (self.isVisible) return;
+        if (self.isPopupVisible) return;
 
-        self.isVisible = true;
+        self.isPopupVisible = true;
         self.$root.addClass('b-notiflist_show');
+
+        self.$root.trigger('update_widget');
     }
 
     NotificationList.prototype.hidePopup = function(){
         var self = this;
 
-        if (!self.isVisible) return;
+        if (!self.isPopupVisible) return;
 
-        self.isVisible = false;
+        self.isPopupVisible = false;
         self.$root.removeClass('b-notiflist_show');
     }
 
     NotificationList.prototype.togglePopup = function(){
-        this.isVisible? this.hidePopup(): this.showPopup();
+        this.isPopupVisible? this.hidePopup(): this.showPopup();
     }
 
-    NotificationList.prototype.getList = function(){
-        var self = this;
+    NotificationList.prototype.sendViewedNotification = function(){
+        var self = this,
+            locals = self.locals,
+            viewedNotif = [];
 
-        if (self.isLoaded) return;
+        locals.$list.children().each( function(index, el){
+            var $el = $(el);
 
-        $.get('/notiflist/getlist', function(data){
-            self.$list.html(data);
-            self.isLoaded = true;
-            self.$root.removeClass('b-notiflist_state_load');
+            if ($el.data('viewed')) return;
+
+            $el.data('viewed', 'true');
+            viewedNotif.push($el.data('id'));
         })
-    };
 
-    NotificationList.prototype.getFullList = function(){
-        var self = this;
+        if (viewedNotif.length){
+            $.post('/', function(){
 
-        /*
-        data: {
-            count: 10,
-            html: html-list
+            })
         }
-         */
-        $.get('/notiflist/gullgetlist', function(data){
-            self.$list.append(data.html);
-            self.$count.text(data.html);
-            self.$root.addClass('b-notiflist_load_all');
-        })
     }
 
-    NotificationList.prototype.setIsReaded = function(){
-        var self = this;
+    NotificationList.prototype.loadPreviousNotification = function(){
+        var self = this,
+            locals = self.locals;
 
-        $.post('/notiflist/setIsreader', function(){
-            self.$root.removeClass('b-notiflist_have_notification');
+        self.$root.addClass('b-notiflist_load_all');
+    }
+
+    NotificationList.prototype.setCountForNewNotification = function(){
+        var $newNotification = this.locals.$list.children(),
+            count = 0;
+
+        $newNotification.each(function(index, el){
+            if (!$(el).data('viewed')){
+                count += 1;
+            }
         })
+        this.locals.$count.text(count);
+    }
+
+    NotificationList.prototype.setHighLightLink = function(){
+        this.$root.addClass('b-notiflist_have_notification');
+    }
+
+    NotificationList.prototype.setNoHighLightLink = function(){
+        this.$root.removeClass('b-notiflist_have_notification');
     }
 
     App.widgets.NotificationList = NotificationList;
-})(jQuery, App);
+})(jQuery, App, Pusher);
