@@ -288,7 +288,6 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
                 }
                 jsonSuccess("Badges were updated")
               }
-
           }
       )
   }

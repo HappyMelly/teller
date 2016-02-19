@@ -257,6 +257,7 @@ POST          /url/:url/validate                                             con
 GET           /usage                                                         controllers.admin.Usage.index
 
 GET           /user/account                                                  controllers.UserAccounts.account
+GET           /user/channels                                                 controllers.UserAccounts.channels
 POST          /user/disconnect/:profileId                                    controllers.UserAccounts.disconnect(profileId: String)
 POST          /user/newPassword                                              controllers.UserAccounts.handleNewPassword
 POST          /user/password                                                 controllers.UserAccounts.changePassword
