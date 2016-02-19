@@ -412,7 +412,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
      recordInfo) ⇒ {
       val brand = Brand(id, code, uniqueName, name, ownerId,
         description, picture, tagLine, webSite, blog, email, evaluationUrl,
-        evaluationHookUrl, true, recordInfo)
+        evaluationHookUrl, active = true, recordInfo = recordInfo)
       BrandProfileView(brand, profile)
     }
   })({ (view: BrandProfileView) ⇒

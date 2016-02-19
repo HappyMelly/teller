@@ -51,6 +51,7 @@ case class Brand(id: Option[Long],
     evaluationUrl: Option[String] = None,
     evaluationHookUrl: Option[String] = None,
     active: Boolean = true,
+    hashedId: String = Random.alphanumeric.take(8).mkString,
     recordInfo: DateStamp) extends ActivityRecorder {
 
   /**
