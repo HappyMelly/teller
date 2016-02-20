@@ -169,6 +169,9 @@ GET           /membership/payment                                            con
 POST          /membership/payment                                            controllers.Membership.charge
 GET           /membership/congratulations                                    controllers.Membership.congratulations(orgId: Option[Long] ?= None)
 
+GET           /notifications/:offset/:limit                                  controllers.Notifications.list(offset: Long, limit: Long)
+POST          /notifications                                                 controllers.Notifications.read()
+
 POST          /organization/:id/activation                                   controllers.Organisations.activation(id: Long)
 GET           /organization/new                                              controllers.Organisations.add
 POST          /organization/:id/cancel                                       controllers.Organisations.cancel(id: Long)
@@ -257,7 +260,6 @@ POST          /url/:url/validate                                             con
 GET           /usage                                                         controllers.admin.Usage.index
 
 GET           /user/account                                                  controllers.UserAccounts.account
-GET           /user/channels                                                 controllers.UserAccounts.channels
 POST          /user/disconnect/:profileId                                    controllers.UserAccounts.disconnect(profileId: String)
 POST          /user/newPassword                                              controllers.UserAccounts.handleNewPassword
 POST          /user/password                                                 controllers.UserAccounts.changePassword

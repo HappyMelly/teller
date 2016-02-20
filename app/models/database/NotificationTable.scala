@@ -23,25 +23,26 @@
  */
 package models.database
 
-import models.OldEvaluation
+import models.Notification
 import slick.driver.JdbcProfile
 
-private[models] trait OldEvaluationTable {
+private[models] trait NotificationTable {
 
   protected val driver: JdbcProfile
   import driver.api._
 
   /**
-    * Connects Material object with its database representation
+    * Connects Notification object with its database representation
     */
-  class OldEvaluations(tag: Tag) extends Table[OldEvaluation](tag, "MGT30_OLD_EVALUATION") {
+  class Notifications(tag: Tag) extends Table[Notification](tag, "NOTIFICATION") {
 
-    def notPublic = column[Boolean]("NOT_PUBLIC")
-    def impression = column[Int]("IMPRESSION")
-    def facilitatorId = column[Long]("FACILITATOR_ID")
+    def id = column[Option[Long]]("ID")
+    def personId = column[Long]("PERSON_ID")
+    def body = column[String]("BODY")
+    def typ = column[String]("TYPE")
+    def unread = column[Boolean]("UNREAD")
 
-    def * = (notPublic, impression, facilitatorId) <>(
-      (OldEvaluation.apply _).tupled, OldEvaluation.unapply)
+    def * = (id, personId, body, typ, unread) <>((Notification.apply _).tupled, Notification.unapply)
   }
 
 }

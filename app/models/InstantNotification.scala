@@ -27,34 +27,39 @@ import controllers.brand.Badges
 import models.brand.Badge
 import spray.json._
 
+case class Notification(id: Option[Long],
+                        personId: Long,
+                        body: String,
+                        typ: String,
+                        unread: Boolean = true)
 /**
   * Represents instant notification
   */
-case class Notification(image: String, body: String, exclude: Option[String] = None)
+case class InstantNotification(image: String, body: String, exclude: Option[String] = None)
 
-class NotificationWriter extends JsonWriter[Notification] {
-  def write(obj: Notification) = JsObject(
+class NotificationWriter extends JsonWriter[InstantNotification] {
+  def write(obj: InstantNotification) = JsObject(
     "image" -> JsString(obj.image),
     "body" -> JsString(obj.body),
     "exclude" -> obj.exclude.map(x => JsString(x)).getOrElse(JsNull)
   )
 }
 
-object Notification {
+object InstantNotification {
 
-  def badge(person: Person, badge: Badge): Notification = {
+  def badge(person: Person, badge: Badge): InstantNotification = {
     val body = s"${person.fullName} got a badge ${badge.name}"
-    Notification(person.photo.url.getOrElse(""), body, Some(person.identifier.toString))
+    InstantNotification(person.photo.url.getOrElse(""), body, Some(person.identifier.toString))
   }
 
   def newFacilitator(person: Person, brand: String) = {
     val body = s"${person.fullName} joined as a new $brand facilitator"
-    Notification(person.photo.url.getOrElse(""), body, Some(person.identifier.toString))
+    InstantNotification(person.photo.url.getOrElse(""), body, Some(person.identifier.toString))
   }
 
-  def personalBadge(person: Person, badge: Badge): Notification = {
+  def personalBadge(person: Person, badge: Badge): InstantNotification = {
     val body = s"Congratulations! You've got ${badge.name} badge"
-    Notification(Badges.pictureUrl(badge, "icon"), body)
+    InstantNotification(Badges.pictureUrl(badge, "icon"), body)
   }
 
   object Events {

@@ -365,8 +365,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
 
   protected def sendNewFacilitatorNotification(person: Person, brand: Brand) = {
     val channels = Seq(brand.channels.coordinators, brand.channels.facilitators)
-    val message = Notification.newFacilitator(person, brand.name)
+    val message = InstantNotification.newFacilitator(person, brand.name)
     implicit val writer = new NotificationWriter
-    env.pusher.trigger(channels, Notification.Events.facilitator, message)
+    env.pusher.trigger(channels, InstantNotification.Events.facilitator, message)
   }
 }

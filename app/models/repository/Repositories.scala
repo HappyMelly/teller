@@ -57,6 +57,7 @@ trait IRepositories {
   val license: LicenseRepository
   val org: OrganisationRepository
   val paymentRecord: PaymentRecordRepository
+  val notification: NotificationRepository
   val person: PersonRepository
   val product: ProductRepository
   val profileStrength: ProfileStrengthRepository
@@ -114,6 +115,8 @@ class Repositories @Inject()(val app: Application) extends IRepositories {
   lazy val mailToken: PasswordTokenRepository = new PasswordTokenRepository(app)
 
   lazy val member: MemberRepository = new MemberRepository(app)
+
+  lazy val notification: NotificationRepository = new NotificationRepository(app)
 
   lazy val license: LicenseRepository = new LicenseRepository(app)
 

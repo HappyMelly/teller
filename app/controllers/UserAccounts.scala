@@ -112,29 +112,6 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   }
 
   /**
-    * Returns the list of channels for the current user
-    */
-  def channels = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
-    val coordinatedReq = if (user.account.coordinator)
-      repos.brand.findByCoordinator(user.account.personId)
-    else
-      Future.successful(List())
-    val facilitatedReq = if (user.account.facilitator)
-      repos.license.activeLicenses(user.account.personId)
-    else
-      Future.successful(List())
-    (for {
-      c <- coordinatedReq
-      f <- facilitatedReq
-    } yield (c.map(_.brand), f.map(_.brand))) flatMap { case (facilitated, coordinated) =>
-      val forCoordinator = coordinated.map(_.channels.coordinators)
-      val forFacilitator = facilitated.map(_.channels.facilitators)
-      val channels: List[String] = user.person.channels.personal :: (forCoordinator ++ forFacilitator)
-      jsonOk(Json.obj("channels" -> channels.toSeq))
-    }
-  }
-
-  /**
     * checks if the supplied password matches the stored one
     *
     * @param suppliedPassword the password entered in the form
