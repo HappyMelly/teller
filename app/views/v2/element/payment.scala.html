@@ -21,8 +21,8 @@
 
   <div class="payment">
     <div class="text-left">
-      To be a Happy Melly Supporter, all you need is to do is pay a small annual membership fee.
-      The minimum fee amount depends on the country you live in.
+      To be a Happy Melly Supporter, all you need is to do is pay a small annual membership contribution.
+      The minimum contribution amount depends on the country you live in.
     </div>
     <form class="form-inline payment-bottom-space"
       action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
@@ -54,18 +54,18 @@
             <div class="col-md-6 text-left">
                 @org.map { organisation =>
                 <p>@organisation.name is from @Countries.all.toMap.get(organisation.countryCode).
-                    For this country the minimum fee is <b>€@fee._1</b>,
-                    the regular fee is <b>€@fee._2</b>
-                    and the elite fee is <b>€@fee._3</b>.
+                    For this country Token contribution is <b>€@fee._1</b>,
+                    Generous contribution is <b>€@fee._2</b>
+                    and Big hearted contribution is <b>€@fee._3</b>.
                 </p>
                 }.getOrElse {
                     <p>You are from @Countries.all.toMap.get(person.address.countryCode).
-                        For your country the minimum fee is <b>€@fee._1.toString</b>,
-                        the regular fee is <b>€@fee._2</b>
-                        and the elite fee is <b>€@fee._3</b>.
+                        For your country Token contribution is <b>€@fee._1</b>,
+                        Generous contribution is <b>€@fee._2</b>
+                        and Big hearted contribution is <b>€@fee._3</b>.
                     </p>
                 }
-                <p><a href="#" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership fees</a></p>
+                <p><a href="#" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
             </div>
         </div>
         @views.html.v2.element.fees()
