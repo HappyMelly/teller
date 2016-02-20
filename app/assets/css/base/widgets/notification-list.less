@@ -27,7 +27,7 @@
   height: 20px;
   border-radius: 20px;
   overflow: hidden;
-  background-color: #fff;
+  background-color: #9d9d9d;
   font-size: 12px;
   text-align: center;
   color: #222 !important;
@@ -35,6 +35,10 @@
   text-decoration: none !important;
   z-index: @index-middle + 2;
   .transition(background-color .15s ease);
+
+  &:hover{
+    background-color: #ffffff;
+  }
 
   .count{
     display: inline;
@@ -194,11 +198,15 @@
 /*states*/
 .b-notiflist_have_notification{
   .b-notiflist__link{
-    background-color: #ffc550;
+    background-color: #ffc550 !important;
   }
 }
 
 .b-notiflist_show{
+  .b-notiflist__link{
+    background-color: #fff !important;
+  }
+
   .b-notiflist__back{
     display: block;
   }
