@@ -52,8 +52,18 @@ class FacilitatorsApi @Inject() (val services: Repositories,
                                 address: Address,
                                 languages: List[FacilitatorLanguage],
                                 countries: List[FacilitatorCountry],
-                                rating: Float)
-  
+                                rating: Float,
+                                badges: Seq[BadgeUrl])
+
+  implicit val badgeUrlWrites = new Writes[BadgeUrl] {
+    def writes(badge: BadgeUrl) = {
+      Json.obj(
+        "name" -> badge.name,
+        "url" -> badge.url)
+    }
+  }
+
+
   implicit val facilitatorWrites = new Writes[FacilitatorSummary] {
     def writes(value: FacilitatorSummary): JsValue = {
       Json.obj(
@@ -65,7 +75,8 @@ class FacilitatorsApi @Inject() (val services: Repositories,
         "country" -> value.address.countryCode,
         "languages" -> value.languages.map(r ⇒ Languages.all.getOrElse(r.language, "")).toList,
         "countries" -> value.countries.map(_.country).distinct.toList,
-        "rating" -> value.rating)
+        "rating" -> value.rating,
+        "badges" -> value.badges)
     }
   }
 
@@ -84,7 +95,8 @@ class FacilitatorsApi @Inject() (val services: Repositories,
           c <- services.facilitator.countries(f.map(_.identifier))
           l <- services.facilitator.languages(f.map(_.identifier))
           a <- services.address.find(f.map(_.addressId))
-        } yield facilitatorsSummary(f, c, l, a, data)) flatMap { summaries =>
+          b <- services.brandBadge.findByBrand(brand.identifier)
+        } yield facilitatorsSummary(f, c, l, a, data, b)) flatMap { summaries =>
           val collator = Collator.getInstance(Locale.ENGLISH)
           val ord = new Ordering[String] {
             def compare(x: String, y: String) = collator.compare(x, y)
@@ -116,14 +128,6 @@ class FacilitatorsApi @Inject() (val services: Repositories,
       Json.obj(
         "type" -> material.linkType,
         "link" -> material.link)
-    }
-  }
-
-  implicit val badgeUrlWrites = new Writes[BadgeUrl] {
-    def writes(badge: BadgeUrl) = {
-      Json.obj(
-        "name" -> badge.name,
-        "url" -> badge.url)
     }
   }
 
@@ -209,23 +213,25 @@ class FacilitatorsApi @Inject() (val services: Repositories,
                                     countries: List[FacilitatorCountry],
                                     languages: List[FacilitatorLanguage],
                                     addresses: List[Address],
-                                    stats: List[Facilitator]): List[FacilitatorSummary] = {
+                                    stats: List[Facilitator],
+                                    badges: List[Badge]): List[FacilitatorSummary] = {
     val withAddresses = facilitators.sortBy(_.addressId).zip(addresses.sortBy(_.id))
     val withRating = withAddresses.sortBy(_._1.identifier).zip(stats.sortBy(_.personId))
     val groupedLanguages = languages.groupBy(_.personId)
     val groupedCountries = countries.groupBy(_.personId)
     withRating.map { case ((person, address), stat) =>
-      facilitatorSummary(person, address, stat.publicRating, groupedCountries, groupedLanguages)
+      facilitatorSummary(person, address, stat, groupedCountries, groupedLanguages, badges)
     }
   }
 
-  protected def facilitatorSummary(person: Person, address: Address, rating: Float,
+  protected def facilitatorSummary(person: Person, address: Address, data: Facilitator,
                                    countries: Map[Long, List[FacilitatorCountry]],
-                                   languages: Map[Long, List[FacilitatorLanguage]]): FacilitatorSummary = {
+                                   languages: Map[Long, List[FacilitatorLanguage]],
+                                   badges: List[Badge]): FacilitatorSummary = {
     val language = languages.getOrElse(person.identifier, List())
     val countryOfResidence = List(FacilitatorCountry(person.identifier, address.countryCode))
     val country = countries.get(person.identifier).map(_ ::: countryOfResidence).getOrElse(countryOfResidence).distinct
-    FacilitatorSummary(person, address, language, country, rating)
+    FacilitatorSummary(person, address, language, country, data.publicRating, badgeUrls(badges, data.badges))
   }
 
   /**
