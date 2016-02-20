@@ -179,7 +179,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
       } { (view, brands) =>
         ok(views.html.v2.attendee.forFacilitators(user, view.get.brand, brands))
       } {
-        redirect(controllers.routes.Dashboard.index())
+        redirect(controllers.core.routes.Dashboard.index())
       }
   }
 
@@ -202,7 +202,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         implicit val participantViewWrites = new Writes[AttendeeView] {
           def writes(data: AttendeeView): JsValue = {
             val url: String = data.attendee.personId map { personId =>
-              controllers.routes.People.details(personId).url
+              controllers.core.routes.People.details(personId).url
             } getOrElse {
               controllers.routes.Licenses.addForAttendee(data.attendee.identifier, data.attendee.eventId).url
             }
@@ -343,7 +343,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param eventId Event identifier
     */
   private def attendeeDetailsUrl(attendee: Attendee, eventId: Long): Option[String] = attendee.personId.map { personId =>
-    controllers.routes.People.details(personId).url
+    controllers.core.routes.People.details(personId).url
   }
 
   /**

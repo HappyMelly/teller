@@ -23,7 +23,7 @@
             <dd>@brand.uniqueName</dd>
         @coordinator.map { x =>
             <dt>Owner</dt>
-            <dd><a href="@routes.People.details(x.id.get)">@x.fullName</a></dd>
+            <dd><a href="@controllers.core.routes.People.details(x.id.get)">@x.fullName</a></dd>
         }
         @brand.tagLine.map { value =>
             <dt>Tagline</dt>

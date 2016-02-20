@@ -3,9 +3,9 @@
 @if(account.coordinator && account.facilitator) {
   <li class="switcher">
     @if(account.activeRole) {
-      <span>Brand Coodinator / <a href="@routes.UserAccounts.switchRole()">Facilitator</a></span>
+      <span>Brand Coodinator / <a href="@core.routes.UserAccounts.switchRole()">Facilitator</a></span>
     } else {
-      <span><a href="@routes.UserAccounts.switchRole()">Brand Coodinator</a> / Facilitator</span>
+      <span><a href="@core.routes.UserAccounts.switchRole()">Brand Coodinator</a> / Facilitator</span>
     }
   </li>
 }

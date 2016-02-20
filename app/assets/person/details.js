@@ -329,9 +329,9 @@ $(document).ready( function() {
 
     new App.widgets.UploadPhotoWidget({
         selector: '.js-person-photo',
-        urlPersonUpdate: jsRoutes.controllers.ProfilePhotos.update(getPersonId()).url,
-        urlDelete: jsRoutes.controllers.ProfilePhotos.delete(getPersonId()).url,
-        urlContent: jsRoutes.controllers.ProfilePhotos.choose(getPersonId()).url
+        urlPersonUpdate: jsRoutes.controllers.core.ProfilePhotos.update(getPersonId()).url,
+        urlDelete: jsRoutes.controllers.core.ProfilePhotos.delete(getPersonId()).url,
+        urlContent: jsRoutes.controllers.core.ProfilePhotos.choose(getPersonId()).url
     });
 
     var Menu = new App.widgets.Sidemenu('.js-person-menu', {

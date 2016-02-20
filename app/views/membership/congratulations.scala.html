@@ -25,7 +25,7 @@
       </div>
       @orgId.map { id =>
         <a class="btn btn-success"
-        href="@routes.Organisations.details(id)">Go to Profile &rarr;</a>
+        href="@controllers.core.routes.Organisations.details(id)">Go to Profile &rarr;</a>
       }.getOrElse {
         <div class="js-completion-widget"></div>
       }

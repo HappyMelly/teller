@@ -56,7 +56,7 @@ class Security(deadbolt: DeadboltActions,
    * removed their own account while logged in
    */
   val MissingUserAccountResult = Future.successful(
-    Redirect(routes.LoginPage.logout()))
+    Redirect(core.routes.LoginPage.logout()))
 
   /**
     * Authenticates using SecureSocial

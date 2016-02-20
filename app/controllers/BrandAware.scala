@@ -47,11 +47,11 @@ trait BrandAware extends AsyncController {
         brandId map { identifier =>
           sorted.find(_.brand.identifier == identifier) map { view =>
             coordinator(view, sorted.map(_.brand))
-          } getOrElse redirect(routes.Dashboard.index())
+          } getOrElse redirect(core.routes.Dashboard.index())
         } getOrElse {
           if (sorted.nonEmpty) {
             coordinator(sorted.head, sorted.map(_.brand))
-          } else redirect(routes.Dashboard.index())
+          } else redirect(core.routes.Dashboard.index())
         }
       }
     } else if (account.isFacilitatorNow) {
@@ -59,11 +59,11 @@ trait BrandAware extends AsyncController {
         brandId map { identifier =>
           brands.find(_.brand.identifier == identifier) map { view =>
             facilitator(Some(view), brands.map(_.brand))
-          } getOrElse redirect(routes.Dashboard.index())
+          } getOrElse redirect(core.routes.Dashboard.index())
         } getOrElse {
           brands.length match {
             case 1 => facilitator(Some(brands.head), brands.map(_.brand))
-            case 0 => redirect(routes.Dashboard.index())
+            case 0 => redirect(core.routes.Dashboard.index())
             case _ => facilitator(None, brands.map(_.brand))
           }
         }

@@ -45,9 +45,9 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           ok(views.html.v2.eventRequest.index(user, view.brand, brands, requests))
         } { (brand, brands) =>
-          redirect(routes.Dashboard.index())
+          redirect(core.routes.Dashboard.index())
         } {
-          redirect(routes.Dashboard.index())
+          redirect(core.routes.Dashboard.index())
         }
       }
   }

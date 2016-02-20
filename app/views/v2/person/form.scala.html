@@ -13,7 +13,7 @@
   @v2.main("Person", "people", user, withMelly = true) {
     <div class="form">
       @v2.html.block("") { <h1>@title</h1> }
-      @html.form(action = CSRF(id.map(id => routes.People.update(id)).getOrElse(routes.People.create()))) {
+      @html.form(action = CSRF(id.map(id => core.routes.People.update(id)).getOrElse(core.routes.People.create()))) {
         @v2.person.blocks.form(form, user.account, id.getOrElse(0), id == user.person.id && user.account.byEmail, id == user.person.id)
         @if(form.hasErrors) {
           @v2.html.block("") {

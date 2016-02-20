@@ -89,7 +89,7 @@
             <div class="column">
               <div class="title">Facilitators</div>
               @for(facilitator <- event.facilitators(services)) {
-                <a href="@routes.People.details(facilitator.id.getOrElse(0))">
+                <a href="@controllers.core.routes.People.details(facilitator.id.getOrElse(0))">
                   @element.photo(facilitator, "70")
                 </a>
                 <span class="name">@facilitator.fullName</span><br/>

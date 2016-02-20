@@ -94,7 +94,7 @@ $(document).ready( function() {
 
     new App.widgets.UploadPhotoWidget({
         selector: '.js-organization-photo',
-        urlDelete: jsRoutes.controllers.Organisations.deleteLogo(getOrganozationId()).url
+        urlDelete: jsRoutes.controllers.core.Organisations.deleteLogo(getOrganozationId()).url
     })
 
     new App.widgets.Sidemenu('.js-organization-menu', {

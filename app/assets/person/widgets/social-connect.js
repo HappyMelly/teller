@@ -34,7 +34,7 @@
 
     PersonSocialConnect.prototype.unSetConnect = function($el){
         var socialType = $el.data('social');
-        var url = jsRoutes.controllers.UserAccounts.disconnect(socialType).url;
+        var url = jsRoutes.controllers.core.UserAccounts.disconnect(socialType).url;
 
         $.post(url, {}, function(data) {
             $el.removeClass('state-complete');

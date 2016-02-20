@@ -12,7 +12,7 @@
   @v2.main("Organizations", "orgs", user, withMelly = true) {
     <div class="form">
       @v2.html.block("") { <h1>@name</h1> }
-      @html.form(action = CSRF(id.map(id => routes.Organisations.update(id)).getOrElse(routes.Organisations.create()))) {
+      @html.form(action = CSRF(id.map(id => core.routes.Organisations.update(id)).getOrElse(core.routes.Organisations.create()))) {
         @v2.organisation.blocks.form(form)
 
         @if(form.hasErrors) {

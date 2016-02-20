@@ -27,7 +27,8 @@ import java.net.URLDecoder
 import javax.inject.Inject
 
 import controllers.apiv2.json.{ContributionConverter, PersonConverter}
-import controllers.{Experiments, Organisations}
+import controllers.Experiments
+import controllers.core.Organisations
 import models._
 import models.repository.Repositories
 import play.api.i18n.MessagesApi

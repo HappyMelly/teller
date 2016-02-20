@@ -78,7 +78,7 @@ class Statistics @Inject() (override implicit val env: TellerRuntimeEnvironment,
         ok(views.html.v2.statistics.index(user, view.brand, brands))
       } { (view, brands) =>
         ok(views.html.v2.statistics.index(user, view.get.brand, brands))
-      } { redirect(routes.Dashboard.index()) }
+      } { redirect(core.routes.Dashboard.index()) }
   }
 
   /**

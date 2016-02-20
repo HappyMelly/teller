@@ -65,9 +65,9 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
       val boundForm: Form[Contribution] = contributionForm.bindFromRequest
       val contributorId = boundForm.data("contributorId").toLong
       val route: String = if (page == "organisation") {
-        routes.Organisations.details(contributorId).url
+        core.routes.Organisations.details(contributorId).url
       } else if (page == "person") {
-        routes.People.details(contributorId).url + "#contributions"
+        core.routes.People.details(contributorId).url + "#contributions"
       } else {
         routes.Products.details(boundForm.data("productId").toLong).url
       }
@@ -102,11 +102,11 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
         case Some(contribution) =>
           services.contribution.delete(id) flatMap { _ =>
             val route: String = if (page == "organisation") {
-              routes.Organisations.details(contribution.contributorId).url
+              core.routes.Organisations.details(contribution.contributorId).url
             } else if (page == "product") {
               routes.Products.details(contribution.productId).url
             } else {
-              routes.People.details(contribution.contributorId).url + "#contributions"
+              core.routes.People.details(contribution.contributorId).url + "#contributions"
             }
             redirect(route, "success" -> "Contribution was deleted")
           }

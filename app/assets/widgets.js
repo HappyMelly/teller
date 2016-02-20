@@ -57,7 +57,7 @@
                 if (!self.isProfilePage()) {
                     App.history.add('hmtShowTabAndDialog', [menuTab, modalDialog]);
 
-                    window.location = jsRoutes.controllers.People.details(self.currentUserId).url;
+                    window.location = jsRoutes.controllers.core.People.details(self.currentUserId).url;
                     return false;
                 }
 
@@ -72,7 +72,7 @@
                 if (!self.isProfilePage()) {
                     App.history.add('hmtShowSelectPhotoForm', [modalDialog]);
 
-                    window.location = jsRoutes.controllers.People.details(self.currentUserId).url;
+                    window.location = jsRoutes.controllers.core.People.details(self.currentUserId).url;
                     return false;
                 }
 
@@ -83,7 +83,7 @@
 
     CompletionWidget.prototype.reload = function(){
         var self = this,
-            url = jsRoutes.controllers.ProfileStrengths.personWidget(self.currentUserId, true).url;
+            url = jsRoutes.controllers.core.ProfileStrengths.personWidget(self.currentUserId, true).url;
 
         $.get(url, function(data){
             self.$el.html(data);

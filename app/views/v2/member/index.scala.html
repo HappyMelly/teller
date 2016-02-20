@@ -72,8 +72,8 @@
                                                 <i class="glyphicon glyphicon-home"></i>
                                             }</td>
                                             <td><a href="@if(member.person) {
-                                                @routes.People.details(member.objectId) } else {
-                                                @routes.Organisations.details(member.objectId) }">@member.name</a></td>
+                                                @controllers.core.routes.People.details(member.objectId) } else {
+                                                @controllers.core.routes.Organisations.details(member.objectId) }">@member.name</a></td>
                                             <td>@member.city.map { city => @city, } @Countries.name(member.countryCode)</td>
                                             <td>@if(member.funder){
                                                 <span class="text-sm">funder</span>

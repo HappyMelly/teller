@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,12 +21,13 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.core
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Security, Files, Utilities}
 import models.repository.Repositories
 import models.{Person, Photo}
 import play.api.data.Form
@@ -40,13 +41,13 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
                                val services: Repositories,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
-  with Files {
+    with Files {
 
   /**
-   * Renders a screen for selecting a profile's photo
-   *
-   * @param id Person identifier
-   */
+    * Renders a screen for selecting a profile's photo
+    *
+    * @param id Person identifier
+    */
   def choose(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.find(id) flatMap {
       case None => notFound("Person not found")
@@ -58,10 +59,10 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
   }
 
   /**
-   * Deletes photo of the given person
-   *
-   * @param id Person identifier
-   */
+    * Deletes photo of the given person
+    *
+    * @param id Person identifier
+    */
   def delete(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.find(id) flatMap {
       case None => notFound("Person not found")
@@ -69,23 +70,23 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
         Person.photo(id).remove()
         services.person.update(person.copy(photo = Photo.empty)) flatMap { _ =>
           val route = routes.People.details(id).url
-          jsonOk(Json.obj("link" -> routes.Assets.at("images/add-photo.png").url))
+          jsonOk(Json.obj("link" -> controllers.routes.Assets.at("images/add-photo.png").url))
         }
     }
   }
 
   /**
-   * Retrieve and cache a photo of the given person
-   *
-   * @param id Person identifier
-   */
+    * Retrieve and cache a photo of the given person
+    *
+    * @param id Person identifier
+    */
   def photo(id: Long) = file(Person.photo(id))
 
   /**
     * Updates profile photo
-   *
-   * @param id Person identifier
-   */
+    *
+    * @param id Person identifier
+    */
   def update(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val form = Form(single("type" -> nonEmptyText)).bindFromRequest
     form.fold(
@@ -106,10 +107,10 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
   }
 
   /**
-   * Upload a new photo to Amazon
-   *
-   * @param id Person identifier
-   */
+    * Upload a new photo to Amazon
+    *
+    * @param id Person identifier
+    */
   def upload(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     uploadFile(Person.photo(id), "photo") flatMap { _ ⇒
       val route = routes.People.details(id).url

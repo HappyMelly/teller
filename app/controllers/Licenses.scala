@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -140,7 +140,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                         services.profileStrength.update(ProfileStrength.forFacilitator(strength))
                       }
                       createFacilitatorAccount(person, brand)
-                      val route: String = routes.People.details(personId).url + "#facilitation"
+                      val route: String = core.routes.People.details(personId).url + "#facilitation"
                       redirect(route, "success" -> "License for brand %s was added".format(brand.name))
                     }
                   } else {
@@ -195,7 +195,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       }
                       createFacilitatorAccount(person, brand)
                       activity(license, user.person).created.insert(services)
-                      val route: String = routes.People.details(person.identifier).url + "#facilitation"
+                      val route: String = core.routes.People.details(person.identifier).url + "#facilitation"
                       redirect(route, "success" -> "License for brand %s was added".format(brand.name))
                     }
                 }
@@ -229,7 +229,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
             }
           }
           activity(view.license, user.person).deleted.insert(services)
-          val route: String = routes.People.details(view.licensee.identifier).url + "#facilitation"
+          val route: String = core.routes.People.details(view.licensee.identifier).url + "#facilitation"
           redirect(route, "success" -> "License for brand %s was deleted".format(view.brand.name))
       }
   }
@@ -249,7 +249,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
         brands.find(_.identifier == license.brandId) map { brand =>
           ok(views.html.v2.license.editForm(user, license.id.get, licenseForm.fill(license), brands, brand.identifier))
         } getOrElse {
-          redirect(routes.Dashboard.index(), "error" -> "You are not a coordinator of the selected brand")
+          redirect(core.routes.Dashboard.index(), "error" -> "You are not a coordinator of the selected brand")
         }
     }
   }
@@ -264,7 +264,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       l <- services.license.findWithBrandAndLicensee(id)
       b <- coordinatedBrands(user.account.personId)
     } yield (l, b)) flatMap {
-      case (None, _) => redirect(routes.Dashboard.index(), "error" -> Messages("error.notFound", Messages("models.License")))
+      case (None, _) => redirect(core.routes.Dashboard.index(), "error" -> Messages("error.notFound", Messages("models.License")))
       case (Some(view), brands) =>
         val form = licenseForm.bindFromRequest
         form.fold(
@@ -276,7 +276,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
               services.license.update(editedLicense)
 
               activity(license, user.person).updated.insert(services)
-              val route: String = routes.People.details(view.license.licenseeId).url + "#facilitation"
+              val route: String = core.routes.People.details(view.license.licenseeId).url + "#facilitation"
               redirect(route, "success" -> "License was updated")
             } getOrElse {
               val formWithError = form.withError("brandId", "You are not a coordinator of the selected brand")

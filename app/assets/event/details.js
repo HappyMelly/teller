@@ -82,7 +82,7 @@ function toggleSentButton() {
  */
 function updateOrganizer(id) {
     if (id != 0) {
-        var url = jsRoutes.controllers.Organisations.name(id).url
+        var url = jsRoutes.controllers.core.Organisations.name(id).url
         $.get(url, function(data) {
             $('#organizer').text(data.name);
         }, "json");

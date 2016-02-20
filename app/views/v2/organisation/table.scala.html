@@ -15,7 +15,7 @@
       <tr @if(!org.active) {
         class="inactive" title="deactivated" } >
         <td>
-          <a href="@routes.Organisations.details(org.id.getOrElse(0))">@org.name</a></td>
+          <a href="@controllers.core.routes.Organisations.details(org.id.getOrElse(0))">@org.name</a></td>
         <td>@org.city</td>
         <td>
           <img width="16" src="/assets/images/flags/16/@(org.countryCode.toLowerCase).png" align="absmiddle">

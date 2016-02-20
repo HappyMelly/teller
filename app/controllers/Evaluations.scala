@@ -199,7 +199,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
                   view.get.settings.certificates,
                   facilitator,
                   endorsement))
-              } { redirect(routes.Dashboard.index()) }
+              } { redirect(core.routes.Dashboard.index()) }
           }
       }
   }

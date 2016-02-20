@@ -21,12 +21,13 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.core
 
 import java.util.UUID
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Security, Utilities}
 import models.UserRole.Role.Viewer
 import models._
 import models.repository.IRepositories
@@ -34,7 +35,6 @@ import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
 import securesocial.core.PasswordInfo
@@ -45,14 +45,14 @@ import services.TellerRuntimeEnvironment
 import scala.concurrent.{Await, Future}
 
 /**
- * User administration controller.
- */
+  * User administration controller.
+  */
 class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                            override val messagesApi: MessagesApi,
                                            val repos: IRepositories,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
-  with I18nSupport {
+    with I18nSupport {
 
   val CurrentPassword = "currentPassword"
   val NewPassword = "newPassword"
@@ -130,7 +130,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
 
   /**
     * Disconnects social profile from the current account
- *
+    *
     * @param profileId Profile identifier
     */
   def disconnect(profileId: String) = RestrictedAction(Viewer) { implicit request => implicit handler =>
@@ -269,9 +269,9 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   }
 
   /**
-   * Switches active role to Facilitator if it was Brand Coordinator, and
-   *  visa versa
-   */
+    * Switches active role to Facilitator if it was Brand Coordinator, and
+    *  visa versa
+    */
   def switchRole = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val account = user.account.copy(activeRole = !user.account.activeRole)

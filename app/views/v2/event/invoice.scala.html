@@ -20,10 +20,10 @@
             }
             @if(!event.free) {
                 <dt>Invoice To:</dt>
-                <dl><a href="@routes.Organisations.details(view.invoice.invoiceTo)">@view.invoiceTo</a></dl>
+                <dl><a href="@controllers.core.routes.Organisations.details(view.invoice.invoiceTo)">@view.invoiceTo</a></dl>
                 @view.invoice.invoiceBy.map { id =>
                     <dt>Invoice By:</dt>
-                    <dl><a href="@routes.Organisations.details(id)">@view.invoiceBy.get</a></dl>
+                    <dl><a href="@controllers.core.routes.Organisations.details(id)">@view.invoiceBy.get</a></dl>
                 }
                 @view.invoice.number.map { number =>
                     <dt>Invoice #:</dt>

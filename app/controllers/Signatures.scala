@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -60,7 +60,7 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
             Future.successful(None)
           }
           result flatMap { _ =>
-            val route: String = routes.People.details(personId).url + "#facilitation"
+            val route: String = core.routes.People.details(personId).url + "#facilitation"
             redirect(route, "success" -> "Signature was deleted")
           }
       }
@@ -83,7 +83,7 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
       services.person.find(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
-          val route: String = routes.People.details(personId).url + "#facilitation"
+          val route: String = core.routes.People.details(personId).url + "#facilitation"
           uploadFile(Person.signature(personId), "signature") map { _ ⇒
             services.person.update(person.copy(signature = true))
             Redirect(route).flashing("success" -> "Signature was uploaded")

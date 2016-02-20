@@ -48,9 +48,9 @@ class ExperimentReminder @Inject() (val email: Email, val services: Repositories
         filter(member => member._2.nonEmpty)
       members.foreach { member =>
         val url = if (member._1.person)
-          controllers.routes.People.details(member._1.objectId).url
+          controllers.core.routes.People.details(member._1.objectId).url
         else
-          controllers.routes.Organisations.details(member._1.objectId).url
+          controllers.core.routes.Organisations.details(member._1.objectId).url
         val body = mail.templates.members.html.experimentStatus(member._1.name,
           member._2, fullUrl(url)).toString()
         val subject = "Update your experiments"

@@ -95,13 +95,13 @@ trait Enrollment extends AsyncController
   }
 
   private def notifyAboutPerson(person: Person, member: Member) = {
-    val url: String = routes.People.details(person.id.get).url
+    val url: String = core.routes.People.details(person.id.get).url
     slack.send(personSlackMsg(person, member, url))
     sendWelcomeEmail(person, member.profileUrl, person.firstName)
   }
 
   private def notifyAboutOrg(org: Organisation, member: Member, person: Person) = {
-    val url: String = routes.Organisations.details(org.identifier).url
+    val url: String = core.routes.Organisations.details(org.identifier).url
     slack.send(newMemberMsg(member, org.name, url))
     sendWelcomeEmail(person, member.profileUrl, org.name)
   }

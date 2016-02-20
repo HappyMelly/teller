@@ -11,7 +11,7 @@
 
   @html.indexPageHeader("People") {
     @restrict(handler, List(as(Admin.toString))) {
-      <a class="btn btn-success pull-right" href="@routes.People.add()">
+      <a class="btn btn-success pull-right" href="@controllers.core.routes.People.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Person</a>
     }
   }
@@ -22,7 +22,7 @@
     } else {
       @table(people) { person =>
         @restrict(handler, List(as(Admin.toString))) {
-          <a href="@routes.People.edit(person.id)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
+          <a href="@controllers.core.routes.People.edit(person.id)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }
     }

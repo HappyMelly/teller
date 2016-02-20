@@ -17,7 +17,7 @@
                   @if(attendee.personId.isEmpty) {
                     @attendee.fullName
                     } else {
-                    <a href="@routes.People.details(attendee.identifier)">@attendee.fullName</a>
+                    <a href="@controllers.core.routes.People.details(attendee.identifier)">@attendee.fullName</a>
                     }
                      rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)

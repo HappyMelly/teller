@@ -37,7 +37,7 @@ to receive from the system.</p>
   <tbody>
     @for((member, data) <- members) {
       <tr data-id="@member.id.get" data-brandid="@brandId">
-        <td><a href="@routes.People.details(member.id.get)">@member.fullName</a></td>
+        <td><a href="@controllers.core.routes.People.details(member.id.get)">@member.fullName</a></td>
         <td><input type="checkbox" value="event" @if(data.notification.event) {checked}/></td>
         <td><input type="checkbox" value="evaluation" @if(data.notification.evaluation) {checked}/></td>
         <td><input type="checkbox" value="certificate" @if(data.notification.certificate) {checked}/></td>

@@ -71,7 +71,7 @@
     <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
       @v2.html.postDialog("cancelDialog",
         "Stop automatic renewal",
-        CSRF(routes.People.cancel(person.identifier)),
+        CSRF(core.routes.People.cancel(person.identifier)),
         "Stop") {
         <p>If you stop automatic renewal you won't be able to start it again.</p>
         <p>Your membership will be valid till <b>@member.until</b></p>

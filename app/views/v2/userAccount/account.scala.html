@@ -15,7 +15,7 @@
             @v2.html.block("") {
                 <h1>Manage account</h1>
             }
-            @v2.html.form(CSRF(routes.UserAccounts.changeEmail())) {
+            @v2.html.form(CSRF(core.routes.UserAccounts.changeEmail())) {
                 @v2.html.block("") {
                     <legend>Change email</legend>
                     <div class="form-group">
@@ -51,7 +51,7 @@
             <div class="row">
                 <div class="col-md-6" style="border-top: solid 1px #e7e7e7; margin-left: 60px;"></div>
             </div>
-            @v2.html.form(CSRF(routes.UserAccounts.changePassword())) {
+            @v2.html.form(CSRF(core.routes.UserAccounts.changePassword())) {
                 @v2.html.block("") {
                     <legend>Change password</legend>
                     @v2.html.password(passwordForm("currentPassword"), '_label -> "Old password",

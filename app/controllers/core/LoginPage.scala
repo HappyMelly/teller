@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,8 +21,7 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
-package controllers
+package controllers.core
 
 import javax.inject.Inject
 import play.api.Play
@@ -34,18 +33,18 @@ import securesocial.core.utils._
 import scala.concurrent.Future
 
 /**
- * This controller is a partial copy of securesocial.controllers.LoginPage
- *
- * Its logout method allows to pass error message to login page
- */
+  * This controller is a partial copy of securesocial.controllers.LoginPage
+  *
+  * Its logout method allows to pass error message to login page
+  */
 class LoginPage @Inject() (override implicit val env: RuntimeEnvironment) extends BaseLoginPage {
 
   /**
-   * Logs out the user by clearing the credentials from the session.
-   * The browser is redirected either to the login page or to the page specified in the onLogoutGoTo property.
-   *
-   * @return
-   */
+    * Logs out the user by clearing the credentials from the session.
+    * The browser is redirected either to the login page or to the page specified in the onLogoutGoTo property.
+    *
+    * @return
+    */
   def logout(error: Option[String] = None, success: Option[String] = None) = UserAwareAction.async {
     implicit request ⇒
       val redirectTo = Redirect(Play.configuration.getString(onLogoutGoTo).getOrElse(env.routes.loginPageUrl))

@@ -91,7 +91,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
               services.facilitator.insertCountry(FacilitatorCountry(id, country))
             }
             val msg ="New country for facilitator was added"
-            val url: String = routes.People.details(id).url + "#facilitation"
+            val url: String = core.routes.People.details(id).url + "#facilitation"
             redirect(url, "success" -> msg)
         }
       )
@@ -124,7 +124,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
               }
             }
             val msg = "New language for facilitator was added"
-            val url: String = routes.People.details(id).url + "#facilitation"
+            val url: String = core.routes.People.details(id).url + "#facilitation"
             redirect(url, "success" -> msg)
         }
       )
@@ -158,7 +158,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   def deleteCountry(id: Long, country: String) = ProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.facilitator.deleteCountry(id, country) flatMap { _ =>
-        val url: String = routes.People.details(id).url + "#facilitation"
+        val url: String = core.routes.People.details(id).url + "#facilitation"
         redirect(url, "success" -> "Country was deleted from facilitator")
       }
   }
@@ -177,7 +177,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
           case Some(profile) =>
             services.profileStrength.update(profile.markIncomplete("language"))
         }
-        val url: String = routes.People.details(id).url + "#facilitation"
+        val url: String = core.routes.People.details(id).url + "#facilitation"
         redirect(url, "success" -> "Language was deleted from facilitator")
       }
   }
@@ -234,7 +234,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
           }
           ok(views.html.v2.facilitator.forFacilitators(user, view.get.brand, brands, facilitators))
         } {
-          redirect(routes.Dashboard.index())
+          redirect(core.routes.Dashboard.index())
         }
       }
   }

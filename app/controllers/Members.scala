@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -212,12 +212,12 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /** Renders Add new person page */
   def addPerson() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.member.newPerson(user, None, People.personForm(user.name, None, services)))
+    ok(views.html.member.newPerson(user, None, core.People.personForm(user.name, None, services)))
   }
 
   /** Renders Add new organisation page */
   def addOrganisation() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.member.newOrg(user, None, Organisations.organisationForm))
+    ok(views.html.member.newOrg(user, None, core.Organisations.organisationForm))
   }
 
   /** Renders Add existing organisation page */
@@ -239,7 +239,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /** Records a new member-organisation to database */
   def createNewOrganisation() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val orgForm = Organisations.organisationForm.bindFromRequest
+      val orgForm = core.Organisations.organisationForm.bindFromRequest
       orgForm.fold(
         hasErrors ⇒ badRequest(views.html.member.newOrg(user, None, hasErrors)),
         view ⇒ {
@@ -251,7 +251,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
             } yield (v.org, member)
             actions flatMap { case (org, member) =>
               Cache.remove(Members.cacheId(user.person.id.get))
-              val profileUrl: String = routes.Organisations.details(org.identifier).url
+              val profileUrl: String = core.routes.Organisations.details(org.identifier).url
               val text = newMemberMsg(member, org.name, profileUrl)
               slack.send(text)
               redirect(profileUrl, "success" -> "Member was added")
@@ -266,7 +266,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /** Records a new member-person to database */
   def createNewPerson() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      val personForm = People.personForm(user.name, None, services).bindFromRequest
+      val personForm = core.People.personForm(user.name, None, services).bindFromRequest
       personForm.fold(
         hasErrors ⇒
           badRequest(views.html.member.newPerson(user, None, hasErrors)),
@@ -291,7 +291,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
               notify(person, None, member)
               subscribe(person, member)
 
-              val profileUrl: String = routes.People.details(person.id.get).url
+              val profileUrl: String = core.routes.People.details(person.id.get).url
               redirect(profileUrl, "success" -> log.toString)
             }
           } getOrElse {
@@ -334,7 +334,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
                   notify(person, None, m)
                   subscribe(person, m)
 
-                  val profileUrl: String = routes.People.details(person.id.get).url
+                  val profileUrl: String = core.routes.People.details(person.id.get).url
                   redirect(profileUrl, "success" -> log.toString)
                 }
             }
@@ -374,7 +374,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
               services.member.insert(m.copy(objectId = org.id.get, person = false)) flatMap { member =>
                 Cache.remove(Members.cacheId(user.person.id.get))
                 val log = activity(member, user.person, Some(org)).made.insert(services)
-                val profileUrl: String = routes.Organisations.details(org.id.get).url
+                val profileUrl: String = core.routes.Organisations.details(org.id.get).url
                 val text = newMemberMsg(member, org.name, profileUrl)
                 slack.send(text)
                 redirect(profileUrl, "success" -> log.toString)
@@ -426,9 +426,9 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   protected def profileUrl(member: Member): String = {
     if (member.person)
-      routes.People.details(member.objectId).url
+      core.routes.People.details(member.objectId).url
     else
-      routes.Organisations.details(member.objectId).url
+      core.routes.Organisations.details(member.objectId).url
   }
 
   /**

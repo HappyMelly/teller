@@ -9,7 +9,7 @@
   <div class="brand-header-content">
     <div class="container">
       <div class="brand-image">
-        <a href="@routes.Dashboard.overview(activeBrand.identifier)">
+        <a href="@core.routes.Dashboard.overview(activeBrand.identifier)">
           @activeBrand.picture.map { picture =>
             <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@Brands.pictureUrl(activeBrand)"/>
           }.getOrElse {

@@ -35,7 +35,7 @@
           @restrict(handler, List(as(Role.Admin.toString))) {
             <div class="button">
               <form class="delete form-inline" method="post" text="organisation"
-                action="@CSRF(routes.Organisations.delete(view.org.id.getOrElse(0)))">
+                action="@CSRF(controllers.core.routes.Organisations.delete(view.org.id.getOrElse(0)))">
                 <div data-toggle="tooltip" data-placement="bottom"
                   @if(!deletable) { title="@Messages("error.view.org.nonDeletable")" }>
                     <button class="btn btn-default" type="submit"
@@ -46,7 +46,7 @@
             </div>
             <div class="button">
               <form method="post" class="form-inline"
-                action="@CSRF(routes.Organisations.activation(view.org.id.getOrElse(0)))">
+                action="@CSRF(controllers.core.routes.Organisations.activation(view.org.id.getOrElse(0)))">
                 <input name="active" value="@(!view.org.active)" type="hidden">
                 @if(view.org.active) {
                   <button class="btn btn-default" type="submit">
@@ -63,7 +63,7 @@
           @dynamic(handler, Role.OrgMember.toString, view.org.identifier.toString) {
             <div class="button">
               <a class="btn btn-primary"
-                href="@routes.Organisations.edit(view.org.id.get)">Edit</a>
+                href="@controllers.core.routes.Organisations.edit(view.org.id.get)">Edit</a>
             </div>
           }
         </div>

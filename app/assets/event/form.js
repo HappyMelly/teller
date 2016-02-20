@@ -206,7 +206,7 @@ function updateCity(obj) {
  */
 function updateOrganizer(id) {
     if (id != 0) {
-        var url = jsRoutes.controllers.Organisations.name(id).url
+        var url = jsRoutes.controllers.core.Organisations.name(id).url
         $.get(url, function(data) {
             $('#organizerSearch').val(data.name);
         }, "json");
@@ -220,7 +220,7 @@ function addOrganizer(e) {
     e.preventDefault();
     $.ajax({
         type: "POST",
-        url: jsRoutes.controllers.Organisations.createOrganizer().url,
+        url: jsRoutes.controllers.core.Organisations.createOrganizer().url,
         data: $("#addOrgForm").serialize(),
         dataType: "json"
     }).done(function(data){
@@ -325,7 +325,7 @@ $(document).ready( function() {
     updateOrganizer($('#organizer_id').val());
 
     $("#organizerSearch").autocomplete({
-        serviceUrl: jsRoutes.controllers.Organisations.search().url,
+        serviceUrl: jsRoutes.controllers.core.Organisations.search().url,
         paramName: 'query',
         minChars: 3,
         preserveInput: true,

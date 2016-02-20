@@ -97,9 +97,9 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
                   case e: RuntimeException ⇒ Unit
                 } map { _ ⇒
                   val url = if (member.person)
-                    routes.People.details(member.objectId).url
+                    core.routes.People.details(member.objectId).url
                   else
-                    routes.Organisations.details(member.objectId).url
+                    core.routes.Organisations.details(member.objectId).url
                   notifyMembers(member, experiment, url + "#experiments")
                   Redirect(url + "#experiments")
                 }
@@ -208,9 +208,9 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
                   memberId = memberId, picture = existing.picture))
               } map { _ ⇒
                 val url = if (member.person)
-                  routes.People.details(member.objectId).url
+                  core.routes.People.details(member.objectId).url
                 else
-                  routes.Organisations.details(member.objectId).url
+                  core.routes.Organisations.details(member.objectId).url
                 Redirect(url + "#experiments")
               }
           }
@@ -254,7 +254,7 @@ object Experiments {
   def pictureUrl(experiment: Experiment): Option[String] = {
     if (experiment.picture) {
       val picture = Experiment.picture(experiment.id.get)
-      val url = Utilities.fullUrl(controllers.routes.Experiments.picture(experiment.id.get).url)
+      val url = Utilities.fullUrl(routes.Experiments.picture(experiment.id.get).url)
       Utilities.cdnUrl(picture.name).orElse(Some(url))
     } else {
       None

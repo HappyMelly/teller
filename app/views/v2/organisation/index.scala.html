@@ -12,7 +12,7 @@
 
   @html.indexPageHeader("Organizations") {
     @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
-      <a class="btn btn-success pull-right" href="@routes.Organisations.add()">
+      <a class="btn btn-success pull-right" href="@controllers.core.routes.Organisations.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Organization</a>
     }
   }
@@ -23,7 +23,7 @@
     } else {
       @table(organisations) { organisation =>
         @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
-          <a href="@routes.Organisations.edit(organisation.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
+          <a href="@controllers.core.routes.Organisations.edit(organisation.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
 			}
     }

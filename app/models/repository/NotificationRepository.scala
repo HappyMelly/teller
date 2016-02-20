@@ -50,7 +50,7 @@ class NotificationRepository(app: Application) extends HasDatabaseConfig[JdbcPro
     * @return Returns notification object with updated id
     */
   def insert(notification: Notification): Future[Notification] = {
-    val query = notifications returning notifications.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val query = notifications returning notifications.map(_.id) into ((value, id) => value.copy(id = id))
     db.run(query += notification)
   }
 

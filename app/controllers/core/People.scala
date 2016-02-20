@@ -21,10 +21,11 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.core
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Security, Files, Activities, MemberNotifications }
 import controllers.Forms._
 import models.UserRole.Role._
 import models._
@@ -53,19 +54,19 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                                     val email: Email,
                                     deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
-  with Integrations
-  with Files
-  with Activities
-  with MemberNotifications {
+    with Integrations
+    with Files
+    with Activities
+    with MemberNotifications {
 
   val contentType = "image/jpeg"
   val indexCall: Call = routes.People.index()
 
   /**
-   * Form target for toggling whether a person is active
-   *
-   * @param id Person identifier
-   */
+    * Form target for toggling whether a person is active
+    *
+    * @param id Person identifier
+    */
   def activation(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.find(id) flatMap {
       case None => redirect(indexCall, "error" -> "Person not found")
@@ -84,15 +85,15 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Render a Create page
-   */
+    * Render a Create page
+    */
   def add = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.v2.person.form(user, None, People.personForm(user.name, None, services)))
   }
 
   /**
-   * Assign a person to an organisation
-   */
+    * Assign a person to an organisation
+    */
   def addRelationship() = RestrictedAction(List(Admin, Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val relationshipForm = Form(tuple("page" -> text,
@@ -123,8 +124,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Create form submits to this action.
-   */
+    * Create form submits to this action.
+    */
   def create = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     People.personForm(user.name, None, services).bindFromRequest.fold(
       formWithErrors ⇒ badRequest(views.html.v2.person.form(user, None, formWithErrors)),
@@ -137,10 +138,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Delete a person
-   *
-   * @param id Person identifier
-   */
+    * Delete a person
+    *
+    * @param id Person identifier
+    */
   def delete(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       p <- services.person.find(id)
@@ -157,12 +158,12 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Delete a relationthip of a person and an organisation
-   *
-   * @param page Page identifier where the action was requested from
-   * @param personId Person identifier
-   * @param organisationId Org identifier
-   */
+    * Delete a relationthip of a person and an organisation
+    *
+    * @param page Page identifier where the action was requested from
+    * @param personId Person identifier
+    * @param organisationId Org identifier
+    */
   def deleteRelationship(page: String, personId: Long, organisationId: Long) = ProfileAction(personId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       (for {
@@ -186,10 +187,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Render Details page
-   *
-   * @param id Person identifier
-   */
+    * Render Details page
+    *
+    * @param id Person identifier
+    */
   def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       p <- services.person.findComplete(id)
@@ -223,10 +224,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Render an Edit page
-   *
-   * @param id Person identifier
-   */
+    * Render an Edit page
+    *
+    * @param id Person identifier
+    */
   def edit(id: Long) = DynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.findComplete(id) flatMap {
@@ -237,10 +238,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Edit form submits to this action
-   *
-   * @param id Person identifier
-   */
+    * Edit form submits to this action
+    *
+    * @param id Person identifier
+    */
   def update(id: Long) = DynamicAction(ProfileEditor, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       services.person.findComplete(id) flatMap {
@@ -273,11 +274,11 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Renders tab for the given person
+    * Renders tab for the given person
     *
     * @param id Person or Member identifier
-   * @param tab Tab identifier
-   */
+    * @param tab Tab identifier
+    */
   def renderTabs(id: Long, tab: String) = RestrictedAction(Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       tab match {
@@ -331,10 +332,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 
 
   /**
-   * Render a list of people in the network
-   *
-   * @return
-   */
+    * Render a list of people in the network
+    *
+    * @return
+    */
   def index = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     services.person.findAll flatMap { people =>
       ok(views.html.v2.person.index(user, people))
@@ -342,10 +343,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Cancels a subscription for yearly-renewing membership
+    * Cancels a subscription for yearly-renewing membership
     *
     * @param id Person id
-   */
+    */
   def cancel(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val url: String = routes.People.details(id).url + "#membership"
     (for {
@@ -375,11 +376,11 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-   * Compares social profiles and returns a list of errors for a form
+    * Compares social profiles and returns a list of errors for a form
     *
     * @param left Social profile object
-   * @param right Social profile object
-   */
+    * @param right Social profile object
+    */
   protected def compareSocialProfiles(left: SocialProfile, right: SocialProfile): List[FormError] = {
 
     val list = mutable.MutableList[FormError]()
@@ -401,11 +402,11 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 
 
   /**
-   * Retrieve facilitator statistics by brand, including years of experience,
-   *  number of events and rating
+    * Retrieve facilitator statistics by brand, including years of experience,
+    *  number of events and rating
     *
     * @param id Facilitator id
-   */
+    */
   protected def retrieveByBrandStatistics(id: Long) = {
     (for {
       l <- services.license.licensesWithBrands(id)
@@ -445,8 +446,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 object People {
 
   /**
-   * HTML form mapping for a person’s address.
-   */
+    * HTML form mapping for a person’s address.
+    */
   val addressMapping = mapping(
     "id" -> ignored(Option.empty[Long]),
     "street1" -> optional(text),
@@ -457,24 +458,24 @@ object People {
     "country" -> nonEmptyText)(Address.apply)(Address.unapply)
 
   /**
-   * HTML form mapping for a person’s social profile.
-   */
+    * HTML form mapping for a person’s social profile.
+    */
   val socialProfileMapping = mapping(
     "twitterHandle" -> optional(text.verifying(Constraints.pattern("""[A-Za-z0-9_]{1,16}""".r, error = "error.twitter"))),
     "facebookUrl" -> optional(facebookProfileUrl),
     "linkedInUrl" -> optional(linkedInProfileUrl),
     "googlePlusUrl" -> optional(googlePlusProfileUrl))({
-      (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
-        SocialProfile(0, ProfileType.Person, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
-    })({
-      (s: SocialProfile) ⇒
-        Some(s.twitterHandle, s.facebookUrl,
-          s.linkedInUrl, s.googlePlusUrl)
-    })
+    (twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl) ⇒
+      SocialProfile(0, ProfileType.Person, twitterHandle, facebookUrl, linkedInUrl, googlePlusUrl)
+  })({
+    (s: SocialProfile) ⇒
+      Some(s.twitterHandle, s.facebookUrl,
+        s.linkedInUrl, s.googlePlusUrl)
+  })
 
   /**
-   * HTML form mapping for creating and editing.
-   */
+    * HTML form mapping for creating and editing.
+    */
   def personForm(editorName: String, userId: Option[Long] = None, services: Repositories)(implicit user: ActiveUser) = {
     Form(mapping(
       "id" -> ignored(Option.empty[Long]),
@@ -497,20 +498,20 @@ object People {
         "createdBy" -> ignored(editorName),
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply))(
-        { (id, firstName, lastName, emailAddress, birthday, signature,
-          address, bio, interests, webSite, blog, active, dateStamp) ⇒
-          {
-            val person = Person(id, firstName, lastName, emailAddress, birthday, Photo.empty,
-              signature, address.id.getOrElse(0), bio, interests,
-              webSite, blog, customerId = None, virtual = false, active = active, dateStamp = dateStamp)
-            person.address_=(address)
-            person
-          }
-        })(
-          { (p: Person) ⇒
-            Some(
-              (p.id, p.firstName, p.lastName, p.email, p.birthday,
-                p.signature, p.address, p.bio, p.interests, p.webSite, p.blog, p.active, p.dateStamp))
-          }))
+      { (id, firstName, lastName, emailAddress, birthday, signature,
+         address, bio, interests, webSite, blog, active, dateStamp) ⇒
+      {
+        val person = Person(id, firstName, lastName, emailAddress, birthday, Photo.empty,
+          signature, address.id.getOrElse(0), bio, interests,
+          webSite, blog, customerId = None, virtual = false, active = active, dateStamp = dateStamp)
+        person.address_=(address)
+        person
+      }
+      })(
+      { (p: Person) ⇒
+        Some(
+          (p.id, p.firstName, p.lastName, p.email, p.birthday,
+            p.signature, p.address, p.bio, p.interests, p.webSite, p.blog, p.active, p.dateStamp))
+      }))
   }
 }

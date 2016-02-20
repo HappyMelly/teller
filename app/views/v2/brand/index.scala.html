@@ -40,7 +40,7 @@
                         @for(brand <- brands) {
                             <tr @if(!brand.brand.active) { class="inactive" title="Deactivated" }>
                                 <td><a href="@routes.Brands.details(brand.brand.id.get)">@brand.brand.name</a></td>
-                                <td><a href="@routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
+                                <td><a href="@controllers.core.routes.People.details(brand.coordinator.id.get)">@brand.coordinator.fullName</a></td>
                                 @restrict(handler, List(as(Admin.toString))) {
                                     <td><a href="@routes.Brands.edit(brand.brand.id.get)" class="font-sm"> Edit</a></td>
                                 }

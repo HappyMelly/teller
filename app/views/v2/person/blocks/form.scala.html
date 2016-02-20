@@ -47,7 +47,7 @@
             </label>
             <div class="col-md-10">
                 <div class="b-connect js-social-connect">
-                    @defining(Some(routes.People.edit(id).url + "#profiles")) { redirectTo =>
+                    @defining(Some(core.routes.People.edit(id).url + "#profiles")) { redirectTo =>
                         <div class="b-connect-i type-tw @if(account.twitter.nonEmpty){state-complete}"
                             data-social="@TwitterProvider.Twitter"
                             data-url="@env.routes.authenticationUrl(TwitterProvider.Twitter, redirectTo)">

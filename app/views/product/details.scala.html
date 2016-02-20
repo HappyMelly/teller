@@ -126,10 +126,10 @@
                             <td>
                             @if(contributor.contribution.isPerson) {
                                 <i class="glyphicon glyphicon-user"></i>
-                                <a href="@routes.People.details(contributor.id)">@contributor.name</a>
+                                <a href="@controllers.core.routes.People.details(contributor.id)">@contributor.name</a>
                             } else {
                                 <i class="glyphicon glyphicon-home"></i>
-                                <a href="@routes.Organisations.details(contributor.id)">@contributor.name</a>
+                                <a href="@controllers.core.routes.Organisations.details(contributor.id)">@contributor.name</a>
                             }
                             </td>
                             <td>@contributor.contribution.role</td>

@@ -15,7 +15,7 @@
       @for(view <- licenses) {
         <tr>
           <td>
-            <a href="@(routes.People.details(view.licensee.id.get).url)#licenses">
+            <a href="@(core.routes.People.details(view.licensee.id.get).url)#licenses">
             @view.licensee.fullName
             </a>
           </td>

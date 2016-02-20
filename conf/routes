@@ -1,10 +1,10 @@
 # Application pages
 
-GET           /                                                              controllers.Dashboard.index
-GET           /about                                                         controllers.Dashboard.about
-GET           /apiv2                                                         controllers.Dashboard.apiv2
-GET           /profile                                                       controllers.Dashboard.profile
-GET           /overview/:id                                                  controllers.Dashboard.overview(id: Long)
+GET           /                                                              controllers.core.Dashboard.index
+GET           /about                                                         controllers.core.Dashboard.about
+GET           /apiv2                                                         controllers.core.Dashboard.apiv2
+GET           /profile                                                       controllers.core.Dashboard.profile
+GET           /overview/:id                                                  controllers.core.Dashboard.overview(id: Long)
 
 GET           /admin/settings                                                controllers.admin.Administration.settings
 POST          /admin/transactiontype/new                                     controllers.admin.Administration.createTransactionType
@@ -169,49 +169,49 @@ GET           /membership/payment                                            con
 POST          /membership/payment                                            controllers.Membership.charge
 GET           /membership/congratulations                                    controllers.Membership.congratulations(orgId: Option[Long] ?= None)
 
-GET           /notifications/:offset/:limit                                  controllers.Notifications.list(offset: Long, limit: Long)
-POST          /notifications                                                 controllers.Notifications.read()
+GET           /notifications/:offset/:limit                                  controllers.core.Notifications.list(offset: Long, limit: Long)
+POST          /notifications                                                 controllers.core.Notifications.read()
 
-POST          /organization/:id/activation                                   controllers.Organisations.activation(id: Long)
-GET           /organization/new                                              controllers.Organisations.add
-POST          /organization/:id/cancel                                       controllers.Organisations.cancel(id: Long)
-POST          /organizations                                                 controllers.Organisations.create
-POST          /organizer                                                     controllers.Organisations.createOrganizer
-POST          /organization/:id/delete                                       controllers.Organisations.delete(id: Long)
-DELETE        /organization/:id/logo/delete                                  controllers.Organisations.deleteLogo(id: Long)
-GET           /organization/:id                                              controllers.Organisations.details(id: Long)
-GET           /organization/:id/edit                                         controllers.Organisations.edit(id: Long)
-GET           /organizations                                                 controllers.Organisations.index
-GET           /organization/:id/logo                                         controllers.Organisations.logo(id: Long)
-GET           /organization/:id/name                                         controllers.Organisations.name(id: Long)
-POST          /organization/:id                                              controllers.Organisations.update(id: Long)
-GET           /organizations/search                                          controllers.Organisations.search(query: Option[String])
-POST          /organization/:id/logo                                         controllers.Organisations.uploadLogo(id: Long)
+POST          /organization/:id/activation                                   controllers.core.Organisations.activation(id: Long)
+GET           /organization/new                                              controllers.core.Organisations.add
+POST          /organization/:id/cancel                                       controllers.core.Organisations.cancel(id: Long)
+POST          /organizations                                                 controllers.core.Organisations.create
+POST          /organizer                                                     controllers.core.Organisations.createOrganizer
+POST          /organization/:id/delete                                       controllers.core.Organisations.delete(id: Long)
+DELETE        /organization/:id/logo/delete                                  controllers.core.Organisations.deleteLogo(id: Long)
+GET           /organization/:id                                              controllers.core.Organisations.details(id: Long)
+GET           /organization/:id/edit                                         controllers.core.Organisations.edit(id: Long)
+GET           /organizations                                                 controllers.core.Organisations.index
+GET           /organization/:id/logo                                         controllers.core.Organisations.logo(id: Long)
+GET           /organization/:id/name                                         controllers.core.Organisations.name(id: Long)
+POST          /organization/:id                                              controllers.core.Organisations.update(id: Long)
+GET           /organizations/search                                          controllers.core.Organisations.search(query: Option[String])
+POST          /organization/:id/logo                                         controllers.core.Organisations.uploadLogo(id: Long)
 
-GET           /people                                                        controllers.People.index
+GET           /people                                                        controllers.core.People.index
 
-GET           /person/new                                                    controllers.People.add
-POST          /person/new                                                    controllers.People.create
-GET           /person/:id                                                    controllers.People.details(id: Long)
-POST          /person/:id                                                    controllers.People.update(id: Long)
-GET           /person/:id/edit                                               controllers.People.edit(id: Long)
-POST          /person/:id/activation                                         controllers.People.activation(id: Long)
-POST          /person/:id/delete                                             controllers.People.delete(id: Long)
-POST          /person/:id/cancel                                             controllers.People.cancel(id: Long)
-GET           /person/:id/tabs                                               controllers.People.renderTabs(id: Long, tab: String)
+GET           /person/new                                                    controllers.core.People.add
+POST          /person/new                                                    controllers.core.People.create
+GET           /person/:id                                                    controllers.core.People.details(id: Long)
+POST          /person/:id                                                    controllers.core.People.update(id: Long)
+GET           /person/:id/edit                                               controllers.core.People.edit(id: Long)
+POST          /person/:id/activation                                         controllers.core.People.activation(id: Long)
+POST          /person/:id/delete                                             controllers.core.People.delete(id: Long)
+POST          /person/:id/cancel                                             controllers.core.People.cancel(id: Long)
+GET           /person/:id/tabs                                               controllers.core.People.renderTabs(id: Long, tab: String)
 
-POST          /person/:id/photo/upload                                       controllers.ProfilePhotos.upload(id: Long)
-GET           /person/:id/photo                                              controllers.ProfilePhotos.photo(id: Long)
-DELETE        /person/:id/photo/delete                                       controllers.ProfilePhotos.delete(id: Long)
-POST          /person/:id/photo                                              controllers.ProfilePhotos.update(id: Long)
-GET           /person/:id/photo/choose                                       controllers.ProfilePhotos.choose(id: Long)
+POST          /person/:id/photo/upload                                       controllers.core.ProfilePhotos.upload(id: Long)
+GET           /person/:id/photo                                              controllers.core.ProfilePhotos.photo(id: Long)
+DELETE        /person/:id/photo/delete                                       controllers.core.ProfilePhotos.delete(id: Long)
+POST          /person/:id/photo                                              controllers.core.ProfilePhotos.update(id: Long)
+GET           /person/:id/photo/choose                                       controllers.core.ProfilePhotos.choose(id: Long)
 
 
 GET           /person/:id/licenses/new                                       controllers.Licenses.add(id: Long)
 POST          /person/:id/licenses/new                                       controllers.Licenses.create(id: Long)
 
-POST          /person/relation/new                                           controllers.People.addRelationship
-GET           /person/:personId/relation/:organisationId/delete              controllers.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
+POST          /person/relation/new                                           controllers.core.People.addRelationship
+GET           /person/:personId/relation/:organisationId/delete              controllers.core.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
 
 GET           /products                                                      controllers.Products.index
 GET           /product/new                                                   controllers.Products.add
@@ -228,7 +228,7 @@ POST          /product/:id/picture/delete                                    con
 POST          /product/brand/new                                             controllers.Products.addBrand
 GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
-GET           /profile/:id/person/steps/:steps                               controllers.ProfileStrengths.personWidget(id: Long, steps: Boolean)
+GET           /profile/:id/person/steps/:steps                               controllers.core.ProfileStrengths.personWidget(id: Long, steps: Boolean)
 
 GET           /registration/welcome                                          controllers.Registration.welcome
 GET           /registration/step1                                            controllers.Registration.step1(org: Boolean ?= false)
@@ -259,13 +259,13 @@ POST          /url/:url/validate                                             con
 
 GET           /usage                                                         controllers.admin.Usage.index
 
-GET           /user/account                                                  controllers.UserAccounts.account
-POST          /user/disconnect/:profileId                                    controllers.UserAccounts.disconnect(profileId: String)
-POST          /user/newPassword                                              controllers.UserAccounts.handleNewPassword
-POST          /user/password                                                 controllers.UserAccounts.changePassword
-GET           /user/switch                                                   controllers.UserAccounts.switchRole
-POST          /user/email                                                    controllers.UserAccounts.changeEmail
-GET           /user/email/:token                                             controllers.UserAccounts.handleEmailChange(token: String)
+GET           /user/account                                                  controllers.core.UserAccounts.account
+POST          /user/disconnect/:profileId                                    controllers.core.UserAccounts.disconnect(profileId: String)
+POST          /user/newPassword                                              controllers.core.UserAccounts.handleNewPassword
+POST          /user/password                                                 controllers.core.UserAccounts.changePassword
+GET           /user/switch                                                   controllers.core.UserAccounts.switchRole
+POST          /user/email                                                    controllers.core.UserAccounts.changeEmail
+GET           /user/email/:token                                             controllers.core.UserAccounts.handleEmailChange(token: String)
 
 # API (v2)
 GET           /api/v2/brands                                                 controllers.apiv2.BrandsApi.brands
@@ -303,7 +303,7 @@ GET           /api/v2/product/:id                                            con
 GET           /assets/*file                                                  controllers.Assets.at(path="/public", file)
 
 ## SecureSocial
-GET           /login                                                         controllers.LoginPage.login
-GET           /logout                                                        controllers.LoginPage.logout(error: Option[String] ?= None, success: Option[String] ?= None)
+GET           /login                                                         controllers.core.LoginPage.login
+GET           /logout                                                        controllers.core.LoginPage.logout(error: Option[String] ?= None, success: Option[String] ?= None)
 GET           /authenticate/:provider                                        controllers.security.ProviderController.authenticate(provider, redirectTo: Option[String])
 POST          /authenticate/:provider                                        controllers.security.ProviderController.authenticateByPost(provider, redirectTo: Option[String])

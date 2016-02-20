@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,12 +21,13 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.core
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import models.UserRole.Role._
 import models.repository.Repositories
 import models.{ActiveUser, ProfileStrength}
@@ -35,10 +36,10 @@ import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
 
-class ProfileStrengths @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                                  override val messagesApi: MessagesApi,
-                                  val services: Repositories,
-                                  deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+class ProfileStrengths @Inject()(override implicit val env: TellerRuntimeEnvironment,
+                                 override val messagesApi: MessagesApi,
+                                 val services: Repositories,
+                                 deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
     extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
 
   /**

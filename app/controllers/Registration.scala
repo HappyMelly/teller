@@ -165,7 +165,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
             }
           } getOrElse {
             Logger.error(s"[securesocial] There isn't CookieAuthenticator registered in the RuntimeEnvironment")
-            val url: String = routes.LoginPage.login().url
+            val url: String = core.routes.LoginPage.login().url
             redirect(url, "error" -> Messages("There was an error signing you up"))
           }
         }.flatMap(f => f)
@@ -355,9 +355,9 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
     orgId map { id ⇒
-      Ok(views.html.v2.registration.congratulations(routes.Organisations.details(id).url, true))
+      Ok(views.html.v2.registration.congratulations(core.routes.Organisations.details(id).url, true))
     } getOrElse {
-      Ok(views.html.v2.registration.congratulations(routes.Dashboard.profile().url, false))
+      Ok(views.html.v2.registration.congratulations(core.routes.Dashboard.profile().url, false))
     }
   }
 
@@ -428,7 +428,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   protected def redirectViewer(f: Future[Result])(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     user: ActiveUser): Future[Result] = if (user.account.viewer)
-    redirect(routes.Dashboard.index())
+    redirect(core.routes.Dashboard.index())
   else
     f
 

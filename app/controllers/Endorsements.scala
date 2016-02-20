@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -164,7 +164,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
                 endorsementData.content, endorsementData.name,
                 endorsementData.company, maxPosition + 1)
               services.person.insertEndorsement(endorsement) flatMap { _ =>
-                redirect(routes.People.details(personId).url + "#experience")
+                redirect(core.routes.People.details(personId).url + "#experience")
               }
           })
   }
@@ -197,7 +197,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
                 evaluationId = view._3.identifier, rating = Some(view._3.impression))
             }.zipWithIndex.map { x => x._1.copy(position = x._2 + 1 + maxPosition) }
             newEndorsements.foreach { x => services.person.insertEndorsement(x) }
-            val url = routes.People.details(personId).url + "#experience"
+            val url = core.routes.People.details(personId).url + "#experience"
             jsonOk(Json.obj("url" -> url))
           }
         }
@@ -289,7 +289,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
             endorsementData.content, endorsementData.name,
             endorsementData.company)
           services.person.updateEndorsement(endorsement) flatMap { _ =>
-            val url: String = routes.People.details(personId).url + "#experience"
+            val url: String = core.routes.People.details(personId).url + "#experience"
             redirect(url)
           }
         })

@@ -36,7 +36,7 @@ import securesocial.core.services.RoutesService
 class TellerRoutesService extends RoutesService.Default {
 
    override def loginPageUrl(implicit req: RequestHeader): String = {
-     absoluteUrl(_root_.controllers.routes.LoginPage.login())
+     absoluteUrl(_root_.controllers.core.routes.LoginPage.login())
    }
 
   override def handleResetPasswordUrl(mailToken: String)(implicit req: RequestHeader): String = {

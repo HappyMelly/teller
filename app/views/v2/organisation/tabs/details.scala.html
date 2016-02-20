@@ -81,14 +81,14 @@
     <tbody>
       @for(person <- members) {
         <tr @if(!person.active) { class="inactive" title="deactivated" }>
-          <td><a href="@routes.People.details(person.id.get)">@person.fullName</a></td>
+          <td><a href="@controllers.core.routes.People.details(person.id.get)">@person.fullName</a></td>
           <td>
             <img width="16" src="/assets/images/flags/16/@(person.address.countryCode.toLowerCase).png" align="absmiddle">
             @Messages("country." + person.address.countryCode)
           </td>
           <td>
           @restrict(handler, List(as(Admin.toString))) {
-            <a href="@routes.People.deleteRelationship("organisation", person.id.get, org.id.get)" class="font-sm">Delete relation</a>
+            <a href="@controllers.core.routes.People.deleteRelationship("organisation", person.id.get, org.id.get)" class="font-sm">Delete relation</a>
           }
           </td>
         </tr>
@@ -96,7 +96,7 @@
     </tbody>
   </table>
   @restrict(handler, List(as(Admin.toString))) {
-    <form class="form-inline" method="POST" action="@CSRF(routes.People.addRelationship)">
+    <form class="form-inline" method="POST" action="@CSRF(controllers.core.routes.People.addRelationship)">
       <input type="hidden" name="page" value="organisation">
       <input type="hidden" name="organisationId" value="@org.id.get">
       <select class="form-control input-sm" name="personId">

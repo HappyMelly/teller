@@ -88,7 +88,7 @@ function showTab(elem, type) {
         drawDoughnutChart("#topFacilitatorsChart", data.topFacilitators);
         drawTable("#facilitatorList", data.topFacilitators, function(facilitator) {
             return $("<a>").
-                attr("href", jsRoutes.controllers.People.details(facilitator.id).url).
+                attr("href", jsRoutes.controllers.core.People.details(facilitator.id).url).
                 append(facilitator.label);
         });
     });

@@ -36,7 +36,7 @@ function addMember(personId, name, brandId) {
             .attr('data-brandid', brandId)
             .append($('<td>')
                 .append($('<a>')
-                    .attr('href', jsRoutes.controllers.People.details(personId).url)
+                    .attr('href', jsRoutes.controllers.core.People.details(personId).url)
                     .append(name)))
             .append('<td><input type="checkbox" value="event"/></td>')
             .append('<td><input type="checkbox" value="evaluation"/></td>')

@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,10 +22,11 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.core
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Security, BrandAware}
 import models.UserRole.Role._
 import models._
 import models.repository.Repositories
@@ -40,26 +41,26 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
                                         val services: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
-  with BrandAware
-  with I18nSupport {
+    with BrandAware
+    with I18nSupport {
 
   /**
-   * About page - credits.
-   */
+    * About page - credits.
+    */
   def about = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.about(user))
   }
 
   /**
-   * API v2 documentation page.
-   */
+    * API v2 documentation page.
+    */
   def apiv2 = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     ok(views.html.apiv2.index(user))
   }
 
   /**
-   * Dashboard page - logged-in home page.
-   */
+    * Dashboard page - logged-in home page.
+    */
   def index = RestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.registered) {
@@ -89,10 +90,10 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   }
 
   /**
-   * Dashboard page for the specific brand
+    * Dashboard page for the specific brand
     *
     * @param id Brand identifier
-   */
+    */
   def overview(id: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
@@ -117,19 +118,19 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   }
 
   /**
-   * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
-   * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
-   */
+    * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
+    * the `LoginIdentity.person` database query for every page, to get the person ID for the details page URL.
+    */
   def profile = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val currentUser = user.person
     redirect(routes.People.details(currentUser.id.getOrElse(0)))
   }
 
   /**
-   * Returns 3 past events happened in the last 7 days
+    * Returns 3 past events happened in the last 7 days
     *
     * @param events List of all events
-   */
+    */
   protected def pastEvents(events: List[Event], brands: List[Brand]) = {
     val now = LocalDate.now()
     val weekBefore = now.minusDays(7)
@@ -141,10 +142,10 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   }
 
   /**
-   * Returns unhandled evaluations for the given events
+    * Returns unhandled evaluations for the given events
     *
     * @param events List of events
-   */
+    */
   protected def unhandledEvaluations(events: List[Event], brands: List[Brand]) = {
     services.evaluation.findUnhandled(events) map { evaluations =>
       evaluations.sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
@@ -154,11 +155,11 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   }
 
   /**
-   * Returns list of upcoming events (not more than 3)
+    * Returns list of upcoming events (not more than 3)
     *
     * @param events List of all events
-   * @param brands List of related brands
-   */
+    * @param brands List of related brands
+    */
   protected def upcomingEvents(events: List[Event], brands: List[Brand]) = {
     events
       .filter(_.schedule.end.toString >= LocalDate.now().toString)
@@ -166,10 +167,10 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   }
 
   /**
-   * Returns list of past confirmed events without invoices
+    * Returns list of past confirmed events without invoices
     *
     * @param brand Brand of interest
-   */
+    */
   protected def unbilledEvents(brand: Brand): Future[List[Event]] = {
     (for {
       e <- services.event.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))

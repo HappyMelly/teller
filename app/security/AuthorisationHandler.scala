@@ -26,10 +26,9 @@ package security
 
 import be.objectify.deadbolt.core.models.Subject
 import be.objectify.deadbolt.scala.{DeadboltHandler, DynamicResourceHandler}
-import controllers.routes
 import models.ActiveUser
-import models.repository.{IRepositories, Repositories}
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import models.repository.IRepositories
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Request, Result}
 import securesocial.core.SecureSocial
 import services.TellerRuntimeEnvironment
@@ -95,6 +94,6 @@ class AuthorisationHandler @javax.inject.Inject() (override implicit val env: Te
    * @return the action
    */
   def onAuthFailure[A](request: Request[A]): Future[Result] = Future.successful {
-    Redirect(routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
+    Redirect(controllers.core.routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
   }
 }

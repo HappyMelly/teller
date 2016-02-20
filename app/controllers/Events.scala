@@ -137,12 +137,12 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
 
       if (event.deletable(services)) {
         cancelForm.bindFromRequest.fold(
-          failure ⇒ redirect(routes.Dashboard.index(), "error" -> "Something goes wrong :("),
+          failure ⇒ redirect(core.routes.Dashboard.index(), "error" -> "Something goes wrong :("),
           data ⇒ {
             event.cancel(user.person.id.get, data.reason, data.participants, data.details, services)
             val log = activity(event, user.person).deleted.insert(services)
             sendEmailNotification(event, List.empty, log)
-            redirect(routes.Dashboard.index(), "success" -> "Event was cancelled")
+            redirect(core.routes.Dashboard.index(), "success" -> "Event was cancelled")
           })
       } else {
         redirect(routes.Events.details(id), "error" -> Messages("error.event.nonDeletable"))
@@ -196,7 +196,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
               ok(views.html.v2.event.details(user, view.get.brand, brands, List(), event,
                 invoiceView, eventType.name, printableFees, deletable))
             } {
-              redirect(routes.Dashboard.index())
+              redirect(core.routes.Dashboard.index())
             }
           }
 
@@ -242,7 +242,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         }
       } { (view, brands) =>
         ok(views.html.v2.event.index(user, view.get.brand, brands, List()))
-      } { redirect(routes.Dashboard.index()) }
+      } { redirect(core.routes.Dashboard.index()) }
   }
 
   /**
@@ -264,7 +264,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         def writes(data: Person): JsValue = {
           Json.obj(
             "name" -> data.fullName,
-            "url" -> routes.People.details(data.id.get).url)
+            "url" -> core.routes.People.details(data.id.get).url)
         }
       }
 

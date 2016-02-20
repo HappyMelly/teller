@@ -27,7 +27,7 @@
       <tr @if(!org.active) {
         class="inactive" title="deactivated" } >
         <td>
-          <a href="@routes.Organisations.details(org.id.getOrElse(0))">@org.name</a>
+          <a href="@controllers.core.routes.Organisations.details(org.id.getOrElse(0))">@org.name</a>
         </td>
         <td>@org.city</td>
         <td>
@@ -35,7 +35,7 @@
           @Messages("country." + org.countryCode)
         </td>
           <td>@restrict(handler, List(as(Admin.toString))) {
-            <a href="@routes.People.deleteRelationship("person", person.id.get, org.id.get)" class="font-sm">Remove Relation</a>
+            <a href="@controllers.core.routes.People.deleteRelationship("person", person.id.get, org.id.get)" class="font-sm">Remove Relation</a>
         }</td>
       </tr>
     }
@@ -43,7 +43,7 @@
 </table>
 }
 @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
-    <form class="form-inline" method="POST" action="@CSRF(routes.People.addRelationship())">
+    <form class="form-inline" method="POST" action="@CSRF(controllers.core.routes.People.addRelationship())">
         <input type="hidden" name="page" value="person">
         <input type="hidden" name="personId" value="@person.id.get">
         <div class="form-group">
