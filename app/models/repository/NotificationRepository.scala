@@ -66,4 +66,11 @@ class NotificationRepository(app: Application) extends HasDatabaseConfig[JdbcPro
     */
   def read(ids: Seq[Long], personId: Long): Future[Int] =
     db.run(notifications.filter(_.id inSet ids).filter(_.personId === personId).map(_.unread).update(true))
+
+  /**
+    * Returns number of unread notifications for the given person
+    * @param personId Person identifier
+    */
+  def unread(personId: Long): Future[Int] =
+    db.run(notifications.filter(_.personId === personId).filter(_.unread).countDistinct.result)
 }

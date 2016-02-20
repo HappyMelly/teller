@@ -171,6 +171,7 @@ GET           /membership/congratulations                                    con
 
 GET           /notifications/:offset/:limit                                  controllers.core.Notifications.list(offset: Long, limit: Long)
 POST          /notifications                                                 controllers.core.Notifications.read()
+GET           /notifications/unread                                          controllers.core.Notifications.unread()
 
 POST          /organization/:id/activation                                   controllers.core.Organisations.activation(id: Long)
 GET           /organization/new                                              controllers.core.Organisations.add

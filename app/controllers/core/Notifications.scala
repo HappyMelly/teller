@@ -82,4 +82,13 @@ class Notifications @Inject() (override implicit val env: TellerRuntimeEnvironme
       }
     )
   }
+
+  /**
+    * Returns the number of unread notifications for current user
+    */
+  def unread() = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
+    repos.notification.unread(user.person.identifier) flatMap { counter =>
+      jsonOk(Json.obj("unread" -> counter))
+    }
+  }
 }
