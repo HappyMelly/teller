@@ -48,9 +48,9 @@ import scala.concurrent.Future
   */
 class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
-                                        val services: Repositories,
+                                        val repos: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
   with BrandAware {
 
@@ -103,7 +103,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
       form(eventId, user.name).bindFromRequest.fold(
         errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
         data => {
-          services.attendee.insert(data)
+          repos.attendee.insert(data)
           redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was added")
         }
       )
@@ -117,10 +117,10 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   def delete(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.attendee.find(attendeeId, eventId) flatMap {
+      repos.attendee.find(attendeeId, eventId) flatMap {
         case None => jsonNotFound("Unknown attendee")
         case Some(attendee) =>
-          services.attendee.delete(attendeeId, eventId) flatMap { _ =>
+          repos.attendee.delete(attendeeId, eventId) flatMap { _ =>
             jsonSuccess("Attendee was deleted")
           }
       }
@@ -134,7 +134,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   def details(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request => implicit handler => implicit user => implicit event =>
-      services.attendee.find(attendeeId, eventId) flatMap {
+      repos.attendee.find(attendeeId, eventId) flatMap {
         case None => badRequest(Html("Attendee not found"))
         case Some(attendee) =>
           findEvaluation(attendee.evaluationId) flatMap {
@@ -155,7 +155,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   def edit(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.attendee.find(attendeeId, eventId) flatMap {
+      repos.attendee.find(attendeeId, eventId) flatMap {
         case None => notFound(Html("Attendee not found"))
         case Some(attendee) =>
           if (attendee.personId.isEmpty) {
@@ -191,8 +191,8 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   def list(brandId: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      withCoordinators <- services.brand.findWithCoordinators(brandId)
-      withSettings <- services.brand.findWithSettings(brandId)
+      withCoordinators <- repos.brand.findWithCoordinators(brandId)
+      withSettings <- repos.brand.findWithSettings(brandId)
     } yield (withCoordinators, withSettings)) flatMap {
       case (None, _) => ok(Json.toJson(List[String]()))
       case (_, None) => ok(Json.toJson(List[String]()))
@@ -229,13 +229,13 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         }
         val personId = account.personId
         val result = if (coordinator & user.account.isCoordinatorNow)
-          services.attendee.findByBrand(withSettings.brand.id)
+          repos.attendee.findByBrand(withSettings.brand.id)
         else
-          services.license.activeLicense(brandId, personId) flatMap {
+          repos.license.activeLicense(brandId, personId) flatMap {
             case None => Future.successful(List[AttendeeView]())
             case Some(_) =>
-              services.event.findByFacilitator(personId, withSettings.brand.id) flatMap { events =>
-                services.evaluation.findEvaluationsByEvents(events.map(_.identifier))
+              repos.event.findByFacilitator(personId, withSettings.brand.id) flatMap { events =>
+                repos.evaluation.findEvaluationsByEvents(events.map(_.identifier))
               }
           }
         result flatMap { attendees =>
@@ -250,8 +250,8 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
   def listByEvent(eventId: Long) = EventAction(List(Role.Coordinator, Role.Facilitator), eventId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
       (for {
-        view <- services.brand.findWithSettings(event.brandId)
-        participants <- services.evaluation.findEvaluationsByEvents(List(eventId))
+        view <- repos.brand.findWithSettings(event.brandId)
+        participants <- repos.evaluation.findEvaluationsByEvents(List(eventId))
       } yield (view, participants)) flatMap {
         case (None, participants) => ok(Json.toJson(List[String]()))
         case (Some(view), participants) =>
@@ -286,13 +286,13 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
       form(eventId, user.name).bindFromRequest.fold(
         errors => badRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors)),
         data =>
-          services.attendee.find(attendeeId, eventId) flatMap {
+          repos.attendee.find(attendeeId, eventId) flatMap {
             case None => redirect(controllers.routes.Events.details(eventId), "error" -> "Unknown person")
             case Some(attendee) =>
               if (attendee.personId.nonEmpty)
                 redirect(controllers.routes.Events.details(eventId), "error" -> "You are not allowed to update this attendee")
               else
-                services.attendee.update(data.copy(id = attendee.id, personId = attendee.personId)) flatMap { _ =>
+                repos.attendee.update(data.copy(id = attendee.id, personId = attendee.personId)) flatMap { _ =>
                   redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was successfully updated")
                 }
 
@@ -306,7 +306,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param evaluationId Evaluation identifier
     */
   protected def findEvaluation(evaluationId: Option[Long]): Future[Option[Evaluation]] = evaluationId map { id =>
-      services.evaluation.findWithEvent(id).map {
+      repos.evaluation.findWithEvent(id).map {
         case None => None
         case Some(view) => Some(view.eval)
       }
@@ -320,7 +320,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   protected def identicalEvaluation(evaluation: Evaluation): Future[Option[Evaluation]] =
     if (evaluation.status == EvaluationStatus.Unconfirmed || evaluation.status == EvaluationStatus.Pending) {
-      evaluation.identical(services)
+      evaluation.identical(repos)
     } else
       Future.successful(None)
 

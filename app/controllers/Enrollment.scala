@@ -46,7 +46,7 @@ trait Enrollment extends AsyncController
     with Integrations
     with MemberNotifications {
 
-  val services: Repositories
+  val repos: Repositories
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -91,7 +91,7 @@ trait Enrollment extends AsyncController
   protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): String = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
-    payment.subscribe(person, org, data.token, data.fee)(services)
+    payment.subscribe(person, org, data.token, data.fee)(repos)
   }
 
   private def notifyAboutPerson(person: Person, member: Member) = {

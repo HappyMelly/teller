@@ -55,6 +55,12 @@ class BrandCoordinatorRepository(app: Application) extends HasDatabaseConfig[Jdb
     db.run(coordinators.filter(_.brandId === brandId).filter(_.personId === personId).delete)
 
   /**
+    * Returns the list of facilitators for the given brand
+    * @param brandId Brand identifier
+    */
+  def find(brandId: Long): Future[Seq[BrandCoordinator]] =  db.run(coordinators.filter(_.brandId === brandId).result)
+
+  /**
     * Adds new coordinator to database
     * @param coordinator Brand coordinator
     */

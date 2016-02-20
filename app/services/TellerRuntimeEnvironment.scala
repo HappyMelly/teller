@@ -27,7 +27,6 @@ package services
 import javax.inject.Inject
 
 import akka.actor.ActorSystem
-import com.github.dtaniwaki.akka_pusher.PusherClient
 import models.repository.IRepositories
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
@@ -63,7 +62,6 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
     include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
     include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
   )
-  lazy val pusher: PusherClient = new PusherClient()
 }
 
 class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: EmailComponent) extends Mailer.Default(mailTemplates) {

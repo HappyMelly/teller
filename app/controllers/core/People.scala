@@ -25,7 +25,7 @@ package controllers.core
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.{Security, Files, Activities, MemberNotifications }
+import controllers.{Security, Files, Activities, MemberNotifications, Utilities }
 import controllers.Forms._
 import models.UserRole.Role._
 import models._
@@ -444,6 +444,9 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
 }
 
 object People {
+
+  def pictureUrl(person: Person): String =
+    person.photo.url.getOrElse(Utilities.fullUrl(controllers.routes.Assets.at("images/happymelly-face-white.png").url))
 
   /**
     * HTML form mapping for a person’s address.

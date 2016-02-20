@@ -53,7 +53,6 @@ private[models] trait BrandTable extends PersonTable {
     def evaluationUrl = column[Option[String]]("EVALUATION_URL")
     def evaluationHookUrl = column[Option[String]]("EVALUATION_HOOK_URL")
     def active = column[Boolean]("ACTIVE")
-    def hashedId = column[String]("HASHED_ID", O.Length(8, varying = false))
     def created = column[DateTime]("CREATED")
     def createdBy = column[String]("CREATED_BY")
     def updated = column[DateTime]("UPDATED")
@@ -62,19 +61,19 @@ private[models] trait BrandTable extends PersonTable {
 
     type BrandFields = (Option[Long], String, String, String, Long,
       Option[String], Option[String], Option[String], Option[String], Option[String], String,
-      Option[String], Option[String], Boolean, String,
+      Option[String], Option[String], Boolean,
       DateTime, String, DateTime, String)
 
     def * = (id.?, code, uniqueName, name, coordinatorId, description, picture,
-      tagLine, webSite, blog, contactEmail, evaluationUrl, evaluationHookUrl, active, hashedId,
+      tagLine, webSite, blog, contactEmail, evaluationUrl, evaluationHookUrl, active,
       created, createdBy, updated, updatedBy) <>(
       (b: BrandFields) =>
         Brand(b._1, b._2, b._3, b._4, b._5, b._6, b._7,
-          b._8, b._9, b._10, b._11, b._12, b._13, b._14, b._15,
-          DateStamp(b._16, b._17, b._18, b._19)),
+          b._8, b._9, b._10, b._11, b._12, b._13, b._14,
+          DateStamp(b._15, b._16, b._17, b._18)),
       (b: Brand) => Some((b.id, b.code, b.uniqueName, b.name, b.ownerId, b.description, b.picture,
         b.tagLine, b.webSite, b.blog, b.contactEmail, b.evaluationUrl,
-        b.evaluationHookUrl, b.active, b.hashedId,
+        b.evaluationHookUrl, b.active,
         b.recordInfo.created, b.recordInfo.createdBy, b.recordInfo.updated, b.recordInfo.updatedBy)))
 
     def forUpdate = (code, uniqueName, name, coordinatorId, description,

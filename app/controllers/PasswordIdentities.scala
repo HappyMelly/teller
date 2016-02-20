@@ -13,7 +13,7 @@ import scala.util.Random
   */
 trait PasswordIdentities extends BasePasswordReset with AsyncController {
 
-  val services: Repositories
+  val repos: Repositories
 
   /**
     * Creates dummy password and adds all required records to resetting password for newly created account
@@ -28,7 +28,7 @@ trait PasswordIdentities extends BasePasswordReset with AsyncController {
       dummyPassword.password,
       Some(person.firstName),
       Some(person.lastName), dummyPassword.hasher)
-    services.identity.insert(identity)
+    repos.identity.insert(identity)
     env.userService.saveToken(token)
   }
 

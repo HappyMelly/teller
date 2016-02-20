@@ -47,11 +47,11 @@ import scala.concurrent.Future
 class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment,
                              override val messagesApi: MessagesApi,
                              val email: EmailComponent,
-                             val services: Repositories,
+                             val repos: Repositories,
                              @Named("event-rating") eventActor: ActorRef,
                              @Named("facilitator-rating") facilitatorActor: ActorRef,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with I18nSupport
   with Integrations
   with Activities
@@ -90,7 +90,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def add(eventId: Long, attendeeId: Long) = EventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.attendee.find(attendeeId, eventId) flatMap {
+      repos.attendee.find(attendeeId, eventId) flatMap {
         case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
         case Some(attendee) =>
           ok(views.html.v2.evaluation.form(user, evaluationForm(user.name), attendee))
@@ -104,11 +104,11 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def approve(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.evaluation.findWithAttendee(id) flatMap {
+      repos.evaluation.findWithAttendee(id) flatMap {
         case None => notFound("")
         case Some(view) =>
           if (view.evaluation.approvable) {
-            view.evaluation.approve(services) flatMap { evaluation =>
+            view.evaluation.approve(repos) flatMap { evaluation =>
               // recalculate ratings
               eventActor ! evaluation.eventId
               facilitatorActor ! evaluation.eventId
@@ -135,7 +135,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def create(eventId: Long, attendeeId: Long) = EventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.attendee.find(attendeeId, eventId) flatMap {
+      repos.attendee.find(attendeeId, eventId) flatMap {
         case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
         case Some(attendee) =>
           val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
@@ -144,7 +144,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
             evaluation ⇒ {
               val defaultHook = request.host + routes.Evaluations.confirm("").url
               val modified = evaluation.copy(eventId = eventId, attendeeId = attendeeId)
-              modified.add(defaultHook, false, email, services) flatMap { eval =>
+              modified.add(defaultHook, false, email, repos) flatMap { eval =>
                 redirect(routes.Events.details(eventId), "success" -> "Attendee was added")
               }
             })
@@ -158,10 +158,10 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def delete(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.evaluation.find(id) flatMap {
+      repos.evaluation.find(id) flatMap {
         case None => notFound("")
         case Some(evaluation) =>
-          services.evaluation.delete(evaluation) flatMap { _ =>
+          repos.evaluation.delete(evaluation) flatMap { _ =>
             // recalculate ratings
             eventActor ! evaluation.eventId
             facilitatorActor ! evaluation.eventId
@@ -178,11 +178,11 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def details(id: Long) = RestrictedAction(List(Role.Coordinator, Role.Facilitator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.evaluation.findWithEvent(id) flatMap {
+      repos.evaluation.findWithEvent(id) flatMap {
         case None => notFound("")
         case Some(x) =>
           (for {
-            attendee <- services.attendee.find(x.eval.attendeeId, x.eval.eventId)
+            attendee <- repos.attendee.find(x.eval.attendeeId, x.eval.eventId)
             endorsementData <- endorsementPair(x, user.person.identifier, id)
           } yield (attendee, endorsementData)) flatMap {
             case (None, _) => notFound("Attendee not found")
@@ -211,11 +211,11 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def reject(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.evaluation.findWithAttendee(id) flatMap {
+      repos.evaluation.findWithAttendee(id) flatMap {
         case None => notFound("")
         case Some(view) =>
           if (view.evaluation.rejectable) {
-            view.evaluation.reject(services) flatMap { evaluation =>
+            view.evaluation.reject(repos) flatMap { evaluation =>
               // recalculate ratings
               eventActor ! view.evaluation.eventId
               facilitatorActor ! view.evaluation.eventId
@@ -240,11 +240,11 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def sendConfirmationRequest(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.evaluation.find(id) flatMap {
+      repos.evaluation.find(id) flatMap {
         case None => jsonNotFound("Evaluation not found")
         case Some(evaluation) =>
           val defaultHook = request.host + routes.Evaluations.confirm("").url
-          evaluation.sendConfirmationRequest(defaultHook, email, services)
+          evaluation.sendConfirmationRequest(defaultHook, email, repos)
           jsonSuccess("Confirmation request was sent")
       }
   }
@@ -255,10 +255,10 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     * @param confirmationId Confirmation unique id
    */
   def confirm(confirmationId: String) = Action.async { implicit request ⇒
-    services.evaluation.findByConfirmationId(confirmationId) flatMap {
+    repos.evaluation.findByConfirmationId(confirmationId) flatMap {
       case None => notFound(views.html.evaluation.notfound())
       case Some(evaluation) =>
-        evaluation.confirm(email, services)
+        evaluation.confirm(email, repos)
         ok(views.html.evaluation.confirmed())
     }
   }
@@ -272,8 +272,8 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     * @return
     */
   protected def endorsementPair(view: EvaluationEventView, personId: Long, id: Long): Future[(Boolean, Option[Endorsement])] = {
-    if (view.event.facilitatorIds(services).contains(personId))
-      services.person.findEndorsementByEvaluation(id, personId) map { endorsement => (true, endorsement) }
+    if (view.event.facilitatorIds(repos).contains(personId))
+      repos.person.findEndorsementByEvaluation(id, personId) map { endorsement => (true, endorsement) }
     else
       Future.successful((false, None))
   }
@@ -288,24 +288,24 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   protected def sendApprovalConfirmation(approver: Person, evaluation: Evaluation, attendee: Attendee, event: Event) = {
     (for {
-      withSettings <- services.brand.findWithSettings(event.brandId) if withSettings.isDefined
-      coordinators <- services.brand.coordinators(event.brandId)
+      withSettings <- repos.brand.findWithSettings(event.brandId) if withSettings.isDefined
+      coordinators <- repos.brand.coordinators(event.brandId)
     } yield (withSettings.get, coordinators)) foreach { case (withSettings, coordinators) =>
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
       if (attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
         val cert = new Certificate(evaluation.handled, event, attendee)
-        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, services)
-        services.attendee.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
+        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
+        repos.attendee.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
       } else if (attendee.certificate.isEmpty) {
         val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
         val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
         email.send(Set(attendee),
-          Some(event.facilitators(services).toSet),
+          Some(event.facilitators(repos).toSet),
           Some(bcc.toSet),
           subject, body, from = withSettings.brand.name, richMessage = true, None)
       } else {
         val cert = new Certificate(evaluation.handled, event, attendee, renew = true)
-        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, services)
+        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
       }
     }
   }
@@ -318,11 +318,11 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    * @param event Related event
    */
   protected def sendRejectionConfirmation(rejector: Person, attendee: Attendee, event: Event) = {
-    services.brand.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
+    repos.brand.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
       val bcc = view.coordinators.filter(_._2.notification.evaluation).map(_._1)
       val subject = s"Your ${view.brand.name} certificate"
       email.send(Set(attendee),
-        Some(event.facilitators(services).toSet),
+        Some(event.facilitators(repos).toSet),
         Some(bcc.toSet), subject,
         mail.templates.evaluation.html.rejected(view.brand, attendee, rejector).toString(),
         richMessage = true)

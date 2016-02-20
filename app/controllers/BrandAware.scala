@@ -35,14 +35,14 @@ import scala.concurrent.Future
   */
 trait BrandAware extends AsyncController {
 
-  val services: Repositories
+  val repos: Repositories
 
   protected def roleDiffirentiator(account: UserAccount, brandId: Option[Long] = None)
                                   (coordinator: (BrandWithSettings, List[Brand]) => Future[Result])
                                   (facilitator: (Option[BrandWithSettings], List[Brand]) => Future[Result])
                                   (ordinaryUser: Future[Result]): Future[Result] = {
     if (account.isCoordinatorNow) {
-      services.brand.findByCoordinator(account.personId) flatMap { brands =>
+      repos.brand.findByCoordinator(account.personId) flatMap { brands =>
         val sorted = brands.sortBy(_.brand.name)
         brandId map { identifier =>
           sorted.find(_.brand.identifier == identifier) map { view =>
@@ -55,7 +55,7 @@ trait BrandAware extends AsyncController {
         }
       }
     } else if (account.isFacilitatorNow) {
-      services.brand.findByLicense(account.personId) flatMap { brands =>
+      repos.brand.findByLicense(account.personId) flatMap { brands =>
         brandId map { identifier =>
           brands.find(_.brand.identifier == identifier) map { view =>
             facilitator(Some(view), brands.map(_.brand))

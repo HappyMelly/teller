@@ -24,6 +24,7 @@
 package models.database
 
 import models.Notification
+import play.api.libs.json.Json
 import slick.driver.JdbcProfile
 
 private[models] trait NotificationTable {
@@ -42,7 +43,11 @@ private[models] trait NotificationTable {
     def typ = column[String]("TYPE")
     def unread = column[Boolean]("UNREAD")
 
-    def * = (id, personId, body, typ, unread) <>((Notification.apply _).tupled, Notification.unapply)
+    type NotificationFields = (Option[Long], Long, String, String, Boolean)
+
+    def * = (id, personId, body, typ, unread) <> (
+      (n: NotificationFields) => Notification(n._1, n._2, Json.parse(n._3), n._4, n._5),
+      (n: Notification) => Some((n.id, n.personId, n.body.toString(), n.typ, n.unread)))
   }
 
 }

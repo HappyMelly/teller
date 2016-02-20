@@ -60,7 +60,7 @@ class Notifications @Inject() (override implicit val env: TellerRuntimeEnvironme
           Json.obj(
             "id" -> notification.id,
             "type" -> notification.typ,
-            "body" -> notification.body,
+            "body" -> notification.render,
             "unread" -> notification.unread)
         }
       }

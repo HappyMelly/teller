@@ -54,6 +54,8 @@ class NotificationRepository(app: Application) extends HasDatabaseConfig[JdbcPro
     db.run(query += notification)
   }
 
+  def insert(records: Seq[Notification]) = db.run(notifications ++= records)
+
   def find(personId: Long, offset: Long = 0, limit: Long = 5): Future[Seq[Notification]] =
     db.run(notifications.filter(_.personId === personId).drop(offset).take(limit).result)
 

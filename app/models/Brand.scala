@@ -50,7 +50,6 @@ case class Brand(id: Option[Long],
     evaluationUrl: Option[String] = None,
     evaluationHookUrl: Option[String] = None,
     active: Boolean = true,
-    hashedId: String = Random.alphanumeric.take(8).mkString,
     recordInfo: DateStamp) extends ActivityRecorder {
 
   /**
@@ -69,11 +68,6 @@ case class Brand(id: Option[Long],
    * Returns type of this object
    */
   def objectType: String = Activity.Type.Brand
-
-  object channels {
-    def coordinators: String = s"$hashedId-coordinators"
-    def facilitators: String = s"$hashedId-facilitators"
-  }
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])

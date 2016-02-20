@@ -85,10 +85,10 @@ case class AuthenticationInfo(email: String, password: String)
  */
 class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                            override val messagesApi: MessagesApi,
-                                           val services: Repositories,
+                                           val repos: Repositories,
                                            val email: Email,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with PasswordIdentities
   with Enrollment
   with Activities {
@@ -102,7 +102,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     "lastName" -> nonEmptyText,
     "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
       import scala.concurrent.duration._
-      Await.result(services.identity.checkEmail(suppliedEmail), 10.seconds)
+      Await.result(repos.identity.checkEmail(suppliedEmail), 10.seconds)
     }),
     "country" -> nonEmptyText.verifying(
       "error.unknown_country",
@@ -120,7 +120,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     mapping(
       "email" -> play.api.data.Forms.email.verifying("Email address is already in use", { suppliedEmail =>
         import scala.concurrent.duration._
-        Await.result(services.identity.checkEmail(suppliedEmail), 10.seconds)
+        Await.result(repos.identity.checkEmail(suppliedEmail), 10.seconds)
       }),
       "password" ->
         tuple(
@@ -281,10 +281,10 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   def charge = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     redirectViewer {
       Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
-        services.person.insert(unregisteredPerson(userData, user)) flatMap { person =>
+        repos.person.insert(unregisteredPerson(userData, user)) flatMap { person =>
           val futureOrg = if (userData.org) {
             val profile = SocialProfile(0, ProfileType.Organisation)
-            services.org.insert(OrgView(unregisteredOrg(userData), profile)).map(x => Some(x.org))
+            repos.org.insert(OrgView(unregisteredOrg(userData), profile)).map(x => Some(x.org))
           } else {
             Future.successful(None)
           }
@@ -298,24 +298,24 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                   }
                   val customerId = subscribe(person, org, data)
                   org map { x ⇒
-                    services.org.update(x.copy(customerId = Some(customerId), active = true))
-                    services.person.update(person.copy(active = true))
-                    person.addRelation(x.id.get, services)
+                    repos.org.update(x.copy(customerId = Some(customerId), active = true))
+                    repos.person.update(person.copy(active = true))
+                    person.addRelation(x.id.get, repos)
                   } getOrElse {
-                    services.person.update(person.copy(customerId = Some(customerId), active = true))
+                    repos.person.update(person.copy(customerId = Some(customerId), active = true))
                   }
                   val fee = Money.of(EUR, data.fee)
                   val futureMember = org map { x ⇒
-                    x.becomeMember(funder = false, fee, person.id.get, services)
+                    x.becomeMember(funder = false, fee, person.id.get, repos)
                   } getOrElse {
-                    person.becomeMember(funder = false, fee, services)
+                    person.becomeMember(funder = false, fee, repos)
                   }
                   futureMember flatMap { member =>
                     createUserAccount(user.id, user.providerId, person, member)
                     notify(person, org, member)
                     subscribe(person, member)
 
-                    activity(member, person).becameSupporter.insert(services)
+                    activity(member, person).becameSupporter.insert(repos)
 
                     val orgId = org map (_.id) getOrElse None
                     ok(Json.obj("redirect" -> routes.Registration.congratulations(orgId).url))
@@ -387,16 +387,16 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                                   providerId: String,
                                   person: Person,
                                   member: Member)(implicit request: RequestHeader) = {
-    val futureInserted = services.userAccount.insert(account(person, id, providerId))
+    val futureInserted = repos.userAccount.insert(account(person, id, providerId))
     if (providerId == UsernamePasswordProvider.UsernamePassword) {
       Logger.info(s"End of registration of a user with ${id} id")
-      services.registeringUser.delete(id, providerId)
-      services.identity.findByEmail(id) flatMap {
+      repos.registeringUser.delete(id, providerId)
+      repos.identity.findByEmail(id) flatMap {
         case None =>
           Logger.error(s"$id wasn't found in PasswordIdentity table on the final stage of registration")
           throw new RuntimeException("Internal error. Please contact support")
         case Some(identity) =>
-          services.identity.update(identity.copy(userId = person.id,
+          repos.identity.update(identity.copy(userId = person.id,
             firstName = Some(person.firstName),
             lastName = Some(person.lastName)))
       }
@@ -498,7 +498,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    * @param org Organisation
    */
   private def clean(person: Person, org: Option[Organisation]) = {
-    services.person.delete(person)
-    org foreach { x ⇒ services.org.delete(x.id.get) }
+    repos.person.delete(person)
+    org foreach { x ⇒ repos.org.delete(x.id.get) }
   }
 }
