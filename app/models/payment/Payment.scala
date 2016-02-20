@@ -83,7 +83,7 @@ object Payment {
   val DESC = "One Year Membership"
 
   /**
-   * Returns minimum, suggested and elite fees for supporters based on country.
+   * Returns Token, Generous and Big hearted fees for supporters based on country.
    * Fee amounts are taken from HM constitution: http://www.happymelly.com/constitution/
  *
    * @param code Country code
