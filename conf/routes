@@ -149,6 +149,9 @@ GET           /license/:id/edit                                            contr
 POST          /license/:id                                                 controllers.Licenses.update(id: Long)
 POST          /license/:id/brand/:brandId/delete                           controllers.Licenses.delete(brandId: Long, id: Long)
 
+POST          /login-reminder                                              controllers.security.LoginReminder.handle()
+GET           /login-reminder                                              controllers.security.LoginReminder.page()
+
 GET           /members                                                     controllers.Members.index
 GET           /member/new                                                  controllers.Members.add
 GET           /member/new/organisation                                     controllers.Members.addOrganisation

@@ -62,7 +62,9 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
   )
 }
 
-class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: EmailComponent) extends Mailer.Default(mailTemplates) {
+class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: EmailComponent)
+  extends Mailer.Default(mailTemplates) {
+
   private val logger = play.api.Logger("securesocial.core.providers.utils.Mailer.Default")
 
   override def sendEmail(subject: String, emailAddress: String, body: (Option[Txt], Option[Html])) {
