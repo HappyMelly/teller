@@ -2,10 +2,6 @@
 @import "./../../../settings";
 
 
-.request-dlg{
-  padding: 31px 25px;
-}
-
 .request-dlg__title{
   margin: 0 0 29px 0;
   font-size: 18px;
@@ -21,9 +17,9 @@
   margin-bottom: 24px;
   
   &.type-hightlight{
-    padding: 12px 25px 11px;
-    margin-left: -25px;
-    margin-right: -25px;
+    padding: 12px 30px 11px;
+    margin-left: -30px;
+    margin-right: -30px;
     background-color: #E7E7E7;
   }
 }
@@ -54,18 +50,17 @@ textarea.request-dlg__i-textarea{
   position: relative;
   padding-top: 5px;
   margin-bottom: 15px;
+  text-align: center;
 }
 
-button.request-dlg__btn-preview,
 button.request-dlg__btn-save{
-  vertical-align: top;
-  margin-right: 5px;
   font-size: 18px;
   line-height: 1;
   font-weight: 500;
   padding-top: 15px;
   padding-bottom: 17px;
   min-width: 169px !important;
+  margin-right: 70px;
 
   &[disabled]{
     padding-top: 14px;
@@ -74,11 +69,10 @@ button.request-dlg__btn-save{
 }
 
 .request-dlg__cancel{
-  position: absolute;
-  top: 20px;
-  right: 30px;
+  display: inline-block;
   font-size: 18px;
 }
+
 
 .request-dlg__markdown{
   width: 270px;

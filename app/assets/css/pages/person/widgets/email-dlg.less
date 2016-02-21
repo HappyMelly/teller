@@ -1,0 +1,73 @@
+@import "./../../../settings";
+
+.email-dlg{
+  padding-bottom: 20px;
+}
+
+.email-dlg__i{
+  position: relative;
+  display: table;
+  width: 100%;
+  height: 48px;
+  margin-bottom: 12px;
+
+  .item-error{
+    position: absolute;
+    right: 10px;
+    top: 14px;
+    font-size: 10px;
+    color: @red;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  &.state-error{
+    .item-error{
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .form-control{
+      border-color: @red;
+    }
+  }
+}
+
+.email-dlg__i-label{
+  display: table-cell;
+  vertical-align: middle;
+  width: 24.5%;
+  text-align: left;
+}
+
+.email-dlg__i-input{
+  display: table-cell;
+  position: relative;
+}
+
+.email-dlg__buttons{
+  margin-top: 29px;
+}
+
+.email-dlg__error{
+  position: absolute;
+  left: 0;
+  top: 55px;
+  font-size: 12px;
+  color: @red;
+}
+
+.email-dlg__btn{
+  min-width: 300px;
+  font-size: 18px;
+  line-height: 1;
+  padding-top: 15px;
+  padding-bottom: 17px;
+  font-weight: 400;
+  margin-right: 80px;
+}
+
+.email-dlg__close{
+  font-size: 18px;
+}
+

@@ -1,8 +1,9 @@
-@import "./../../settings";
+@import "./../../../settings";
 
 // Connect social network block
 .b-connect{
-  margin: 20px 0;
+  display: inline-block;
+  vertical-align: top;
   text-align: left;
   white-space: nowrap;
 }
@@ -18,9 +19,9 @@
       top: 5px;
       width: 54px;
       height: 65px;
-      background-image: url(../images/person/icon-tw-big.png);
+      background-image: url(/assets/images/person/icon-tw-big.png);
     }
-    
+
     .b-connect-i__btn{
       background: #3099FF;
       border-color: #3099ff;
@@ -31,7 +32,7 @@
     .b-connect-i__img:before{
       width: 63px;
       height: 70px;
-      background-image: url(../images/person/icon-fb-big.png);
+      background-image: url(/assets/images/person/icon-fb-big.png);
     }
 
     .b-connect-i__btn{
@@ -44,7 +45,7 @@
     .b-connect-i__img:before{
       width: 52px;
       height: 70px;
-      background-image: url(../images/person/icon-linked-big.png);
+      background-image: url(/assets/images/person/icon-linked-big.png);
     }
 
     .b-connect-i__btn{
@@ -59,7 +60,7 @@
       top: -4px;
       width: 65px;
       height: 76px;
-      background-image: url(../images/person/icon-gp-big.png);
+      background-image: url(/assets/images/person/icon-gp-big.png);
     }
 
     .b-connect-i__btn{
@@ -103,7 +104,7 @@
   display: block;
   height: 94px;
   position: relative;
-  
+
   &:before{
     content: '';
     position: relative;
@@ -112,7 +113,7 @@
     background-repeat: no-repeat ;
     -webkit-background-size: cover;
     background-size: cover;
-  }  
+  }
 }
 
 .b-connect-i__btn{
@@ -120,7 +121,7 @@
   width: 100%;
   .box-sizing(border-box);
   color: #ffffff !important;
-  border: 1px solid;
+  border: 1px solid tra;
 
   .complete{
     display: none;
