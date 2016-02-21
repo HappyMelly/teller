@@ -158,7 +158,6 @@
                 "class": "item-error"
             }).appendTo($parent);
         }
-
         $error.text(text);
     };
 
