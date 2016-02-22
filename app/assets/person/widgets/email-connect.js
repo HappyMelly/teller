@@ -46,9 +46,15 @@
             self.changeEmail($this);
         });
 
-        self.$root.on('input', '.modal input', function(e){
+        self.$root
+            .on('input', '.modal input', function(e){
                 var $this = $(this);
                 self.removeError($this);
+            })
+            .on('hidden.bs.modal', function(e){
+                var $modal = $(e.target);
+
+                self.clearForm($modal.find('form'));
             })
     };
 
