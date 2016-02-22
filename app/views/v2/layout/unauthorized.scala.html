@@ -3,15 +3,14 @@
 @v2.layout.public("Happy Melly") {
     <div class="unauthorized">
         <img src="@routes.Assets.at("images/melly_right.png")" class="melly"/>
-        <div class="top-stripe">
+        <div class="top-stripe h-rel">
             <div class="subpage">
                 @content
             </div>
-            <div class="footer">
-                Made with love at <a href="http://happymelly.com" target="_blank">Happy Melly</a>
-            </div>
         </div>
-        <div class="bottom-stripe"></div>
+    </div>
+    <div class="unauth__footer">
+        Made with love at <a href="http://happymelly.com" target="_blank">Happy Melly</a>
     </div>
 
     <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/unauthorized.min.css")">
