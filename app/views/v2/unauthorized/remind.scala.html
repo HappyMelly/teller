@@ -1,0 +1,27 @@
+@(form: Form[String])(implicit request: RequestHeader, messages: Messages)
+
+@import helper.CSRF
+
+@v2.layout.unauthorized("Remind Login") {
+    <div class="action-block">
+        <h3>Remind my login options</h3>
+        <div>Enter your email address and we'll send to it how you can login to the system</div>
+        <div class="action-area col-md-6 col-md-offset-3">
+            @if(form.hasErrors) {
+                <div class="errors text-left">
+                    @for((error, index) <- form.errors.zipWithIndex) {
+                        @Messages(error.message)<br/>
+                    }
+                </div>
+            }
+            <form action="@CSRF(controllers.security.routes.LoginReminder.handle())" method="post">
+                <div class="form-group">
+                    <input class="form-control" name="email" placeholder="Email"/>
+                </div>
+                <div class="form-group">
+                    <button class="form-control btn btn-block btn-primary" type="submit">Send reminder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

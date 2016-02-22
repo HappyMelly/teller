@@ -244,6 +244,9 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
     db.run(query.sortBy(_._2.toLowerCase).result).map(_.toList.map(PersonSummary.tupled))
   }
 
+  def findByEmail(email: String): Future[Option[Person]] =
+    db.run(people.filter(_.email === email).result).map(_.headOption)
+
   /**
    * Returns list of people for the given names
     *

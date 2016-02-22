@@ -40,6 +40,7 @@
 package controllers.security
 
 import javax.inject.Inject
+import _root_.services.NotRegisteredException
 import models.ActiveUser
 import play.api.Play
 import play.api.i18n.Messages
@@ -167,6 +168,10 @@ trait BaseProviderController extends SecureSocial {
             }
           }
       } recover {
+        case e: NotRegisteredException =>
+          val url = routes.LoginReminder.page().url
+          val (session, (typ, msg)) = LoginReminder.updateCounter(request.session, url)
+          Redirect(env.routes.loginPageUrl).withSession(session).flashing(typ -> msg)
         case e =>
           logger.error("Unable to log user in. An exception was thrown", e)
           Redirect(env.routes.loginPageUrl).flashing("error" -> Messages("securesocial.login.errorLoggingIn"))

@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -37,6 +37,8 @@ import securesocial.core.services._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+
+class NotRegisteredException extends AuthenticationException
 
 /**
  * Used by SecureSocial to look up and save authentication data.
@@ -242,14 +244,14 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
             existance <- repos.registeringUser.exists(profile.userId, profile.providerId)
             identity <- repos.identity.findByEmail(profile.userId)
           } yield (existance, identity)) flatMap {
-            case (false, _) => Future.failed(new AuthenticationException)
-            case (true, None) => Future.failed(new AuthenticationException)
+            case (false, _) => println("shit"); Future.failed(new AuthenticationException)
+            case (true, None) => println("shit 2"); Future.failed(new AuthenticationException)
             case (true, Some(identity)) => Future.successful(user(identity))
           }
       }
     } else {
       repos.identity.findActiveUser(profile.userId, profile.providerId) flatMap {
-        case None => Future.failed(new AuthenticationException)
+        case None => Future.failed(new NotRegisteredException)
         case Some(user) => Future.successful(user)
       }
     }

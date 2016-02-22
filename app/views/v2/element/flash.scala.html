@@ -1,0 +1,19 @@
+@()(implicit flash: Flash)
+
+@alert(alertType: String, timeout: Boolean = true) = {
+    @flash.get(alertType).map { message =>
+        <script type="text/javascript">
+            function htmlDecode(value){
+                return $('<div/>').html(value).text();
+            }
+            noty({text: htmlDecode("@message"), layout: 'bottom', theme: 'relax',
+                timeout: @if(timeout) { 2000 } else { false },
+                type: '@alertType' });
+        </script>
+    }
+}
+@alert("alert", timeout = false)
+@alert("error", timeout = false)
+@alert("success")
+@alert("information")
+@alert("warning", timeout = false)
