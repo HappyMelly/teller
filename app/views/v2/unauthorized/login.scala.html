@@ -5,21 +5,10 @@
 
 @import securesocial.core.providers.UsernamePasswordProvider
 
-@alert(alertType: String) = {
-    @request.flash.get(alertType).map { message =>
-        <script type="text/javascript">
-            noty({text: '@message', layout: 'bottom', theme: 'relax',
-                timeout: @if(alertType == "error") { false } else { 2000 },
-                type: '@alertType' });
-        </script>
-    }
-}
-
 @v2.layout.unauthorized("Log In") {
     <div class="action-block">
         <h3>Login to Happy Melly Teller</h3>
-        @alert("error")
-        @alert("success")
+        @v2.element.flash()(request.flash)
         <div class="action-area">
             <div class="column">
                 <div class="social">
@@ -41,11 +30,9 @@
                 <img src="@routes.Assets.at("images/login-or.png")" height="228px"/>
             </div>
             <div class="column">
-                @if(loginForm.hasErrors) {
+                @errorMsg.map { msg =>
                     <div class="errors text-left">
-                        @for((error, index) <- loginForm.errors.zipWithIndex) {
-                            @Messages(error.message)<br/>
-                        }
+                        @Messages(msg)
                     </div>
                 }
                 <form action="@env.routes.authenticationUrl(UsernamePasswordProvider.UsernamePassword)" method="post">

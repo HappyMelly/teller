@@ -30,7 +30,7 @@ import models.repository.IRepositories
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
-import play.api.mvc.Action
+import play.api.mvc.{Action, Session}
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import services.integrations.EmailComponent
 
@@ -66,7 +66,9 @@ class LoginReminder @Inject() (val repos: IRepositories, val messagesApi: Messag
                   val options = rawOptions.filter(_.nonEmpty).map(_.get)
                   val body = mail.templates.password.html.remind(person, options).toString
                   email.send(Set(person), None, None, "Teller Login Reminder", body, richMessage = true)
-                  redirect(url, "success" -> "Check your mailbox")
+                  val modifiedSession = request.session - LoginReminder.Key
+                  redirect(url, modifiedSession,
+                    "success" -> "Thank you. Please check your email for further instructions")
               }
           }
         }
@@ -80,4 +82,20 @@ class LoginReminder @Inject() (val repos: IRepositories, val messagesApi: Messag
     }
   }
 
+}
+
+object LoginReminder {
+  val Key = "login-attempt"
+
+  def updateCounter(session: Session, url: String): (Session, (String, String)) = {
+    val counter = session.get(Key).map(_.toInt).getOrElse(0) + 1
+    val modifiedSession = session + (Key -> counter.toString)
+    if (counter > 1) {
+      val msg = s"Forgot what account to use to log into the system? <a href='$url'>Send a reminder</a>"
+      (modifiedSession, "warning" -> msg)
+    } else {
+      (modifiedSession, "error" -> "You are not registered in the system")
+    }
+
+  }
 }

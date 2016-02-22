@@ -304,6 +304,6 @@ GET           /assets/*file                                                  con
 
 ## SecureSocial
 GET           /login                                                         controllers.LoginPage.login
-GET           /logout                                                        controllers.LoginPage.logout(error: Option[String] ?= None, success: Option[String] ?= None)
+GET           /logout                                                        controllers.LoginPage.logout(typ: Option[String] ?= None, msg: Option[String] ?= None)
 GET           /authenticate/:provider                                        controllers.security.ProviderController.authenticate(provider, redirectTo: Option[String])
 POST          /authenticate/:provider                                        controllers.security.ProviderController.authenticateByPost(provider, redirectTo: Option[String])

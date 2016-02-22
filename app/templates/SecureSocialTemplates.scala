@@ -42,7 +42,7 @@ class SecureSocialTemplates (env: RuntimeEnvironment, val messagesApi: MessagesA
   implicit val implicitEnv = env
 
   override def getLoginPage(form: Form[(String, String)],
-    msg: Option[String] = None)(implicit request: RequestHeader, lang: Lang) = {
+                            msg: Option[String] = None)(implicit request: RequestHeader, lang: Lang) = {
     views.html.v2.unauthorized.login(form, msg)
   }
 

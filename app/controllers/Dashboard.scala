@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2014, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -26,6 +26,7 @@ package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.security.LoginReminder
 import models.UserRole.Role._
 import models._
 import models.repository.Repositories
@@ -84,7 +85,10 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
           ok(views.html.v2.dashboard.forMembers(user))
         }
       } else {
-        redirect(routes.LoginPage.logout(error = Some("You are not registered in the system")))
+        val url = controllers.security.routes.LoginReminder.page().url
+        val (session, (typ, msg)) = LoginReminder.updateCounter(request.session, url)
+        val call = routes.LoginPage.logout(Some(typ), Some(msg))
+        redirect(call.url, session)
       }
   }
 

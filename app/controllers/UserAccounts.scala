@@ -181,7 +181,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
               repos.emailToken.delete(tokenId)
               repos.person.update(person.copy(email = token.email))
               val msg = "Your email was successfully updated. Please log in with your new email"
-              redirect(routes.LoginPage.logout(success = Some(msg)))
+              redirect(routes.LoginPage.logout(Some("success"), Some(msg)))
           }
         }
     }
