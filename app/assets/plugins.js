@@ -166,7 +166,7 @@
                 self.compileContent();
             })
             .on('keyup', function(e){
-                if (!self.isKeyTrigger(e.keyCode)) return true;
+                if (!self.isKeyTrigger(e.which)) return true;
 
                 self.pausing && (self.isNeedUpdating = true);
                 self.compileContent();
