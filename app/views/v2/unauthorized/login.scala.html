@@ -35,18 +35,26 @@
                         @Messages(msg)
                     </div>
                 }
-                <form action="@env.routes.authenticationUrl(UsernamePasswordProvider.UsernamePassword)" method="post">
+                <form class="b-login js-login-form" action="@env.routes.authenticationUrl(UsernamePasswordProvider.UsernamePassword)" method="post">
                     <div class="form-group">
-                        <input class="form-control" id="email" type="text" name="username" placeholder="Email"/>
+                        <input class="form-control" id="email" type="text" name="username" placeholder="Email" data-login-email />
                     </div>
-                    <div class="form-group">
-                        <input class="form-control" id="password" type="password" name="password" placeholder="Password"/>
-                        <div class="remind-me">
-                            <a href="@routes.PasswordReset.handleStartResetPassword()" id="passwordReset">Reset password</a>
+                    <div class="form-group b-login__remind ">
+                        <input class="form-control" id="password" type="password" name="password" placeholder="Password" data-login-password />
+                        <div class="b-login__remfade">
+                            Check your inbox
+                        </div>
+                        <div class="b-login__remtext">
+                            <a class="b-login__remlink link-blue" href="@routes.PasswordReset.handleStartResetPassword()" id="passwordReset" data-login-reset>
+                                <span class="text-reset">Reset password</span>
+                            </a>
+                            <a class="b-login__enter link-blue" href="javascript: void(0)" data-login-enter>
+                                <span class="text-reset">Enter</span>
+                            </a>
                         </div>
                     </div>
                     <div class="form-group">
-                        <button class="form-control btn btn-block btn-primary" type="submit">Login</button>
+                        <button class="form-control btn btn-block btn-primary" type="submit" data-login-submit>Login</button>
                     </div>
                 </form>
                 <div class="join-now">
