@@ -40,12 +40,12 @@ import scala.concurrent.Future
 class LoginPage @Inject() (override implicit val env: RuntimeEnvironment) extends BaseLoginPage {
 
   /**
-    * Logs out the user by clearing the credentials from the session.
-    * The browser is redirected either to the login page or to the page specified in the onLogoutGoTo property.
-    *
-    * @return
-    */
-  def logout(error: Option[String] = None, success: Option[String] = None) = UserAwareAction.async {
+   * Logs out the user by clearing the credentials from the session.
+   * The browser is redirected either to the login page or to the page specified in the onLogoutGoTo property.
+   *
+   * @return
+   */
+  def logout(typ: Option[String] = None, msg: Option[String] = None) = UserAwareAction.async {
     implicit request ⇒
       val redirectTo = Redirect(Play.configuration.getString(onLogoutGoTo).getOrElse(env.routes.loginPageUrl))
       val result = for {
@@ -53,13 +53,11 @@ class LoginPage @Inject() (override implicit val env: RuntimeEnvironment) extend
         authenticator ← request.authenticator
       } yield {
         redirectTo.discardingAuthenticator(authenticator).map { auth ⇒
-          val withError = error map { value ⇒
-            auth.flashing("error" -> value)
-          } getOrElse auth
-          val withSuccess = success map { value =>
-            withError.flashing("success" -> value)
-          } getOrElse withError
-          withSuccess.withSession(Events.fire(new LogoutEvent(user)).getOrElse(request.session))
+          val withFlashing = (typ, msg) match {
+            case (Some(msgType), Some(message)) => auth.flashing(msgType -> message)
+            case (_, _) => auth
+          }
+          withFlashing.withSession(Events.fire(new LogoutEvent(user)).getOrElse(request.session))
         }
       }
       result.getOrElse {

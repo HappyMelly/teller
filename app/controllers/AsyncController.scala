@@ -76,4 +76,10 @@ trait AsyncController extends Controller with I18nSupport {
     Future.successful(Redirect(call))
   else
     Future.successful(Redirect(call).flashing(flashing:_*))
+
+  protected def redirect(url: String, session: Session, flashing: (String, String)*) = if (flashing.isEmpty)
+    Future.successful(Redirect(url).withSession(session))
+  else
+    Future.successful(Redirect(url).flashing(flashing:_*).withSession(session))
+
 }

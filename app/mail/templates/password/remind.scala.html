@@ -1,9 +1,22 @@
 @(person: Person, options: Seq[String])(implicit request: RequestHeader)
 
+@printOptions(options: Seq[String]) = {
+    @if(options.length == 1) {
+        @options.head
+    } else {
+        @if(options.length == 2) {
+            @options.head and @options.last
+        } else {
+            @for(option <- options.tail.tail) { @option, }
+            @options.tail.head and @options.head
+        }
+    }
+}
+
 @mail.templates.html.hmTmpl("Login Reminder Request") {
     <h2>Hi @person.firstName,</h2>
-    <p>You could log into Teller with </p>
-    @mail.templates.html.button("Login Now", routes.LoginPage.login().url)
+    <p>You could log into Teller with @printOptions(options)</p>
+    @mail.templates.html.button("Login Now", Utilities.fullUrl(routes.LoginPage.login().url))
     <p>If you still cannot login, please feel free to <a href="mailto:hello@@happymelly.com">contact us</a>.</p>
     <p>All the best, <br>
         Happy Melly Teller Team</p>

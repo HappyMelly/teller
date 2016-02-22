@@ -33,17 +33,7 @@
       </div>
       <div id="content">
         <div class="alert-block">
-          @alert(alertType: String) = {
-            @flash.get(alertType).map { message =>
-              <script type="text/javascript">
-                noty({text: '@message', layout: 'bottom', theme: 'relax',
-                  timeout: @if(alertType == "error") { false } else { 2000 },
-                  type: '@alertType' });
-              </script>
-            }
-          }
-          @alert("error")
-          @alert("success")
+            @v2.element.flash()
         </div>
         @content
       </div>
