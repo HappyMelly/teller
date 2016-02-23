@@ -83,9 +83,10 @@
     PersonEmailConnect.prototype.createEmail = function($form){
         var self = this,
             $modal = $form.closest('.modal'),
-            $newEmail = $modal.find('input[name="email"]').val();
+            $newEmail = $modal.find('input[name="email"]').val(),
+            url = jsRoutes.controllers.UserAccounts.handleNewPassword().url;
 
-        $.post('/send/createEmail', {
+        $.post(url, {
             email: $form.find('input[name="email"]').val(),
             password: $form.find('input[name="password"]').val()
         }, function(){
@@ -99,9 +100,10 @@
 
     PersonEmailConnect.prototype.changePassword = function($form){
         var self = this,
-            $modal = $form.closest('.modal');
+            $modal = $form.closest('.modal'),
+            url = jsRoutes.controllers.UserAccounts.changePassword().url;
 
-        $.post('/send/createPassword', {
+        $.post(url, {
             oldpassword: $form.find('input[name="old-password"]').val(),
             password: $form.find('input[name="password"]').val()
         }, function(){
@@ -115,11 +117,12 @@
     PersonEmailConnect.prototype.changeEmail = function($form){
         var self = this,
             $modal = $form.closest('.modal'),
-            $newEmail = $modal.find('input[name="new-email"]').val();
+            $newEmail = $modal.find('input[name="new-email"]').val(),
+            url = jsRoutes.controllers.UserAccounts.changeEmail().url;
 
-        $.post('/send/changeEmail', {
+        $.post(url, {
             oldemail: $form.find('input[name="old-email"]').val(),
-            email: $form.find('input[name="new-email"]').val(),
+            email: $form.find('input[name="email"]').val(),
             password: $form.find('input[name="hmt-password"]').val()
         }, function(){
             $modal.modal('hide');

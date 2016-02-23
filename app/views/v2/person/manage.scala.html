@@ -1,24 +1,18 @@
 @(user: ActiveUser,
-        person: Person,
-        organisations: List[Organisation],
-        otherOrganisations: List[Organisation],
-        conf: PeopleDetailConfig,
-        badges: List[(models.brand.Badge, String)],
-        member: Option[Member])(implicit request: Request[Any],
-        flash: Flash,
+        person: Person)(implicit request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
-        token: play.filters.csrf.CSRF.Token,
-        messages: Messages)
+        flash: play.api.mvc.Flash,
+        env: securesocial.core.RuntimeEnvironment,
+        token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import be.objectify.deadbolt.scala.views.html._
 @import helper.CSRF
 @import models.UserRole._
+@import securesocial.core.providers.{LinkedInProvider, GoogleProvider, TwitterProvider, FacebookProvider}
 
 
 @v2.main(person.fullName + " - Person", "people", user) {
-
-
 
     <div class="manage-page container">
         <h1 class="manage-page__title">
@@ -31,7 +25,7 @@
         <div class="manage-page__list">
 
             @* email connect *@
-            <div class="b-connect-email js-email-connect"> <!-- canbe .show_connected -->
+            <div class="b-connect-email js-email-connect @if(user.account.byEmail) { show_connected }">
                 <i class="b-connect-email__img"></i>
                 <a href="#"
                     data-toggle="modal"
@@ -56,17 +50,17 @@
 
                     <div class="b-connect-email__hint">
                         <div class="title">Current email:</div>
-                        <span data-email-current></span>
+                        <span data-email-current>@user.person.email</span>
                     </div>
                 </div>
 
-                @views.html.v2.person.blocks.email_connect()
+                @views.html.v2.person.blocks.email_connect(user.person.email)
             </div>
 
             @* other social network *@
-            @*<div class="b-connect js-social-connect">
-            @defining(Some(routes.People.edit(id).url + "#profiles")) { redirectTo =>
-                <div class="b-connect-i type-tw @if(account.twitter.nonEmpty) {state-complete}"
+            <div class="b-connect js-social-connect">
+            @defining(Some(routes.UserAccounts.account().url)) { redirectTo =>
+                <div class="b-connect-i type-tw @if(user.account.twitter.nonEmpty) {state-complete}"
                     data-social="@TwitterProvider.Twitter"
                     data-url="@env.routes.authenticationUrl(TwitterProvider.Twitter, redirectTo)">
                     <i class="b-connect-i__img"></i>
@@ -75,7 +69,7 @@
                         <span class="text">Connect</span>
                     </a>
                 </div>
-                <div class="b-connect-i type-fb @if(account.facebook.nonEmpty) {state-complete}"
+                <div class="b-connect-i type-fb @if(user.account.facebook.nonEmpty) {state-complete}"
                     data-social="@FacebookProvider.Facebook"
                     data-url="@env.routes.authenticationUrl(FacebookProvider.Facebook, redirectTo)">
                     <i class="b-connect-i__img type-fb"></i>
@@ -84,7 +78,7 @@
                         <span class="text">Connect</span>
                     </a>
                 </div>
-                <div class="b-connect-i type-linkedin @if(account.linkedin.nonEmpty) {state-complete}"
+                <div class="b-connect-i type-linkedin @if(user.account.linkedin.nonEmpty) {state-complete}"
                     data-social="@LinkedInProvider.LinkedIn"
                     data-url="@env.routes.authenticationUrl(LinkedInProvider.LinkedIn, redirectTo)">
                     <i class="b-connect-i__img "></i>
@@ -93,7 +87,7 @@
                         <span class="text">Connect</span>
                     </a>
                 </div>
-                <div class="b-connect-i type-gp @if(account.google.nonEmpty) {state-complete} "
+                <div class="b-connect-i type-gp @if(user.account.google.nonEmpty) {state-complete} "
                     data-social="@GoogleProvider.Google"
                     data-url="@env.routes.authenticationUrl(GoogleProvider.Google, redirectTo)">
                     <i class="b-connect-i__img "></i>
@@ -103,7 +97,7 @@
                     </a>
                 </div>
             }
-            </div>*@
+            </div>
         </div>
     </div>
 

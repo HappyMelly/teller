@@ -1,4 +1,4 @@
-@()
+@(email: String)
 
 <div id="dlg-email-connect" class="modal fade b-modal " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
     @v2.html.modal("", "Create email account") {
@@ -52,7 +52,7 @@
                     Old password
                 </div>
                 <div class="email-dlg__i-input">
-                    <input type="password" name="old-password" class="form-control" >
+                    <input type="password" name="currentPassword" class="form-control" >
                 </div>
             </div>
             <div class="email-dlg__i">
@@ -60,7 +60,7 @@
                     New password
                 </div>
                 <div class="email-dlg__i-input">
-                    <input type="password" name="password" class="form-control" >
+                    <input type="password" name="newPassword_password1" class="form-control" >
                 </div>
             </div>
             <div class="email-dlg__i">
@@ -68,7 +68,7 @@
                     Repeat new password
                 </div>
                 <div class="email-dlg__i-input">
-                    <input type="password" class="form-control is-the-same" >
+                    <input type="password" name="newPassword_password2" class="form-control is-the-same" >
                 </div>
             </div>
 
@@ -94,7 +94,7 @@
                     Current email
                 </div>
                 <div class="email-dlg__i-input">
-                    <input type="text" name="old-email" class="form-control type-email" disabled value="slawasyandex.ru">
+                    <input type="text" name="old-email" class="form-control type-email" disabled value="@email">
                 </div>
             </div>
             <div class="email-dlg__i">
@@ -102,7 +102,7 @@
                     New email
                 </div>
                 <div class="email-dlg__i-input">
-                    <input type="text" name="new-email" class="form-control type-email" >
+                    <input type="text" name="email" class="form-control type-email" >
                 </div>
             </div>
             <div class="email-dlg__i">

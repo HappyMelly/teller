@@ -108,6 +108,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
       } else {
         ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
       }
+      ok(views.html.v2.person.manage(user, user.person))
   }
 
   /**

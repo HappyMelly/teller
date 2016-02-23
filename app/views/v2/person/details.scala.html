@@ -65,9 +65,11 @@
               </form>
             </div>
             <div class="button">
-              <a class="btn btn-default" href="#">
-                Manage accounts
-              </a>
+              @if(person.identifier == user.person.identifier) {
+                <a class="btn btn-default" href="@routes.UserAccounts.account()">
+                  Manage accounts
+                </a>
+              }
             </div>
             <div class="button">
               <a class="btn btn-primary" href="@routes.People.edit(person.id.get)">
