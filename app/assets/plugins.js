@@ -130,10 +130,7 @@
     };
 
     PreviewMarkdown.prototype.createPopover = function(){
-        if (this.$popover) return;
-
-        this.$popover = $(this.options.template)
-            .css(this.getPosition());
+        this.$popover = $(this.options.template);
 
         if (this.options.markdownclass){
             this.$popover.addClass(this.options.markdownclass);
@@ -222,7 +219,8 @@
     };
 
     PreviewMarkdown.prototype.show = function(){
-        this.createPopover();
+        if ( !this.$popover) this.createPopover();
+        this.$popover.css(this.getPosition());
 
         if (this.isVisible) return;
 
