@@ -23,7 +23,7 @@
  */
 package controllers.acceptance
 
-import controllers.Urls
+import controllers.Utilities
 import integration.PlayAppSpec
 import play.api.libs.json.JsObject
 import stubs.{ FakeRuntimeEnvironment, FakeSocialIdentity, FakeSecurity }
@@ -39,9 +39,9 @@ class UrlsSpec extends PlayAppSpec {
     'valid' should be returned    $e2
   """
 
-  class TestUrls extends Urls(FakeRuntimeEnvironment) with FakeSecurity
+  class TestUtilities extends Utilities(FakeRuntimeEnvironment) with FakeSecurity
 
-  val controller = new TestUrls
+  val controller = new TestUtilities
 
   def e1 = {
     val url = "http://notexisting312312398098dsalfjda.com"

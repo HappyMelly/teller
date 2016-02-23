@@ -109,8 +109,8 @@
 
     var PreviewMarkdown = function (el, options) {
         var defaultOptions = {
-            url: '/get/compileContent',
-            interval: 3000,
+            url: jsRoutes.controllers.Utilities.markdown().url,
+            interval: 1000,
             markdownposition: "body",
             template: "<div class='popover-bl'><i class='fa fa-spinner fa-spin'></i><div class='popover-bl__content' data-content></div></div>"
         };
@@ -119,7 +119,6 @@
         this.options = $.extend({}, defaultOptions, options);
 
         this.resetState();
-        this.createPopover();
         this.assignEvents();
     };
 
@@ -131,10 +130,7 @@
     };
 
     PreviewMarkdown.prototype.createPopover = function(){
-        if (this.$popover) return;
-
-        this.$popover = $(this.options.template)
-            .css(this.getPosition());
+        this.$popover = $(this.options.template);
 
         if (this.options.markdownclass){
             this.$popover.addClass(this.options.markdownclass);
@@ -166,7 +162,7 @@
                 self.compileContent();
             })
             .on('keyup', function(e){
-                if (!self.isKeyTrigger(e.keyCode)) return true;
+                if (!self.isKeyTrigger(e.which)) return true;
 
                 self.pausing && (self.isNeedUpdating = true);
                 self.compileContent();
@@ -223,6 +219,9 @@
     };
 
     PreviewMarkdown.prototype.show = function(){
+        if ( !this.$popover) this.createPopover();
+        this.$popover.css(this.getPosition());
+
         if (this.isVisible) return;
 
         this.isVisible = true;

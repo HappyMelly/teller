@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -23,8 +23,57 @@
  */
 package controllers
 
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import models.repository.Repositories
 import play.api.Play
 import play.api.Play.current
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.i18n.MessagesApi
+import play.api.libs.json.Json
+import play.api.libs.ws.WS
+import play.api.mvc.Action
+import services.TellerRuntimeEnvironment
+import templates.Formatters._
+
+import scala.language.postfixOps
+
+class Utilities @Inject()(override implicit val env: TellerRuntimeEnvironment,
+                          override val messagesApi: MessagesApi,
+                          val services: Repositories,
+                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
+
+  /**
+    * Compiles the given markdown to html
+    */
+  def markdown() = Action.async { implicit request =>
+    val form = Form(single("data" -> nonEmptyText))
+    form.bindFromRequest.fold(
+      error => ok(""),
+      data => ok(data.markdown)
+    )
+  }
+
+  /**
+   * Validates the given url points to an existing page
+   *
+   * @param url Url to check
+   */
+  def validate(url: String) = Action.async { implicit request ⇒
+    WS.url(url).head().flatMap { response =>
+      if (response.status >= 200 && response.status < 300)
+        jsonOk(Json.obj("result" -> "valid"))
+      else
+        jsonOk(Json.obj("result" -> "invalid"))
+    }.recover { case _ =>
+      Ok(Json.prettyPrint(Json.obj("result" -> "invalid")))
+    }
+  }
+}
 
 object Utilities {
 
