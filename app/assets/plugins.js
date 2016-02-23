@@ -109,8 +109,8 @@
 
     var PreviewMarkdown = function (el, options) {
         var defaultOptions = {
-            url: '/get/compileContent',
-            interval: 3000,
+            url: jsRoutes.controllers.Utilities.markdown().url,
+            interval: 1000,
             markdownposition: "body",
             template: "<div class='popover-bl'><i class='fa fa-spinner fa-spin'></i><div class='popover-bl__content' data-content></div></div>"
         };
