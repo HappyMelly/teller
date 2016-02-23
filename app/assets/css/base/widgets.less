@@ -36,6 +36,28 @@
 @import "widgets/datatable";
 @import "widgets/event-block";
 
+// error
+.b-error{
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  font-size: 10px;
+  color: @red;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.b-error_show{
+  .b-error{
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .form-control{
+    border-color: @red;
+  }
+}
+
 
 // other styles
 .notification-widget {

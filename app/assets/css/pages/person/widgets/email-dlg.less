@@ -6,42 +6,21 @@
 
 .email-dlg__i{
   position: relative;
-  display: table;
-  width: 100%;
   height: 48px;
   margin-bottom: 12px;
-
-  .item-error{
-    position: absolute;
-    right: 10px;
-    top: 14px;
-    font-size: 10px;
-    color: @red;
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  &.state-error{
-    .item-error{
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .form-control{
-      border-color: @red;
-    }
-  }
 }
 
 .email-dlg__i-label{
-  display: table-cell;
-  vertical-align: middle;
-  width: 24.5%;
+  position: relative;
+  top: 50%;
+  .transform(translate(0, -50%));
+  float: left;
+  width: 150px;
   text-align: left;
 }
 
 .email-dlg__i-input{
-  display: table-cell;
+  overflow: hidden;
   position: relative;
 }
 
