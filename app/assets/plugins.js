@@ -119,7 +119,6 @@
         this.options = $.extend({}, defaultOptions, options);
 
         this.resetState();
-        this.createPopover();
         this.assignEvents();
     };
 
@@ -223,6 +222,8 @@
     };
 
     PreviewMarkdown.prototype.show = function(){
+        this.createPopover();
+
         if (this.isVisible) return;
 
         this.isVisible = true;
