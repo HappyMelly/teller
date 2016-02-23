@@ -61,6 +61,7 @@ class MembersApi @Inject() (val services: Repositories,
         "type" -> readableMemberType(view.member),
         "funder" -> view.member.funder,
         "country" -> view.country,
+        "since" -> view.member.since,
         "image" -> memberImageUrl(view.member))
     }
   }
@@ -112,6 +113,7 @@ class MembersApi @Inject() (val services: Repositories,
         "type" -> readableMemberType(view.member),
         "reason" -> view.member.reason,
         "experiments" -> view.experiments,
+        "since" -> view.member.since,
         "person" -> Json.toJson(view.person)(personDetailsWrites))
     }
   }
@@ -148,6 +150,7 @@ class MembersApi @Inject() (val services: Repositories,
         "type" -> readableMemberType(view.member),
         "reason" -> view.member.reason,
         "experiments" -> view.experiments,
+        "since" -> view.member.since,
         "org" -> Json.toJson(view.orgView)(organisationDetailsWrites))
     }
   }
