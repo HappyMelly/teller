@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -23,8 +23,10 @@
  */
 package controllers
 
+import play.api.data.Form
 import play.api.Play
 import play.api.Play.current
+import play.api.libs.json.{Json, JsValue}
 
 object Utilities {
 
@@ -38,6 +40,17 @@ object Utilities {
   }
 
   /**
+    * Converts form errors to a format readable by frontend
+    * @param form Form
+    */
+  def errorsToJson[U](form: Form[U]): JsValue = {
+    val errors = form.errors.map { error =>
+      Json.obj("name" -> error.key, "error" -> error.messages.mkString(","))
+    }
+    Json.obj("errors" -> errors)
+  }
+
+  /**
     * Returns an url with domain
     *
     * @param url Domain-less part of url
@@ -45,4 +58,5 @@ object Utilities {
   def fullUrl(url: String): String = {
     Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
+
 }

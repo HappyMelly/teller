@@ -34,6 +34,7 @@ import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
 import securesocial.core.PasswordInfo
@@ -101,14 +102,8 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
     * Renders form for creating or changing the password
     */
-  def account = RestrictedAction(Viewer) { implicit request =>
-    implicit handler => implicit user =>
-      if (user.account.byEmail) {
-        ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
-      } else {
-        ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
-      }
-      ok(views.html.v2.person.manage(user, user.person))
+  def account = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
+    ok(views.html.v2.userAccount.manage(user, user.person))
   }
 
   /**
@@ -194,7 +189,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def handleNewPassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       newPasswordForm.bindFromRequest().fold(
-        errors => badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
+        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
         password => {
           repos.identity.checkEmail(user.person.email) flatMap {
             case true =>
@@ -210,7 +205,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             case false =>
               val msg = "Your email address is used by another account. Please contact a support team if it's a mistake"
               val errors = newPasswordForm.withGlobalError(msg)
-              badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))
+              badRequest(Json.obj("data" -> Utilities.errorsToJson(errors)))
           }
         }
       )
@@ -223,7 +218,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     implicit handler => implicit user =>
       val form = changeEmailForm.bindFromRequest()
       form.fold(
-        errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm)),
+        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
         info => {
           repos.identity.findByEmail(user.person.email) flatMap { maybeIdentity =>
             val response = for (
@@ -246,7 +241,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             response getOrElse {
               val errors = form.withError("password", "Wrong password")
               Future.successful(
-                BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
+                BadRequest(Json.obj("data" -> Utilities.errorsToJson(errors)))
               )
             }
           }
@@ -260,7 +255,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def changePassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
-        errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, errors)),
+        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
         info => {
           env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
           redirect(routes.UserAccounts.account(), "success" -> Messages(OkMessage))
