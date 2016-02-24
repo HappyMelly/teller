@@ -55,10 +55,24 @@
     left: -12px;
     .triangle(12px, 24px, #ddd, 'left');
   }
+
+  .fa-spinner{
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    line-height: 1;
+    display: none;
+  }
 }
 
 .popover-bl_show{
   opacity: 1;
   visibility: visible;
   .transform(translate(0,0));
+}
+
+.popover-bl_loading{
+  .fa-spinner{
+    display: inline-block;
+  }
 }

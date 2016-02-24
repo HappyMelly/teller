@@ -155,7 +155,7 @@ function checkUrl(url, element) {
             $(this).text("Web site URL");
         });
     } else {
-        var fullUrl = jsRoutes.controllers.Urls.validate(url).url;
+        var fullUrl = jsRoutes.controllers.Utilities.validate(url).url;
         $.post(fullUrl, {}, null, "json").done(function(data) {
             if (data.result == "invalid") {
                 $(field).addClass('has-error');

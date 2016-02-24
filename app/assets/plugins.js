@@ -104,129 +104,143 @@
 //  $('.selector').previewMarkdown();
 // ======================
 
-(function ($, markedPlugin) {
+(function ($) {
     'use strict';
 
     var PreviewMarkdown = function (el, options) {
-        var defaults = {
-           markdownposition: "fixed"
+        var defaultOptions = {
+            url: jsRoutes.controllers.Utilities.markdown().url,
+            interval: 1000,
+            markdownposition: "body",
+            template: "<div class='popover-bl'><i class='fa fa-spinner fa-spin'></i><div class='popover-bl__content' data-content></div></div>"
         };
 
-        this.el = el;
         this.$el = $(el);
+        this.options = $.extend({}, defaultOptions, options);
 
-        this.options = $.extend({}, defaults, options);
-
-        if (!this.isValidDevepdencies()) return;
-
-        markedPlugin.setOptions({
-            renderer: new markedPlugin.Renderer(),
-            gfm: true,
-            tables: true,
-            breaks: false,
-            pedantic: false,
-            sanitize: true,
-            smartLists: true,
-            smartypants: false
-        });
-
+        this.resetState();
         this.assignEvents();
     };
 
-    PreviewMarkdown.prototype.isValidDevepdencies = function(){
-        var valid = true;
+    PreviewMarkdown.prototype.resetState = function(){
+        this.sending = null;
+        this.sending = null;
+        this.isNeedUpdating = null;
+        this.waitingTimer = null
+    };
 
-        if (!markedPlugin) {
-            valid = false;
-            console.log('There is no MarkDown plugin : https://github.com/chjj/marked');
+    PreviewMarkdown.prototype.createPopover = function(){
+        this.$popover = $(this.options.template);
+
+        if (this.options.markdownclass){
+            this.$popover.addClass(this.options.markdownclass);
         }
 
-        return valid;
-    };
-
-    PreviewMarkdown.prototype.assignEvents = function (e) {
-        var self = this;
-
-        self.$el
-            .on('focus', function (e) {
-                var $this = $(this),
-                    compiledContent = self.compileMarkdown($this.val());
-
-                self.setContent(compiledContent);
-                self.showPopover();
-            })
-            .on('keydown', function (e) {
-                var $this = $(this),
-                    compiledContent = self.compileMarkdown($this.val());
-
-                self.setContent(compiledContent);
-            })
-            .on('blur', function (e) {
-                var $this = $(this);
-
-                self.hidePopover();
-            });
-
-        $(window)
-            .resize(function () {
-                self.$popover && self.$popover.css(self.getPosition());
-            });
-    };
-
-    PreviewMarkdown.prototype.compileMarkdown = function(content){
-        return markedPlugin(content);
-    };
-
-    PreviewMarkdown.prototype.setContent = function (content) {
-        var self = this,
-            $el = self.$el;
-
-        if (self.$popover){
-            self.$popover.html(content);
-            return;
-        }
-
-        var $popover = $('<div />', {
-            'class': 'popover-bl ' + self.options.markdownclass,
-            html: content,
-            css:  self.getPosition()
-        });
-
-        if (self.options.markdownposition == "fixed"){
-            $popover.appendTo('body');
+        if (this.options.markdownposition == "body"){
+            this.$popover.appendTo('body');
         } else {
-            self.$el.after($popover)
+            this.$popover.insertAfter(this.$el);
         }
-
-        self.$popover = $popover;
     };
 
     PreviewMarkdown.prototype.getPosition = function(){
-        var positionFixed = {
-            top: this.$el.offset().top,
-            left: this.$el.offset().left + this.$el.outerWidth()
-        };
+        var $el = this.$el,
+            offsetBody = {
+                top: $el.offset().top,
+                left: $el.offset().left + $el.outerWidth()
+            };
 
-        return this.options.markdownposition == "fixed"? positionFixed: {};
+        return this.options.markdownposition == "body"? offsetBody: {};
     };
 
-    PreviewMarkdown.prototype.showPopover = function () {
-        var self = this,
-            $el = self.$el;
-
-        if (self.isVisible) return;
-
-        self.isVisible = true;
-        self.$popover.addClass('popover-bl_show');
-    };
-
-    PreviewMarkdown.prototype.hidePopover = function () {
+    PreviewMarkdown.prototype.assignEvents = function(){
         var self = this;
 
-        if (!self.isVisible) return;
+        self.$el
+            .on('focus', function(){
+                self.toggle();
+                self.compileContent();
+            })
+            .on('keyup', function(e){
+                if (!self.isKeyTrigger(e.which)) return true;
 
-        self.isVisible = false;
-        self.$popover.removeClass('popover-bl_show');
+                self.pausing && (self.isNeedUpdating = true);
+                self.compileContent();
+            })
+            .on('blur', function(){
+                self.resetState();
+                self.toggle();
+            });
+
+        $(window).resize(function () {
+            self.$popover && self.$popover.css(self.getPosition());
+        });
+    };
+
+    PreviewMarkdown.prototype.compileContent = function(content){
+        var self = this;
+        content = content || self.$el.val();
+
+        if (self.sending || self.pausing) return;
+
+        self.pausing = true;
+        self.setSending();
+        self.setWaiting();
+
+        $.post(self.options.url, {
+            data: content
+        }, function(data){
+            self.setSended();
+            self.$popover.find('[data-content]').html(data);
+        });
+    };
+
+    PreviewMarkdown.prototype.setSending = function(){
+        this.sending = true;
+        this.$popover.addClass('popover-bl_loading');
+    };
+
+    PreviewMarkdown.prototype.setSended = function(){
+        this.sending = false;
+        this.$popover.removeClass('popover-bl_loading');
+    };
+
+    PreviewMarkdown.prototype.setWaiting = function(){
+        var self = this;
+
+        self.waitingTimer = setTimeout(
+            function () {
+                self.pausing = false;
+                if (self.isNeedUpdating) {
+                    self.isNeedUpdating = false;
+                    self.compileContent();
+                }
+            }, self.options.interval);
+    };
+
+    PreviewMarkdown.prototype.show = function(){
+        if ( !this.$popover) this.createPopover();
+        this.$popover.css(this.getPosition());
+
+        if (this.isVisible) return;
+
+        this.isVisible = true;
+        this.$popover.addClass('popover-bl_show');
+    };
+
+    PreviewMarkdown.prototype.hide = function(){
+        if (!this.isVisible) return;
+
+        this.isVisible = false;
+        this.$popover.removeClass('popover-bl_show');
+    };
+
+    PreviewMarkdown.prototype.toggle = function(){
+        this[this.isVisible? 'hide': 'show']();
+    };
+
+    PreviewMarkdown.prototype.isKeyTrigger = function(code){
+        return (code >= 45 && code <= 90) || (code >= 186) && (code <= 222) || (code == 13) || (code == 27) || (code == 32) || (code == 8);
     };
 
     function Plugin(option) {
@@ -242,4 +256,4 @@
 
     $.fn.previewMarkdown = Plugin
 
-})(jQuery, marked);
+})(jQuery);
