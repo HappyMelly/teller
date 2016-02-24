@@ -531,52 +531,71 @@
             })
     };
 
-    NotificationList.prototype.getNotification = function(offset){
+    NotificationList.prototype.getNotification = function(offset, limit){
         var self = this,
-            url = '/notifications/' + offset + '/5',
+            limitNotification = (!limit || limit > 5)? 5: limit,
+            url = jsRoutes.controllers.core.Notifications.list(offset, limitNotification).url,
             length, unread;
 
-        if (!self.unreadCount) return;
 
         $.get(url, function(data){
-            data = $.parseJSON(data);
+            data = $.parseJSON(data)[0];
             length = data.length;
 
+            if (!length) {
+                self.$root.addClass('b-notiflist_load_all');
+                return;
+            };
+
             self.offset += length;
-            unread -= length;
+            self.unreadCount -= length;
 
             self.setUnreadCount(unread);
             self.setReaded(data);
+            self.renderNotification(data)
         })
     };
 
     NotificationList.prototype.setReaded = function(data){
-        var ids = [];
+        var ids = [],
+            url = jsRoutes.controllers.core.Notifications.read().url
 
         data.forEach(function(item){
             ids.push(item.id);
         });
 
-        $.post('/notifications', {
+        $.post(url, {
             ids: ids
         }, function(){
 
         })
     }
 
-    NotificationList.prototype.getCountUnread = function(){
+    NotificationList.prototype.renderNotification = function(data){
         var self = this;
 
-        $.get('/notifications/unread', function (data) {
-            self.count = ($.parseJSON(data)).unread;
-            self.setUnreadCount(self.count);
+        data.forEach(function(item){
+            var $notif = $(item.body)
+                .addClass(item.type)
+                .data('id', item.id)
+                .appendTo(self.locals.$list);
+        })
+    }
+
+    NotificationList.prototype.getCountUnread = function(){
+        var self = this,
+            url = jsRoutes.controllers.core.Notifications.unread().url;
+
+        $.get(url, function (data) {
+            self.unreadCount = ($.parseJSON(data)).unread;
+            self.setUnreadCount(self.unreadCount);
         })
     };
 
     NotificationList.prototype.showPopup = function(){
         var self = this;
 
-        if (!self.isLoaded) self.getNotification(self.offset);
+        if (!self.isLoaded) self.getNotification(0,self.unreadCount);
 
         if (self.isPopupVisible) return;
         self.isPopupVisible = true;
