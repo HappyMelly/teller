@@ -47,17 +47,20 @@
             name && (ajaxData[name] = $el.val())
         });
 
-        $.post(self.options.url, ajaxData, function(){
-            self.$modal.modal('hide');
-            self.validation.clearForm();
+        $.post(self.options.url, ajaxData, function () {
+                self.$modal.modal('hide');
+                self.validation.clearForm();
 
-            self.options.success && self.options.success();
-        }).fail(function(data){
-            if (!data.errors) return;
-            self.validation.setErrors(data.errors);
+                self.options.success && self.options.success();
+            })
+            .fail(function (response) {
+                var data = $.parseJSON(response.responseText).data;
 
-            self.options.fail && self.options.fail();
-        })
+                if (!data.errors) return;
+                self.validation.setErrors(data.errors);
+
+                self.options.fail && self.options.fail();
+            })
     };
 
     App.widgets.EmailConnectDlg = EmailConnectDlg;

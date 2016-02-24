@@ -555,7 +555,7 @@
      */
     FormValidation.prototype.setError = function($input, errorText){
         var $parent = $input.parent(),
-            $error = $parent.find('b-error');
+            $error = $parent.find('.b-error');
 
         if ($error.length) return;
 
