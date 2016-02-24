@@ -573,7 +573,7 @@
         var self = this;
 
         errors.forEach(function(item){
-            var $currentInput = self.find('[name="' + item.name + '"]').first();
+            var $currentInput = self.$inputs.find('[name="' + item.name + '"]').first();
 
             if ($currentInput.length) self.setError($currentInput, item.error)
         })
