@@ -515,8 +515,9 @@
      * @param {jQuery} $inputs
      * @returns {boolean}
      */
-    FormValidation.prototype.isValidInputs = function($inputs){
-        var self = this,
+    FormValidation.prototype.isValidInputs = function(){
+        var  self = this,
+            $inputs = self.$inputs,
             error = 0
 
         $inputs.each(function(index, input){

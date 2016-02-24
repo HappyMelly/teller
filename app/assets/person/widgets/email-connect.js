@@ -26,7 +26,7 @@
             var $inputs = self.locals.$inputs;
             e.preventDefault();
 
-            if (!self.validation.isValidInputs($inputs)) return;
+            if (!self.validation.isValidInputs()) return;
             self.submitForm();
         });
 
