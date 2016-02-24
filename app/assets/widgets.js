@@ -547,6 +547,7 @@
                 return;
             };
 
+            self.isLoaded = true;
             self.offset += length;
             self.unreadCount -= length;
 
