@@ -49,7 +49,7 @@ class LoginReminder @Inject() (val repos: IRepositories, val messagesApi: Messag
       form.bindFromRequest.fold(
         errors => badRequest(views.html.v2.unauthorized.remind(errors)),
         emailAddress => {
-          val url: String = controllers.routes.LoginPage.login().url
+          val url: String = controllers.core.routes.LoginPage.login().url
           repos.person.findByEmail(emailAddress) flatMap {
             case None => redirect(url, "error" -> "This email address is not registered")
             case Some(person) =>
