@@ -24,6 +24,7 @@
  */
 package models.repository
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.database.NotificationTable
 import models.Notification
 import play.api.Application
@@ -57,7 +58,7 @@ class NotificationRepository(app: Application) extends HasDatabaseConfig[JdbcPro
   def insert(records: Seq[Notification]) = db.run(notifications ++= records)
 
   def find(personId: Long, offset: Long = 0, limit: Long = 5): Future[Seq[Notification]] =
-    db.run(notifications.filter(_.personId === personId).drop(offset).take(limit).result)
+    db.run(notifications.filter(_.personId === personId).sortBy(_.created.desc).drop(offset).take(limit).result)
 
   /**
     * Marks the given notifications as Read

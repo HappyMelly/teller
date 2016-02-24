@@ -26,13 +26,15 @@ package models
 import controllers.brand.Badges
 import controllers.core.People
 import models.brand.Badge
+import org.joda.time.DateTime
 import play.api.libs.json.{JsValue, Json, JsObject}
 
 case class Notification(id: Option[Long],
                         personId: Long,
                         body: JsValue,
                         typ: String,
-                        unread: Boolean = true) {
+                        unread: Boolean = true,
+                        created: DateTime = DateTime.now()) {
 
   def render: String = typ match {
     case NotificationType.NewBadge =>

@@ -23,7 +23,9 @@
  */
 package models.database
 
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.Notification
+import org.joda.time.DateTime
 import play.api.libs.json.Json
 import slick.driver.JdbcProfile
 
@@ -42,12 +44,13 @@ private[models] trait NotificationTable {
     def body = column[String]("BODY")
     def typ = column[String]("TYPE")
     def unread = column[Boolean]("UNREAD")
+    def created = column[DateTime]("CREATED")
 
-    type NotificationFields = (Option[Long], Long, String, String, Boolean)
+    type NotificationFields = (Option[Long], Long, String, String, Boolean, DateTime)
 
-    def * = (id, personId, body, typ, unread) <> (
-      (n: NotificationFields) => Notification(n._1, n._2, Json.parse(n._3), n._4, n._5),
-      (n: Notification) => Some((n.id, n.personId, n.body.toString(), n.typ, n.unread)))
+    def * = (id, personId, body, typ, unread, created) <> (
+      (n: NotificationFields) => Notification(n._1, n._2, Json.parse(n._3), n._4, n._5, n._6),
+      (n: Notification) => Some((n.id, n.personId, n.body.toString(), n.typ, n.unread, n.created)))
   }
 
 }
