@@ -38,6 +38,28 @@
 @import "widgets/event-block";
 @import "widgets/notification-list";
 
+// error
+.b-error{
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  font-size: 10px;
+  color: @red;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.b-error_show{
+  .b-error{
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .form-control{
+    border-color: @red;
+  }
+}
+
 
 // other styles
 .notification-widget {

@@ -1,0 +1,130 @@
+@(email: String)
+
+<div id="dlg-email-connect" class="modal fade b-modal " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+    @v2.html.modal("", "Create email account") {
+        <div class="email-dlg">
+            <form action="#" data-create-email>
+                <div class="email-dlg__i">
+                    <div class="email-dlg__i-label">
+                        Email
+                    </div>
+                    <div class="email-dlg__i-input">
+                        <input type="text" name="email" class="form-control type-email" disabled value="@email">
+                    </div>
+                </div>
+                <div class="email-dlg__i">
+                    <div class="email-dlg__i-label">
+                        Password
+                    </div>
+                    <div class="email-dlg__i-input">
+                        <input type="password" name="newPassword.password1" class="form-control" >
+                    </div>
+                </div>
+                <div class="email-dlg__i">
+                    <div class="email-dlg__i-label">
+                        Repeat password
+                    </div>
+                    <div class="email-dlg__i-input">
+                        <input type="password" name="newPassword.password2" class="form-control is-the-same" >
+                    </div>
+                </div>
+
+                <div class="email-dlg__buttons">
+                    <button type="submit" class="btn btn-primary email-dlg__btn">
+                        Create email account
+                    </button>
+                    <a href="#" class="link-blue email-dlg__close" data-dismiss="modal">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    }
+</div>
+
+
+<div id="dlg-change-password" class="modal fade b-modal " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+@v2.html.modal("", "Change password") {
+    <div class="email-dlg">
+        <form action="#" data-change-pass>
+            <div class="email-dlg__i">
+                <div class="email-dlg__i-label">
+                    Old password
+                </div>
+                <div class="email-dlg__i-input">
+                    <input type="password" name="currentPassword" class="form-control" >
+                </div>
+            </div>
+            <div class="email-dlg__i">
+                <div class="email-dlg__i-label">
+                    New password
+                </div>
+                <div class="email-dlg__i-input">
+                    <input type="password" name="newPassword.password1" class="form-control" >
+                </div>
+            </div>
+            <div class="email-dlg__i">
+                <div class="email-dlg__i-label">
+                    Repeat new password
+                </div>
+                <div class="email-dlg__i-input">
+                    <input type="password" name="newPassword.password2" class="form-control is-the-same" >
+                </div>
+            </div>
+
+            <div class="email-dlg__buttons">
+                <button type="submit" class="btn btn-primary email-dlg__btn">
+                    Save new password
+                </button>
+                <a href="#" class="link-blue email-dlg__close" data-dismiss="modal">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+}
+</div>
+
+<div id="dlg-change-email" class="modal fade b-modal " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+@v2.html.modal("", "Change email") {
+    <div class="email-dlg">
+        <form action="#" data-change-email>
+            <div class="email-dlg__i">
+                <div class="email-dlg__i-label">
+                    Current email
+                </div>
+                <div class="email-dlg__i-input">
+                    <input type="text" name="old-email" class="form-control type-email" disabled value="@email">
+                </div>
+            </div>
+            <div class="email-dlg__i">
+                <div class="email-dlg__i-label">
+                    New email
+                </div>
+                <div class="email-dlg__i-input">
+                    <input type="text" name="email" class="form-control type-email" >
+                </div>
+            </div>
+            <div class="email-dlg__i">
+                <div class="email-dlg__i-label">
+                    Happy Melly Teller password
+                </div>
+                <div class="email-dlg__i-input">
+                    <input type="password" name="password" class="form-control" >
+                </div>
+            </div>
+
+            <div class="email-dlg__buttons">
+                <button type="submit" class="btn btn-primary email-dlg__btn">
+                    Save new email
+                </button>
+                <a href="#" class="link-blue email-dlg__close" data-dismiss="modal">
+                    Cancel
+                </a>
+
+                <div class="email-dlg__error"></div>
+            </div>
+        </form>
+    </div>
+}
+</div>

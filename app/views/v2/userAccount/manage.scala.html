@@ -1,0 +1,111 @@
+@(user: ActiveUser,
+        person: Person)(implicit request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        flash: play.api.mvc.Flash,
+        env: securesocial.core.RuntimeEnvironment,
+        token: play.filters.csrf.CSRF.Token)
+
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import be.objectify.deadbolt.scala.views.html._
+@import helper.CSRF
+@import models.UserRole._
+@import securesocial.core.providers.{LinkedInProvider, GoogleProvider, TwitterProvider, FacebookProvider}
+
+
+@v2.main(person.fullName + " - Person", "people", user) {
+
+    <div class="manage-page container">
+        <h1 class="manage-page__title">
+            Manage accounts
+        </h1>
+        <div class="manage-page__text">
+            You can connect your email and multiple social accounts to Happy Melly Teller. That will make you more flexible with login choices.
+        </div>
+
+        <div class="manage-page__list">
+
+            @* email connect *@
+            <div class="b-connect-email js-email-connect @if(user.account.byEmail) { show_connected }">
+                <i class="b-connect-email__img"></i>
+                <a href="#"
+                    data-toggle="modal"
+                    data-target="#dlg-email-connect"
+                    class="btn b-connect-email__btn type-connect">
+                    Connect
+                </a>
+
+                <div class="b-connect-email__add">
+                    <a href="#"
+                        data-toggle="modal"
+                        data-target="#dlg-change-email"
+                        class="btn b-connect-email__btn type-email">
+                        Change email
+                    </a>
+                    <a href="#"
+                        data-toggle="modal"
+                        data-target="#dlg-change-password"
+                        class="btn b-connect-email__btn type-password">
+                        Change password
+                    </a>
+
+                    <div class="b-connect-email__hint">
+                        <div class="title">Current email:</div>
+                        <span data-email-current>@user.person.email</span>
+                    </div>
+                </div>
+
+                @views.html.v2.person.blocks.email_connect(user.person.email)
+            </div>
+
+            @* other social network *@
+            <div class="b-connect js-social-connect">
+            @defining(Some(routes.UserAccounts.account().url)) { redirectTo =>
+                <div class="b-connect-i type-tw @if(user.account.twitter.nonEmpty) {state-complete}"
+                    data-social="@TwitterProvider.Twitter"
+                    data-url="@env.routes.authenticationUrl(TwitterProvider.Twitter, redirectTo)">
+                    <i class="b-connect-i__img"></i>
+                    <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                        <span class="complete">Disconnect</span>
+                        <span class="text">Connect</span>
+                    </a>
+                </div>
+                <div class="b-connect-i type-fb @if(user.account.facebook.nonEmpty) {state-complete}"
+                    data-social="@FacebookProvider.Facebook"
+                    data-url="@env.routes.authenticationUrl(FacebookProvider.Facebook, redirectTo)">
+                    <i class="b-connect-i__img type-fb"></i>
+                    <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                        <span class="complete">Disconnect</span>
+                        <span class="text">Connect</span>
+                    </a>
+                </div>
+                <div class="b-connect-i type-linkedin @if(user.account.linkedin.nonEmpty) {state-complete}"
+                    data-social="@LinkedInProvider.LinkedIn"
+                    data-url="@env.routes.authenticationUrl(LinkedInProvider.LinkedIn, redirectTo)">
+                    <i class="b-connect-i__img "></i>
+                    <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                        <span class="complete">Disconnect</span>
+                        <span class="text">Connect</span>
+                    </a>
+                </div>
+                <div class="b-connect-i type-gp @if(user.account.google.nonEmpty) {state-complete} "
+                    data-social="@GoogleProvider.Google"
+                    data-url="@env.routes.authenticationUrl(GoogleProvider.Google, redirectTo)">
+                    <i class="b-connect-i__img "></i>
+                    <a href="#" class="btn b-connect-i__btn" data-social-connect>
+                        <span class="complete">Disconnect</span>
+                        <span class="text">Connect</span>
+                    </a>
+                </div>
+            }
+            </div>
+        </div>
+    </div>
+
+
+    <link rel="stylesheet" href="@routes.Assets.at("css/pages/person/manage-accounts-page.min.css")">
+
+    <script src='@routes.Assets.at("person/widgets/email-connect.js")' type="text/javascript"></script>
+    <script src='@routes.Assets.at("person/widgets/social-connect.js")' type="text/javascript"></script>
+    <script src='@routes.Assets.at("person/manage-accounts.js")' type="text/javascript"></script>
+
+}

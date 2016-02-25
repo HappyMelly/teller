@@ -53,12 +53,6 @@
         }
     };
 
-    PersonSocialConnect.prototype.createWindow = function(url){
-        var windowParams = "menubar=no,location=yes,resizable=yes,scrollbars=yes,status=no,width=500,height=300";
-
-        return window.open(url, "HMT_authorization", windowParams);
-    };
-
     App.widgets.PersonSocialConnect = PersonSocialConnect;
 
 })(jQuery, App);

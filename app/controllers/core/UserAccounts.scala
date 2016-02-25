@@ -35,6 +35,7 @@ import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc._
 import securesocial.controllers.{BaseRegistration, ChangeInfo}
 import securesocial.core.PasswordInfo
@@ -102,13 +103,8 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   /**
     * Renders form for creating or changing the password
     */
-  def account = RestrictedAction(Viewer) { implicit request =>
-    implicit handler => implicit user =>
-      if (user.account.byEmail) {
-        ok(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, changePasswordForm))
-      } else {
-        ok(views.html.v2.userAccount.emptyPasswordAccount(user, newPasswordForm))
-      }
+  def account = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
+    ok(views.html.v2.userAccount.manage(user, user.person))
   }
 
   /**
@@ -172,7 +168,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
         } else {
           (for {
             i <- repos.identity.findByUserId(token.userId)
-            p <- repos.person.find(token.userId)
+            p <- repos.person.findComplete(token.userId)
           } yield (i, p)) flatMap {
             case (None, _) => redirect(routes.Dashboard.index(), "error" -> "Internal error. Please contact support")
             case (_, None) => redirect(routes.Dashboard.index(), "error" -> "Internal error. Please contact support")
@@ -194,7 +190,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def handleNewPassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       newPasswordForm.bindFromRequest().fold(
-        errors => badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors)),
+        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(updateChangePasswordErrors(errors)))),
         password => {
           repos.identity.checkEmail(user.person.email) flatMap {
             case true =>
@@ -210,7 +206,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             case false =>
               val msg = "Your email address is used by another account. Please contact a support team if it's a mistake"
               val errors = newPasswordForm.withGlobalError(msg)
-              badRequest(views.html.v2.userAccount.emptyPasswordAccount(user, errors))
+              badRequest(Json.obj("data" -> Utilities.errorsToJson(errors)))
           }
         }
       )
@@ -223,7 +219,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     implicit handler => implicit user =>
       val form = changeEmailForm.bindFromRequest()
       form.fold(
-        errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm)),
+        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
         info => {
           repos.identity.findByEmail(user.person.email) flatMap { maybeIdentity =>
             val response = for (
@@ -234,19 +230,17 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
               val now = DateTime.now
               val token = EmailToken(UUID.randomUUID().toString, info._1, user.person.identifier, now, now.plusMinutes(60))
               repos.emailToken.insert(token)
-              env.mailer.sendEmail("Confirm your email", info._1,
-                (None, Some(mail.templates.password.html.confirmEmail(
-                  user.person.firstName,
-                  Utilities.fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
-                  user.person.email)))
-              )
+              val body = mail.templates.password.html.confirmEmail(user.person.firstName,
+                Utilities.fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
+                user.person.email)
+              env.mailer.sendEmail("Confirm your email", info._1, (None, Some(body)))
               val msg = "Confirmation email was sent to your new email address"
               redirect(routes.UserAccounts.account(), "success" -> msg)
             }
             response getOrElse {
               val errors = form.withError("password", "Wrong password")
               Future.successful(
-                BadRequest(views.html.v2.userAccount.account(user, user.person.email, errors, changePasswordForm))
+                BadRequest(Json.obj("data" -> Utilities.errorsToJson(errors)))
               )
             }
           }
@@ -260,10 +254,10 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def changePassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
-        errors => badRequest(views.html.v2.userAccount.account(user, user.person.email, changeEmailForm, errors)),
+        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(updateChangePasswordErrors(errors)))),
         info => {
           env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
-          redirect(routes.UserAccounts.account(), "success" -> Messages(OkMessage))
+          jsonSuccess(Messages(OkMessage))
         }
       )
   }
@@ -298,6 +292,19 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
         repos.identity.update(identity)
     }
     repos.userAccount.update(user.account.copy(byEmail = true))
+  }
+
+  /**
+    * Converts standard form error for unmatched password to the one readable by frontend
+    * @param form Form with errors
+    */
+  protected def updateChangePasswordErrors[A](form: Form[A]): Form[A] = {
+    form.error(NewPassword).map { error =>
+      val errors = form.errors.filterNot(_.key == NewPassword)
+      val withErrors = errors.foldLeft(form.discardingErrors)(_.withError(_))
+      withErrors.withError(s"$NewPassword.$Password1", Messages(BaseRegistration.PasswordsDoNotMatch))
+        .withError(s"$NewPassword.$Password2", Messages(BaseRegistration.PasswordsDoNotMatch))
+    }.getOrElse(form)
   }
 
   protected def nonEmpty(acc: UserAccount): Boolean =
