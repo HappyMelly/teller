@@ -25,27 +25,21 @@ package controllers
 
 import javax.inject.Inject
 
-import be.objectify.deadbolt.scala.cache.HandlerCache
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import models.repository.Repositories
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WS
 import play.api.mvc.Action
-import services.TellerRuntimeEnvironment
 import templates.Formatters._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
-class Utilities @Inject()(override implicit val env: TellerRuntimeEnvironment,
-                          override val messagesApi: MessagesApi,
-                          val services: Repositories,
-                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
+class Utilities @Inject()(override val messagesApi: MessagesApi) extends AsyncController{
+
 
   /**
     * Compiles the given markdown to html
@@ -84,6 +78,17 @@ object Utilities {
     */
   def cdnUrl(path: String): Option[String] = {
     Play.configuration.getString("cdn.url").map(url => Some(url + path)).getOrElse(None)
+  }
+
+  /**
+    * Converts form errors to a format readable by frontend
+    * @param form Form
+    */
+  def errorsToJson[U](form: Form[U]): JsValue = {
+    val errors = form.errors.map { error =>
+      Json.obj("name" -> error.key, "error" -> error.messages.mkString(","))
+    }
+    Json.obj("errors" -> errors)
   }
 
   /**

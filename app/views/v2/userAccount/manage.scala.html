@@ -59,7 +59,7 @@
 
             @* other social network *@
             <div class="b-connect js-social-connect">
-            @defining(Some(routes.UserAccounts.account().url)) { redirectTo =>
+            @defining(Some(controllers.core.routes.UserAccounts.account().url)) { redirectTo =>
                 <div class="b-connect-i type-tw @if(user.account.twitter.nonEmpty) {state-complete}"
                     data-social="@TwitterProvider.Twitter"
                     data-url="@env.routes.authenticationUrl(TwitterProvider.Twitter, redirectTo)">
