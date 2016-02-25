@@ -1,6 +1,6 @@
 @(user: securesocial.core.BasicProfile)(implicit request: RequestHeader, env: securesocial.core.RuntimeEnvironment)
 
-@mail.templates.html.hmTmpl("Password was updated") {
+@mail.templates.hm.html.tmpl("Password was updated") {
     <h2>Hi @user.firstName,</h2>
     <p>Your password for Happy Melly Teller has been changed recently using a reset link that we sent to your email address.
         Please log in using your new password by clicking <a href="@env.routes.loginPageUrl">here</a>

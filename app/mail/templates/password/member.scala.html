@@ -2,7 +2,7 @@
     mailToken: String)(implicit request: RequestHeader,
         env: securesocial.core.RuntimeEnvironment)
 
-@mail.templates.html.hmTmpl(s"Your Happy Melly Account") {
+@mail.templates.hm.html.tmpl(s"Your Happy Melly Account") {
     <h2>Hi @recipient,</h2>
     <p>Your member account has been created.</p>
     <p>If you want to log into the system by email, please create a new password:</p>

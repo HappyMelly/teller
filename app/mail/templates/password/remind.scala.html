@@ -13,7 +13,7 @@
     }
 }
 
-@mail.templates.html.hmTmpl("Login Reminder Request") {
+@mail.templates.hm.html.tmpl("Login Reminder Request") {
     <h2>Hi @person.firstName,</h2>
     <p>You could log into Teller with @printOptions(options)</p>
     @mail.templates.html.button("Login Now", Utilities.fullUrl(controllers.core.routes.LoginPage.login().url))

@@ -1,7 +1,7 @@
 @(user: securesocial.core.BasicProfile, mailToken: String)(implicit request: RequestHeader,
     env: securesocial.core.RuntimeEnvironment)
 
-@mail.templates.html.hmTmpl("Password Reset Request") {
+@mail.templates.hm.html.tmpl("Password Reset Request") {
     <h2>Hi @user.firstName,</h2>
     <p>Someone recently requested a password change for your Happy Melly Teller account. If this was you, click the button to set a new password:</p>
     @mail.templates.html.button("Reset Password", env.routes.resetPasswordUrl(mailToken))
