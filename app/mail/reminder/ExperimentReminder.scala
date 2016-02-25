@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -25,6 +25,7 @@ package mail.reminder
 
 import javax.inject.Inject
 
+import controllers.Members
 import models.repository.Repositories
 import play.api.Play
 import play.api.Play.current
@@ -47,10 +48,7 @@ class ExperimentReminder @Inject() (val email: Email, val services: Repositories
           (member, experiments.find(_._1 == member.identifier).map(_._2).getOrElse(List()))).
         filter(member => member._2.nonEmpty)
       members.foreach { member =>
-        val url = if (member._1.person)
-          controllers.core.routes.People.details(member._1.objectId).url
-        else
-          controllers.core.routes.Organisations.details(member._1.objectId).url
+        val url = Members.profileUrl(member._1)
         val body = mail.templates.members.html.experimentStatus(member._1.name,
           member._2, fullUrl(url)).toString()
         val subject = "Update your experiments"

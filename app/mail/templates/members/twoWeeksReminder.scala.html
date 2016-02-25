@@ -1,0 +1,47 @@
+@(member: Member, length: Long, paymentUrl: String, profileUrl: String)
+
+@import views.ViewHelpersV2._
+
+@mail.templates.hm.html.tmpl("Your Happy Melly Membership") {
+    @mail.templates.hm.html.title(s"Hi ${member.name},")
+    @mail.templates.hm.html.paragraph {
+        You’ve been a Happy Melly member since @date(member.since). (That’s at least @length days of happiness)
+        Big respect to you!
+    }
+    @mail.templates.hm.html.paragraph {
+        In about two weeks your Happy Melly membership will automatically renew for another year.
+        (We’ll send you a confirmation receipt once your payment method on file has been charged.)
+    }
+    @mail.templates.hm.html.paragraph {
+        If you need to update your payment details before renewal takes place, you can
+        <a href="@paymentUrl">update</a> them via your Teller Account.
+    }
+    @mail.templates.hm.html.paragraph {
+        You might check your Teller <a href="@profileUrl">profile</a>
+        to make sure your social info, website links, etc. are all up to date. And hey, while you’re there, maybe
+        grab a Happy Melly badge for your website, if you haven’t already!
+    }
+    @mail.templates.hm.html.paragraph {
+        If you’ve enjoyed the Happy Melly community as much as we’ve enjoyed having you a part of it, can we ask you to
+        share a smile or two? Here are a few links you can “click to tweet”
+    }
+    @mail.templates.hm.html.paragraph {
+        <ul>
+            <li><a href="http://ctt.ec/aRFxP">Happiness is the future of work. #happinessatwork http://ctt.ec/aRFxP+</a></li>
+            <li><a href="http://ctt.ec/a_5Rs">Job satisfaction doesn’t have to be a myth. #happinessatwork http://ctt.ec/a_5Rs+</a></li>
+            <li><a href="http://ctt.ec/ej35u">Happy Melly can be found anywhere people are smiling at work. #happinessatwork http://ctt.ec/ej35u+</a></li>
+        </ul>
+    }
+    @mail.templates.hm.html.paragraph {
+        Here’s to another year of experiments and collaboration!
+    }
+    @mail.templates.hm.html.paragraph {
+        Happy Melly
+    }
+    @mail.templates.hm.html.paragraph {
+        PS: If for any reason you don’t wish to renew your Happy Melly membership,
+        <a href="@profileUrl#membership">here’s a link</a> to your Teller profile account page to cancel. We’d be sad
+        to see you go, and we would like to know what we could have done better to support your mission.
+        Please reach out and <a href="http://www.happymelly.com/contact/">let us know</a>.
+    }
+} { }

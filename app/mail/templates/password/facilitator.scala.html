@@ -3,7 +3,7 @@
     brand: String)(implicit request: RequestHeader,
         env: securesocial.core.RuntimeEnvironment)
 
-@mail.templates.html.hmTmpl(s"Your Facilitator Account for $brand") {
+@mail.templates.hm.html.tmpl(s"Your Facilitator Account for $brand") {
     <h2>Hi @recipient,</h2>
     <p>Your facilitator account for @brand has been created.</p>
     <p>Please create a new password to log in:</p>

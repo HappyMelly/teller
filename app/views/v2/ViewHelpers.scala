@@ -49,4 +49,6 @@ object ViewHelpersV2 {
     else
       start.toString("d MMM yyyy — ") + end.toString("d MMM yyyy")
   }
+
+  def date(value: LocalDate): String = value.toString("d MMM yyyy")
 }
