@@ -46,7 +46,7 @@ trait IScheduler
 @Singleton
 class Scheduler @Inject() (val env: Environment,
                            val email: Email,
-                           val services: Repositories,
+                           val repos: Repositories,
                            val actors: ActorSystem) extends IScheduler {
   start
 
@@ -69,10 +69,12 @@ class Scheduler @Inject() (val env: Environment,
       Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
       Duration.create(24, TimeUnit.HOURS)) {
       println("INFO: Start of daily routines")
-      (new EventReminder(email, services)).sendPostFactumConfirmation()
-      (new EvaluationReminder(email, services)).sendToAttendees()
-      Facilitator.updateFacilitatorExperience(services)
-      (new ExpiredEventRequestCleaner(services)).clean()
+      val membership = new MembershipReminder(email, repos)
+      membership.sendOneMonthExpirationReminder()
+      (new EventReminder(email, repos)).sendPostFactumConfirmation()
+      (new EvaluationReminder(email, repos)).sendToAttendees()
+      Facilitator.updateFacilitatorExperience(repos)
+      (new ExpiredEventRequestCleaner(repos)).clean()
       println("INFO: End of daily routines")
     }
   }
@@ -90,9 +92,9 @@ class Scheduler @Inject() (val env: Environment,
       Duration.create(24, TimeUnit.HOURS)) {
       if (now.getDayOfMonth == 1) {
         println("INFO: Start of monthly routines")
-        (new ProfileStrengthReminder(email, services)).sendToFacilitators()
-        (new ExperimentReminder(email, services)).sendStatus()
-        (new BrandReminder(email, services)).sendLicenseExpirationReminder()
+        (new ProfileStrengthReminder(email, repos)).sendToFacilitators()
+        (new ExperimentReminder(email, repos)).sendStatus()
+        (new BrandReminder(email, repos)).sendLicenseExpirationReminder()
 //        (new EventReminder(email, app)).sendUpcomingEventsNotification()
         println("INFO: End of monthly routines")
       }
