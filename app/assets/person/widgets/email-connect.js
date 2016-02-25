@@ -48,7 +48,7 @@
         });
 
         $.post(self.options.url, ajaxData, function () {
-                self.$modal.modal('hide');
+                self.$root.modal('hide');
                 self.validation.clearForm();
 
                 self.options.success && self.options.success();
