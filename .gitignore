@@ -14,4 +14,3 @@ keystore.jks
 TODO
 .vagrant
 node_modules
-public/css/*.css

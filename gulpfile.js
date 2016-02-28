@@ -3,7 +3,9 @@ var gulp = require('gulp'),
     $ = require('gulp-load-plugins')(),
     browserSync = require('browser-sync').create(),
     runSequence =  require('run-sequence'),
-    gulpIf = require('gulp-if');
+    gulpIf = require('gulp-if'),
+    named = require('vinyl-named'),
+    webpack = require('webpack-stream');
 
 var isBuild = process.env.NODE_ENV && process.env.NODE_ENV == 'production',
     errorHandler = function (error) {
@@ -40,36 +42,34 @@ gulp.task('styles', function(){
     return gulp.src(['frontend/css/**/*.less', '!frontend/css/**/_*.less'])
         .pipe($.plumber({errorHandler: errorHandler}))
         .pipe($.less())
+        .pipe($.cached('styles'))
         .pipe(gulpIf(isBuild, $.cssnano()))
         .pipe(gulp.dest('public/css'));
 });
 
 gulp.task('scripts', function(){
-    return gulp.src(['frontend/scripts/**/*.js', '!frontend/scripts/**/_*.js'])
-        .pipe(gulp.dest('public/js'));
+
+    return gulp.src(['frontend/scripts/**/*.js', '!frontend/scripts/**/_*.js'], {base: 'frontend/scripts' })
+        .pipe(named())
+        .pipe(webpack(require('./webpack.config.js')))
+        .pipe($.cached('scripts'))
+        .pipe($.if(isBuild, $.uglify()))
+        .pipe(gulp.dest('public/js/package'));
 });
 
 gulp.task('watch', function(){
-    gulp.watch('frontend/css/**/*.*', 'styles');
-    gulp.watch('frontend/js/**/*.*', 'scripts');
+    gulp.watch('frontend/css/**/*.*', gulp.series('styles'));
+    gulp.watch('frontend/js/**/*.*', gulp.series('scripts'));
 
     browserSync.watch('public/**/*.*').on('change', browserSync.reload);
 });
 
 
 // Common task
-gulp.task('run', function(done){
-    runSequence(['styles', 'scripts'], done);
-});
+gulp.task('run', gulp.parallel('styles', 'scripts'));
 
-gulp.task('dev', function(done){
-    runSequence('run', ['watch', 'browser-sync'])
-});
+gulp.task('dev', gulp.series('run', gulp.parallel('watch', 'browser-sync')));
 
-gulp.task('build', ['run']);
+gulp.task('build', gulp.series('run'));
 
-gulp.task('js-valid', ['jscs', 'jslint']);
-
-gulp.task('default', function () {
-    gulp.start('dev');
-});
+gulp.task('default', gulp.series('dev'));
