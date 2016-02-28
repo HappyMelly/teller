@@ -1,0 +1,236 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+/* colors */
+/* z-indexes */
+/* mixins */
+.b-connect {
+  display: inline-block;
+  vertical-align: top;
+  text-align: left;
+  white-space: nowrap;
+}
+.b-connect-i {
+  display: inline-block;
+  vertical-align: top;
+  width: 134px;
+  margin-right: 17px;
+}
+.b-connect-i.type-tw .b-connect-i__img:before {
+  top: 5px;
+  width: 54px;
+  height: 65px;
+  background-image: url(/assets/images/person/icon-tw-big.png);
+}
+.b-connect-i.type-tw .b-connect-i__btn {
+  background: #3099FF;
+  border-color: #3099ff;
+}
+.b-connect-i.type-fb .b-connect-i__img:before {
+  width: 63px;
+  height: 70px;
+  background-image: url(/assets/images/person/icon-fb-big.png);
+}
+.b-connect-i.type-fb .b-connect-i__btn {
+  background: #375A9A;
+  border-color: #375A9A;
+}
+.b-connect-i.type-linkedin .b-connect-i__img:before {
+  width: 52px;
+  height: 70px;
+  background-image: url(/assets/images/person/icon-linked-big.png);
+}
+.b-connect-i.type-linkedin .b-connect-i__btn {
+  background: #0077B5;
+  border-color: #0077B5;
+}
+.b-connect-i.type-gp .b-connect-i__img:before {
+  left: -7px;
+  top: -4px;
+  width: 65px;
+  height: 76px;
+  background-image: url(/assets/images/person/icon-gp-big.png);
+}
+.b-connect-i.type-gp .b-connect-i__btn {
+  background: #DD4B39;
+  border-color: #DD4B39;
+}
+.b-connect-i.state-complete .text {
+  display: none;
+}
+.b-connect-i.state-complete .complete {
+  display: inline;
+}
+.b-connect-i.state-complete .b-connect-i__btn {
+  background: none;
+}
+.b-connect-i.state-complete.type-tw .b-connect-i__btn {
+  color: #3099ff !important;
+}
+.b-connect-i.state-complete.type-fb .b-connect-i__btn {
+  color: #375A9A !important;
+}
+.b-connect-i.state-complete.type-linkedin .b-connect-i__btn {
+  color: #0077B5 !important;
+}
+.b-connect-i.state-complete.type-gp .b-connect-i__btn {
+  color: #DD4B39 !important;
+}
+.b-connect-i__img {
+  display: block;
+  height: 94px;
+  position: relative;
+}
+.b-connect-i__img:before {
+  content: '';
+  position: relative;
+  display: block;
+  margin: 0 auto;
+  background-repeat: no-repeat;
+  -webkit-background-size: cover;
+  background-size: cover;
+}
+.b-connect-i__btn {
+  display: block;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #ffffff !important;
+  border: 1px solid transparent;
+}
+.b-connect-i__btn .complete {
+  display: none;
+}
+.b-connect-email {
+  display: inline-block;
+  vertical-align: top;
+  width: 134px;
+  margin-right: 17px;
+}
+.b-connect-email__img {
+  display: block;
+  height: 94px;
+  position: relative;
+}
+.b-connect-email__img:before {
+  content: '';
+  position: relative;
+  display: block;
+  margin: 0 auto;
+  width: 52px;
+  height: 72px;
+  background: url(/assets/images/person/icon-email-big.png) no-repeat;
+  -webkit-background-size: cover;
+  background-size: cover;
+}
+.b-connect-email__btn {
+  display: block;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #ffffff !important;
+  margin-bottom: 6px;
+  background-color: #ee929f;
+}
+.b-connect-email__hint {
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+}
+.b-connect-email__hint .title {
+  color: #9b9b9b;
+}
+.b-connect-email__add {
+  display: none;
+}
+/*== states ==*/
+.b-connect-email.show_connected .b-connect-email__add {
+  display: block;
+}
+.b-connect-email.show_connected .b-connect-email__btn.type-connect {
+  display: none;
+}
+.email-dlg {
+  padding-bottom: 20px;
+}
+.email-dlg__i {
+  position: relative;
+  height: 48px;
+  margin-bottom: 12px;
+}
+.email-dlg__i-label {
+  position: relative;
+  top: 50%;
+  -webkit-transform: translate(0, -50%);
+  -moz-transform: translate(0, -50%);
+  -ms-transform: translate(0, -50%);
+  -o-transform: translate(0, -50%);
+  transform: translate(0, -50%);
+  float: left;
+  width: 150px;
+  text-align: left;
+}
+.email-dlg__i-input {
+  overflow: hidden;
+  position: relative;
+}
+.email-dlg__buttons {
+  margin-top: 29px;
+}
+.email-dlg__error {
+  position: absolute;
+  left: 0;
+  top: 55px;
+  font-size: 12px;
+  color: #e73b2b;
+}
+.email-dlg__btn {
+  min-width: 300px;
+  font-size: 18px;
+  line-height: 1;
+  padding-top: 15px;
+  padding-bottom: 17px;
+  font-weight: 400;
+  margin-right: 80px;
+}
+.email-dlg__close {
+  font-size: 18px;
+}
+.manage-page {
+  padding-top: 40px;
+}
+.manage-page__title {
+  font-size: 36px;
+  line-height: 39px;
+  margin: 0 0 20px 0;
+}
+.manage-page__text {
+  margin-bottom: 30px;
+}
+.manage-page__list {
+  margin-bottom: 60px;
+}
