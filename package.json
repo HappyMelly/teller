@@ -16,10 +16,12 @@
   },
   "homepage": "https://github.com/HappyMelly/teller#readme",
   "devDependencies": {
+    "browser-sync": "^2.11.1",
     "gulp": "^3.9.0",
+    "gulp-cssnano": "^2.1.1",
+    "gulp-eslint": "^2.0.0",
     "gulp-jscs": "^3.0.2",
-    "gulp-jshint": "^2.0.0",
-    "gulp-load-plugins": "^1.2.0",
-    "jshint": "^2.8.0"
+    "gulp-less": "^3.0.5",
+    "gulp-load-plugins": "^1.2.0"
   }
 }

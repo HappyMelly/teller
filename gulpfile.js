@@ -1,29 +1,47 @@
 
 var gulp = require('gulp'),
-    $ = require('gulp-load-plugins')();
+    $ = require('gulp-load-plugins')(),
+    browserSync = require('browser-sync').create()
 
-// Javascript code style - .jscsrc ( http://jscs.info/rules )
 gulp.task('jscs', function() {
     return gulp.src('app/**/*.js')
         .pipe($.jscs())
         .pipe($.jscs.reporter());
 });
 
-// Javascript hint - .jshintrc (http://jshint.com/docs/options/)
-gulp.task('jshint', function() {
+gulp.task('jslint', function() {
     return gulp.src('app/**/*.js')
-        .pipe($.jshint())
-        .pipe($.jshint.reporter('default'))
+        .pipe($.eslint())
+        .pipe($.eslint.format())
+        .pipe($.eslint.failAfterError());
 });
 
+gulp.task('browser-sync', function() {
+
+});
+
+gulp.task('styles', function(){
+    return gulp.src(['frontend/css/**/*.less', '!frontend/css/**/_*.less'])
+        .pipe($.less())
+        .pipe($.cssnano())
+        .pipe(gulp.dest('public/css'));
+});
+
+gulp.task('scripts', function(){
+    return gulp.src(['frontend/scripts/**/*.js'])
+        .pipe(gulp.dest('public/js'));
+});
+
+gulp.task('watch', function(){
+    gulp.watch('frontend/css/**/*.*', 'styles');
+    gulp.watch('frontend/js/**/*.*', 'scripts');
+});
 
 // Watch task
-gulp.task('serve', ['jscs'], function () {
-    gulp.watch('app/**/*.js', ['jscs']);
-});
+gulp.task('dev', ['styles', 'sripts']);
 
 
 //Default task
 gulp.task('default', function () {
-    gulp.start('serve');
+    gulp.start('dev');
 });
