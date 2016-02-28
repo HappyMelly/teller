@@ -38,7 +38,7 @@ gulp.task('watch', function(){
 });
 
 // Watch task
-gulp.task('dev', ['styles', 'sripts']);
+gulp.task('dev', ['styles']);
 
 
 //Default task
