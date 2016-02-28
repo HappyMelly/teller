@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "gulp serve"
+    "dev": "gulp serve",
+    "build": "NODE_ENV=production gulp build"
   },
   "repository": {
     "type": "git",
@@ -18,10 +19,15 @@
   "devDependencies": {
     "browser-sync": "^2.11.1",
     "gulp": "^3.9.0",
+    "gulp-cached": "^1.1.0",
     "gulp-cssnano": "^2.1.1",
     "gulp-eslint": "^2.0.0",
     "gulp-jscs": "^3.0.2",
     "gulp-less": "^3.0.5",
-    "gulp-load-plugins": "^1.2.0"
+    "gulp-load-plugins": "^1.2.0",
+    "gulp-plumber": "^1.1.0",
+    "run-sequence": "^1.1.5",
+    "vinyl-named": "^1.1.0",
+    "webpack-stream": "^3.1.0"
   }
 }
