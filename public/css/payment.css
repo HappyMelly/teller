@@ -75,7 +75,7 @@
   padding: 19px;
 }
 .payment-icons {
-  background-image: url("../../public/images/payment-logo.png");
+  background-image: url(../images/payment-logo.png);
   background-repeat: no-repeat;
   display: inline-block;
   margin-right: 10px;
