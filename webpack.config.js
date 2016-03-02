@@ -1,19 +1,22 @@
 "use strict";
 
 var webpack = require('webpack'),
-    path = require('path');
+    path    = require('path'),
+    config  = require('./gulp/config.js');
 
 module.exports = {
+    watch: !config.isBuild,
     output: {
         filename: '[name].js'
     },
-    devtool: "#inline-source-map",
+    devtool: config.isBuild? false: 'cheap-eval-source-map',
     cache: true,
     module: {
         loaders: [
             {
                 test: /\.jsx$/,
-                loaders: ['babel?presets[]=react,presets[]=es2015']
+                exclude: /node_modules/,
+                loaders: ['babel?presets[]=es2015']
             }
         ]
     },
