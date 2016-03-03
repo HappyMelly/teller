@@ -24,6 +24,7 @@
 
 package models
 
+import controllers.Utilities
 import mail.reminder.EvaluationReminder
 import models.event.Attendee
 import models.repository._
@@ -220,7 +221,8 @@ case class  Evaluation(id: Option[Long],
         val impression = views.Evaluations.impression(facilitatorImpression)
         val subject = s"New evaluation (General impression: $impression)"
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-        val body = mail.templates.evaluation.html.details(this, event, attendee, brand)(messages)
+        val url = Utilities.fullUrl(controllers.routes.Evaluations.details(this.identifier).url)
+        val body = mail.templates.evaluation.html.details(this, event, attendee, brand, url)(messages)
         email.send(event.facilitators(services).toSet, Some(cc.toSet), None, subject,
           body.toString(), richMessage = true)
 
