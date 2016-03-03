@@ -6,10 +6,6 @@ GET           /apiv2                                                         con
 GET           /profile                                                       controllers.core.Dashboard.profile
 GET           /overview/:id                                                  controllers.core.Dashboard.overview(id: Long)
 
-GET           /admin/settings                                                controllers.admin.Administration.settings
-POST          /admin/transactiontype/new                                     controllers.admin.Administration.createTransactionType
-POST          /admin/transactiontype/:id/delete                              controllers.admin.Administration.deleteTransactionType(id: Long)
-
 GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
 POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
 
