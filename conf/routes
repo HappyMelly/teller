@@ -72,6 +72,8 @@ GET           /certificate/new/:eventId/:personId                            con
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
 
+GET           /credits                                                       controllers.brand.Credits.index()
+
 POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword
 
 GET           /person/:personId/endorsement                                  controllers.Endorsements.add(personId: Long)

@@ -33,7 +33,7 @@ import slick.driver.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class BadgeRepository(app: Application)  extends HasDatabaseConfig[JdbcProfile]
+class BadgeRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with BadgeTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
