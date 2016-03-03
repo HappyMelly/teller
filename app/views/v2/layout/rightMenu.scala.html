@@ -23,8 +23,6 @@
             @restrict(handler, List(as(Admin.toString))) {
                 <li><a href="@controllers.admin.routes.Usage.index()">Usage</a></li>
                 <li><a href="@core.routes.Dashboard.about()">About</a></li>
-                <li><a href="@controllers.admin.routes.Administration.settings()">
-                    Settings</a></li>
             }
             <li><a href="@core.routes.Dashboard.apiv2()"> API (v2)</a></li>
             <li class="divider"></li>
