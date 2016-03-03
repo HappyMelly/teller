@@ -56,8 +56,7 @@ private[models] trait MemberTable {
     def * = (id.?, objectId, person, funder, feeCurrency, fee, renewal,
       since, until, reason, created, createdBy, updated, updatedBy) <>(
       (m: MembersFields) ⇒
-        Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, false,
-          m._10, m._11, m._12, m._13, m._14),
+        Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, m._10, m._11, m._12, m._13, m._14),
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
           BigDecimal(m.fee.getAmount), m.renewal, m.since,

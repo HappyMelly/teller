@@ -35,7 +35,6 @@ case class Member(
     renewal: Boolean = true,
     since: LocalDate,
     until: LocalDate,
-    existingObject: Boolean,
     reason: Option[String] = None,
     created: DateTime,
     createdBy: Long,

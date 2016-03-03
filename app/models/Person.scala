@@ -189,7 +189,7 @@ case class Person(
       renewal = true,
       since = LocalDate.now(),
       until = LocalDate.now().plusYears(1),
-      existingObject = true, reason = None,
+      reason = None,
       created = DateTime.now(), id.get,
       DateTime.now(), id.get)
 
