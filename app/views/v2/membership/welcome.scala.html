@@ -3,16 +3,19 @@
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     flash: Flash)
 
-@main("Welcome", "membership", user, false) {
-  <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
-  <script type="text/javascript" src="@routes.Assets.at("membership/welcome.js")"></script>
+@v2.main("Welcome", "membership", user, withMelly = true) {
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
+    <script type="text/javascript" src="@routes.Assets.at("membership/welcome.js")"></script>
 
   <div class="col-md-12 text-center">
-    <h1>Join Happy Melly network</h1>
+    <h3>Join Happy Melly network</h3>
   </div>
   <div class="row text-center welcome">
     <div class="col-md-6 col-md-offset-3">
-      @element.supporter()
+        <div class="text-left">
+            @v2.element.supporter()
+        </div>
         <div class="row">
           <div class="col-md-5 text-center button-block">
             <h5>I want to be a Supporter</h5>
@@ -28,14 +31,14 @@
                     </a>
                   }
               }.getOrElse {
-                <a href="@routes.Membership.payment(None)" class="btn btn-success">
+                <a href="@routes.Membership.payment(None)" class="btn btn-primary">
                   Become a Supporter</a>
               }
             </div>
           </div>
           <div class="col-md-7 text-center button-block">
             <h5>My organisation wants to be a Supporter</h5>
-            @if(orgs.length > 0) {
+            @if(orgs.nonEmpty) {
               <div class="col-md-10 col-md-offset-1">
                 <select class="form-control" id="org">
                   <option value="0">Select organisation</option>
@@ -45,7 +48,7 @@
                 </select>
               </div>
               <div class="button-line text-center">
-                <a href="@routes.Membership.payment(None)" id="orgSupporter" class="btn btn-success">
+                <a href="@routes.Membership.payment(None)" id="orgSupporter" class="btn btn-primary">
                   Make My Organisation a Supporter</a>
               </div>
             } else {
