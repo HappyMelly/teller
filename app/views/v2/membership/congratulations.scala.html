@@ -3,10 +3,8 @@
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     flash: Flash)
 
-@main("Congratulations", "membership", user, false) {
-  <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/payment.css")">
-
-  <div class="congratulation">
+@v2.main("Congratulations", "membership", user) {
+  <div class="col-md-10 col-md-offset-1 congratulation">
     <div class="col-md-4 col-md-offset-1">
       <img src="@routes.Assets.at("images/HM-character.png")" height="500px"/>
     </div>
@@ -24,10 +22,11 @@
         </p>
       </div>
       @orgId.map { id =>
-        <a class="btn btn-success"
-        href="@controllers.core.routes.Organisations.details(id)">Go to Profile &rarr;</a>
+        <a class="btn btn-primary"
+            href="@controllers.core.routes.Organisations.details(id)">Go to Organisation Profile</a>
       }.getOrElse {
-        <div class="js-completion-widget"></div>
+        <a class="btn btn-primary action-button"
+          href="@(controllers.core.routes.People.details(user.person.identifier).url)#membership">Go to your profile</a>
       }
     </div>
   </div>

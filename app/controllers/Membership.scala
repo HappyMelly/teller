@@ -62,7 +62,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       o <- repos.person.memberships(user.person.identifier)
       m <- repos.member.findByObjects(o.map(_.identifier))
     } yield (o, m.filterNot(_.person))) flatMap { case (orgs, members) =>
-      ok(views.html.membership.welcome(user, orgs.filterNot(x => members.exists(_.objectId == x.identifier))))
+      ok(views.html.v2.membership.welcome(user, orgs.filterNot(x => members.exists(_.objectId == x.identifier))))
     }
   }
 
@@ -74,7 +74,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def congratulations(orgId: Option[Long]) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      ok(views.html.membership.congratulations(user, orgId))
+      ok(views.html.v2.membership.congratulations(user, orgId))
   }
 
   /**
@@ -94,7 +94,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
             repos.person.memberships(user.person.identifier) flatMap { orgs =>
               if (orgs.exists(_.id == org.id)) {
                 val fee = Payment.countryBasedFees(org.countryCode)
-                ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
+                ok(views.html.v2.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
               } else {
                 redirect(welcomeCall, "error" -> Messages("error.person.notOrgMember"))
               }
@@ -103,7 +103,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       } getOrElse {
         val code = user.person.address.countryCode
         val fee = Payment.countryBasedFees(code)
-        ok(views.html.membership.payment(user, paymentForm, publicKey, fee))
+        ok(views.html.v2.membership.payment(user, paymentForm, publicKey, fee))
       }
   }
 
