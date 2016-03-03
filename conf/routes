@@ -62,7 +62,6 @@ POST          /brand/:brandId/testimonial                                    con
 POST          /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.update(brandId: Long, id: Long)
 DELETE        /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.remove(brandId: Long, id: Long)
 
-
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
 
@@ -271,6 +270,8 @@ POST          /user/password                                                 con
 GET           /user/switch                                                   controllers.core.UserAccounts.switchRole
 POST          /user/email                                                    controllers.core.UserAccounts.changeEmail
 GET           /user/email/:token                                             controllers.core.UserAccounts.handleEmailChange(token: String)
+
+POST          /webhooks/stripe                                               controllers.webhooks.Stripe.event
 
 # API (v2)
 GET           /api/v2/brands                                                 controllers.apiv2.BrandsApi.brands

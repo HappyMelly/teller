@@ -33,9 +33,9 @@ import views.Countries
 
 class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
-                                        val services: Repositories,
+                                        val repos: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   /**
    * Renders list of available fees for the given brand
@@ -45,8 +45,8 @@ class BrandFees @javax.inject.Inject() (override implicit val env: TellerRuntime
   def index(brandId: Long) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brand.find(brandId)
-        fees <- services.fee.findByBrand(brandId)
+        brand <- repos.brand.find(brandId)
+        fees <- repos.fee.findByBrand(brandId)
       } yield (brand, fees)) flatMap {
         case (None, _) => notFound("Brand not found")
         case (Some(brand), fees) =>
