@@ -173,11 +173,13 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     val fee = Money.of(EUR, data.fee)
     (for {
       _ <- repos.person.update(person.copy(customerId = Some(customerId)))
+      p <- repos.socialProfile.find(person.identifier, ProfileType.Person)
       m <- person.becomeMember(funder = false, fee, repos)
-    } yield m) map { member =>
+    } yield (p, m)) map { case (profile, member) =>
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
         _.updateUser(ActiveUser(user.id, user.providerId, user.account, user.person, Some(member)))
       })
+      person.profile_=(profile)
       notify(person, None, member)
       subscribe(person, member)
 

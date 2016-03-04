@@ -8,11 +8,10 @@
         messages: Messages)
 
 @v2.main("Payment", "membership", user, withMelly = true) {
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
     <div class="col-md-12 text-center">
         <h3>Make Payment</h3>
     </div>
-    <div class="row text-left welcome">
+    <div class="row text-left existing-user">
         <div class="col-md-6 col-md-offset-3">
             @views.html.v2.element.payment(form, user.person, apiKey, fee, org)
             <div class="row payment-info">
