@@ -199,7 +199,13 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
       }
       futureIdentity.map(identity => user(identity))
     } else {
-      Future.successful(unregisteredActiveUser(SocialIdentity(profile)))
+      val identity = SocialIdentity(profile)
+      repos.identity.insert(identity)
+      //TODO this should be removed after some time when the records will come to a normal shape
+      repos.identity.findActiveUser(profile.userId, profile.providerId) map {
+        case Some(user) => user
+        case None => unregisteredActiveUser(identity)
+      }
     }
   }
 
