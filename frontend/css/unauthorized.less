@@ -1,0 +1,167 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+
+@import "settings";
+
+.social {
+  .btn {
+    color: #fff;
+    padding: 9px 18px 10px 18px;
+    margin-top: 15px;
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+  .btn-twitter {
+    background-color: #71abf3;
+  }
+  .btn-facebook {
+    background-color: #475aa3;
+  }
+  .btn-linkedin {
+    background-color: #397bc0;
+  }
+  .btn-google {
+    background-color: #c13a25;
+  }
+}
+
+.unauthorized {
+  position: relative;
+  min-height: 100%;
+  margin-bottom: -80px;
+  text-align: center;
+
+  &:before{
+    content: '';
+    position: absolute;
+    right: 0;
+    left: 0;
+    top: 0;
+    height: 280px;
+    border-bottom: 1px solid #ddd;
+    background: #e7e7e7;
+    background: -moz-linear-gradient(left,  #dfdfdf 0%, #dfdfdf 25%, #e7e7e7 26%, #e7e7e7 100%);
+    background: -webkit-linear-gradient(left,  #dfdfdf 0%, #dfdfdf 25%, #e7e7e7 26%, #e7e7e7 100%);
+    background: linear-gradient(to right,  #dfdfdf 0%, #dfdfdf 25%, #e7e7e7 26%, #e7e7e7 100%);
+    -webkit-background-size: 4px 10px;
+    background-size: 4px 10px;
+  }
+
+  &:after{
+    content: '';
+    display: block;
+    height: 70px;
+  }
+
+  img.melly {
+    position: absolute;
+    top: 113px;
+    right: 0;
+  }
+
+  .top-stripe{
+    padding-top: 140px;
+  }
+
+  .subpage {
+    width: 710px;
+    margin: 0 auto;
+
+    .action-block {
+      padding: 20px 46px 46px 46px;
+      height: 423px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 7px 1px @grey;
+      .column {
+        width: 45%;
+        float: left;
+      }
+      .middle-column {
+        width: 10%;
+        float: left;
+        background-image: url('../images/login-or.png');
+      }
+      .action-area {
+        padding-top: 25px;
+
+        .errors {
+          color: @pig-pink;
+          padding-bottom: 10px;
+        }
+      }
+      .join-now {
+        font-family: "kg_skinny_latteregular";
+        text-transform: uppercase;
+        font-size: 24px;
+        padding-top: 10px;
+      }
+    }
+  }
+}
+
+.unauth__footer {
+  width: 100%;
+  text-align: center;
+  padding: 30px 0 30px 0;
+  background-color: @light-grey;
+  color: @grey;
+
+  a {
+    color: @grey3;
+  }
+}
+
+
+// refactor
+/* Sign-in page */
+body.signin {
+  background: url(../images/Melly-Shum-hates-her-job.jpg) no-repeat scroll 0 0 / cover #FFF;
+  padding-top : 0;
+  height: 100%;
+}
+div.signin {
+  padding-top: 30px;
+  height: 100%;
+  background: none repeat scroll 0 0 #FFF;
+  position: fixed;
+}
+.footer {
+  bottom: 30px;
+  position: absolute;
+  color: #cccccc;
+}
+.footer a {
+  color: rgba(0, 0, 0, 0.53);
+}
+
+
+/* Button block */
+.form-block {
+  margin-top: 50px;
+}
+.form-block .btn-login {
+  margin-bottom: 20px;
+}

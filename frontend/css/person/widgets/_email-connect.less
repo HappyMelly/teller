@@ -1,0 +1,61 @@
+
+.b-connect-email{
+  display: inline-block;
+  vertical-align: top;
+  width: 134px;
+  margin-right: 17px;
+}
+
+.b-connect-email__img{
+  display: block;
+  height: 94px;
+  position: relative;
+
+  &:before{
+    content: '';
+    position: relative;
+    display: block;
+    margin: 0 auto;
+    width: 52px;
+    height: 72px;
+    background: url(/assets/images/person/icon-email-big.png) no-repeat;
+    -webkit-background-size: cover;
+    background-size: cover;
+  }
+}
+
+.b-connect-email__btn{
+  display: block;
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  .box-sizing(border-box);
+  color: #ffffff !important;
+  margin-bottom: 6px;
+  background-color: #ee929f;
+}
+
+.b-connect-email__hint{
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+
+  .title{
+    color: #9b9b9b;
+  }
+}
+
+.b-connect-email__add{
+  display: none;
+}
+
+/*== states ==*/
+.b-connect-email.show_connected{
+  .b-connect-email__add{
+    display: block;
+  }
+
+  .b-connect-email__btn.type-connect{
+    display: none;
+  }
+}

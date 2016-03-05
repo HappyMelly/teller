@@ -1,29 +1,46 @@
 
 var gulp = require('gulp'),
-    $ = require('gulp-load-plugins')();
+    $ = require('gulp-load-plugins')(),
+    named = require('vinyl-named'),
+    webpack = require('webpack-stream');
 
-// Javascript code style - .jscsrc ( http://jscs.info/rules )
-gulp.task('jscs', function() {
-    return gulp.src('app/**/*.js')
-        .pipe($.jscs())
-        .pipe($.jscs.reporter());
+
+function lazyLoad(name, path, options){
+    options = options || {};
+    options.name = options.name || name;
+
+    gulp.task(name, function(done){
+        var task = require(path);
+        return task(options, done);
+    })
+}
+
+lazyLoad('styles', './gulp/styles.js', {
+    target: ['frontend/css/**/*.less', '!frontend/css/**/_*.less'],
+    dst: 'public/css'
 });
 
-// Javascript hint - .jshintrc (http://jshint.com/docs/options/)
-gulp.task('jshint', function() {
-    return gulp.src('app/**/*.js')
-        .pipe($.jshint())
-        .pipe($.jshint.reporter('default'))
+lazyLoad('scripts', './gulp/scripts.js', {
+    target: ['frontend/js/**/*.js', '!frontend/js/**/_*.js'],
+    dst: 'public/js/package'
 });
 
-
-// Watch task
-gulp.task('serve', ['jscs'], function () {
-    gulp.watch('app/**/*.js', ['jscs']);
+lazyLoad('jscs', './gulp/js-codestyle.js', {
+    target: 'app/**/*.js'
 });
 
-
-//Default task
-gulp.task('default', function () {
-    gulp.start('serve');
+lazyLoad('jslint', './gulp/js-lint.js', {
+    target: 'app/**/*.js'
 });
+
+lazyLoad('watch', './gulp/watch.js');
+
+
+/*== Tasks ==*/
+gulp.task('prepare', gulp.parallel('styles', 'scripts'));
+
+gulp.task('dev', gulp.series('prepare', gulp.parallel('watch')));
+
+gulp.task('build', gulp.series('prepare'));
+
+gulp.task('default', gulp.series('dev'));

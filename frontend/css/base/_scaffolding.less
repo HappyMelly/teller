@@ -1,0 +1,267 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+@import "../settings";
+
+a {
+  color: @dark-sky-blue;
+  &.disabled {
+    color: black;
+    text-decoration: none;
+    &:hover, &:focus {
+      color: black;
+      text-decoration: none;
+      cursor: default;
+    }
+  }
+}
+.navbar {
+  margin-bottom: 0;
+}
+.panel {
+  margin-top: 20px;
+}
+h1 {
+  font-size: 36px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+h4 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+h5 {
+  font-weight: 300;
+}
+
+legend {
+  border: 0;
+}
+
+.btn {
+  padding: 6px 18px;
+  line-height: 1.9;
+  border: 0;
+
+  &.btn-lg {
+    border-radius: 4px;
+  }
+  &.btn-primary {
+    background-color: @dark-sky-blue;
+    &[disabled], &.disabled {
+      border: 1px solid @dark-sky-blue;
+      background-color: transparent;
+      opacity: 1;
+      color: @dark-sky-blue;
+    }
+  }
+  &.btn-default {
+    color: #fff;
+    background-color: @grey;
+    &[disabled], &.disabled {
+      border: 1px solid @grey;
+      background-color: transparent;
+      opacity: 1;
+      color: @grey;
+    }
+  }
+
+}
+
+dl.dl-horizontal {
+  dt {
+    color: @warm-grey;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+    width: initial;
+    margin-top: 3px;
+  }
+  dd {
+    margin-left: 100px;
+  }
+}
+.has-error .form-control {
+  border-color: @pig-pink;
+}
+.form-control {
+  height: 45px;
+  border: 1px solid @light-grey;
+  background-color: transparent;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  &.input-sm {
+    height: 38px;
+  }
+}
+.input-group-addon {
+  background-color: @light-grey;
+  border: 0;
+  padding: 8px 16px;
+}
+@media (min-width: 768px) {
+  .form-horizontal {
+    .control-label {
+      color: @grey3;
+      padding-top: 13px;
+      text-align: left;
+      font-weight: inherit;
+    }
+  }
+  .navbar {
+    border-radius: 0;
+  }
+}
+.list-group {
+  border-top: 1px solid @light-grey;
+  border-bottom: 1px solid @light-grey;
+  .list-group-item {
+    border: 0;
+    .list-group-item-body {
+      border-bottom: 1px solid @light-grey;
+    }
+    &:last-child {
+      border-bottom: 0;
+      border-radius: 0;
+      .list-group-item-body {
+        border: 0;
+      }
+    }
+    &:first-child {
+      border-top: 0;
+      border-radius: 0;
+    }
+    &.active {
+      border-color: @light-grey;
+      background-color: @light-blue;
+      .list-group-item-text {
+        color: black;
+      }
+    }
+  }
+}
+
+
+.modal {
+  .modal-content {
+    border-radius: 0;
+    border: 0;
+    .modal-header {
+      padding: 15px 25px 0;
+      border-bottom: 0;
+      .close {
+        margin-top: -17px;
+        margin-right: -58px;
+        opacity: 1;
+      }
+    }
+
+    .help-block {
+      text-align: right;
+    }
+  }
+
+  .modal-body {
+    padding: 0 25px;
+  }
+  .modal-footer {
+    padding: 15px 25px 50px;
+    border-top: 0;
+  }
+}
+.navbar-inverse .navbar-brand {
+  color: @pig-pink;
+}
+.input-group-btn {
+  button {
+    height: 45px;
+  }
+}
+.nav-tabs {
+  li {
+    a {
+      border: 0;
+    }
+  }
+  li.active {
+    a, a:hover, a:focus {
+      color: @grey3;
+      cursor: default;
+      background-color: #fff;
+      border: 0;
+      font-weight: bold;
+    }
+  }
+}
+.tab-pane {
+  padding: 10px 10px 10px 10px;
+}
+.table {
+  thead > tr > th {
+    border-bottom: 0;
+    padding: 12px 0;
+    vertical-align: top;
+  }
+  tbody {
+    tr {
+      td {
+        padding: 12px 0;
+      }
+      &.active, &.active:hover {
+        td {
+          background-color: @light-blue !important;
+          color: black;
+          a {
+            color: @dark-sky-blue;
+            &.btn {
+              color: white;
+            }
+          }
+        }
+      }
+      &.inactive {
+        color: @grey;
+        a {
+          color: @grey;
+        }
+      }
+      &:last-child td {
+        border-bottom: 1px solid #ddd;
+      }
+    }
+  }
+  &.table-rowed {
+    border-top: 1px solid #ddd;
+    tbody >tr td {
+      padding: 12px 10px;
+    }
+  }
+}

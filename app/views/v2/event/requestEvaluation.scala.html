@@ -7,13 +7,13 @@
         <div class="modal-content">
             <a href="#" class="b-modal__close" data-dismiss="modal" aria-hidden="true">×</a>
 
-            <div class="request-dlg">
-                <h2 class="request-dlg__title">
+            <div class="b-modal__content">
+                <div class="b-modal__title">
                     Request Evaluations
-                </h2>
+                </div>
                 <form class="request-dlg__form"
-                    id="requestForm"
-                    action="@CSRF(controllers.event.routes.Requests.send(event.id.get))" method="post">
+                      id="requestForm"
+                      action="@CSRF(controllers.event.routes.Requests.send(event.id.get))" method="post">
 
                     <div class="request-dlg__i type-hightlight">
                         <h4 class="request-dlg__i-title">
@@ -32,9 +32,9 @@
                             <script type="text/template" id="request-dlg-template">
                                 <label class="request-particip__i ">
                                     <input type="checkbox"
-                                            class=" <%= status? ' have-evaluation': ''%>"
-                                            name="participantIds[<%= index %>]"
-                                            value = "<%= value %>"  />
+                                           class=" <%= status? ' have-evaluation': ''%>"
+                                           name="participantIds[<%= index %>]"
+                                           value = "<%= value %>"  />
                                     <span class="text"><%= name %></span>
                                 </label>
                             </script>
@@ -48,16 +48,16 @@
                         </h4>
                         <div class="request-dlg__i-text">
                             Your letter should contain a link to an evaluation form. Use
-                             <a target="_blank" href="http://daringfireball.net/projects/markdown/syntax" class="link-blue">Markdown</a>
-                                to formating.
+                            <a target="_blank" href="http://daringfireball.net/projects/markdown/syntax" class="link-blue">Markdown</a>
+                            to formating.
                         </div>
                         <div class="h-rel">
                             <textarea name="body" cols="30" rows="10"
-                                class="request-dlg__i-textarea form-control"
-                                data-requesteval-textarea
-                                markdownpreview
-                                data-markdownclass = "request-dlg__markdown"
-                                data-markdownposition = "not-fixed">
+                                      class="request-dlg__i-textarea form-control"
+                                      data-requesteval-textarea
+                                      markdownpreview
+                                      data-markdownclass = "request-dlg__markdown"
+                                      data-markdownposition = "not-fixed">
                             @mail.templates.evaluation.html.requestBody("#### Hi PARTICIPANT_NAME_TOKEN, ####", event, facilitatorId, evaluationUrl)
                             </textarea>
                         </div>
@@ -68,10 +68,10 @@
                     </div>
                     <div class="request-dlg__buttons">
                         <button id="requestButton"
-                            data-requesteval-submit
-                            class="btn btn-primary request-dlg__btn-save"
-                            type="submit"
-                            form="requestForm" disabled>
+                                data-requesteval-submit
+                                class="btn btn-primary request-dlg__btn-save"
+                                type="submit"
+                                form="requestForm" disabled>
                             Send
                         </button>
 
@@ -79,7 +79,6 @@
                     </div>
                 </form>
             </div>
-
         </div>
     </div>
 </div>
