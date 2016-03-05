@@ -70,6 +70,8 @@ case class UserAccount(id: Option[Long],
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
+
+  def hasAccess: Boolean = byEmail || twitter.nonEmpty || facebook.nonEmpty || linkedin.nonEmpty || google.nonEmpty
 }
 
 object UserAccount {

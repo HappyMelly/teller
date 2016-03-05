@@ -79,7 +79,7 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
    */
   def delete(person: Person): Unit = {
     repos.member.delete(person.identifier, person = true)
-    repos.core.customer.delete(person.identifier, CustomerType.Person)
+    repos.paymentRecord.delete(person.identifier, person = true)
     repos.userAccount.delete(person.identifier)
     repos.socialProfile.delete(person.identifier, ProfileType.Person)
     val actions = (for {
@@ -141,19 +141,20 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
   /**
    * Inserts new person object into database
     *
-    * @param person Person object
+    * @param value Person object
    * @return Returns saved person
    */
-  def insert(person: Person): Future[Person] = {
-    repos.address.insert(person.address).flatMap { address =>
-      val query = people returning people.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-      val futureInserted = db.run(query += person.copy(addressId = address.id.get))
-      futureInserted.map { inserted =>
-        repos.socialProfile.insert(person.profile.copy(objectId = inserted.identifier))
-        repos.profileStrength.insert(ProfileStrength.empty(inserted.identifier, false))
-        inserted.address_=(address)
-        inserted
-      }
+  def insert(value: Person): Future[Person] = {
+    val query = people returning people.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val request = for {
+      address <- repos.address.insert(value.address)
+      person <- db.run(query += value.copy(addressId = address.id.get))
+      _ <- repos.socialProfile.insert(SocialProfile(objectId = person.identifier))
+      _ <- repos.profileStrength.insert(ProfileStrength.empty(person.identifier, false))
+    } yield (address, person)
+    request map { case (address, person) =>
+      person.address_=(address)
+      person
     }
   }
 
