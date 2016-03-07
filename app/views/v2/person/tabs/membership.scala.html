@@ -36,25 +36,28 @@
 
 @views.html.v2.element.badge(member)
 <div class="block">
-<h4>Payments</h4>
-<table class="payments table">
-  <thead>
-    <tr>
-      <th>Description</th>
-      <th>Amount, €</th>
-      <th>Date</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for(charge <- charges) {
-      <tr>
-        <td>@charge.description</td>
-        <td>@charge.amount</td>
-        <td>@charge.created.toString("YYYY-MM-dd HH:mm:ss")</td>
-      </tr>
-    }
-  </tbody>
-</table>
+    <h4>Contribution</h4>
+</div>
+<div class="block">
+    <h4>Payments</h4>
+    <table class="payments table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount, €</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(charge <- charges) {
+          <tr>
+            <td>@charge.description</td>
+            <td>@charge.amount</td>
+            <td>@charge.created.toString("YYYY-MM-dd HH:mm:ss")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
 </div>
 <div class="block">
 <h4>Membership Renewal</h4>
