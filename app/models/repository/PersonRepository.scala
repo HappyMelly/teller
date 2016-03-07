@@ -25,7 +25,6 @@
 package models.repository
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.JodaMoney._
 import models._
 import models.core.payment.CustomerType
 import models.database._
@@ -79,7 +78,7 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
    */
   def delete(person: Person): Unit = {
     repos.member.delete(person.identifier, person = true)
-    repos.paymentRecord.delete(person.identifier, person = true)
+    repos.core.customer.delete(person.identifier, CustomerType.Person)
     repos.userAccount.delete(person.identifier)
     repos.socialProfile.delete(person.identifier, ProfileType.Person)
     val actions = (for {
