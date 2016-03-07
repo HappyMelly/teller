@@ -52,7 +52,6 @@ private[models] trait OrganisationTable {
     def webSite = column[Option[String]]("WEB_SITE")
     def blog = column[Option[String]]("BLOG")
     def contactEmail = column[Option[String]]("CONTACT_EMAIL")
-    def customerId = column[Option[String]]("CUSTOMER_ID")
     def about = column[Option[String]]("ABOUT")
     def logo = column[Boolean]("LOGO")
     def active = column[Boolean]("ACTIVE")
@@ -63,28 +62,28 @@ private[models] trait OrganisationTable {
 
     type OrganisationsFields = (Option[Long], String, Option[String], Option[String], Option[String], Option[String],
       Option[String], String, Option[String], Option[String],
-      Option[String], Option[String], Option[String], Option[String],
+      Option[String], Option[String], Option[String],
       Option[String], Boolean,
       Boolean, DateTime, String, DateTime, String)
 
     def * = (id.?, name, street1, street2, city, province, postCode,
       countryCode, vatNumber, registrationNumber, webSite, blog, contactEmail,
-      customerId, about, logo, active, created, createdBy, updated,
+      about, logo, active, created, createdBy, updated,
       updatedBy) <>(
       (o: OrganisationsFields) ⇒
         Organisation(o._1, o._2, o._3, o._4, o._5, o._6, o._7, o._8, o._9, o._10,
-          o._11, o._12, o._13, o._14, o._15, o._16, o._17,
-          DateStamp(o._18, o._19, o._20, o._21)),
+          o._11, o._12, o._13, o._14, o._15, o._16,
+          DateStamp(o._17, o._18, o._19, o._20)),
       (o: Organisation) ⇒
         Some(o.id, o.name, o.street1, o.street2, o.city,
           o.province, o.postCode, o.countryCode, o.vatNumber, o.registrationNumber,
-          o.webSite, o.blog, o.contactEmail, o.customerId, o.about, o.logo, o.active,
+          o.webSite, o.blog, o.contactEmail, o.about, o.logo, o.active,
           o.dateStamp.created, o.dateStamp.createdBy, o.dateStamp.updated,
           o.dateStamp.updatedBy))
 
     def forUpdate = (id.?, name, street1, street2, city, province, postCode,
       countryCode, vatNumber, registrationNumber, webSite, blog, contactEmail,
-      customerId, about, active, updated, updatedBy)
+      about, active, updated, updatedBy)
   }
 
 }

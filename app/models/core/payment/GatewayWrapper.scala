@@ -22,7 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.payment
+package models.core.payment
 
 import com.stripe.Stripe
 import com.stripe.exception._
@@ -105,7 +105,7 @@ class GatewayWrapper(apiKey: String) {
         "email" -> payerEmail,
         "source" -> token)
       Stripe.apiKey = apiKey
-      val customer = Customer.create(params)
+      val customer = com.stripe.model.Customer.create(params)
       customer.createSubscription(Map("plan" -> plan,
         "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
       customer.getId
@@ -131,7 +131,7 @@ class GatewayWrapper(apiKey: String) {
   def cancel(customerId: String) = {
     try {
       Stripe.apiKey = apiKey
-      val subscriptions = Customer.retrieve(customerId).getSubscriptions.getData
+      val subscriptions = com.stripe.model.Customer.retrieve(customerId).getSubscriptions.getData
       subscriptions.foreach(_.cancel(Map[String, AnyRef]()))
     } catch {
       case e: CardException ⇒

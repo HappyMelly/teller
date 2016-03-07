@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -29,7 +29,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
-import models.payment.{Payment, PaymentException, RequestException}
+import models.core.payment.{Payment, PaymentException, RequestException}
 import models.repository.Repositories
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -146,8 +146,8 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
     val customerId = subscribe(user.person, Some(org), data)
     val fee = Money.of(EUR, data.fee)
+    addCustomerRecord(customerId, user.person, Some(org))
     (for {
-      _ <- repos.org.update(org.copy(customerId = Some(customerId)))
       m <- org.becomeMember(funder = false, fee, user.person.identifier, repos)
     } yield m) map { member =>
       notify(user.person, Some(org), member)
@@ -171,8 +171,8 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
     val customerId = subscribe(person, None, data)
     val fee = Money.of(EUR, data.fee)
+    addCustomerRecord(customerId, person, None)
     (for {
-      _ <- repos.person.update(person.copy(customerId = Some(customerId)))
       m <- person.becomeMember(funder = false, fee, repos)
     } yield m) map { member =>
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {

@@ -21,11 +21,10 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.repository
+package models.repository.core.payment
 
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.Activity
-import models.database.ActivityTable
+import models.database.core.payment.CustomerTable
+import models.core.payment.{CustomerType, Customer}
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
@@ -34,28 +33,32 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
- * Contains a set of activity-related functions to work with database
- */
-class ActivityRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
-  with ActivityTable {
+  * Manages customer records in database
+  */
+class CustomerRepository (app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with CustomerTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
-  private val activities = TableQuery[Activities]
+  private val customers = TableQuery[Customers]
 
   /**
-   * Inserts the given activity to database
-   * @param activity Activity object
-   * @return The given activity with updated id
-   */
-  def insert(activity: Activity): Future[Activity] = {
-    val query = activities returning activities.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += activity)
+    * Returns customer for the given object
+    *
+    * @param objectId Customer identifier
+    * @param objectType Type
+    */
+  def find(objectId: Long, objectType: CustomerType.Value): Future[Option[Customer]] = {
+    import Customers.customerTypeMapper
+    db.run(customers.filter(_.objectId === objectId).filter(_.objectType === objectType).result).map(_.headOption)
   }
 
   /**
-   * Returns 50 latest activity stream entries in reverse chronological order
-   */
-  def findAll: Future[List[Activity]] =
-    db.run(activities.sortBy(_.timestamp.desc).take(50).result).map(_.toList)
+    * Inserts new customer record to the databae
+    * @param customer Customer
+    */
+  def insert(customer: Customer): Future[Customer] = {
+    val query = customers returning customers.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += customer)
+  }
 }

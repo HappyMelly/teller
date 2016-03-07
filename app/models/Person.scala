@@ -50,7 +50,6 @@ case class Person(
   interests: Option[String],
   webSite: Option[String],
   blog: Option[String],
-  customerId: Option[String] = None,
   virtual: Boolean = false,
   active: Boolean = true,
   dateStamp: DateStamp) extends Recipient with ActivityRecorder {
@@ -71,14 +70,13 @@ case class Person(
     interests: Option[String] = interests,
     webSite: Option[String] = webSite,
     blog: Option[String] = blog,
-    customerId: Option[String] = customerId,
     virtual: Boolean = virtual,
     active: Boolean = active,
     dateStamp: DateStamp = dateStamp): Person = {
 
     val person = Person(id, firstName, lastName, email, birthday, photo,
       signature, addressId, bio, interests, webSite, blog,
-      customerId, virtual, active, dateStamp)
+      virtual, active, dateStamp)
 
     this._profile foreach { p ⇒
       person.profile_=(this.profile)

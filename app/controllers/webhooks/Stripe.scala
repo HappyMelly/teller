@@ -27,20 +27,47 @@ import javax.inject.Inject
 
 import controllers.AsyncController
 import models.repository.Repositories
-import play.api.mvc.Action
 import play.api.i18n.MessagesApi
+import play.api.libs.json._
+import play.api.mvc.Action
 
 /**
   * Handles events triggered by Stripe
   */
 class Stripe @Inject() (val services: Repositories, val messagesApi: MessagesApi) extends AsyncController {
 
+  case class EventData(typ: String, customer: String)
+
   def event() = Action.async { implicit request =>
-    // check IPs
-    // check event type
-    // if the payment is successful, add a record
-    // remove a record addition after the first payment
-    // send an email (if the payment record is not the first one)
-    ok("")
+    request.body.asJson map { json =>
+      // check IPs
+      parseEvent(json) match  {
+        case Left(data) =>
+          data.typ match {
+            case "charge.succeeded" => ok("")
+            case _ => badRequest("Unsupported event type")
+          }
+        case Right(error) => badRequest(error)
+      }
+      // if the payment is successful, add a record
+      // remove a record addition after the first payment
+      // send an email (if the payment record is not the first one)
+    } getOrElse {
+      badRequest("Expecting Json data")
+    }
+  }
+
+  protected def parseEvent(json: JsValue): Either[EventData, String] = {
+    if ((json \ "object").asOpt[String].contains("event")) {
+      try {
+        val typ = (json \ "type").as[String]
+        val customer = (((json \ "data") \ "object") \ "customer").as[String]
+        Left(EventData(typ, customer))
+      } catch {
+        case e: JsResultException => Right(e.getMessage)
+      }
+    } else {
+      Right("Missing parameter [object] equals to [event]")
+    }
   }
 }

@@ -5,7 +5,7 @@
     contributions: List[ContributionView],
     products: List[Product],
     member: Option[Member],
-    payments: List[payment.Record],
+    payments: List[models.core.payment.Record],
     deletable: Boolean)(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,

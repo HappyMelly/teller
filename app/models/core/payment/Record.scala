@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,12 +22,10 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.payment
+package models.core.payment
 
-import models.repository.Repositories
 import org.joda.money.Money
 import org.joda.time.DateTime
-import scala.concurrent.Future
 
 /**
  * Contains data of a successful payment
@@ -45,6 +43,7 @@ object Record {
 
   /**
    * Returns new PaymentRecord object
+ *
    * @param remoteId Remote payment id
    * @param payerId Payer id
    * @param objectId Object of the payment

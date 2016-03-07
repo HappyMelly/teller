@@ -211,7 +211,7 @@ class OrganisationRepository(app: Application, services: Repositories) extends H
     val updateTuple = (org.id, org.name, org.street1,
       org.street2, org.city, org.province, org.postCode,
       org.countryCode, org.vatNumber, org.registrationNumber,
-      org.webSite, org.blog, org.contactEmail, org.customerId, org.about,
+      org.webSite, org.blog, org.contactEmail, org.about,
       org.active, org.dateStamp.updated, org.dateStamp.updatedBy)
     db.run(query.update(updateTuple)).map(_ => org)
   }

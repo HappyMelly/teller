@@ -21,43 +21,44 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
-package models.database
+package models.database.core.payment
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.JodaMoney._
-import models.core.payment.Record
+import models.DateStamp
+import models.core.payment.{Customer, CustomerType}
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
 
-private[models] trait PaymentRecordTable {
+trait CustomerTable {
 
   protected val driver: JdbcProfile
   import driver.api._
 
-  class PaymentRecords(tag: Tag) extends Table[Record](tag, "PAYMENT_RECORD") {
+  class Customers(tag: Tag) extends Table[Customer](tag, "CUSTOMER") {
+
+    implicit val customerTypeMapper = MappedColumnType.base[CustomerType.Value, Int](
+      { objectType ⇒ objectType.id }, { id ⇒ CustomerType(id) })
 
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def remoteId = column[String]("REMOTE_ID")
-    def payerId = column[Long]("PAYER_ID")
     def objectId = column[Long]("OBJECT_ID")
-    def person = column[Boolean]("PERSON")
-    def description = column[String]("DESCRIPTION")
-    def feeCurrency = column[String]("FEE_CURRENCY")
-    def fee = column[BigDecimal]("FEE")
+    def objectType = column[CustomerType.Value]("OBJECT_TYPE")
     def created = column[DateTime]("CREATED")
+    def createdBy = column[String]("CREATED_BY")
+    def updated = column[DateTime]("UPDATED")
+    def updatedBy = column[String]("UPDATED_BY")
 
-    type PaymentRecordsFields = (Option[Long], String, Long, Long, Boolean, String, String, BigDecimal, DateTime)
+    type CustomerFields = (Option[Long], String, Long, CustomerType.Value, DateTime, String, DateTime, String)
 
-    def * = (id.?, remoteId, payerId, objectId, person, description,
-      feeCurrency, fee, created) <>(
-      (r: PaymentRecordsFields) ⇒
-        Record(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9),
-      (r: Record) ⇒
-        Some(r.id, r.remoteId, r.payerId, r.objectId, r.person, r.description,
-          r.fee.getCurrencyUnit.getCode, BigDecimal(r.fee.getAmount),
-          r.created))
-
+    def * = (id.?, remoteId, objectId, objectType, created, createdBy, updated, updatedBy) <> (
+      (c: CustomerFields) => Customer(c._1, c._2, c._3, c._4, DateStamp(c._5, c._6, c._7, c._8)),
+      (c: Customer) => Some((c.id, c.remoteId, c.objectId, c.objectType,
+        c.recordInfo.created, c.recordInfo.createdBy, c.recordInfo.updated, c.recordInfo.updatedBy))
+      )
   }
 
+  object Customers {
+    implicit val customerTypeMapper = MappedColumnType.base[CustomerType.Value, Int](
+      { objectType ⇒ objectType.id }, { id ⇒ CustomerType(id) })
+  }
 }

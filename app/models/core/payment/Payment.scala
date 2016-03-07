@@ -22,10 +22,10 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.payment
+package models.core.payment
 
 import models.repository.Repositories
-import models.{ Organisation, Person }
+import models.{Organisation, Person}
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import play.api.Logger
@@ -47,7 +47,7 @@ case class Payment(key: String) {
    */
   def subscribe(person: Person,
                 org: Option[Organisation],
-                token: String, amount: Int)(implicit services: Repositories): String = {
+                token: String, amount: Int)(implicit repos: Repositories): String = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }
@@ -64,7 +64,7 @@ case class Payment(key: String) {
       "Internal error. Please inform the support stuff"
     val userId = person.id.get
     val record = Record(invoiceId, userId, customerId, person = org.isEmpty, Payment.DESC, fee)
-    services.paymentRecord.insert(record)
+    repos.core.record.insert(record)
     val msg = org map { o ⇒
       "Organisation %s (id = %s) paid membership fee EUR %s".format(
         customerName, customerId, fee)

@@ -51,7 +51,6 @@ case class Organisation(
     webSite: Option[String],
     blog: Option[String],
     contactEmail: Option[String],
-    customerId: Option[String] = None,
     about: Option[String] = None,
     logo: Boolean = false,
     active: Boolean = true,
@@ -111,7 +110,7 @@ object Organisation {
   def apply(name: String, countryCode: String): Organisation = {
     val date = DateStamp(createdBy = "", updated = DateTime.now(), updatedBy = "")
     Organisation(None, name, None, None, None, None, None, countryCode,
-      None, None, None, None, None, None, None, logo = false, active = false, date)
+      None, None, None, None, None, None, logo = false, active = false, date)
   }
 }
 

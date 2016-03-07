@@ -2,7 +2,7 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-    conf: core.PeopleDetailConfig,
+    conf: controllers.core.PeopleDetailConfig,
     badges: List[(models.brand.Badge, String)],
     member: Option[Member])(implicit request: Request[Any],
         flash: Flash,
