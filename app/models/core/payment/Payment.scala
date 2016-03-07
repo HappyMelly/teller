@@ -53,32 +53,12 @@ case class Payment(key: String) {
     val customerName = org map { _.name } getOrElse { person.fullName }
     val customerId = org map { _.id.get } getOrElse { person.id.get }
     val customer = gateway.customer(customerName, customerId, person.email, plan, token)
-    val fee = Money.of(EUR, amount)
-    val invoices = gateway.invoices(customer)
-    if (invoices.length != 1) {
-      Logger.error("A number of invoices for a new customer = %s".format(invoices.length))
-    }
-    val invoiceId = if (invoices.length >= 1)
-      invoices(0)
-    else
-      "Internal error. Please inform the support stuff"
-    val userId = person.id.get
-    val record = Record(invoiceId, userId, customerId, person = org.isEmpty, Payment.DESC, fee)
-    repos.core.record.insert(record)
-    val msg = org map { o ⇒
-      "Organisation %s (id = %s) paid membership fee EUR %s".format(
-        customerName, customerId, fee)
-    } getOrElse {
-      "User %s (id = %s) paid membership fee EUR %s".format(
-        customerName, customerId, fee)
-    }
-    Logger.info(msg)
     customer
   }
 }
 
 object Payment {
-  private val DUTCH_VAT = 21.0
+  private val DUTCH_VAT = 21.0f
   val TAX_PERCENT_AMOUNT = DUTCH_VAT
   val DESC = "One Year Membership"
 

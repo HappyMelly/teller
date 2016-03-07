@@ -94,11 +94,7 @@ class GatewayWrapper(apiKey: String) {
    * @param token Card token
    * @return Returns customer identifier
    */
-  def customer(customerName: String,
-    customerId: Long,
-    payerEmail: String,
-    plan: String,
-    token: String): String = {
+  def customer(customerName: String, customerId: Long, payerEmail: String, plan: String, token: String): String = {
     try {
       val params = Map(
         "description" -> "Customer %s (id = %s) ".format(customerName, customerId),
@@ -177,9 +173,7 @@ class GatewayWrapper(apiKey: String) {
    * @param token Stripe token for a single session
    * @return Returns Stripe JSON response
    */
-  def charge(sum: Int,
-    payer: Person,
-    token: Option[String]) = {
+  def charge(sum: Int, payer: Person, token: Option[String]) = {
     val params = Map("amount" -> Int.box(sum * 100),
       "currency" -> "eur",
       "card" -> token.getOrElse(""),
@@ -187,7 +181,7 @@ class GatewayWrapper(apiKey: String) {
       "receipt_email" -> payer.email)
     try {
       Stripe.apiKey = apiKey
-      Charge.create(params)
+      com.stripe.model.Charge.create(params)
     } catch {
       case e: CardException ⇒
         throw new PaymentException(e.getMessage, e.getCode, e.getParam)

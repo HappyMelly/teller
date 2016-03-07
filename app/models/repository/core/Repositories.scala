@@ -24,7 +24,7 @@
  */
 package models.repository.core
 
-import models.repository.core.payment.{CustomerRepository, PaymentRecordRepository}
+import models.repository.core.payment.{ChargeRepository, CustomerRepository}
 import play.api.Application
 
 /**
@@ -32,6 +32,6 @@ import play.api.Application
   */
 class Repositories(app: Application) {
 
+  lazy val charge: ChargeRepository = new ChargeRepository(app)
   lazy val customer: CustomerRepository = new CustomerRepository(app)
-  lazy val record: PaymentRecordRepository = new PaymentRecordRepository(app)
 }

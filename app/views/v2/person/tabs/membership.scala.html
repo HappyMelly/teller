@@ -1,7 +1,7 @@
 @(user: ActiveUser,
     person: Person,
     member: Member,
-    payments: List[models.core.payment.Record])(implicit request: Request[Any],
+    charges: Seq[models.core.payment.Charge])(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
@@ -46,11 +46,11 @@
     </tr>
   </thead>
   <tbody>
-    @for(payment <- payments) {
+    @for(charge <- charges) {
       <tr>
-        <td>@payment.description</td>
-        <td>@payment.fee.getAmount</td>
-        <td>@payment.created.toString("YYYY-MM-dd HH:mm:ss")</td>
+        <td>@charge.description</td>
+        <td>@charge.amount</td>
+        <td>@charge.created.toString("YYYY-MM-dd HH:mm:ss")</td>
       </tr>
     }
   </tbody>

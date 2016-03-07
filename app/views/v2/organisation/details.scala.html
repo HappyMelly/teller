@@ -5,7 +5,7 @@
     contributions: List[ContributionView],
     products: List[Product],
     member: Option[Member],
-    payments: List[models.core.payment.Record],
+    charges: Seq[models.core.payment.Charge],
     deletable: Boolean)(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
@@ -92,7 +92,7 @@
         @member.map { member =>
           <div class="tab-pane" id="experiments"></div>
           <div class="tab-pane" id="membership">
-            @views.html.v2.organisation.tabs.membership(user, view.org, member, payments)
+            @views.html.v2.organisation.tabs.membership(user, view.org, member, charges)
           </div>
         }
       </div>

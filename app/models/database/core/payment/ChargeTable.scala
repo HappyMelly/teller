@@ -22,41 +22,33 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.database
+package models.database.core.payment
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.JodaMoney._
-import models.core.payment.Record
+import models.core.payment.Charge
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
 
-private[models] trait PaymentRecordTable {
+private[models] trait ChargeTable {
 
   protected val driver: JdbcProfile
   import driver.api._
 
-  class PaymentRecords(tag: Tag) extends Table[Record](tag, "PAYMENT_RECORD") {
+  class Charges(tag: Tag) extends Table[Charge](tag, "CHARGE") {
 
     def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
     def remoteId = column[String]("REMOTE_ID")
-    def payerId = column[Long]("PAYER_ID")
-    def objectId = column[Long]("OBJECT_ID")
-    def person = column[Boolean]("PERSON")
+    def customerId = column[Long]("CUSTOMER_ID")
     def description = column[String]("DESCRIPTION")
-    def feeCurrency = column[String]("FEE_CURRENCY")
-    def fee = column[BigDecimal]("FEE")
+    def amount = column[Float]("AMOUNT")
+    def vat = column[Float]("VAT")
     def created = column[DateTime]("CREATED")
 
-    type PaymentRecordsFields = (Option[Long], String, Long, Long, Boolean, String, String, BigDecimal, DateTime)
+    type ChargeFields = (Option[Long], String, Long, String, Float, Float, DateTime)
 
-    def * = (id.?, remoteId, payerId, objectId, person, description,
-      feeCurrency, fee, created) <>(
-      (r: PaymentRecordsFields) ⇒
-        Record(r._1, r._2, r._3, r._4, r._5, r._6, r._7 -> r._8, r._9),
-      (r: Record) ⇒
-        Some(r.id, r.remoteId, r.payerId, r.objectId, r.person, r.description,
-          r.fee.getCurrencyUnit.getCode, BigDecimal(r.fee.getAmount),
-          r.created))
+    def * = (id.?, remoteId, customerId, description, amount, vat, created) <> (
+      (c: ChargeFields) ⇒ Charge(c._1, c._2, c._3, c._4, c._5, c._6, c._7),
+      (c: Charge) ⇒ Some(c.id, c.remoteId, c.customerId, c.description, c.amount, c.vat, c.created))
 
   }
 

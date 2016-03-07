@@ -43,6 +43,25 @@ class CustomerRepository (app: Application) extends HasDatabaseConfig[JdbcProfil
   private val customers = TableQuery[Customers]
 
   /**
+    * Deletes the given customer
+    *
+    * @param objectId Customer identifier
+    * @param objectType Type
+    */
+  def delete(objectId: Long, objectType: CustomerType.Value): Future[Int] = {
+    import Customers.customerTypeMapper
+    db.run(customers.filter(_.objectId === objectId).filter(_.objectType === objectType).delete)
+  }
+
+  /**
+    * Returns customer for the given id
+    *
+    * @param customerId Customer identifier
+    */
+  def find(customerId: String): Future[Option[Customer]] =
+    db.run(customers.filter(_.remoteId === customerId).result).map(_.headOption)
+
+  /**
     * Returns customer for the given object
     *
     * @param objectId Customer identifier
@@ -55,6 +74,7 @@ class CustomerRepository (app: Application) extends HasDatabaseConfig[JdbcProfil
 
   /**
     * Inserts new customer record to the databae
+    *
     * @param customer Customer
     */
   def insert(customer: Customer): Future[Customer] = {

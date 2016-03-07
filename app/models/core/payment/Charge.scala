@@ -24,40 +24,12 @@
 
 package models.core.payment
 
-import org.joda.money.Money
 import org.joda.time.DateTime
 
-/**
- * Contains data of a successful payment
- */
-case class Record(id: Option[Long],
-    remoteId: String,
-    payerId: Long,
-    objectId: Long,
-    person: Boolean,
-    description: String,
-    fee: Money,
-    created: DateTime)
-
-object Record {
-
-  /**
-   * Returns new PaymentRecord object
- *
-   * @param remoteId Remote payment id
-   * @param payerId Payer id
-   * @param objectId Object of the payment
-   * @param person Defines if the object is a person
-   * @param description Description of the payment
-   * @param fee Amount of the payment
-   */
-  def apply(remoteId: String,
-    payerId: Long,
-    objectId: Long,
-    person: Boolean,
-    description: String,
-    fee: Money): Record = {
-    new Record(None, remoteId, payerId, objectId, person,
-      description, fee, DateTime.now())
-  }
-}
+case class Charge(id: Option[Long],
+                  remoteId: String,
+                  customerId: Long,
+                  description: String,
+                  amount: Float,
+                  vat: Float,
+                  created: DateTime = DateTime.now())

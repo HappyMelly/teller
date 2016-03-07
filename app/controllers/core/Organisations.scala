@@ -194,13 +194,16 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
       } yield (o, m, p, c, pr, member)) flatMap {
         case (None, _, _, _, _, _) => notFound("Organisation not found")
         case (Some(view), members, people, contributions, products, member) =>
-          val result = member map { v ⇒
-            repos.core.record.findByOrganisation(id)
+          val chargesRequest = member map { value =>
+            for {
+              customer <- repos.core.customer.find(id, CustomerType.Organisation) if customer.nonEmpty
+              charges <- repos.core.charge.findByCustomer(customer.get.id.get)
+            } yield charges
           } getOrElse Future.successful(List())
-          result flatMap { payments =>
+          chargesRequest flatMap { charges =>
             val deletable = members.isEmpty && contributions.isEmpty
             ok(views.html.v2.organisation.details(user, view, members, people, contributions,
-              products, member, payments, deletable))
+              products, member, charges, deletable))
           }
       }
   }
