@@ -8,7 +8,9 @@
                 <b>Contribution level</b>
             </td>
             <td>
-                <span class="b-contrib__price">30&#8364;</span>
+                <div class="b-contrib__price">
+                    <span>30&#8364;</span>
+                </div>
             </td>
             <td class="h-aright">
                 <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">Change level</a>
@@ -39,6 +41,9 @@
         If you decrease contribution level, we’ll not return money but next year your membership will chiper for amount of difference. <br>
         Changing contribution level doesn’t reflect on membership exparation date.
     </div>
+    @{/*@views.html.v2.element.payment(form, person, apiKey, fee, org)*/}
+    @views.html.v2.element.paymentInfo()
+
 }
 </div>
 
@@ -51,5 +56,8 @@
     <div class="dlg-contrib__text">
         Simply add information about new card. We’ll hold 1&#8364; from new card, but we’ll bring all back.
     </div>
+    @{/*@views.html.v2.element.payment(form, person, apiKey, fee, org)*/}
+    @views.html.v2.element.paymentInfo()
+
 }
 </div>

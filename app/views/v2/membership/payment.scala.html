@@ -14,21 +14,7 @@
     <div class="row text-left existing-user">
         <div class="col-md-6 col-md-offset-3">
             @views.html.v2.element.payment(form, user.person, apiKey, fee, org)
-            <div class="row payment-info">
-                <div class="col-md-2">
-                    <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")"/>
-                </div>
-                <div class="col-md-10 text-left">
-                    <p class="text-muted">Happy Melly does not store your card details. All payments are securily
-                        processed by <a href="http://stripe.com" target="_blank">Stripe, Inc.</a>
-                    </p>
-                    <p class="text-muted">
-                        The information transfer is secured and verified by SSL 128 bit certificate
-                        issued by RapidSSL. Web site fully satisfies the security standards of
-                        Visa and Mastercard (PCI compliancy).
-                    </p>
-                </div>
-            </div>
+            @views.html.v2.element.paymentInfo()
         </div>
     </div>
 }

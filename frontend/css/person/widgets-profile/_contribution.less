@@ -2,8 +2,12 @@
 
 // Contribution block
 .b-contrib__table{
+  max-width: 410px;
+  table-layout: fixed;
+
   tr:first-of-type td{
     border-top: none !important;
+    width: 138px;
   }
   tr:last-child td {
     border-bottom: none !important;
@@ -11,7 +15,15 @@
 }
 
 .b-contrib__price{
+  height: 20px;
   font-size: 24px;
+
+  span{
+    display: inline-block;
+    vertical-align: top;
+    position: relative;
+    top: -9px;
+  }
 }
 
 .b-contrib__hint{
@@ -26,6 +38,11 @@
 
   .b-modal__title{
     display: none !important;
+  }
+
+  .b-modal__content{
+    padding-left: 56px;
+    padding-right: 56px;
   }
 }
 

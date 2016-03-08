@@ -8063,8 +8063,8 @@ textarea.form-control {
 /* fee strip */
 .b-feestrip {
   background-color: rgba(255, 197, 80, 0.44);
-  margin: 22px -46px 22px;
-  padding: 20px 46px 16px;
+  margin: 22px -56px 22px;
+  padding: 20px 56px 16px;
   display: block;
   zoom: 1;
 }
@@ -8082,11 +8082,15 @@ textarea.form-control {
   text-align: left;
   width: 50%;
   min-height: 1px;
-  padding-right: 15px;
-  padding-left: 15px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+}
+.b-feestrip__col:first-of-type {
+  padding-right: 15px;
+}
+.b-feestrip__col:last-of-type {
+  padding-left: 15px;
 }
 .b-feestrip__title {
   font-size: 18px;
@@ -8098,7 +8102,8 @@ textarea.form-control {
   width: 98px !important;
 }
 .b-card {
-  height: 262px;
+  height: 279px;
+  text-align: center;
 }
 .b-card .form-control {
   height: 40px;

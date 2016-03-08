@@ -14,24 +14,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
- *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+il Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 /* colors */
 /* z-indexes */
 /* mixins */
+.b-contrib__table {
+  max-width: 410px;
+  table-layout: fixed;
+}
 .b-contrib__table tr:first-of-type td {
   border-top: none !important;
+  width: 138px;
 }
 .b-contrib__table tr:last-child td {
   border-bottom: none !important;
 }
 .b-contrib__price {
+  height: 20px;
   font-size: 24px;
+}
+.b-contrib__price span {
+  display: inline-block;
+  vertical-align: top;
+  position: relative;
+  top: -9px;
 }
 .b-contrib__hint {
   color: #777777;
@@ -41,6 +49,10 @@
 }
 .dlg-contrib .b-modal__title {
   display: none !important;
+}
+.dlg-contrib .b-modal__content {
+  padding-left: 56px;
+  padding-right: 56px;
 }
 .dlg-contrib__title {
   font-size: 24px;
