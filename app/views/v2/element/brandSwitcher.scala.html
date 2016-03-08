@@ -7,7 +7,7 @@
     <div class="container">
       @if(withAllBrands) {
         @if(activeBrand.nonEmpty) {
-          <span><a href="@core.routes.Dashboard.index()">All brands</a></span>
+          <span><a href="@controllers.core.routes.Dashboard.index()">All brands</a></span>
         } else {
           <span>All brands</span>
         }
@@ -16,7 +16,7 @@
         @if(activeBrand.exists(_.identifier == brand.identifier)) {
           <span>@brand.name</span>
         } else {
-          <span><a href="@core.routes.Dashboard.overview(brand.identifier)">@brand.name</a></span>
+          <span><a href="@controllers.core.routes.Dashboard.overview(brand.identifier)">@brand.name</a></span>
         }
       }
     </div>
