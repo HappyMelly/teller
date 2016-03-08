@@ -51,7 +51,8 @@
   margin-top: 100px;
 }
 .unauthorized .subpage .action-block.registration {
-  height: 725px;
+  min-height: 725px;
+  height: auto;
 }
 .unauthorized .subpage .registration-menu {
   margin-bottom: 10px;

@@ -19,26 +19,26 @@
   Stripe.setPublishableKey("@apiKey");
 </script>
 
-  <div class="payment">
-    <div class="text-left">
+  <div class="b-payment">
+    <div class="b-payment__text">
       To be a Happy Melly Supporter, all you need is to do is pay a small annual membership contribution.
       The minimum contribution amount depends on the country you live in.
     </div>
-    <form class="form-inline payment-bottom-space"
+    <form class="b-payment__form"
       action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
       method="POST" id="payment-form" autocomplete="on">
       <span class="payment-errors"></span>
       @org.map { organisation =>
         <input type="hidden" name="orgId" value="@organisation.id.getOrElse(0)"/>
       }
-      <div class="payment-form">
-        <div class="row fee-strip">
-            <div class="col-md-6 text-left">
-                <h4>Set you one year subscription fee</h4>
+      <div>
+        <div class="b-feestrip">
+            <div class="b-feestrip__col">
+                <h4 class="b-feestrip__title">Set you one year subscription fee</h4>
                 <div class="input-group">
                     <label class="input-group-addon">€</label>
                     @defining(if (form("fee").value.isEmpty) { fee._2 } else { form("fee").value }) { amount =>
-                        <input class="form-control fee-input" name="@form("fee").name" id="@form("fee").id"
+                        <input class="form-control b-feestrip__input" name="@form("fee").name" id="@form("fee").id"
                         type="number" min="@fee._1"
                         step="1" value="@amount" data-tax="@Payment.TAX_PERCENT_AMOUNT">
                     }
@@ -51,70 +51,75 @@
                     </span>
                 }
             </div>
-            <div class="col-md-6 text-left">
+            <div class="b-feestrip__col">
                 @org.map { organisation =>
                 <p>@organisation.name is from @Countries.all.toMap.get(organisation.countryCode).
-                    For this country Token contribution is <b>€@fee._1</b>,
-                    Generous contribution is <b>€@fee._2</b>
-                    and Big hearted contribution is <b>€@fee._3</b>.
+                    For this country Token contribution is <b>&#8364;@fee._1</b>,
+                    Generous contribution is <b>&#8364;@fee._2</b>
+                    and Big hearted contribution is <b>&#8364;@fee._3</b>.
                 </p>
                 }.getOrElse {
                     <p>You are from @Countries.all.toMap.get(person.address.countryCode).
-                        For your country Token contribution is <b>€@fee._1</b>,
-                        Generous contribution is <b>€@fee._2</b>
-                        and Big hearted contribution is <b>€@fee._3</b>.
+                        For your country Token contribution is <b>&#8364;@fee._1</b>,
+                        Generous contribution is <b>&#8364;@fee._2</b>
+                        and Big hearted contribution is <b>&#8364;@fee._3</b>.
                     </p>
                 }
-                <p><a href="#" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
+                <p><a class="link-mblue" href="#" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
             </div>
         </div>
         @views.html.v2.element.fees()
       </div>
-      <div class="card-strip">
-          <div class="payment-card">
-              <div class="row">
-                  <div class="pull-right payment-icons payment-mastercard"></div>
-                  <div class="pull-right payment-icons payment-visa"></div>
-              </div>
-              <div class="payment-wide">
-                <div class="form-group pull-left">
-                  <div class="payment-label"><span>CARD NUMBER</span></div>
+      <div class="b-card">
+          <div class="b-card__con">
+              <i class="b-card__icon-mastercard"></i>
+              <i class="b-card__icon-visa"></i>
+
+              <div class="b-card__i">
+                <div class="b-card__i-number">
+                  <div class="b-card__i-label">CARD NUMBER</div>
                   <input type="tel" placeholder="XXXX XXXX XXXX XXXX" autocompletetype="cc-number"
                   class="form-control cc-number"
                   data-stripe="number"/>
                 </div>
               </div>
-            <div class="form-group payment-wide">
+            <div class="b-card__i no-bottom-pad">
                 <div class="pull-left">
-                    <div class="payment-label"><span>CARD HOLDER</span></div>
-                    <input type="text" class="form-control cc-name" placeholder="HAPPY MELLY" data-stripe="name"/>
+                    <div class="b-card__i-holder">
+                        <div class="b-card__i-label">CARD HOLDER</div>
+                        <input type="text" class="form-control cc-name" placeholder="HAPPY MELLY" data-stripe="name"/>
+                    </div>
                 </div>
                 <div class="pull-left valid-thru">
-                    <div class="payment-label"><span>VALID THRU</span></div>
+                    <div class="b-card__i-valid">
+                        <div class="b-card__i-label">VALID THRU</div>
+                    </div>
                     <input type="tel" class="form-control cc-exp-month" placeholder="09"
                     size="2" data-stripe="exp-month"/>
                     <input type="tel" class="form-control cc-exp-year" placeholder="2018"
                     size="4" data-stripe="exp-year"/>
                 </div>
-                <div class="alert"></div>
+                <div class="b-card__alert alert"></div>
             </div>
           </div>
 
-          <div class="text-right ccv payment-card">
-            <span class="payment-code-line"></span>
-            <div class="form-group">
-                <div class="payment-label"><span>CVC/CVV</span></div>
+          <div class="b-card__back">
+            <span class="b-card__back-line"></span>
+            <div class="b-card__cvv">
+                <div class="b-card__i-label">
+                    CVC/CVV
+                </div>
                 <input type="tel" class="form-control cc-cvc" autocomplete="off" data-stripe="cvc" placeholder="000"/>
             </div>
           </div>
       </div>
-      <div class="row">
-        <div class="col-md-6 col-md-offset-3">
+        <div class="b-card__buttons">
+            Subscription fee &euro;<span id="amount">30</span>
+            plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span id="tax">0.00</span>
             <div>
-              Subscription fee &euro;<span id="amount">30</span> plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span id="tax">0.00</span>
+                <button type="submit" class="btn btn-primary b-card__submit">Pay &euro;<span>0.00</span></button>
+
             </div>
-          <button type="submit" class="btn btn-primary btn-lg btn-block">Pay &euro;<span>0.00</span></button>
         </div>
-      </div>
     </form>
   </div>
