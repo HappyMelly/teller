@@ -1,0 +1,55 @@
+
+
+<div class="b-contrib block">
+    <h4 class="b-contrib__title">Contribution</h4>
+    <table class="b-contrib__table table">
+        <tr>
+            <td>
+                <b>Contribution level</b>
+            </td>
+            <td>
+                <span class="b-contrib__price">30&#8364;</span>
+            </td>
+            <td class="h-aright">
+                <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">Change level</a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <b>Payment card</b>
+            </td>
+            <td>
+                Visa x-9003 <br>
+                <span class="b-contrib__hint">expired</span>
+            </td>
+            <td class="h-aright">
+                <a href="#" class="link-mblue" data-toggle="modal"  data-target="#dlg-change-card">Change card</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="dlg-change-level" class="modal fade b-modal dlg-contrib" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+@v2.html.modal("", "") {
+    <h2 class="dlg-contrib__title">
+        Change contribution level
+    </h2>
+    <div class="dlg-contrib__text">
+        You can change contribution level, but it should be equal or above the minimum level. Minimum  level is depend on your country. <br>
+        If you decrease contribution level, we’ll not return money but next year your membership will chiper for amount of difference. <br>
+        Changing contribution level doesn’t reflect on membership exparation date.
+    </div>
+}
+</div>
+
+
+<div id="dlg-change-card" class="modal fade b-modal dlg-contrib" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+@v2.html.modal("", "") {
+    <h2 class="dlg-contrib__title">
+        Change payment card information
+    </h2>
+    <div class="dlg-contrib__text">
+        Simply add information about new card. We’ll hold 1&#8364; from new card, but we’ll bring all back.
+    </div>
+}
+</div>

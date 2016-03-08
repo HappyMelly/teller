@@ -6750,6 +6750,15 @@ button.close {
 .h-weight400 {
   font-weight: 400;
 }
+.h-aright {
+  text-align: right !important;
+}
+.h-aleft {
+  text-align: left !important;
+}
+.h-acenter {
+  text-align: center !important;
+}
 /*== colors ==*/
 .h-pink {
   color: #ee929f;
@@ -6944,13 +6953,13 @@ textarea.form-control {
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-.b-modal .modal-dialog {
-  box-shadow: none;
-}
 .b-modal .modal-body,
 .b-modal .modal-footer {
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+.b-modal__dlg {
+  box-shadow: none !important;
 }
 .b-modal__close {
   position: absolute;

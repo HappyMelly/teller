@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,51 +21,34 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-@import "../settings";
-
-.h-nowrap{
-  white-space: nowrap;
+/* colors */
+/* z-indexes */
+/* mixins */
+.b-contrib__table tr:first-of-type td {
+  border-top: none !important;
 }
-
-.h-ovh{
-  overflow: hidden;
+.b-contrib__table tr:last-child td {
+  border-bottom: none !important;
 }
-
-.h-rel{
-  position: relative;
+.b-contrib__price {
+  font-size: 24px;
 }
-
-.h-ellps{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.b-contrib__hint {
+  color: #777777;
 }
-
-.h-ovh{
-  overflow: hidden;
+.dlg-contrib .b-modal__dlg {
+  width: 710px;
 }
-
-.h-d-inline{
-  display: inline-block;
+.dlg-contrib .b-modal__title {
+  display: none !important;
 }
-
-.h-weight400{
+.dlg-contrib__title {
+  font-size: 24px;
+  line-height: 29px;
+  margin: 0 0 30px 0;
+  text-align: center;
   font-weight: 400;
 }
-
-.h-aright{
-  text-align: right !important;
-}
-
-.h-aleft{
-  text-align: left !important;
-}
-
-.h-acenter{
-  text-align: center !important;
-}
-
-/*== colors ==*/
-.h-pink{
-  color: @pig-pink;
+.dlg-contrib__text {
+  margin-bottom: 30px;
 }
