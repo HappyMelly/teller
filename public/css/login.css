@@ -1,12 +1,7 @@
 /*
  * Happy Melly Teller
  * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
- *
- * This file is part of the Happy Melly Teller.
- *
- * Happy Melly Teller is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * Happy Melly Teller is distributed in the hope that it will be useful,
@@ -74,8 +69,6 @@
   border: 1px solid #ddd;
 }
 .b-login__remtext {
-  opacity: 0;
-  visibility: hidden;
   text-align: right;
   bottom: 0;
   padding: 0 15px;
@@ -89,10 +82,6 @@
   display: none;
 }
 /*== States ==*/
-.b-login_remind_show .b-login__remtext {
-  opacity: 1;
-  visibility: visible;
-}
 .b-login_remind_disabled .b-login__remfade {
   opacity: 1;
   visibility: visible;

@@ -691,7 +691,7 @@
             return false;
         }
         return true;
-    }
+    };
 
     /**
      * Set error for input
@@ -708,7 +708,7 @@
         $('<div class="b-error" />')
             .text(errorText)
             .prependTo($parent);
-    }
+    };
 
     /**
      * Set errors
@@ -722,7 +722,7 @@
 
             if ($currentInput.length) self.setError($currentInput, item.error)
         })
-    }
+    };
 
     /**
      * Remove error for input
@@ -735,7 +735,7 @@
         $parent
             .removeClass('b-error_show')
             .find('.b-error').remove();
-    }
+    };
 
     /**
      * Remove all errors
@@ -748,7 +748,7 @@
             var $el = $(el);
             self.removeError($el)
         })
-    }
+    };
 
     FormValidation.prototype.clearForm = function(){
         var self = this;
@@ -757,7 +757,7 @@
             var $el = $(el);
             if (!$el.attr("disabled"))  $el.val('');
         })
-    }
+    };
 
     /**
      * Is Email valid?

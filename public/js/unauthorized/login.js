@@ -43,32 +43,44 @@ LoginForm.prototype.assignEvents = function(){
     self.$root
         .on('click', '[data-login-reset]', function(e){
             e.preventDefault();
+
+            if (!self.isEmailValid()) {
+                self.setError(self.locals.$email);
+                self.locals.$email.trigger('focus');
+                return;
+            }
             self.sendRequest();
         })
         .on('click', '[data-login-enter]', function(e){
             e.preventDefault();
             self.activateLoginForm();
         })
-        .on('keyup', '[data-login-input], [data-login-password]', function(){
-            self.toggleShowLink();
+        .on('keyup', '[data-login-email]', function(){
+            self.removeError($(this));
         })
 };
 
-LoginForm.prototype.toggleShowLink = function(){
-    var self = this,
-        locals = self.locals,
-        isShowRemind = null;
+LoginForm.prototype.removeError = function($el){
+    $el.closest('.form-group').removeClass('has-error');
+};
 
-    isShowRemind = (locals.$email.val().length > 0 && locals.$password.val().length == 0);
-    self.$root.toggleClass('b-login_remind_show', isShowRemind);
+LoginForm.prototype.setError = function($el){
+    $el.closest('.form-group').addClass('has-error');
+};
+
+LoginForm.prototype.isEmailValid = function(){
+    var self = this,
+        emailValue = self.locals.$email.val(),
+        re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    return (emailValue.length > 0 ) && (re.test(emailValue));
 };
 
 LoginForm.prototype.sendRequest = function(){
     var self = this,
         locals = self.locals;
 
-    $.post(
-        locals.$resetLink.attr('href'),
+    $.post( locals.$resetLink.attr('href'),
         {'email': locals.$email.val()},
         function (data) {
             self.$root.addClass('b-login_remind_disabled');
