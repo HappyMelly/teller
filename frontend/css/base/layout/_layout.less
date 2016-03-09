@@ -1,0 +1,44 @@
+
+
+html,
+body {
+  height: 100%;
+}
+
+body{
+  &.with-melly {
+    background-image: url(../images/melly_right.png);
+    background-repeat: no-repeat;
+    background-position: right 51px;
+  }
+
+  &.with-melly-old {
+    background-image: url(../images/melly.png);
+    background-repeat: no-repeat;
+    background-position: left 41px;
+    padding-top: 60px;
+  }
+}
+
+.l-wrapper{
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.l-content {
+  padding-bottom: 100px;
+}
+
+.l-footer {
+  position: relative;
+  margin-top: -80px;
+  height: 80px;
+  text-align: right;
+  color: #cccccc;
+}
+
+.l-footer__inner{
+  border-top: 1px solid #e5e5e5;
+  padding: 15px 15px 0;
+}
