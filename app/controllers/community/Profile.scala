@@ -31,6 +31,8 @@ import controllers.Security
 import models.core.payment.CustomerType
 import models.repository.Repositories
 import models.UserRole.Role._
+import play.api.Play
+import play.api.Play.current
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -43,8 +45,11 @@ class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
+  val apiPublicKey = Play.configuration.getString("stripe.public_key").get
+
   /**
     * Renders Membership tab for the given person
+    *
     * @param id Person identifier
     */
   def membership(id: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
@@ -59,7 +64,7 @@ class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case (None, _, _, _) => notFound("Person not found")
       case (Some(person), Some(member), charges, cards) =>
         val card = cards.filter(_.active).head
-        ok(views.html.v2.person.tabs.membership(user, person, member, charges, card))
+        ok(views.html.v2.person.tabs.membership(user, person, member, charges, card, apiPublicKey))
     }
   }
 

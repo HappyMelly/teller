@@ -71,49 +71,7 @@
         </div>
         @views.html.v2.element.fees()
       </div>
-      <div class="b-card">
-          <div class="b-card__con">
-              <i class="b-card__icon-mastercard"></i>
-              <i class="b-card__icon-visa"></i>
-
-              <div class="b-card__i">
-                <div class="b-card__i-number">
-                  <div class="b-card__i-label">CARD NUMBER</div>
-                  <input type="tel" placeholder="XXXX XXXX XXXX XXXX" autocompletetype="cc-number"
-                  class="form-control cc-number"
-                  data-stripe="number"/>
-                </div>
-              </div>
-            <div class="b-card__i no-bottom-pad">
-                <div class="pull-left">
-                    <div class="b-card__i-holder">
-                        <div class="b-card__i-label">CARD HOLDER</div>
-                        <input type="text" class="form-control cc-name" placeholder="HAPPY MELLY" data-stripe="name"/>
-                    </div>
-                </div>
-                <div class="pull-left">
-                    <div class="b-card__i-valid">
-                        <div class="b-card__i-label">VALID THRU</div>
-                        <input type="tel" class="form-control cc-exp-month" placeholder="09"
-                        size="2" data-stripe="exp-month"/>
-                        <input type="tel" class="form-control cc-exp-year" placeholder="2018"
-                        size="4" data-stripe="exp-year"/>
-                    </div>
-                </div>
-                <div class="b-card__alert alert"></div>
-            </div>
-          </div>
-
-          <div class="b-card__back">
-            <div class="b-card__back-line"></div>
-            <div class="b-card__cvv">
-                <div class="b-card__i-label">
-                    CVC/CVV
-                </div>
-                <input type="tel" class="form-control cc-cvc" autocomplete="off" data-stripe="cvc" placeholder="000"/>
-            </div>
-          </div>
-      </div>
+        @card()
         <div class="b-card__buttons">
             Subscription fee &euro;<span id="amount">30</span>
             plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span id="tax">0.00</span>

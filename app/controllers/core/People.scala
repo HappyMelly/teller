@@ -25,24 +25,23 @@ package controllers.core
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.{Security, Files, Activities, MemberNotifications, Utilities }
 import controllers.Forms._
+import controllers.{Activities, Files, MemberNotifications, Security, Utilities}
 import models.UserRole.Role._
 import models._
 import models.core.payment.{CustomerType, GatewayWrapper, PaymentException, RequestException}
 import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Play.current
+import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
-import play.api.data.{Form, FormError}
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 import services.integrations.{Email, Integrations}
 
-import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
@@ -319,7 +318,6 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
       }
   }
 
-
   /**
     * Render a list of people in the network
     *
@@ -363,32 +361,6 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
           redirect(url, "error" -> Messages("error.membership.noSubscription"))
         }    }
   }
-
-  /**
-    * Compares social profiles and returns a list of errors for a form
-    *
-    * @param left Social profile object
-    * @param right Social profile object
-    */
-  protected def compareSocialProfiles(left: SocialProfile, right: SocialProfile): List[FormError] = {
-
-    val list = mutable.MutableList[FormError]()
-    val msg = Messages("error.socialProfile.exist")
-    if (left.twitterHandle.nonEmpty && left.twitterHandle == right.twitterHandle) {
-      list += FormError("profile.twitterHandle", msg)
-    }
-    if (left.facebookUrl.nonEmpty && left.facebookUrl == right.facebookUrl) {
-      list += FormError("profile.facebookUrl", msg)
-    }
-    if (left.linkedInUrl.nonEmpty && left.linkedInUrl == right.linkedInUrl) {
-      list += FormError("profile.linkedInUrl", msg)
-    }
-    if (left.googlePlusUrl.nonEmpty && left.googlePlusUrl == right.googlePlusUrl) {
-      list += FormError("profile.googlePlusUrl", msg)
-    }
-    list.toList
-  }
-
 
   /**
     * Retrieve facilitator statistics by brand, including years of experience,
