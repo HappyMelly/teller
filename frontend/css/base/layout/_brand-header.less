@@ -11,10 +11,11 @@
   top: 19px;
   text-align: right;
   line-height: 20px;
+}
 
-  .link-mblue {
-    margin-left: 30px;
-  }
+.b-brandhead__i{
+  display: inline-block;
+  margin-left: 30px;
 }
 
 .b-brandhead__img-con {
@@ -56,12 +57,6 @@
   width: 30px;
   height: 25px;
   vertical-align: top;
-
-  &:hover .b-brandmenu__popup{
-    opacity: 1;
-    visibility: visible;
-    .transform(transalte(0, 0));
-  }
 }
 
 .b-brandmenu__icon{
@@ -92,16 +87,14 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 26px;
+  top: 30px;
+  padding: 0;
   border-radius: 0 0 4px 4px;
   z-index: @index-middle + 2;
   border: 1px solid rgba(0, 0, 0, 0.15);
   background-color: #ffffff;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
   .transition(all .15s ease);
-  opacity: 0;
-  visibility: hidden;
-  .transform(translate(0, 8px));
 }
 
 .b-brandmenu__i{

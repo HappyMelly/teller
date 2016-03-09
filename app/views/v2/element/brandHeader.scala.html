@@ -7,25 +7,33 @@
     <div class="b-brandhead">
       <div class="container h-rel">
         <div class="b-brandhead__links">
-          @if(tab == "events") { Events } else {
-            <a class="link-mblue" href="@routes.Events.index(activeBrand.identifier)">Events</a>
+          @if(tab == "events") {
+            <span class="b-brandhead__i">Events</span>
+          } else {
+            <a class="link-blue b-brandhead__i" href="@routes.Events.index(activeBrand.identifier)">Events</a>
           }
-          @if(tab == "attendees") { Attendees } else {
-            <a class="link-mblue" href="@controllers.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a>
+          @if(tab == "attendees") {
+            <span class="b-brandhead__i">Attendees</span>
+          } else {
+            <a class="link-blue b-brandhead__i" href="@controllers.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a>
           }
-          @if(tab == "statistics") { Statistics } else {
-            <a class="link-mblue" href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a>
+          @if(tab == "statistics") {
+            <span class="b-brandhead__i">Statistics</span>
+          } else {
+            <a class="link-blue b-brandhead__i" href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a>
           }
-          @if(tab == "facilitators") { Facilitators } else {
-            <a class="link-mblue" href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a>
+          @if(tab == "facilitators") {
+            <span class="b-brandhead__i">Facilitators</span>
+          } else {
+            <a class="link-blue b-brandhead__i" href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a>
           }
           @if(!facilitator) {
             @if(tab == "requests") {
-              Requests
+              <span class="b-brandhead__i">Requests</span>
             } else {
-              <a class="link-mblue" href="@routes.EventRequests.index(activeBrand.identifier)">Requests</a>
+              <a class="link-blue b-brandhead__i" href="@routes.EventRequests.index(activeBrand.identifier)">Requests</a>
             }
-            <a class="link-mblue" href="@routes.Brands.details(activeBrand.identifier).url">
+            <a class="link-blue b-brandhead__i" href="@routes.Brands.details(activeBrand.identifier).url">
               Settings
             </a>
           }

@@ -33,9 +33,7 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-/* colors */
-/* z-indexes */
-/* mixins */
+
 /*!
  * Bootstrap v3.3.4 (http://getbootstrap.com)
  * Copyright 2011-2015 Twitter, Inc.
@@ -7781,6 +7779,7 @@ textarea.form-control {
   -ms-transform: translate(0, 10px);
   -o-transform: translate(0, 10px);
   transform: translate(0, 10px);
+  color: #333333;
 }
 .b-notiflist__close {
   position: absolute;
@@ -8454,6 +8453,8 @@ body.with-melly-old {
 .b-headava__img {
   display: inline-block;
   vertical-align: middle;
+  position: relative;
+  top: -1px;
   width: 20px;
   height: 20px;
   border-radius: 20px;
@@ -8479,7 +8480,8 @@ body.with-melly-old {
   text-align: right;
   line-height: 20px;
 }
-.b-brandhead__links .link-mblue {
+.b-brandhead__i {
+  display: inline-block;
   margin-left: 30px;
 }
 .b-brandhead__img-con {
@@ -8516,15 +8518,6 @@ body.with-melly-old {
   height: 25px;
   vertical-align: top;
 }
-.b-brandmenu:hover .b-brandmenu__popup {
-  opacity: 1;
-  visibility: visible;
-  -webkit-transform: transalte(0, 0);
-  -moz-transform: transalte(0, 0);
-  -ms-transform: transalte(0, 0);
-  -o-transform: transalte(0, 0);
-  transform: transalte(0, 0);
-}
 .b-brandmenu__icon {
   display: block;
   height: 25px;
@@ -8556,7 +8549,8 @@ body.with-melly-old {
   position: absolute;
   left: 0;
   right: 0;
-  top: 26px;
+  top: 30px;
+  padding: 0;
   border-radius: 0 0 4px 4px;
   z-index: 102;
   border: 1px solid rgba(0, 0, 0, 0.15);
@@ -8566,13 +8560,6 @@ body.with-melly-old {
   -moz-transition: all 0.15s ease;
   -o-transition: all 0.15s ease;
   transition: all 0.15s ease;
-  opacity: 0;
-  visibility: hidden;
-  -webkit-transform: translate(0, 8px);
-  -moz-transform: translate(0, 8px);
-  -ms-transform: translate(0, 8px);
-  -o-transform: translate(0, 8px);
-  transform: translate(0, 8px);
 }
 .b-brandmenu__i {
   font-size: 16px;
