@@ -43,17 +43,16 @@ case class Payment(key: String) {
    * @param org Organisation which wants to be a member
    * @param token Card token
    * @param amount Fee amount
-   * @return Returns remote customer identifier
+   * @return Returns remote customer identifier and credit card info
    */
   def subscribe(person: Person,
                 org: Option[Organisation],
-                token: String, amount: Int)(implicit repos: Repositories): String = {
+                token: String, amount: Int)(implicit repos: Repositories): (String, CreditCard) = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }
     val customerId = org map { _.id.get } getOrElse { person.id.get }
-    val customer = gateway.customer(customerName, customerId, person.email, plan, token)
-    customer
+    gateway.customer(customerName, customerId, person.email, plan, token)
   }
 }
 

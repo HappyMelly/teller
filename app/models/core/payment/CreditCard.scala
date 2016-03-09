@@ -18,20 +18,28 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.repository.core
+package models.core.payment
 
-import models.repository.core.payment.{CreditCardRepository, ChargeRepository, CustomerRepository}
-import play.api.Application
+import org.joda.time.DateTime
 
 /**
-  * Contains repositories of 'core' package
+  * Represents credit card
   */
-class Repositories(app: Application) {
-  lazy val card: CreditCardRepository = new CreditCardRepository(app)
-  lazy val charge: ChargeRepository = new ChargeRepository(app)
-  lazy val customer: CustomerRepository = new CustomerRepository(app)
+case class CreditCard(id: Option[Long],
+                      customerId: Long,
+                      remoteId: String,
+                      brand: String,
+                      number: String,
+                      expMonth: Int,
+                      expYear: Int,
+                      active: Boolean = true,
+                      created: DateTime = DateTime.now()) {
+
+  def expired: Boolean = {
+    val now = DateTime.now()
+    expYear < now.getYear || (expYear == now.getYear && expMonth < now.getMonthOfYear)
+  }
 }

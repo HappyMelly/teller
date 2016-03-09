@@ -315,18 +315,6 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                 .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.publicRating))
               ok(views.html.v2.person.tabs.facilitation(person, facilitatorData, languages, countries))
           }
-        case "membership" ⇒
-          (for {
-            person <- repos.person.find(id)
-            member <- repos.person.member(id)
-            customer <- repos.core.customer.find(id, CustomerType.Person) if customer.nonEmpty
-            charges <- repos.core.charge.findByCustomer(customer.get.id.get)
-          } yield (person, member, charges)) flatMap {
-            case (_, None, _) => ok("Person is not a member")
-            case (None, _, _) => notFound("Person not found")
-            case (Some(person), Some(member), charges) =>
-              ok(views.html.v2.person.tabs.membership(user, person, member, charges))
-          }
         case _ ⇒ ok("")
       }
   }

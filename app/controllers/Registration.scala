@@ -296,8 +296,8 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                   if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
                     throw new ValidationException("error.payment.minimum_fee")
                   }
-                  val customerId = subscribe(person, org, data)
-                  addCustomerRecord(customerId, person, org)
+                  val (customerId, card) = subscribe(person, org, data)
+                  addCustomerRecord(customerId, card, person, org)
                   org map { x ⇒
                     repos.person.update(person.copy(active = true))
                     person.addRelation(x.id.get, repos)

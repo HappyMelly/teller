@@ -1,4 +1,4 @@
-
+@(card: models.core.payment.CreditCard)
 
 <div class="b-contrib block">
     <h4 class="b-contrib__title">Contribution</h4>
@@ -21,8 +21,12 @@
                 <b>Payment card</b>
             </td>
             <td>
-                Visa x-9003 <br>
-                <span class="b-contrib__hint">expired</span>
+                @card.brand x-@card.number <br>
+                @if(card.expired) {
+                    <span class="b-contrib__hint">expired</span>
+                } else {
+                    <span class="b-contrib__hint">expire @{"%02d".format(card.expMonth)}/@card.expYear</span>
+                }
             </td>
             <td class="h-aright">
                 <a href="#" class="link-mblue" data-toggle="modal"  data-target="#dlg-change-card">Change card</a>

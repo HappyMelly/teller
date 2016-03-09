@@ -92,9 +92,13 @@ class GatewayWrapper(apiKey: String) {
    * @param payerEmail Email of the person who pays
    * @param plan Plan identifier
    * @param token Card token
-   * @return Returns customer identifier
+   * @return Returns customer identifier and credit card info
    */
-  def customer(customerName: String, customerId: Long, payerEmail: String, plan: String, token: String): String = {
+  def customer(customerName: String,
+               customerId: Long,
+               payerEmail: String,
+               plan: String,
+               token: String): (String, CreditCard) = {
     try {
       val params = Map(
         "description" -> "Customer %s (id = %s) ".format(customerName, customerId),
@@ -102,9 +106,8 @@ class GatewayWrapper(apiKey: String) {
         "source" -> token)
       Stripe.apiKey = apiKey
       val customer = com.stripe.model.Customer.create(params)
-      customer.createSubscription(Map("plan" -> plan,
-        "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
-      customer.getId
+      customer.createSubscription(Map("plan" -> plan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+      (customer.getId, creditCard(customer))
     } catch {
       case e: CardException ⇒
         throw new PaymentException(e.getMessage, e.getCode, e.getParam)
@@ -194,5 +197,14 @@ class GatewayWrapper(apiKey: String) {
       case e: APIException ⇒
         throw new RequestException("error.payment.api", Some(e.toString))
     }
+  }
+
+  /**
+    * Returns default credit card info
+    * @param customer Stripe customer object
+    */
+  protected def creditCard(customer: com.stripe.model.Customer): CreditCard = {
+    val card = customer.getCards.retrieve(customer.getDefaultCard)
+    CreditCard(None, 0, card.getId, card.getBrand, card.getLast4, card.getExpMonth, card.getExpYear)
   }
 }

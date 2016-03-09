@@ -24,7 +24,7 @@
 
 package controllers
 
-import models.core.payment.{CustomerType, Customer, Payment}
+import models.core.payment.{CreditCard, CustomerType, Customer, Payment}
 import models.repository.Repositories
 import models._
 import org.joda.time.DateTime
@@ -34,9 +34,9 @@ import play.api.data.Form
 import play.api.data.Forms._
 import services.integrations.Integrations
 
-case class PaymentData(token: String,
-  fee: Int,
-  orgId: Option[Long] = None) {}
+import scala.concurrent.ExecutionContext.Implicits.global
+
+case class PaymentData(token: String, fee: Int, orgId: Option[Long] = None) {}
 
 /**
  * Defines an interface for enrollment classes
@@ -76,14 +76,19 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
     mailChimp.subscribeToNewsletterList(newsletterListId, person)
   }
 
-  protected def addCustomerRecord(customerId: String, person: Person, org: Option[Organisation]) = {
+  protected def addCustomerRecord(customerId: String, card: CreditCard, person: Person, org: Option[Organisation]) = {
     val recordInfo = DateStamp(DateTime.now(), person.fullName, DateTime.now(), person.fullName)
     val customer = org map { x =>
       Customer(None, customerId, x.identifier, CustomerType.Organisation, recordInfo)
     } getOrElse {
       Customer(None, customerId, person.identifier, CustomerType.Person, recordInfo)
     }
-    repos.core.customer.insert(customer)
+    (for {
+      c <- repos.core.customer.insert(customer)
+      cd <- repos.core.card.insert(card.copy(customerId = c.id.get))
+    } yield (c, cd)) map { case (_, creditCard) =>
+        println(creditCard)
+    }
   }
 
   /**
@@ -93,9 +98,9 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
    * @param person Person making all membership-related actions
    * @param org Organisation which want to become a member
    * @param data Payment data
-   * @return Returns customer identifier in the payment system
+   * @return Returns customer identifier in the payment system and credit card info
    */
-  protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): String = {
+  protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): (String, CreditCard) = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
     payment.subscribe(person, org, data.token, data.fee)(repos)

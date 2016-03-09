@@ -144,9 +144,9 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def processOrganisationMember(data: PaymentData, user: ActiveUser, org: Organisation): Future[Boolean] = {
     validatePaymentData(data, user.person, user.member, Some(org))
 
-    val customerId = subscribe(user.person, Some(org), data)
+    val (customerId, card) = subscribe(user.person, Some(org), data)
     val fee = Money.of(EUR, data.fee)
-    addCustomerRecord(customerId, user.person, Some(org))
+    addCustomerRecord(customerId, card, user.person, Some(org))
     (for {
       m <- org.becomeMember(funder = false, fee, user.person.identifier, repos)
     } yield m) map { member =>
@@ -169,9 +169,9 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     val person = user.person
     validatePaymentData(data, person, user.member, None)
 
-    val customerId = subscribe(person, None, data)
+    val (customerId, card) = subscribe(person, None, data)
     val fee = Money.of(EUR, data.fee)
-    addCustomerRecord(customerId, person, None)
+    addCustomerRecord(customerId, card, person, None)
     (for {
       p <- repos.socialProfile.find(person.identifier, ProfileType.Person)
       m <- person.becomeMember(funder = false, fee, repos)

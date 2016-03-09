@@ -1,7 +1,8 @@
 @(user: ActiveUser,
     person: Person,
     member: Member,
-    charges: Seq[models.core.payment.Charge])(implicit request: Request[Any],
+    charges: Seq[models.core.payment.Charge],
+    card: models.core.payment.CreditCard)(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._
@@ -35,7 +36,7 @@
 </div>
 
 @views.html.v2.element.badge(member)
-@{/*@views.html.v2.person.blocks.contribution()*/}
+@views.html.v2.person.blocks.contribution(card)
 
 <div class="block">
     <h4>Payments</h4>
