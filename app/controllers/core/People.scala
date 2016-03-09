@@ -26,7 +26,8 @@ package controllers.core
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import controllers.{Activities, Files, MemberNotifications, Security, Utilities}
+import controllers.community.MemberNotifications
+import controllers.{Activities, Files, Security, Utilities}
 import models.UserRole.Role._
 import models._
 import models.core.payment.{CustomerType, GatewayWrapper, PaymentException, RequestException}

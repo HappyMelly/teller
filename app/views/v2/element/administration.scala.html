@@ -6,7 +6,7 @@
 
 <div class="block">
   <h4>Administration</h4>
-  <a class="btn btn-primary" href="@routes.Members.edit(member.id.get)">
+  <a class="btn btn-primary" href="@controllers.community.routes.Members.edit(member.id.get)">
     Edit Membership</a>
   <a class="btn btn-default" href="#" data-toggle="modal"
     data-target="#deleteMembership">Delete Membership</a>
@@ -14,7 +14,7 @@
     aria-labelledby="feeModal" aria-hidden="true">
     @v2.html.postDialog("deleteMembership",
       "Delete Membership",
-      CSRF(routes.Members.delete(member.id.get)),
+      CSRF(controllers.community.routes.Members.delete(member.id.get)),
       "Delete") {
         <p><b>Attention:</b> you cannot undo this action.</p>
         <p>All payment records will be kept and restored as soon as this

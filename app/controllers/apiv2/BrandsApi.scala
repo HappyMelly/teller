@@ -25,12 +25,12 @@ package controllers.apiv2
 
 import javax.inject.Inject
 
+import controllers.Brands
 import controllers.apiv2.json.{PersonConverter, ProductConverter}
-import controllers.{Products, Brands}
-import models.brand.{BrandLink, BrandTestimonial}
 import models._
+import models.brand.{BrandLink, BrandTestimonial}
 import models.repository.Repositories
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.MessagesApi
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global

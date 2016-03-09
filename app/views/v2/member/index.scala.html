@@ -20,7 +20,8 @@
                             <div class="page-header">
                                 <h2>Total Fee €@totalFee.getAmount
                                     @restrict(handler, List(as(Admin.toString))) {
-                                        <a class="btn btn-primary pull-right" href="@routes.Members.add()">Add Funder</a>
+                                        <a class="btn btn-primary pull-right"
+                                        href="@controllers.community.routes.Members.add()">Add Funder</a>
                                     }
                                 </h2>
                             </div>

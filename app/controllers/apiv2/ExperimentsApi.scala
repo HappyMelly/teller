@@ -2,7 +2,7 @@ package controllers.apiv2
 
 import javax.inject.Inject
 
-import controllers.Experiments
+import controllers.community.Experiments
 import models.Experiment
 import models.repository.Repositories
 import play.api.i18n.MessagesApi

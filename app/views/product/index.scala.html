@@ -10,7 +10,7 @@
 
   @html.indexPageHeader("Products") {
     @dynamic(handler, Role.Funder.toString, "0") {
-      <a class="btn btn-success pull-right" href="@routes.Products.add()">
+      <a class="btn btn-success pull-right" href="@community.routes.Products.add()">
       <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Product</a>
     }
   }
@@ -21,7 +21,7 @@
     } else {
       @table(products) { product =>
         @dynamic(handler, Role.Funder.toString, "0") {
-          <a href="@routes.Products.edit(product.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
+          <a href="@community.routes.Products.edit(product.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
         }
       }
     }

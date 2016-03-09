@@ -25,6 +25,7 @@ package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.community.Enrollment
 import models.UserRole.Role._
 import models._
 import models.core.payment._

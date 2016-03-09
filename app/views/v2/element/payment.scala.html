@@ -1,4 +1,4 @@
-@(form: Form[PaymentData],
+@(form: Form[community.PaymentData],
     person: Person,
     apiKey: String,
     fee: (Int, Int, Int),
@@ -26,7 +26,8 @@
     </div>
 
     <form class="b-payment__form "
-      action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
+      action="@person.id.map { id => @community.routes.Membership.charge() }.getOrElse {
+          @routes.Registration.charge() }"
       method="POST" id="payment-form" autocomplete="on">
       <span class="b-payment__errors"></span>
       @org.map { organisation =>

@@ -67,7 +67,7 @@
     </h2>
     <div class="b-payment">
         <form class="b-payment__form "
-        action="@person.id.map { id => @routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
+        action="@person.id.map { id => @community.routes.Membership.charge() }.getOrElse { @routes.Registration.charge() }"
         method="POST" id="payment-form" autocomplete="on">
             @views.html.v2.element.card()
             <div class="b-card__buttons">

@@ -21,12 +21,13 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.community
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers._
 import controllers.Forms._
 import models.UserRole.Role
 import models.repository.Repositories
@@ -48,7 +49,6 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
                              val email: Email,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
-  with BrandAware
   with Integrations
   with Files {
 

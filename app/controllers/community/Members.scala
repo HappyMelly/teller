@@ -21,23 +21,24 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.community
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers._
 import models.JodaMoney._
 import models.UserRole.Role._
 import models.repository.Repositories
 import models.{ActiveUser, Member, UserAccount}
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
-import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
+import play.api.Play.current
 import play.api.mvc._
 import services.TellerRuntimeEnvironment
 import services.integrations.Email
@@ -52,7 +53,6 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
                          val email: Email,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
-  with BrandAware
   with Enrollment
   with Activities
   with I18nSupport

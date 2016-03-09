@@ -122,15 +122,15 @@ GET           /event/:id/attendees                                         contr
 
 GET           /eventrequest/:id/unsubscribe                                controllers.EventRequests.unsubscribe(id: String)
 
-GET           /member/:id/experiment                                       controllers.Experiments.add(id: Long)
-POST          /member/:id/experiment                                       controllers.Experiments.create(id: Long)
-DELETE        /member/:id/experiment/:experimentId                         controllers.Experiments.delete(id: Long, experimentId: Long)
-DELETE        /member/:id/experiment/:experimentId/picture                 controllers.Experiments.deletePicture(id: Long, experimentId: Long)
-GET           /member/:id/experiment/:experimentId                         controllers.Experiments.edit(id: Long, experimentId: Long)
-GET           /member/:id/experiments                                      controllers.Experiments.experiments(id: Long)
-POST          /member/:id/experiment/:experimentId                         controllers.Experiments.update(id: Long, experimentId: Long)
+GET           /member/:id/experiment                                       controllers.community.Experiments.add(id: Long)
+POST          /member/:id/experiment                                       controllers.community.Experiments.create(id: Long)
+DELETE        /member/:id/experiment/:experimentId                         controllers.community.Experiments.delete(id: Long, experimentId: Long)
+DELETE        /member/:id/experiment/:experimentId/picture                 controllers.community.Experiments.deletePicture(id: Long, experimentId: Long)
+GET           /member/:id/experiment/:experimentId                         controllers.community.Experiments.edit(id: Long, experimentId: Long)
+GET           /member/:id/experiments                                      controllers.community.Experiments.experiments(id: Long)
+POST          /member/:id/experiment/:experimentId                         controllers.community.Experiments.update(id: Long, experimentId: Long)
 
-GET           /experiment/:id/picture                                      controllers.Experiments.picture(id: Long, size: String ?= "")
+GET           /experiment/:id/picture                                      controllers.community.Experiments.picture(id: Long, size: String ?= "")
 
 POST          /facilitator/:id/country                                     controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                    controllers.Facilitators.addLanguage(id: Long)
@@ -147,21 +147,21 @@ POST          /license/:id/brand/:brandId/delete                           contr
 POST          /login-reminder                                              controllers.security.LoginReminder.handle()
 GET           /login-reminder                                              controllers.security.LoginReminder.page()
 
-GET           /members                                                     controllers.Members.index
-GET           /member/new                                                  controllers.Members.add
-GET           /member/existing/organisation                                controllers.Members.addExistingOrganisation
-GET           /member/existing/person                                      controllers.Members.addExistingPerson
-POST          /member                                                      controllers.Members.create
-POST          /member/existing/organisation/                               controllers.Members.updateExistingOrg
-POST          /member/existing/person/                                     controllers.Members.updateExistingPerson
-GET           /member/:id/edit                                             controllers.Members.edit(id: Long)
-POST          /member/:id                                                  controllers.Members.update(id: Long)
-POST          /member/:personId/reason                                     controllers.Members.updateReason(personId: Long)
-POST          /member/:id/delete                                           controllers.Members.delete(id: Long)
-GET           /membership/welcome                                            controllers.Membership.welcome
-GET           /membership/payment                                            controllers.Membership.payment(orgId: Option[Long] ?= None)
-POST          /membership/payment                                            controllers.Membership.charge
-GET           /membership/congratulations                                    controllers.Membership.congratulations(orgId: Option[Long] ?= None)
+GET           /members                                                     controllers.community.Members.index
+GET           /member/new                                                  controllers.community.Members.add
+GET           /member/existing/organisation                                controllers.community.Members.addExistingOrganisation
+GET           /member/existing/person                                      controllers.community.Members.addExistingPerson
+POST          /member                                                      controllers.community.Members.create
+POST          /member/existing/organisation/                               controllers.community.Members.updateExistingOrg
+POST          /member/existing/person/                                     controllers.community.Members.updateExistingPerson
+GET           /member/:id/edit                                             controllers.community.Members.edit(id: Long)
+POST          /member/:id                                                  controllers.community.Members.update(id: Long)
+POST          /member/:personId/reason                                     controllers.community.Members.updateReason(personId: Long)
+POST          /member/:id/delete                                           controllers.community.Members.delete(id: Long)
+GET           /membership/welcome                                          controllers.community.Membership.welcome
+GET           /membership/payment                                          controllers.community.Membership.payment(orgId: Option[Long] ?= None)
+POST          /membership/payment                                          controllers.community.Membership.charge
+GET           /membership/congratulations                                  controllers.community.Membership.congratulations(orgId: Option[Long] ?= None)
 
 GET           /notifications/:offset/:limit                                  controllers.core.Notifications.list(offset: Long, limit: Long)
 POST          /notifications                                                 controllers.core.Notifications.read()
@@ -208,20 +208,20 @@ POST          /person/:id/licenses/new                                       con
 POST          /person/relation/new                                           controllers.core.People.addRelationship
 GET           /person/:personId/relation/:organisationId/delete              controllers.core.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
 
-GET           /products                                                      controllers.Products.index
-GET           /product/new                                                   controllers.Products.add
-POST          /product/:id/activation                                        controllers.Products.activation(id: Long)
-POST          /product/new                                                   controllers.Products.create
-GET           /product/:id                                                   controllers.Products.details(id: Long)
-POST          /product/:id                                                   controllers.Products.update(id: Long)
-GET           /product/:id/edit                                              controllers.Products.edit(id: Long)
-POST          /product/:id/delete                                            controllers.Products.delete(id: Long)
+GET           /products                                                      controllers.community.Products.index
+GET           /product/new                                                   controllers.community.Products.add
+POST          /product/:id/activation                                        controllers.community.Products.activation(id: Long)
+POST          /product/new                                                   controllers.community.Products.create
+GET           /product/:id                                                   controllers.community.Products.details(id: Long)
+POST          /product/:id                                                   controllers.community.Products.update(id: Long)
+GET           /product/:id/edit                                              controllers.community.Products.edit(id: Long)
+POST          /product/:id/delete                                            controllers.community.Products.delete(id: Long)
 
-GET           /product/:id/picture                                           controllers.Products.picture(id: Long)
-POST          /product/:id/picture/delete                                    controllers.Products.deletePicture(id: Long)
+GET           /product/:id/picture                                           controllers.community.Products.picture(id: Long)
+POST          /product/:id/picture/delete                                    controllers.community.Products.deletePicture(id: Long)
 
-POST          /product/brand/new                                             controllers.Products.addBrand
-GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+POST          /product/brand/new                                             controllers.community.Products.addBrand
+GET           /product/:productId/brand/:brandId/delete                      controllers.community.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
 GET           /profile/:id/person/membership                                 controllers.community.Profile.membership(id: Long)
 GET           /profile/:id/person/steps/:steps                               controllers.core.ProfileStrengths.personWidget(id: Long, steps: Boolean)

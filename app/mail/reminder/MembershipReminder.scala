@@ -25,7 +25,7 @@ package mail.reminder
 
 import javax.inject.Inject
 
-import controllers.Members
+import controllers.community.Members
 import models.Member
 import models.repository.Repositories
 import org.joda.time.{DateTime, Duration, LocalDate}

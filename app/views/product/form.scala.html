@@ -21,7 +21,7 @@
       <div class="page-header">
         <h1>@productName</h1>
       </div>
-      @html.form(action = CSRF(id.map(id => routes.Products.update(id)).getOrElse(routes.Products.create())),
+      @html.form(action = CSRF(id.map(id => community.routes.Products.update(id)).getOrElse(community.routes.Products.create())),
         'enctype -> "multipart/form-data") {
           @html.text(form("title"), '_label -> "Title")
           @html.text(form("subtitle"), '_label -> "Subtitle")

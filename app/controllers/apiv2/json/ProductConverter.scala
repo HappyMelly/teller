@@ -1,11 +1,10 @@
 package controllers.apiv2.json
 
-import javax.inject.Singleton
-
-import controllers.{Brands, Products}
-import models.{ProductCategory, Brand, ProductView, Product}
+import controllers.Brands
+import controllers.community.Products
+import models.{Brand, Product, ProductCategory, ProductView}
 import play.api.i18n.Messages
-import play.api.libs.json.{Json, JsValue, Writes}
+import play.api.libs.json.{JsValue, Json, Writes}
 
 /**
   * Converts product to JSON

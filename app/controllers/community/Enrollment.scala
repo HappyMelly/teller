@@ -22,11 +22,12 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.community
 
-import models.core.payment.{CreditCard, CustomerType, Customer, Payment}
-import models.repository.Repositories
+import controllers.{AsyncController, Utilities}
 import models._
+import models.core.payment.{CreditCard, Customer, CustomerType, Payment}
+import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Play
 import play.api.Play.current
@@ -107,13 +108,13 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
   }
 
   private def notifyAboutPerson(person: Person, member: Member) = {
-    val url: String = core.routes.People.details(person.id.get).url
+    val url: String = controllers.core.routes.People.details(person.id.get).url
     slack.send(personSlackMsg(person, member, url))
     sendWelcomeEmail(person, member.profileUrl, person.firstName)
   }
 
   private def notifyAboutOrg(org: Organisation, member: Member, person: Person) = {
-    val url: String = core.routes.Organisations.details(org.identifier).url
+    val url: String = controllers.core.routes.Organisations.details(org.identifier).url
     slack.send(newMemberMsg(member, org.name, url))
     sendWelcomeEmail(person, member.profileUrl, org.name)
   }

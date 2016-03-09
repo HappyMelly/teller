@@ -21,22 +21,23 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.community
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers._
 import models.UserRole.Role._
 import models._
 import models.core.payment.{Payment, PaymentException, RequestException}
 import models.repository.Repositories
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
-import play.api.Play.current
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc._
+import play.api.Play.current
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 import services.integrations.Email
