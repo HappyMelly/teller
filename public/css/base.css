@@ -33,9 +33,7 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-/* colors */
-/* z-indexes */
-/* mixins */
+
 /*!
  * Bootstrap v3.3.4 (http://getbootstrap.com)
  * Copyright 2011-2015 Twitter, Inc.
@@ -8343,6 +8341,137 @@ body.with-melly-old {
 .l-footer__inner {
   border-top: 1px solid #e5e5e5;
   padding: 15px 15px 0;
+}
+.b-brandhead {
+  min-height: 62px;
+  background-color: #E7E7E7;
+}
+.b-brandhead__links {
+  position: absolute;
+  right: 15px;
+  top: 19px;
+  text-align: right;
+  line-height: 20px;
+}
+.b-brandhead__links .link-mblue {
+  margin-left: 30px;
+}
+.b-brandhead__img-con {
+  position: absolute;
+  left: 15px;
+  top: 9px;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.b-brandhead__img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.b-brandhead__content {
+  margin: 14px 0 15px 50px;
+}
+.b-brandhead__title {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: bold;
+}
+.b-brandhead__button {
+  margin-top: 15px;
+}
+.b-brandmenu {
+  display: inline-block;
+  width: 30px;
+  height: 25px;
+  vertical-align: top;
+}
+.b-brandmenu:hover .b-brandmenu__popup {
+  opacity: 1;
+  visibility: visible;
+  -webkit-transform: transalte(0, 0);
+  -moz-transform: transalte(0, 0);
+  -ms-transform: transalte(0, 0);
+  -o-transform: transalte(0, 0);
+  transform: transalte(0, 0);
+}
+.b-brandmenu__icon {
+  display: block;
+  height: 25px;
+  position: relative;
+  cursor: pointer;
+}
+.b-brandmenu__icon:before {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 40px;
+  height: 20px;
+  top: 25px;
+}
+.b-brandmenu__icon:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15px;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-bottom: none;
+  border-left: 7px solid transparent !important;
+  border-right: 7px solid transparent !important;
+  border-top: 8px solid #333;
+}
+.b-brandmenu__popup {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  border-radius: 4px;
+  z-index: 102;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+  opacity: 0;
+  visibility: hidden;
+  -webkit-transform: translate(0, 8px);
+  -moz-transform: translate(0, 8px);
+  -ms-transform: translate(0, 8px);
+  -o-transform: translate(0, 8px);
+  transform: translate(0, 8px);
+}
+.b-brandmenu__i {
+  font-size: 16px;
+  padding: 0 15px;
+  height: 40px;
+  line-height: 40px;
+  border-bottom: 1px solid #ccc;
+  text-decoration: none !important;
+  color: #333333 !important;
+  font-weight: 400;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+}
+.b-brandmenu__i:hover {
+  background-color: #e7e7e7;
+}
+.b-brandmenu__i:last-child {
+  border-bottom: none;
+}
+.b-brandmenu__i.state-selected {
+  cursor: default;
+  background: none !important;
+  font-weight: bold;
 }
 .b-headprofile {
   height: 162px;

@@ -1,0 +1,131 @@
+
+// Brand header
+.b-brandhead {
+  min-height: 62px;
+  background-color: #E7E7E7;
+}
+
+.b-brandhead__links {
+  position: absolute;
+  right: 15px;
+  top: 19px;
+  text-align: right;
+  line-height: 20px;
+
+  .link-mblue {
+    margin-left: 30px;
+  }
+}
+
+.b-brandhead__img-con {
+  position: absolute;
+  left: 15px;
+  top: 9px;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.b-brandhead__img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.b-brandhead__content {
+  margin: 14px 0 15px 50px;
+}
+
+.b-brandhead__title {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.b-brandhead__button {
+  margin-top: 15px;
+}
+
+// brand menu
+.b-brandmenu{
+  display: inline-block;
+  width: 30px;
+  height: 25px;
+  vertical-align: top;
+
+  &:hover .b-brandmenu__popup{
+    opacity: 1;
+    visibility: visible;
+    .transform(transalte(0, 0));
+  }
+}
+
+.b-brandmenu__icon{
+  display: block;
+  height: 25px;
+  position: relative;
+  cursor: pointer;
+
+  &:before{
+    content: '';
+    position: absolute;
+    right: 0;
+    width: 40px;
+    height: 20px;
+    top: 25px;
+  }
+
+  &:after{
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15px;
+    .triangle(14px, 8px, #333, 'down');
+  }
+}
+
+.b-brandmenu__popup{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  border-radius: 4px;
+  z-index: @index-middle + 2;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0, .3);
+  .transition(all .15s ease);
+  opacity: 0;
+  visibility: hidden;
+  .transform(translate(0, 8px));
+}
+
+.b-brandmenu__i{
+  font-size: 16px;
+  padding: 0 15px;
+  height: 40px;
+  line-height: 40px;
+  border-bottom: 1px solid #ccc;
+  text-decoration: none !important;
+  color: #333333 !important;
+  font-weight: 400;
+  display: block;
+  .t-ellps();
+
+  &:hover{
+    background-color: #e7e7e7;
+  }
+
+  &:last-child{
+    border-bottom: none;
+  }
+
+  &.state-selected{
+    cursor: default;
+    background: none !important;
+    font-weight: bold;
+  }
+}

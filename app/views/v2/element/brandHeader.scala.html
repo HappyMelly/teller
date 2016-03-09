@@ -4,48 +4,49 @@
     small: Boolean = false,
     facilitator: Boolean = false)(content: Html)
 
-<div class="row brand-header">
-  @v2.element.brandSwitcher(Some(activeBrand), brands, facilitator)
-  <div class="brand-header-content">
-    <div class="container">
-      <div class="brand-image">
-        <a href="@controllers.core.routes.Dashboard.overview(activeBrand.identifier)">
-          @activeBrand.picture.map { picture =>
-            <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@Brands.pictureUrl(activeBrand)"/>
-          }.getOrElse {
-            <img class="img-rounded" @if(small) {width="80"} else {width="120"} src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+    <div class="b-brandhead">
+      <div class="container h-rel">
+        <div class="b-brandhead__links">
+          @if(tab == "events") { Events } else {
+            <a class="link-mblue" href="@routes.Events.index(activeBrand.identifier)">Events</a>
           }
+          @if(tab == "attendees") { Attendees } else {
+            <a class="link-mblue" href="@controllers.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a>
+          }
+          @if(tab == "statistics") { Statistics } else {
+            <a class="link-mblue" href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a>
+          }
+          @if(tab == "facilitators") { Facilitators } else {
+            <a class="link-mblue" href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a>
+          }
+          @if(!facilitator) {
+            @if(tab == "requests") {
+              Requests
+            } else {
+              <a class="link-mblue" href="@routes.EventRequests.index(activeBrand.identifier)">Requests</a>
+            }
+            <a class="link-mblue" href="@routes.Brands.details(activeBrand.identifier).url">
+              Settings
+            </a>
+          }
+        </div>
+
+        <a class="b-brandhead__img-con" href="@controllers.core.routes.Dashboard.overview(activeBrand.identifier)">
+            @activeBrand.picture.map { picture =>
+              <img class="b-brandhead__img" src="@Brands.pictureUrl(activeBrand)" />
+            }.getOrElse {
+              <img class="b-brandhead__img" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+            }
         </a>
-      </div>
-      <div class="brand-name">
-        <h2>@activeBrand.name</h2>
-        <div class="buttons @if(small) { small }">
-          @content
+
+        <div class="b-brandhead__content">
+          <div class="b-brandhead__title">
+              @activeBrand.name
+              @v2.element.brandSwitcher(Some(activeBrand), brands, facilitator)
+          </div>
+          <div class="b-brandhead__button @if(small) { small }">
+              @content
+          </div>
         </div>
       </div>
-      <div class="brand-links text-right">
-        @if(tab == "events") { <span>Events</span> } else {
-          <span><a href="@routes.Events.index(activeBrand.identifier)">Events</a></span>
-        }
-        @if(tab == "attendees") { <span>Attendees</span> } else {
-          <span><a href="@controllers.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a></span>
-        }
-        @if(tab == "statistics") { <span>Statistics</span> } else {
-          <span><a href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a></span>
-        }
-        @if(tab == "facilitators") { <span>Facilitators</span> } else {
-          <span><a href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a></span>
-        }
-        @if(!facilitator) {
-          @if(tab == "requests") {
-            <span>Requests</span>
-          } else {
-            <span><a href="@routes.EventRequests.index(activeBrand.identifier)">Requests</a></span>
-          }
-          <span><a href="@routes.Brands.details(activeBrand.identifier).url">
-            Settings</a></span>
-        }
-      </div>
-    </div>
   </div>
-</div>
