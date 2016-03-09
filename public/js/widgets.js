@@ -494,28 +494,32 @@
 
         self.$root = $(selector);
         self.options = $.extend({}, options, self.$root.data());
+        self.locals = self._getDom();
 
-        self.locals = {
-            $list: self.$root.find('[data-notiflist-list]'),
-            $close: self.$root.find('[data-notiflist-close]'),
-            $link: self.$root.find('[data-notiflist-show]'),
-            $load: self.$root.find('[data-notiflist-load]'),
-            $count: self.$root.find('[data-notiflist-count]'),
-            $listOld: self.$root.find('[data-notiflist-old-list]')
-        };
-
-        self.init();
+        self._resetState();
         self.assignEvents();
+        this.receiveUnreadCount();
     }
 
-    NotificationList.prototype.init = function(){
+    NotificationList.prototype._resetState = function(){
         this.isPopupVisible = false;
         this.isLoaded = null;
         this.unreadCount = 0;
         this.offset = 0;
+    };
 
-        this.getCountUnread();
-    }
+    NotificationList.prototype._getDom = function(){
+        var $root = this.$root;
+
+        return {
+            $list:  $root.find('[data-notiflist-list]'),
+            $close: $root.find('[data-notiflist-close]'),
+            $link:  $root.find('[data-notiflist-show]'),
+            $load:  $root.find('[data-notiflist-load]'),
+            $count: $root.find('[data-notiflist-count]'),
+            $listOld: $root.find('[data-notiflist-old-list]')
+        };
+    };
 
     NotificationList.prototype.assignEvents = function(){
         var self = this;
@@ -545,21 +549,21 @@
             if (!length) {
                 self.$root.addClass('b-notiflist_load_all');
                 return;
-            };
+            }
 
             self.isLoaded = true;
             self.offset += length;
             self.unreadCount -= length;
 
-            self.setUnreadCount(unread);
-            self.setReaded(data);
+            self.setUnreadCount(self.unreadCount);
+            self.sendReadNotification(data);
             self.renderNotification(data)
         })
     };
 
-    NotificationList.prototype.setReaded = function(data){
+    NotificationList.prototype.sendReadNotification = function(data){
         var ids = [],
-            url = jsRoutes.controllers.core.Notifications.read().url
+            url = jsRoutes.controllers.core.Notifications.read().url;
 
         data.forEach(function(item){
             ids.push(item.id);
@@ -567,30 +571,36 @@
 
         $.post(url, {
             ids: ids
-        }, function(){
-
-        })
-    }
+        }, function(){ })
+    };
 
     NotificationList.prototype.renderNotification = function(data){
         var self = this;
 
         data.forEach(function(item){
-            var $notif = $(item.body)
+            $(item.body)
                 .addClass(item.type)
+                .toggleClass('is-new', Boolean(item.unread))
                 .data('id', item.id)
                 .appendTo(self.locals.$list);
         })
-    }
+    };
 
-    NotificationList.prototype.getCountUnread = function(){
+    NotificationList.prototype.receiveUnreadCount = function(){
         var self = this,
             url = jsRoutes.controllers.core.Notifications.unread().url;
 
-        $.get(url, function (data) {
+        return $.get(url, function (data) {
             self.unreadCount = ($.parseJSON(data)).unread;
             self.setUnreadCount(self.unreadCount);
         })
+    };
+
+    NotificationList.prototype.setUnreadCount = function(count){
+        this.unreadCount = (count > 0)? count: 0;
+
+        this.locals.$count.text(this.unreadCount);
+        this.$root.toggleClass('b-notiflist_have_notification', Boolean(this.unreadCount));
     };
 
     NotificationList.prototype.showPopup = function(){
@@ -601,7 +611,7 @@
         if (self.isPopupVisible) return;
         self.isPopupVisible = true;
         self.$root.addClass('b-notiflist_show');
-    }
+    };
 
     NotificationList.prototype.hidePopup = function(){
         var self = this;
@@ -610,18 +620,11 @@
 
         self.isPopupVisible = false;
         self.$root.removeClass('b-notiflist_show');
-    }
+    };
 
     NotificationList.prototype.togglePopup = function(){
         this.isPopupVisible? this.hidePopup(): this.showPopup();
-    }
-
-    NotificationList.prototype.setUnreadCount = function(count){
-        this.unreadCount = (count > 0)? count: 0;
-
-        this.locals.$count.text(this.unreadCount);
-        this.$root.toggleClass('b-notiflist_have_notification', Boolean(this.unreadCount));
-    }
+    };
 
     App.widgets.NotificationList = NotificationList;
 })(jQuery, App);
