@@ -7291,7 +7291,7 @@ textarea.form-control {
 /* == Avatar image ==*/
 .b-avatar {
   position: relative;
-  margin-top: -145px;
+  margin-top: -139px;
 }
 .b-avatar__img {
   min-height: 135px;
@@ -8343,6 +8343,40 @@ body.with-melly-old {
 .l-footer__inner {
   border-top: 1px solid #e5e5e5;
   padding: 15px 15px 0;
+}
+.b-headprofile {
+  height: 162px;
+  background-color: #e7e7e7;
+}
+.b-headprofile.funder {
+  background-color: #f1a7a9;
+}
+.b-headprofile.supporter {
+  background-color: #ffc550;
+}
+.b-headprofile__content {
+  margin: 27px 0 0 231px;
+}
+.b-headprofile__title {
+  margin: 0 0 10px 0;
+}
+.b-headprofile__type {
+  position: absolute;
+  right: 15px;
+  top: 28px;
+  font-family: "kg_skinny_latteregular", Arial;
+  text-transform: uppercase;
+  font-size: 20px;
+  color: #222222;
+}
+.b-headprofile__buttons {
+  position: absolute;
+  right: 15px;
+  top: 100px;
+}
+.b-headprofile__btn {
+  float: left !important;
+  margin-left: 16px;
 }
 /*!
 Chosen, a Select Box Enhancer for jQuery and Prototype

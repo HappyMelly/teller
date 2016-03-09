@@ -13,47 +13,51 @@
 @import models.UserRole.Role
 
 @v2.main(brand.code + " - Brand", "brands", user) {
-    <div class="row profile-header">
-      <div class="container">
-          <div class="content-block">
-              <h2>@brand.name</h2>
-              @views.html.element.profiles(profile, None)
-              <div class="actions pull-right">
-                  @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
-                      <div class="button">
-                          <a class="btn btn-primary" href="@routes.Brands.edit(brand.id.get)">Edit</a>
-                      </div>
-                      @brand.picture.map { picture =>
-                          <div class="button">
-                              <form class="delete form-inline" method="post" text="image"
-                              action="@CSRF(routes.Brands.deletePicture(brand.id.get))">
-                                  <button class="btn btn-warning" type="submit">Delete Picture</button>
-                              </form>
-                          </div>
-                      }
-                      <div class="button">
-                      @if(brand.active) {
-                          <button id="activate" class="btn btn-default" data-id="@brand.id.get" type="submit">Deactivate
-                          </button>
-                      } else {
-                          <button id="activate" class="btn btn-default" data-id="@brand.id.get" type="submit">Activate
-                          </button>
-                      }
-                      </div>
-                      <div class="button">
-                          <form class="delete form-inline" method="post" text="brand"
-                          action="@CSRF(routes.Brands.delete(brand.id.get))">
-                              <button class="btn btn-default" type="submit"
-                                  @if(!deletable) {
-                                      disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }
-                              >Delete</button>
-                          </form>
-                      </div>
-                  }
+    <div class="b-headprofile">
+      <div class="container h-rel">
+          <div class="b-headprofile__buttons">
+          @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
+              <div class="b-headprofile__btn">
+                  <a class="btn btn-primary" href="@routes.Brands.edit(brand.id.get)">Edit</a>
+              </div>
+              @brand.picture.map { picture =>
+                  <div class="b-headprofile__btn">
+                      <form class="delete form-inline" method="post" text="image"
+                      action="@CSRF(routes.Brands.deletePicture(brand.id.get))">
+                          <button class="btn btn-warning" type="submit">Delete Picture</button>
+                      </form>
+                  </div>
+              }
+              <div class="b-headprofile__btn">
+              @if(brand.active) {
+                  <button id="activate" class="btn btn-default" data-id="@brand.id.get" type="submit">Deactivate
+                  </button>
+              } else {
+                  <button id="activate" class="btn btn-default" data-id="@brand.id.get" type="submit">Activate
+                  </button>
+              }
+              </div>
+              <div class="b-headprofile__btn">
+                  <form class="delete form-inline" method="post" text="brand"
+                  action="@CSRF(routes.Brands.delete(brand.id.get))">
+                      <button class="btn btn-default" type="submit"
+                          @if(!deletable) {
+                              disabled="disabled" title="You cannot delete this brand because it has products, licenses or bookings" }
+                      >Delete</button>
+                  </form>
+              </div>
+          }
+          </div>
+
+          <div class="b-headprofile__content">
+              <h2 class="b-headprofile__title">@brand.name</h2>
+              <div class="b-social">
+                @views.html.element.profiles(profile, None)
               </div>
           </div>
       </div>
     </div>
+
     <div class="row">
         <div class="container">
             <div class="left">

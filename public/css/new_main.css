@@ -129,27 +129,6 @@ h3 a.font-sm {
 .padding-fix.last {
   padding-right: 0;
 }
-.profile-header {
-  height: 162px;
-  background-color: #e7e7e7;
-}
-.profile-header.funder {
-  background-color: #f1a7a9;
-}
-.profile-header.supporter {
-  background-color: #ffc550;
-}
-.profile-header .content-block {
-  margin-left: 240px;
-}
-.profile-header .content-block .membership-type {
-  font-family: "kg_skinny_latteregular";
-  text-transform: uppercase;
-  font-size: 20px;
-  padding-right: 10px;
-  margin-top: 10px;
-  float: right;
-}
 .left {
   float: left;
   width: 199px;
