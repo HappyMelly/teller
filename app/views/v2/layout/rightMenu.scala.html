@@ -8,7 +8,9 @@
     <div class="b-headmenu">
         <div class="b-headmenu__link" >
             <div data-toggle="dropdown"  class="b-headava">
-                <div class="b-headava__img" style="background-image : url() ;"></div>
+                @defining(user.person.photo.url.map(url => url).getOrElse(routes.Assets.at("images/hm-face.jpg").url)) { url =>
+                    <div class="b-headava__img" style="background-image : url(@url) ;"></div>
+                }
                 <div class="b-headava__name">@user.name</div>
             </div>
 
@@ -40,7 +42,7 @@
             @views.html.v2.element.notificationList()
         </div>
         <a href="@controllers.core.routes.LoginPage.logout()" class="b-headmenu__link">
-            Sing out
+            Log out
         </a>
     </div>
 
