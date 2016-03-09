@@ -1,11 +1,22 @@
-@(account: UserAccount)(implicit request: Request[Any])
+@(user: ActiveUser,
+        menu: String)(implicit request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
-@if(account.coordinator && account.facilitator) {
-  <li class="switcher">
-    @if(account.activeRole) {
-      <span>Brand Coodinator / <a href="@controllers.core.routes.UserAccounts.switchRole()">Facilitator</a></span>
+  <div class="b-headmenu">
+    @if(user.account.activeRole) {
+      <div class="b-headmenu__link state_selected">Brand manager</div>
+      <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Facilitator</a>
     } else {
-      <span><a href="@controllers.core.routes.UserAccounts.switchRole()">Brand Coodinator</a> / Facilitator</span>
+      <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Brand manager</a>
+      <div class="b-headmenu__link state_selected">Facilitator</div>
     }
-  </li>
-}
+  </div>
+
+  <div class="b-headswitcher">
+    <span class="b-headswitcher__link">Network</span>
+    <div class="b-headswitcher__content">
+      <div class="container">
+        @views.html.v2.layout.leftMenu(user, menu)
+      </div>
+    </div>
+  </div>

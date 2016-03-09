@@ -23,15 +23,24 @@
         Hi there! We’ve made some changes to stabilize login through social networks. You need to reconnect some networks you were using to login, otherwise they will not work.
       }
 
-      <div class="navbar navbar-inverse" role="nagivation">
-          <div class="container">
-              <a class="navbar-brand" href="/">Happy Melly</a>
-              <div class="navbar-collapse collapse">
-                  @views.html.v2.layout.leftMenu(user, menu)
-                  @views.html.v2.layout.rightMenu(user)
-              </div> <!--/.navbar-collapse -->
+      <div class="b-header">
+        <div class="container">
+          <div class="h-rel">
+            <a href="/" class="b-header__logo">Happy Melly</a>
+            <div class="b-header__right">
+              @views.html.v2.layout.rightMenu(user)
+            </div>
           </div>
+          <div class="b-header__left">
+            @if(user.account.coordinator && user.account.facilitator) {
+              @views.html.v2.element.roleSwitcher(user, menu)
+            } else {
+              @views.html.v2.layout.leftMenu(user, menu)
+            }
+          </div>
+        </div>
       </div>
+
       <div class="l-content">
         <div class="alert-block">
             @v2.element.flash()

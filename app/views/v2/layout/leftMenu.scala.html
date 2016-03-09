@@ -6,18 +6,22 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.Role._
 
-<ul class="nav navbar-nav">
-    <li @if(menu == "members") {
-        class="active" }
-    ><a href="@routes.Members.index()">Members</a></li>
+<div class="b-headmenu">
+    <a class="b-headmenu__link @if(menu == "members") { state_selected }" href="@routes.Members.index()">
+        Members
+    </a>
     @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
-        <li @if(menu == "orgs") {
-            class="active"}><a href="@controllers.core.routes.Organisations.index()">Organizations</a></li>
+        <a class="b-headmenu__link @if(menu == "orgs") { active }" href="@controllers.core.routes.Organisations.index()">
+            Organizations
+        </a>
     }
-    <li @if(menu == "brands") {
-        class="active"}><a href="@routes.Brands.index()">Brands</a></li>
-    <li @if(menu == "products") {
-        class="active"}><a href="@routes.Products.index()">Products</a></li>
-    <li @if(menu == "people") {
-        class="active"}><a href="@controllers.core.routes.People.index()">People</a></li>
-</ul>
+    <a class="b-headmenu__link @if(menu == "brands") { state_selected }" href="@routes.Brands.index()">
+        Brands
+    </a>
+    <a class="b-headmenu__link @if(menu == "products") { active }" href="@routes.Products.index()">
+        Products
+    </a>
+    <a class="b-headmenu__link @if(menu == "people") { active }" href="@controllers.core.routes.People.index()">
+        People
+    </a>
+</div>
