@@ -59,12 +59,12 @@ class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
       customer <- repos.core.customer.find(id, CustomerType.Person) if customer.nonEmpty
       charges <- repos.core.charge.findByCustomer(customer.get.id.get)
       cards <- repos.core.card.findByCustomer(customer.get.id.get)
-    } yield (person, member, charges, cards)) flatMap {
-      case (_, None, _, _) => ok("Person is not a member")
-      case (None, _, _, _) => notFound("Person not found")
-      case (Some(person), Some(member), charges, cards) =>
+    } yield (person, member, charges, cards, customer.get.id.get)) flatMap {
+      case (_, None, _, _, _) => ok("Person is not a member")
+      case (None, _, _, _, _) => notFound("Person not found")
+      case (Some(person), Some(member), charges, cards, customerId) =>
         val card = cards.filter(_.active).head
-        ok(views.html.v2.person.tabs.membership(user, person, member, charges, card, apiPublicKey))
+        ok(views.html.v2.person.tabs.membership(user, person, member, charges, card, customerId, apiPublicKey))
     }
   }
 

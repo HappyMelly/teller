@@ -54,6 +54,18 @@ case class Payment(key: String) {
     val customerId = org map { _.id.get } getOrElse { person.id.get }
     gateway.customer(customerName, customerId, person.email, plan, token)
   }
+
+  /**
+    * Deletes old cards and add a new one to the given customer
+    * @param customerId Customer identifier
+    * @param cardToken New card token
+    * @param cards Old cards
+    * @return New card data
+    */
+  def updateCards(customerId: String, cardToken: String, cards: Seq[CreditCard]): CreditCard = {
+    val gateway = new GatewayWrapper(key)
+    gateway.updateCards(customerId, cardToken, cards)
+  }
 }
 
 object Payment {

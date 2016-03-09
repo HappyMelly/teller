@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -113,56 +113,6 @@ var validateDetails = function() {
     return flag;
 };
 
-/**
- * Returns true if entered amount is valid
- * @returns {boolean}
- */
-var validateAmount = function() {
-    var field = $('#fee');
-    if (field.val().length < 1 || isNaN(field.val())) {
-        field.parent().addClass('has-error');
-        return false;
-    } else {
-        field.parent().removeClass('has-error');
-        return true;
-    }
-};
-
-/**
- * Updates charged amount field
- * @param objectId Fee field
- */
-var updateAmount = function(objectId) {
-    var amount = $(objectId).val();
-    if (amount.length < 1) {
-        amount = 0.00;
-    } else {
-        amount = parseInt(amount);
-    }
-    var taxPercent = parseFloat($('#fee').data('tax'));
-    var tax = (amount * taxPercent) / 100;
-    var amountWithTax = amount + tax;
-    $('[type="submit"] > span').text(amountWithTax);
-    $('#tax').text(tax);
-    $('#amount').text(amount);
-};
-
-function switchSupportersFundersFees(supporters) {
-    var $supporters = $('#supporters');
-    var $funders = $('#funders');
-    if (supporters) {
-        $supporters.addClass('deactivated');
-        $funders.removeClass('deactivated');
-        $('.supporters').show();
-        $('.funders').hide();
-    } else {
-        $supporters.removeClass('deactivated');
-        $funders.addClass('deactivated');
-        $('.supporters').hide();
-        $('.funders').show();
-    }
-}
-
 $(document).ready(function($) {
     $('.alert').hide();
     $('#payment-form').submit(function(e) {
@@ -179,20 +129,9 @@ $(document).ready(function($) {
         // Prevent the form from submitting with the default action
         return false;
     });
-    $('#fee').bind('change paste keyup', function() {
-        updateAmount('#fee');
-    });
     $('input.cc-name').bind('change paste keyup', function() {
         this.value = this.value.toUpperCase();
     });
     $('input.cc-number').payment('formatCardNumber');
     $('input.cc-cvc').payment('formatCardCVC');
-    updateAmount('#fee');
-    $('#supporters').on('click', function(e) {
-        switchSupportersFundersFees(true)
-    });
-    $('#funders').on('click', function(e) {
-        switchSupportersFundersFees(false)
-    });
-    switchSupportersFundersFees(true);
 });

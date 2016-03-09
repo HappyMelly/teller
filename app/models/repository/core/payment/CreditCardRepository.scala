@@ -40,6 +40,8 @@ class CreditCardRepository(app: Application) extends HasDatabaseConfig[JdbcProfi
 
   private val cards = TableQuery[CreditCards]
 
+  def delete(ids: Seq[Long]): Future[Int] = db.run(cards.filter(_.id inSet ids).delete)
+
   def findByCustomer(customerId: Long): Future[Seq[CreditCard]] =
     db.run(cards.filter(_.customerId === customerId).result)
 
