@@ -7,7 +7,7 @@
 
 .b-header__logo{
   position: absolute;
-  left: 15px;
+  left: 0;
   top: 13px;
   font-size: 18px;
   line-height: 1;
@@ -22,12 +22,12 @@
 }
 
 .b-header__left{
-  margin-left: 130px;
+  margin-left: 115px;
 }
 
 .b-header__right{
   position: absolute;
-  right: 15px;
+  right: -10px;
   top: 0;
   bottom: 0;
 }
@@ -86,13 +86,22 @@
   margin-left: 4px;
 
   &:hover{
-    .b-headswitcher__content{
-      display: block;
-    }
-
     .b-headswitcher__link{
       color: #4a90e2;
       border-bottom-color: #4a90e2;
+    }
+  }
+
+  &.open{
+    .b-headswitcher__link{
+      color: #fff;
+      border-bottom-color: #fff;
+      cursor: default;
+    }
+
+    .b-headswitcher__content{
+      opacity: 1;
+      visibility: visible;
     }
   }
 }
@@ -116,7 +125,15 @@
   height: 62px;
   background-color: #333333;
   z-index: @index-middle + 5;
-  display: none;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  .transition(all .15s ease);
+  float: none;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 // avatar with name
@@ -126,9 +143,9 @@
 
 .b-headava__img{
   display: inline-block;
-  vertical-align: middle;
+  vertical-align: top;
   position: relative;
-  top: -1px;
+  margin-top: 14px;
   width: 20px;
   height: 20px;
   border-radius: 20px;
@@ -143,4 +160,8 @@
 
 .b-headava__name{
   display: inline-block;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

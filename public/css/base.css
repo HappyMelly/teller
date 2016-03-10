@@ -8315,6 +8315,7 @@ body.with-melly-old {
   min-height: 100%;
   position: relative;
   overflow: hidden;
+  min-width: 1000px;
 }
 .l-content {
   padding-bottom: 100px;
@@ -8352,13 +8353,18 @@ body.with-melly-old {
   margin-right: 25px;
   line-height: 1.1;
 }
+@media screen and (max-width: 1001px) {
+  .container {
+    width: 1000px !important;
+  }
+}
 .b-header {
   height: 50px;
   background-color: #333333;
 }
 .b-header__logo {
   position: absolute;
-  left: 15px;
+  left: 0;
   top: 13px;
   font-size: 18px;
   line-height: 1;
@@ -8374,11 +8380,11 @@ body.with-melly-old {
   opacity: .9;
 }
 .b-header__left {
-  margin-left: 130px;
+  margin-left: 115px;
 }
 .b-header__right {
   position: absolute;
-  right: 15px;
+  right: -10px;
   top: 0;
   bottom: 0;
 }
@@ -8430,12 +8436,18 @@ body.with-melly-old {
   line-height: 48px;
   margin-left: 4px;
 }
-.b-headswitcher:hover .b-headswitcher__content {
-  display: block;
-}
 .b-headswitcher:hover .b-headswitcher__link {
   color: #4a90e2;
   border-bottom-color: #4a90e2;
+}
+.b-headswitcher.open .b-headswitcher__link {
+  color: #fff;
+  border-bottom-color: #fff;
+  cursor: default;
+}
+.b-headswitcher.open .b-headswitcher__content {
+  opacity: 1;
+  visibility: visible;
 }
 .b-headswitcher__link {
   display: inline-block;
@@ -8458,16 +8470,27 @@ body.with-melly-old {
   height: 62px;
   background-color: #333333;
   z-index: 105;
-  display: none;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+  float: none;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 .b-headava {
   cursor: pointer;
 }
 .b-headava__img {
   display: inline-block;
-  vertical-align: middle;
+  vertical-align: top;
   position: relative;
-  top: -1px;
+  margin-top: 15px;
   width: 20px;
   height: 20px;
   border-radius: 20px;
@@ -8481,6 +8504,10 @@ body.with-melly-old {
 }
 .b-headava__name {
   display: inline-block;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .b-brandhead {
   min-height: 62px;

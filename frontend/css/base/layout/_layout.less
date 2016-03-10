@@ -23,6 +23,7 @@ body{
   min-height: 100%;
   position: relative;
   overflow: hidden;
+  min-width: 1000px;
 }
 
 .l-content {
@@ -56,4 +57,10 @@ body{
 .b-footmenu__i{
   margin-right: 25px;
   line-height: 1.1;
+}
+
+@media screen and (max-width: 1001px) {
+  .container{
+    width: 1000px !important;
+  }
 }
