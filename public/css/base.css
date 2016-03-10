@@ -33,7 +33,9 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
+/* colors */
+/* z-indexes */
+/* mixins */
 /*!
  * Bootstrap v3.3.4 (http://getbootstrap.com)
  * Copyright 2011-2015 Twitter, Inc.
@@ -6849,7 +6851,8 @@ button.close {
   color: #333333 !important;
 }
 .link-mblack:hover {
-  border-bottom-color: #333;
+  color: #4a90e2 !important;
+  border-bottom-color: #4a90e2;
 }
 .link-mblue {
   display: inline;
@@ -7748,7 +7751,7 @@ textarea.form-control {
   transition: background-color 0.15s ease;
 }
 .b-notiflist__link:hover {
-  background-color: #ffffff;
+  background-color: #4a90e2;
 }
 .b-notiflist__link .count {
   display: inline;
@@ -8318,7 +8321,6 @@ body.with-melly-old {
   background-image: url(../images/melly.png);
   background-repeat: no-repeat;
   background-position: left 41px;
-  padding-top: 60px;
 }
 .l-wrapper {
   min-height: 100%;
@@ -8328,16 +8330,38 @@ body.with-melly-old {
 .l-content {
   padding-bottom: 100px;
 }
+/* == footer ==*/
 .l-footer {
   position: relative;
   margin-top: -80px;
   height: 80px;
   text-align: right;
-  color: #cccccc;
+  color: #878787;
+  border-top: 1px solid #e5e5e5;
+  display: block;
+  zoom: 1;
+}
+.l-footer:after {
+  content: " ";
+  display: block;
+  font-size: 0;
+  height: 0;
+  clear: both;
+  visibility: hidden;
 }
 .l-footer__inner {
-  border-top: 1px solid #e5e5e5;
   padding: 15px 15px 0;
+}
+.b-footcopy {
+  float: right;
+}
+.b-footmenu {
+  float: left;
+  padding-top: 13px;
+}
+.b-footmenu__i {
+  margin-right: 25px;
+  line-height: 1.1;
 }
 .b-header {
   height: 50px;
@@ -8403,7 +8427,7 @@ body.with-melly-old {
   display: none;
 }
 .b-headmenu__link:hover {
-  color: #ffffff;
+  color: #4a90e2;
 }
 .b-headmenu__link.state_selected {
   color: #ffffff !important;
@@ -8421,8 +8445,8 @@ body.with-melly-old {
   display: block;
 }
 .b-headswitcher:hover .b-headswitcher__link {
-  color: #ffffff;
-  border-bottom-color: #fff;
+  color: #4a90e2;
+  border-bottom-color: #4a90e2;
 }
 .b-headswitcher__link {
   display: inline-block;

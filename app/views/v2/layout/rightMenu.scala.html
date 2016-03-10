@@ -1,46 +1,22 @@
 @(user: ActiveUser)(implicit request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
-@import be.objectify.deadbolt.core.utils.TemplateUtils.as
-@import be.objectify.deadbolt.scala.views.html._
-@import models.UserRole.Role._
 
-    <div class="b-headmenu">
-        <div class="b-headmenu__link" >
-            <div data-toggle="dropdown"  class="b-headava">
-                <div class="b-headava__img" style="background-image : url() ;"></div>
-                <div class="b-headava__name">@user.name</div>
-            </div>
-
-            <ul class="dropdown-menu">
-                <li>
-                    <a href="@controllers.core.routes.Dashboard.profile()">
-                        <i class="glyphicon glyphicon-user"></i>
-                        Profile
-                    </a>
-                </li>
-                <li class="divider"></li>
-                @restrict(handler, List(as(Admin.toString))) {
-                    <li>
-                        <a href="@controllers.admin.routes.Usage.index()">Usage</a>
-                    </li>
-                    <li>
-                        <a href="@controllers.core.routes.Dashboard.about()">About</a>
-                    </li>
-                }
-                <li>
-                    <a href="@controllers.core.routes.Dashboard.apiv2()"> API (v2)</a>
-                </li>
-            </ul>
+<div class="b-headmenu">
+    <a href="@controllers.core.routes.Dashboard.profile()" class="b-headmenu__link" >
+        <div class="b-headava">
+            <div class="b-headava__img" style="background-image : url() ;"></div>
+            <div class="b-headava__name">@user.name</div>
         </div>
-        <a href="@controllers.core.routes.UserAccounts.account()" class="b-headmenu__link">
-            Account settings
-        </a>
-        <div class="b-headmenu__link">
-            @views.html.v2.element.notificationList()
-        </div>
-        <a href="@controllers.core.routes.LoginPage.logout()" class="b-headmenu__link">
-            Sing out
-        </a>
+    </a>
+    <a href="@controllers.core.routes.UserAccounts.account()" class="b-headmenu__link">
+        Account settings
+    </a>
+    <div class="b-headmenu__link">
+        @views.html.v2.element.notificationList()
     </div>
+    <a href="@controllers.core.routes.LoginPage.logout()" class="b-headmenu__link">
+        Sing out
+    </a>
+</div>
 

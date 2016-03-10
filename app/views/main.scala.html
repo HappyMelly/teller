@@ -23,15 +23,11 @@
           <div class="h-rel">
             <a href="/" class="b-header__logo">Happy Melly</a>
             <div class="b-header__right">
-            @views.html.v2.layout.rightMenu(user)
+              @views.html.v2.layout.rightMenu(user)
             </div>
           </div>
           <div class="b-header__left">
-          @if(user.account.coordinator && user.account.facilitator) {
-            @views.html.v2.element.roleSwitcher(user, menu)
-          } else {
-            @views.html.v2.layout.leftMenu(user, menu)
-          }
+              @views.html.v2.element.headerMenu(user, menu)
           </div>
         </div>
       </div>
@@ -53,14 +49,9 @@
       </div>
     </div>
 
-    <div class="l-footer" >
-      <div class="container l-footer__inner">
-        <img width="50" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
-        Made with love at <a class="link-mblue" href="http://happymelly.com" target="_blank">Happy Melly</a>
-      </div>
-    </div>
-
+    @views.html.v2.layout.footer(user)
     @views.html.jsroutes()
+
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
