@@ -2,7 +2,7 @@
         menu: String)(implicit request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
-  @if(user.account.member){
+  @if(user.account.member || user.account.admin){
 
     @if(user.account.coordinator && user.account.facilitator){
       <div class="b-headmenu">
