@@ -28,7 +28,7 @@
  */
 function success(message) {
     noty({text: message, layout: 'bottom',
-        theme: 'relax', timeout: 2000 , type: 'success'});
+        theme: 'relax', timeout: 2500 , type: 'success'});
 }
 
 /**
@@ -37,5 +37,5 @@ function success(message) {
  */
 function error(message) {
     noty({text: message, layout: 'bottom',
-        theme: 'relax', timeout: 2000 , type: 'error'});
+        theme: 'relax', timeout: 2500 , type: 'error'});
 }

@@ -45,7 +45,7 @@ LoginForm.prototype.assignEvents = function(){
             e.preventDefault();
 
             if (!self.isEmailValid()) {
-                self.setError(self.locals.$email);
+                error('Enter your email first and then click \"Remind me\" to remind your password');
                 self.locals.$email.trigger('focus');
                 return;
             }

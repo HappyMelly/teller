@@ -16,10 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
- *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
- * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 /*
  * Happy Melly Teller
@@ -72,6 +69,7 @@
   min-height: 100%;
   margin-bottom: -80px;
   text-align: center;
+  background-color: #f3f3f3;
 }
 .unauthorized:before {
   content: '';
@@ -100,6 +98,7 @@
 }
 .unauthorized .top-stripe {
   padding-top: 140px;
+  z-index: 2;
 }
 .unauthorized .subpage {
   width: 710px;
@@ -135,10 +134,11 @@
   padding-top: 10px;
 }
 .unauth__footer {
+  position: relative;
   width: 100%;
   text-align: center;
   padding: 30px 0 30px 0;
-  background-color: #e7e7e7;
+  background-color: #f3f3f3;
   color: #9b9b9b;
 }
 .unauth__footer a {
