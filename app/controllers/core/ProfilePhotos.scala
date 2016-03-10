@@ -64,7 +64,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param id Person identifier
     */
   def delete(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.person.find(id) flatMap {
+    repos.person.findComplete(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
         Person.photo(id).remove()
