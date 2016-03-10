@@ -47,52 +47,6 @@
 /* colors */
 /* z-indexes */
 /* mixins */
-.brand-header {
-  background-color: #e7e7e7;
-}
-.brand-header .brand-menu {
-  padding: 1em 0;
-  border-bottom: 1px solid white;
-}
-.brand-header .brand-menu span {
-  color: #9b9b9b;
-  padding-right: 2em;
-}
-.brand-header .brand-header-content {
-  padding: 1.5em 0;
-}
-.brand-header .brand-image {
-  float: left;
-}
-.brand-header .brand-name {
-  width: 25%;
-  float: left;
-  margin-left: 2em;
-}
-.brand-header .brand-name h2 {
-  margin-top: 0.3em;
-}
-.brand-header .brand-name .buttons {
-  margin-top: 35px;
-}
-.brand-header .brand-name .buttons.small {
-  margin-top: 15px;
-}
-.brand-header .brand-name .buttons span {
-  font-size: 18px;
-  font-weight: bold;
-}
-.brand-header .brand-name .buttons .btn {
-  margin-right: 0.5em;
-}
-.brand-header .brand-links {
-  width: 55%;
-  float: right;
-  margin-top: 1.1em;
-}
-.brand-header .brand-links span {
-  padding-left: 2.5em;
-}
 .page-content {
   padding-top: 2em;
 }

@@ -3,20 +3,21 @@
     withAllBrands: Boolean = false)
 
 @if(brands.length > 1) {
-  <div class="brand-menu">
-    <div class="container">
+  <div class="b-brandmenu">
+    <i class="b-brandmenu__icon" data-toggle="dropdown"></i>
+    <div class="b-brandmenu__popup dropdown-menu">
       @if(withAllBrands) {
         @if(activeBrand.nonEmpty) {
-          <span><a href="@controllers.core.routes.Dashboard.index()">All brands</a></span>
+          <a class="b-brandmenu__i" href="@controllers.core.routes.Dashboard.index()">All brands</a>
         } else {
-          <span>All brands</span>
+          <div class="b-brandmenu__i state-selected">All brands</div>
         }
       }
       @for(brand <- brands) {
         @if(activeBrand.exists(_.identifier == brand.identifier)) {
-          <span>@brand.name</span>
+          <div class="b-brandmenu__i state-selected">@brand.name</div>
         } else {
-          <span><a href="@controllers.core.routes.Dashboard.overview(brand.identifier)">@brand.name</a></span>
+          <a class="b-brandmenu__i" href="@controllers.core.routes.Dashboard.overview(brand.identifier)">@brand.name</a>
         }
       }
     </div>

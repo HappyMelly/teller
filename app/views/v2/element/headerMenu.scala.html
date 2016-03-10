@@ -1,0 +1,47 @@
+@(user: ActiveUser,
+        menu: String)(implicit request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
+
+  @if(user.account.member || user.account.admin){
+
+    @if(user.account.coordinator && user.account.facilitator){
+      <div class="b-headmenu">
+        @if(user.account.activeRole) {
+          <div class="b-headmenu__link state_selected">Brand manager</div>
+          <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Facilitator</a>
+        } else {
+          <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Brand manager</a>
+          <div class="b-headmenu__link state_selected">Facilitator</div>
+        }
+      </div>
+
+      <div class="b-headswitcher">
+        <span class="b-headswitcher__link" >Network</span>
+        <div class="b-headswitcher__content">
+          <div class="container">
+          @views.html.v2.layout.memberMenu(user, menu)
+          </div>
+        </div>
+      </div>
+    } else {
+      @views.html.v2.layout.memberMenu(user, menu)
+    }
+
+  } else {
+
+    @if(user.account.coordinator && user.account.facilitator){
+      <div class="b-headmenu">
+        @if(user.account.activeRole) {
+          <div class="b-headmenu__link state_selected">Brand manager</div>
+          <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Facilitator</a>
+        } else {
+          <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Brand manager</a>
+          <div class="b-headmenu__link state_selected">Facilitator</div>
+        }
+      </div>
+    }
+  }
+
+
+
+

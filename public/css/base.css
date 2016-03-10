@@ -6849,7 +6849,8 @@ button.close {
   color: #333333 !important;
 }
 .link-mblack:hover {
-  border-bottom-color: #333;
+  color: #4a90e2 !important;
+  border-bottom-color: #4a90e2;
 }
 .link-mblue {
   display: inline;
@@ -7289,7 +7290,7 @@ textarea.form-control {
 /* == Avatar image ==*/
 .b-avatar {
   position: relative;
-  margin-top: -145px;
+  margin-top: -139px;
 }
 .b-avatar__img {
   min-height: 135px;
@@ -7717,8 +7718,7 @@ textarea.form-control {
   width: 20px;
   height: 20px;
   position: relative;
-  vertical-align: -5px;
-  margin-left: 9px;
+  vertical-align: middle;
 }
 .b-notiflist__back {
   display: none;
@@ -7749,7 +7749,7 @@ textarea.form-control {
   transition: background-color 0.15s ease;
 }
 .b-notiflist__link:hover {
-  background-color: #ffffff;
+  background-color: #4a90e2;
 }
 .b-notiflist__link .count {
   display: none;
@@ -7780,6 +7780,7 @@ textarea.form-control {
   -ms-transform: translate(0, 10px);
   -o-transform: translate(0, 10px);
   transform: translate(0, 10px);
+  color: #333333;
 }
 .b-notiflist__close {
   position: absolute;
@@ -8242,9 +8243,6 @@ dl.dl-horizontal dd {
   padding: 15px 25px 50px;
   border-top: 0;
 }
-.navbar-inverse .navbar-brand {
-  color: #ee929f;
-}
 .input-group-btn button {
   height: 45px;
 }
@@ -8298,6 +8296,343 @@ dl.dl-horizontal dd {
 }
 .table.table-rowed tbody > tr td {
   padding: 12px 10px;
+}
+html,
+body {
+  height: 100%;
+}
+body.with-melly {
+  background-image: url(../images/melly_right.png);
+  background-repeat: no-repeat;
+  background-position: right 51px;
+}
+body.with-melly-old {
+  background-image: url(../images/melly.png);
+  background-repeat: no-repeat;
+  background-position: left 41px;
+}
+.l-wrapper {
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.l-content {
+  padding-bottom: 100px;
+}
+/* == footer ==*/
+.l-footer {
+  position: relative;
+  margin-top: -80px;
+  height: 80px;
+  text-align: right;
+  color: #878787;
+  border-top: 1px solid #e5e5e5;
+  display: block;
+  zoom: 1;
+}
+.l-footer:after {
+  content: " ";
+  display: block;
+  font-size: 0;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.l-footer__inner {
+  padding: 15px 15px 0;
+}
+.b-footcopy {
+  float: right;
+}
+.b-footmenu {
+  float: left;
+  padding-top: 13px;
+}
+.b-footmenu__i {
+  margin-right: 25px;
+  line-height: 1.1;
+}
+.b-header {
+  height: 50px;
+  background-color: #333333;
+}
+.b-header__logo {
+  position: absolute;
+  left: 15px;
+  top: 13px;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: bold;
+  color: #ee929f !important;
+  text-decoration: none !important;
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+}
+.b-header__logo:hover {
+  opacity: .9;
+}
+.b-header__left {
+  margin-left: 130px;
+}
+.b-header__right {
+  position: absolute;
+  right: 15px;
+  top: 0;
+  bottom: 0;
+}
+.b-headmenu {
+  display: inline-block;
+  vertical-align: top;
+  text-align: left;
+}
+.b-headmenu__link {
+  display: inline-block;
+  vertical-align: top;
+  height: 50px;
+  padding: 0 10px;
+  position: relative;
+  font-size: 14px;
+  line-height: 48px;
+  color: #9d9d9d;
+  text-decoration: none !important;
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+}
+.b-headmenu__link:after {
+  content: '';
+  display: block;
+  position: absolute;
+  height: 14px;
+  right: -1px;
+  width: 1px;
+  background-color: #757575;
+  top: 18px;
+}
+.b-headmenu__link:last-child:after {
+  display: none;
+}
+.b-headmenu__link:hover {
+  color: #4a90e2;
+}
+.b-headmenu__link.state_selected {
+  color: #ffffff !important;
+  cursor: default;
+}
+.b-headswitcher {
+  display: inline-block;
+  vertical-align: top;
+  height: 50px;
+  padding: 0 10px;
+  line-height: 48px;
+  margin-left: 4px;
+}
+.b-headswitcher:hover .b-headswitcher__content {
+  display: block;
+}
+.b-headswitcher:hover .b-headswitcher__link {
+  color: #4a90e2;
+  border-bottom-color: #4a90e2;
+}
+.b-headswitcher__link {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.1;
+  border-bottom: 1px dashed #9D9D9D;
+  color: #9d9d9d;
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+}
+.b-headswitcher__content {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  left: 0;
+  padding: 5px 0 0 15px;
+  height: 62px;
+  background-color: #333333;
+  z-index: 105;
+  display: none;
+}
+.b-headava {
+  cursor: pointer;
+}
+.b-headava__img {
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-right: 4px;
+  background-color: #cccccc;
+  background-repeat: no-repeat;
+  -webkit-background-size: cover;
+  background-size: cover;
+  background-position: 50% 50%;
+}
+.b-headava__name {
+  display: inline-block;
+}
+.b-brandhead {
+  min-height: 62px;
+  background-color: #E7E7E7;
+}
+.b-brandhead__links {
+  position: absolute;
+  right: 15px;
+  top: 19px;
+  text-align: right;
+  line-height: 20px;
+}
+.b-brandhead__i {
+  display: inline-block;
+  margin-left: 30px;
+}
+.b-brandhead__img-con {
+  position: absolute;
+  left: 15px;
+  top: 9px;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.b-brandhead__img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.b-brandhead__content {
+  margin: 14px 0 15px 50px;
+}
+.b-brandhead__title {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: bold;
+}
+.b-brandhead__button {
+  margin-top: 15px;
+}
+.b-brandmenu {
+  display: inline-block;
+  width: 30px;
+  height: 25px;
+  vertical-align: top;
+}
+.b-brandmenu__icon {
+  display: block;
+  height: 25px;
+  position: relative;
+  cursor: pointer;
+}
+.b-brandmenu__icon:before {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 40px;
+  height: 20px;
+  top: 25px;
+}
+.b-brandmenu__icon:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15px;
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-bottom: none;
+  border-left: 7px solid transparent !important;
+  border-right: 7px solid transparent !important;
+  border-top: 8px solid #333;
+}
+.b-brandmenu__popup {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  padding: 0;
+  border-radius: 0 0 4px 4px;
+  z-index: 102;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+}
+.b-brandmenu__i {
+  font-size: 16px;
+  padding: 0 15px;
+  height: 40px;
+  line-height: 40px;
+  border-bottom: 1px solid #ccc;
+  text-decoration: none !important;
+  color: #333333 !important;
+  font-weight: 400;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+}
+.b-brandmenu__i:hover {
+  background-color: #e7e7e7;
+}
+.b-brandmenu__i:last-child {
+  border-bottom: none;
+}
+.b-brandmenu__i.state-selected {
+  cursor: default;
+  background: none !important;
+  font-weight: bold;
+}
+.b-headprofile {
+  height: 162px;
+  background-color: #e7e7e7;
+}
+.b-headprofile.funder {
+  background-color: #f1a7a9;
+}
+.b-headprofile.supporter {
+  background-color: #ffc550;
+}
+.b-headprofile__content {
+  margin: 27px 0 0 231px;
+}
+.b-headprofile__title {
+  margin: 0 0 10px 0;
+}
+.b-headprofile__type {
+  position: absolute;
+  right: 15px;
+  top: 28px;
+  font-family: "kg_skinny_latteregular", Arial;
+  text-transform: uppercase;
+  font-size: 20px;
+  color: #222222;
+}
+.b-headprofile__buttons {
+  position: absolute;
+  right: 15px;
+  top: 100px;
+}
+.b-headprofile__btn {
+  float: left !important;
+  margin-left: 16px;
 }
 /*!
 Chosen, a Select Box Enhancer for jQuery and Prototype

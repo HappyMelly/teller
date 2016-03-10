@@ -1,0 +1,23 @@
+@(user: ActiveUser)(implicit request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
+
+@import be.objectify.deadbolt.core.utils.TemplateUtils.as
+@import be.objectify.deadbolt.scala.views.html._
+@import models.UserRole.Role._
+
+<div class="l-footer" >
+    <div class="container l-footer__inner">
+
+        <div class="b-footcopy">
+            <img width="50" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+            Made with love at <a class="link-mblack" href="http://happymelly.com" target="_blank">Happy Melly</a>
+        </div>
+        <div class="b-footmenu">
+            @restrict(handler, List(as(Admin.toString))) {
+                <a class="b-footmenu__i link-mblue" href="@controllers.admin.routes.Usage.index()">Usage</a>
+                <a class="b-footmenu__i link-mblue " href="@controllers.core.routes.Dashboard.about()">About</a>
+            }
+        <a class="b-footmenu__i link-mblue" href="@controllers.core.routes.Dashboard.apiv2()"> API (v2)</a>
+        </div>
+    </div>
+</div>

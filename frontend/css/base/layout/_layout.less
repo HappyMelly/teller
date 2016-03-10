@@ -1,0 +1,59 @@
+
+
+html,
+body {
+  height: 100%;
+}
+
+body{
+  &.with-melly {
+    background-image: url(../images/melly_right.png);
+    background-repeat: no-repeat;
+    background-position: right 51px;
+  }
+
+  &.with-melly-old {
+    background-image: url(../images/melly.png);
+    background-repeat: no-repeat;
+    background-position: left 41px;
+  }
+}
+
+.l-wrapper{
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.l-content {
+  padding-bottom: 100px;
+}
+
+/* == footer ==*/
+.l-footer {
+  position: relative;
+  margin-top: -80px;
+  height: 80px;
+  text-align: right;
+  color: #878787;
+  border-top: 1px solid #e5e5e5;
+  .clearfix();
+}
+
+.l-footer__inner{
+  padding: 15px 15px 0;
+}
+
+.b-footcopy{
+  float: right;
+}
+
+.b-footmenu{
+  float: left;
+  padding-top: 13px;
+}
+
+.b-footmenu__i{
+  margin-right: 25px;
+  line-height: 1.1;
+}

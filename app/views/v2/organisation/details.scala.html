@@ -19,54 +19,62 @@
 
 
 @v2.main(view.org.name + " - Organization", "orgs", user) {
-  <div class="row profile-header
+  <div class="b-headprofile
     @if(member.nonEmpty) { @if(member.get.funder) { funder } else { supporter }}">
-    <div class="container">
-      <div class="content-block">
-        <h2>@view.org.name
-        @member.map { member =>
-          <div class="membership-type">
-            @if(member.funder) { Funder } else { Supporter }
+
+    <div class="container h-rel">
+
+      @member.map { member =>
+        <div class="b-headprofile__type">
+          @if(member.funder) { Funder } else { Supporter }
+        </div>
+      }
+
+      <div class="b-headprofile__buttons">
+        @restrict(handler, List(as(Role.Admin.toString))) {
+          <div class="b-headprofile__btn">
+            <form class="delete form-inline" method="post" text="organisation"
+            action="@CSRF(controllers.core.routes.Organisations.delete(view.org.id.getOrElse(0)))">
+              <div data-toggle="tooltip" data-placement="bottom"
+                @if(!deletable) { title="@Messages("error.view.org.nonDeletable")" }>
+                <button class="btn btn-default" type="submit"
+                  @if(!deletable) { disabled="disabled" }>Delete
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="b-headprofile__btn">
+            <form method="post" class="form-inline"
+            action="@CSRF(controllers.core.routes.Organisations.activation(view.org.id.getOrElse(0)))">
+              <input name="active" value="@(!view.org.active)" type="hidden">
+              @if(view.org.active) {
+                <button class="btn btn-default" type="submit">
+                  <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
+                </button>
+              } else {
+                <button class="btn btn-default" type="submit">
+                  <i class="glyphicon-off glyphicon glyphicon-white"></i> Activate
+                </button>
+              }
+            </form>
           </div>
         }
+        @dynamic(handler, Role.OrgMember.toString, view.org.identifier.toString) {
+          <div class="b-headprofile__btn">
+            <a class="btn btn-primary"
+            href="@controllers.core.routes.Organisations.edit(view.org.id.get)">Edit</a>
+          </div>
+        }
+      </div>
+
+      <div class="b-headprofile__content">
+        <h2 class="b-headprofile__title">
+          @view.org.name
         </h2>
-        @views.html.element.profiles(view.profile, member)
-        <div class="actions pull-right">
-          @restrict(handler, List(as(Role.Admin.toString))) {
-            <div class="button">
-              <form class="delete form-inline" method="post" text="organisation"
-                action="@CSRF(controllers.core.routes.Organisations.delete(view.org.id.getOrElse(0)))">
-                <div data-toggle="tooltip" data-placement="bottom"
-                  @if(!deletable) { title="@Messages("error.view.org.nonDeletable")" }>
-                    <button class="btn btn-default" type="submit"
-                      @if(!deletable) { disabled="disabled" }>Delete
-                    </button>
-                </div>
-              </form>
-            </div>
-            <div class="button">
-              <form method="post" class="form-inline"
-                action="@CSRF(controllers.core.routes.Organisations.activation(view.org.id.getOrElse(0)))">
-                <input name="active" value="@(!view.org.active)" type="hidden">
-                @if(view.org.active) {
-                  <button class="btn btn-default" type="submit">
-                    <i class="glyphicon-off glyphicon glyphicon-white"></i> Deactivate
-                  </button>
-                } else {
-                  <button class="btn btn-default" type="submit">
-                    <i class="glyphicon-off glyphicon glyphicon-white"></i> Activate
-                  </button>
-                }
-              </form>
-            </div>
-          }
-          @dynamic(handler, Role.OrgMember.toString, view.org.identifier.toString) {
-            <div class="button">
-              <a class="btn btn-primary"
-                href="@controllers.core.routes.Organisations.edit(view.org.id.get)">Edit</a>
-            </div>
-          }
+        <div class="b-social">
+          @views.html.element.profiles(view.profile, member)
         </div>
+
       </div>
     </div>
   </div>
