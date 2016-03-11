@@ -39,7 +39,8 @@ class RequestException(msg: String, logMsg: Option[String] = None)
 
 /**
  * Wrapper around stripe.CardException
- * @param msg Human-readable message
+  *
+  * @param msg Human-readable message
  * @param code Unique error code
  * @param param Optional parameter
  */
@@ -53,7 +54,8 @@ class GatewayWrapper(apiKey: String) {
 
   /**
    * Cancels subscriptions
-   * @param customerId Customer
+    *
+    * @param customerId Customer
    * @return
    */
   def cancel(customerId: String) = stripeCall {
@@ -63,7 +65,8 @@ class GatewayWrapper(apiKey: String) {
 
   /**
    * Charges user's card using Stripe
-   * @param sum Amount to be charged
+    *
+    * @param sum Amount to be charged
    * @param payer User object
    * @param token Stripe token for a single session
    * @return Returns Stripe JSON response
@@ -79,6 +82,7 @@ class GatewayWrapper(apiKey: String) {
 
   /**
     * Creates a new customer and subscribes him/her to the given plan
+    *
     * @param customerName Name of the customer
     * @param customerId Internal id of the customer
     * @param payerEmail Email of the person who pays
@@ -96,12 +100,19 @@ class GatewayWrapper(apiKey: String) {
       "email" -> payerEmail,
       "source" -> token)
     val customer = com.stripe.model.Customer.create(params)
-    customer.createSubscription(Map("plan" -> plan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
-    (customer.getId, creditCard(customer))
+    try {
+      customer.createSubscription(Map("plan" -> plan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+      (customer.getId, creditCard(customer))
+    } catch {
+      case e: StripeException =>
+        customer.delete()
+        throw e
+    }
   }
 
   /**
     * Returns a list of invoices for the given customer
+    *
     * @param customerId Customer
     * @return
     */
@@ -111,6 +122,7 @@ class GatewayWrapper(apiKey: String) {
 
   /**
     * Retrieves plan or creates a plan if the required one doesn't exist
+    *
     * @param fee Plan amount
     * @return Returns plan identifier
     */
@@ -133,6 +145,7 @@ class GatewayWrapper(apiKey: String) {
 
   /**
     * Deletes old cards and add a new one to the given customer
+    *
     * @param customerId Customer identifier
     * @param cardToken New card token
     * @param cards Old cards
@@ -169,6 +182,7 @@ class GatewayWrapper(apiKey: String) {
 
   /**
     * Returns default credit card info
+    *
     * @param customer Stripe customer object
     */
   protected def creditCard(customer: com.stripe.model.Customer): CreditCard = {
