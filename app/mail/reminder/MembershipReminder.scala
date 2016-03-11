@@ -25,6 +25,7 @@ package mail.reminder
 
 import javax.inject.Inject
 
+import controllers.Utilities
 import controllers.community.Members
 import models.Member
 import models.repository.Repositories
@@ -66,8 +67,7 @@ class MembershipReminder @Inject()(val email: Email, val repos: Repositories) ex
       val membershipInDays = membershipDuration.getStandardDays
       val body = mail.templates.members.html.twoWeeksReminder(member,
         membershipInDays,
-        Members.paymentUrl(member),
-        Members.profileUrl(member)).toString()
+        Utilities.fullUrl(Members.profileUrl(member))).toString()
 
       val recipient = if (member.person)
         Future.successful(member.memberObj._1.get)

@@ -380,8 +380,6 @@ object Members {
    */
   def cacheId(id: Long): String = "incomplete.member." + id.toString
 
-  def paymentUrl(member: Member): String = ""
-
   def profileUrl(member: Member): String = if (member.person)
     controllers.core.routes.People.details(member.objectId).url
   else
