@@ -198,6 +198,21 @@
   }
 }
 
+.b-notiflist__empty{
+  display: none;
+  text-align: center;
+  line-height: 1.2;
+
+  span{
+    display: block;
+    padding-top: 56px;
+    font-size: 18px;
+    line-height: 20px;
+    font-weight: 700;
+    margin-bottom: 11px;
+  }
+}
+
 /*states*/
 .b-notiflist_have_notification{
   .b-notiflist__link{
@@ -236,3 +251,18 @@
     display: none;
   }
 }
+
+.b-notiflist_empty{
+  .b-notiflist__load-more{
+    display: none;
+  }
+
+  .b-notiflist__list-inner{
+    display: none;
+  }
+
+  .b-notiflist__empty{
+    display: block;
+  }
+}
+
