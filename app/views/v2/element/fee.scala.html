@@ -1,0 +1,36 @@
+@(fee: (Int, Int, Int),
+        person: Person,
+        org: Option[Organisation] = None)
+
+@import models.core.payment.Payment
+@import views.Countries
+
+<div class="b-feestrip">
+    <div class="b-feestrip__col">
+        <h4 class="b-feestrip__title">Set you one year subscription fee</h4>
+        <div class="input-group">
+            <label class="input-group-addon">€</label>
+                <input class="form-control b-feestrip__input" name=""
+                type="number"
+                step="1" >
+        </div>
+    </div>
+    <div class="b-feestrip__col">
+        @org.map { organisation =>
+        <p>@organisation.name is from @Countries.all.toMap.get(organisation.countryCode).
+            For this country a Token contribution is <b>&#8364;@fee._1</b>,
+            a Generous contribution is <b>&#8364;@fee._2</b>
+            and a Big hearted contribution is <b>&#8364;@fee._3</b>.
+        </p>
+        }.getOrElse {
+            <p>You are from @Countries.all.toMap.get(person.address.countryCode).
+                For your country Token contribution is <b>&#8364;@fee._1</b>,
+                Generous contribution is <b>&#8364;@fee._2</b>
+                and Big hearted contribution is <b>&#8364;@fee._3</b>.
+            </p>
+        }
+    <p><a href="#" class="link-mblue" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
+    </div>
+
+    @views.html.v2.element.fees()
+</div>

@@ -1,11 +1,5 @@
 @(person: Person, card: models.core.payment.CreditCard, customerId: Long, apiKey: String)
 
-@*<script type="text/javascript" src="https://js.stripe.com/v2/"></script>*@
-<script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("js/element/creditcard.js")" type="text/javascript"></script>
-@*<script type="text/javascript">*@
-    @*Stripe.setPublishableKey("@apiKey");*@
-@*</script>*@
 
 <div class="b-contrib block">
     <h4 class="b-contrib__title">Contribution</h4>
@@ -52,7 +46,19 @@
         If you decrease contribution level, we’ll not return money but next year your membership will chiper for amount of difference. <br>
         Changing contribution level doesn’t reflect on membership exparation date.
     </div>
-    @views.html.v2.element.payment(card, person, apiKey, (12, 12, 12))
+
+    <form class="b-payment__form " action="@controllers.core.routes.Customers.updateCard(customerId)"
+    method="POST" id="payment-form" autocomplete="on">
+
+        @views.html.v2.element.fee((12,12,12), person);
+
+        <div class="b-card__buttons">
+            ubscription fee &euro;<span id="amount">30</span>
+            plus % tax &euro; <span id="tax">0.00</span>
+
+            <button type="submit" class="btn btn-primary b-card__submit">Pay &euro;<span>0.00</span></button>
+        </div>
+    </form>
     @views.html.v2.element.paymentInfo()
 
 }
