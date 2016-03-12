@@ -33,7 +33,9 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
+/* colors */
+/* z-indexes */
+/* mixins */
 /*!
  * Bootstrap v3.3.4 (http://getbootstrap.com)
  * Copyright 2011-2015 Twitter, Inc.
@@ -7903,6 +7905,19 @@ textarea.form-control {
 .b-notiflist__load-more:hover {
   background-color: #ffffff;
 }
+.b-notiflist__empty {
+  display: none;
+  text-align: center;
+  line-height: 1.2;
+}
+.b-notiflist__empty span {
+  display: block;
+  padding-top: 56px;
+  font-size: 18px;
+  line-height: 20px;
+  font-weight: 700;
+  margin-bottom: 11px;
+}
 /*states*/
 .b-notiflist_have_notification .b-notiflist__link {
   background-color: #ffc550 !important;
@@ -7930,6 +7945,15 @@ textarea.form-control {
 }
 .b-notiflist_load_all .b-notiflist__load-more {
   display: none;
+}
+.b-notiflist_empty .b-notiflist__load-more {
+  display: none;
+}
+.b-notiflist_empty .b-notiflist__list-inner {
+  display: none;
+}
+.b-notiflist_empty .b-notiflist__empty {
+  display: block;
 }
 .b-event {
   padding-top: 16px;
