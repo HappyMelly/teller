@@ -53,8 +53,7 @@ $.fn.dataTableExt.afnFiltering.push(filterByType);
 
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     "url-text-pre": function ( a ) {
-        var x = String(a).replace( /<[\s\S]*?>/g, "" );
-        return x;
+        return String(a).replace( /<[\s\S]*?>/g, "" );
     },
 
     "url-text-asc": function ( a, b ) {
