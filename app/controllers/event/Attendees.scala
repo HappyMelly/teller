@@ -44,7 +44,7 @@ import views.Countries
 import scala.concurrent.Future
 
 /**
-  * Created by sery0ga on 04/01/16.
+  * Manages event attendees
   */
 class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
@@ -70,17 +70,19 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
       "postCode" -> optional(text),
       "country" -> optional(nonEmptyText),
       "role" -> optional(text),
+      "optOut" -> boolean,
       "recordInfo" -> mapping(
         "created" -> ignored(DateTime.now()),
         "createdBy" -> ignored(editorName),
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply))({
-      (id, firstName, lastName, email, dateOfBirth, street1, street2, city, province, postCode, country, role, recordInfo) ⇒
+      (id, firstName, lastName, email, dateOfBirth, street1, street2, city, province, postCode, country,
+        role, optOut, recordInfo) ⇒
         Attendee(id, eventId, None, firstName, lastName, email, dateOfBirth, country, city, street1, street2, province,
-          postCode, None, None, None, None, None, role, recordInfo)
+          postCode, None, None, None, None, None, role, optOut, recordInfo)
     })({
       (p: Attendee) ⇒ Some((p.id, p.firstName, p.lastName, p.email, p.dateOfBirth, p.street_1, p.street_2, p.city,
-        p.province, p.postcode, p.countryCode, p.role, p.recordInfo))
+        p.province, p.postcode, p.countryCode, p.role, p.optOut, p.recordInfo))
     }))
 
   /**
