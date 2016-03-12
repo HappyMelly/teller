@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,21 +21,31 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package services.cleaners
+
+import scala.util.{Failure, Success}
+import models.repository.Repositories
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
- * Shows success notification in the bottom of webpage
- * @param message {string}
- */
-function success(message) {
-    noty({text: message, layout: 'bottom',
-        theme: 'relax', timeout: 2500 , type: 'success'});
-}
+  * Removes expired email and password tokens from database
+  */
+class TokenCleaner(repos: Repositories) {
 
-/**
- * Shows error notification in the bottom of webpage
- * @param message {string}
- */
-function error(message) {
-    noty({text: message, layout: 'bottom',
-        theme: 'relax', timeout: 2500 , type: 'error'});
+  def clean() = {
+    println("TokenCleaner: start")
+    val request = for {
+      p <- repos.mailToken.deleteExpiredTokens()
+      e <- repos.emailToken.deleteExpiredTokens()
+    } yield (p, e)
+    request onComplete {
+      case Success((passwordTokens, emailTokens)) =>
+        println(s"TokenCleaner: $passwordTokens password and $emailTokens email tokens were deleted")
+        println("TokenCleaner: end")
+      case Failure(t) =>
+        println(s"[ERROR] Token Cleaner: ${t.getMessage}")
+        println("TokenCleaner: end")
+    }
+  }
 }

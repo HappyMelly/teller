@@ -91,8 +91,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /** Renders a list of all members */
   def index() = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.member.findAll flatMap { results =>
-      val members = results.filter(_.active)
+    repos.member.findAll flatMap { members =>
       val fee = members.find(m ⇒ m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
       members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))

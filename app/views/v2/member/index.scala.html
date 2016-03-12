@@ -33,10 +33,10 @@
                                             <a href="#" class="active" data-type="all">All</a>&nbsp;<span class="counter">@members.length</span>
                                         </div>
                                         <div class="filter">
-                                            <a href="#" data-type="funder">Funders</a>&nbsp;<span class="counter">@members.count(_.funder)</span>
+                                            <a href="#" data-type="Funder">Funders</a>&nbsp;<span class="counter">@members.count(_.funder)</span>
                                         </div>
                                         <div class="filter">
-                                            <a href="#" data-type="supporter">Supporters</a>&nbsp;<span class="counter">@members.count(_.funder == false)</span>
+                                            <a href="#" data-type="Supporter">Supporters</a>&nbsp;<span class="counter">@members.count(_.funder == false)</span>
                                         </div>
                                     </div>
                                     <div class="table-filters pull-left type">
@@ -66,7 +66,7 @@
                                     </thead>
                                     <tbody>
                                     @for(member <- members) {
-                                        <tr>
+                                        <tr @if(!member.active){class="inactive"} >
                                             <td style="text-align: center;">@if(member.person){
                                                 <i class="glyphicon glyphicon-user"></i>
                                             }else{
@@ -77,9 +77,9 @@
                                                 @controllers.core.routes.Organisations.details(member.objectId) }">@member.name</a></td>
                                             <td>@member.city.map { city => @city, } @Countries.name(member.countryCode)</td>
                                             <td>@if(member.funder){
-                                                <span class="text-sm">funder</span>
+                                                <span class="text-sm">Funder</span>
                                             }else{
-                                                <span class="text-sm">supporter</span>
+                                                <span class="text-sm">Supporter</span>
                                             }</td>
                                             <td>@member.since</td>
                                             <td>@member.until</td>

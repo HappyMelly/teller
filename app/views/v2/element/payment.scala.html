@@ -56,9 +56,9 @@
             <div class="b-feestrip__col">
                 @org.map { organisation =>
                 <p>@organisation.name is from @Countries.all.toMap.get(organisation.countryCode).
-                    For this country Token contribution is <b>&#8364;@fee._1</b>,
-                    Generous contribution is <b>&#8364;@fee._2</b>
-                    and Big hearted contribution is <b>&#8364;@fee._3</b>.
+                    For this country a Token contribution is <b>&#8364;@fee._1</b>,
+                    a Generous contribution is <b>&#8364;@fee._2</b>
+                    and a Big hearted contribution is <b>&#8364;@fee._3</b>.
                 </p>
                 }.getOrElse {
                     <p>You are from @Countries.all.toMap.get(person.address.countryCode).

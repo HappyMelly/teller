@@ -484,144 +484,244 @@
 
 
 /**
- *  Notification list
+ * Notification for user about new events
  */
 (function ($, App) {
     'use strict';
 
-    function NotificationList(selector, options){
+    /**
+     * Notification object
+     * @typedef {Object} NotificationItem
+     * @property {String} body      - html of the notification
+     * @property {Boolen} unread    - is current notification already viewed?
+     * @property {Number} id        - id of the notification
+     * @property {String} type      - type of the notification
+     */
+
+    /**
+     *
+     * @param {(String|domElement)} selector  - selector or domElement as root element of the widget
+     * @constructor
+     */
+    function NotificationList(selector){
         var self = this;
 
         self.$root = $(selector);
-        self.options = $.extend({}, options, self.$root.data());
+        self.locals = self._getDom();
 
-        self.locals = {
-            $list: self.$root.find('[data-notiflist-list]'),
-            $close: self.$root.find('[data-notiflist-close]'),
-            $link: self.$root.find('[data-notiflist-show]'),
-            $load: self.$root.find('[data-notiflist-load]'),
-            $count: self.$root.find('[data-notiflist-count]'),
-            $listOld: self.$root.find('[data-notiflist-old-list]')
+        self._init();
+        self._assignEvents();
+    }
+
+    /**
+     * Get $ elements of the widget
+     * @returns {Object} - jQuery links ot the elements of the widget
+     * @private
+     */
+    NotificationList.prototype._getDom = function(){
+        var $root = this.$root;
+
+        return {
+            $list:  $root.find('[data-notiflist-list]'),
+            $close: $root.find('[data-notiflist-close]'),
+            $link:  $root.find('[data-notiflist-show]'),
+            $load:  $root.find('[data-notiflist-load]'),
+            $count: $root.find('[data-notiflist-count]'),
         };
+    };
 
-        self.init();
-        self.assignEvents();
-    }
+    /**
+     * Initiate base variables for widget
+     * @private
+     */
+    NotificationList.prototype._init = function() {
+        var self = this;
 
-    NotificationList.prototype.init = function(){
-        this.isPopupVisible = false;
-        this.isLoaded = null;
-        this.unreadCount = 0;
-        this.offset = 0;
+        self.isLoaded = false;
+        self.offset = 0;
+        self.isVisible = false;
 
-        this.getCountUnread();
-    }
+        self._recieveUnreadCount()
+            .done(function(count){
+                self.setUnreadCount(count);
+            });
+    };
 
-    NotificationList.prototype.assignEvents = function(){
+    /**
+     * Assign events on the widget, deligate on the root element
+     * @private
+     */
+    NotificationList.prototype._assignEvents = function(){
         var self = this;
 
         self.$root
-            .on('click', '[data-notiflist-show], [data-notiflist-close]', function (e) {
-                self.togglePopup();
-                e.preventDefault();
-            })
-            .on('click', '[data-notiflist-load]', function (e) {
-                self.getNotification(self.offset);
-                e.preventDefault();
-            })
+            .on('click', '[data-notiflist-show], [data-notiflist-close]', self._onClickToggleShow.bind(self))
+            .on('click', '[data-notiflist-load]', self._onClickLoadNotification.bind(self))
     };
 
-    NotificationList.prototype.getNotification = function(offset, limit){
-        var self = this,
-            limitNotification = (!limit || limit > 5)? 5: limit,
-            url = jsRoutes.controllers.core.Notifications.list(offset, limitNotification).url,
-            length, unread;
+    /**
+     * Event handler for showing and hiding popup
+     * @param {Event} e - Event Object
+     * @private
+     */
+    NotificationList.prototype._onClickToggleShow = function(e){
+        this.togglePopup();
 
+        if (!this.isLoaded){
+            this.isLoaded  = true;
+            this.loadNotification(this.offset);
+        }
 
-        $.get(url, function(data){
-            data = $.parseJSON(data)[0];
-            length = data.length;
-
-            if (!length) {
-                self.$root.addClass('b-notiflist_load_all');
-                return;
-            };
-
-            self.isLoaded = true;
-            self.offset += length;
-            self.unreadCount -= length;
-
-            self.setUnreadCount(unread);
-            self.setReaded(data);
-            self.renderNotification(data)
-        })
+        e.preventDefault();
     };
 
-    NotificationList.prototype.setReaded = function(data){
-        var ids = [],
-            url = jsRoutes.controllers.core.Notifications.read().url
+    /**
+     * Event handler for the button "load more notification"
+     * @param {Event} e - Event Object
+     * @private
+     */
+    NotificationList.prototype._onClickLoadNotification = function(e){
+        e.preventDefault();
 
-        data.forEach(function(item){
-            ids.push(item.id);
-        });
+        this.loadNotification(this.offset);
+    };
 
-        $.post(url, {
-            ids: ids
-        }, function(){
-
-        })
-    }
-
-    NotificationList.prototype.renderNotification = function(data){
+    /**
+     * Add to the dom 
+     * @param {NotificationItem[]} notifList - list of the notification
+     * @private
+     */
+    NotificationList.prototype._renderNotification = function(notifList){
         var self = this;
 
-        data.forEach(function(item){
-            var $notif = $(item.body)
+        notifList.forEach(function(item){
+            $(item.body)
                 .addClass(item.type)
+                .toggleClass('is-new', Boolean(item.unread))
                 .data('id', item.id)
                 .appendTo(self.locals.$list);
         })
-    }
+    };
 
-    NotificationList.prototype.getCountUnread = function(){
-        var self = this,
-            url = jsRoutes.controllers.core.Notifications.unread().url;
-
-        $.get(url, function (data) {
-            self.unreadCount = ($.parseJSON(data)).unread;
-            self.setUnreadCount(self.unreadCount);
+    /**
+     * Filter notification and return only new
+     * @param {NotificationItem[]} notifList - list of the notification
+     * @returns {NotificationItem[]} notifList - only new notifications
+     * @private
+     */
+    NotificationList.prototype._filterOnlyNew = function(notifList){
+        return notifList.filter(function(item){
+            return item.unread;
         })
     };
 
-    NotificationList.prototype.showPopup = function(){
+    NotificationList.prototype._isHaveNotification = function(notifList){
+        if (!notifList.length && !this.offset) {
+            this.$root.addClass('b-notiflist_empty');
+            return false;
+        }
+
+        if (notifList.length <= 5){
+            this.$root.addClass('b-notiflist_load_all');
+        }
+        return true;
+    };
+
+    /**
+     * Get new load notification and render them
+     * @param {Number} offset -
+     */
+    NotificationList.prototype.loadNotification = function(offset){
         var self = this;
 
-        if (!self.isLoaded) self.getNotification(0,self.unreadCount);
+        self._recieveNotification(offset)
+            .done(function(notifList){
+                if (!self._isHaveNotification(notifList)) return;
 
-        if (self.isPopupVisible) return;
-        self.isPopupVisible = true;
-        self.$root.addClass('b-notiflist_show');
-    }
+                self.offset += notifList.length;
+                self._renderNotification(notifList);
 
-    NotificationList.prototype.hidePopup = function(){
-        var self = this;
+                var newNotifList = self._filterOnlyNew(notifList);
 
-        if (!self.isPopupVisible) return;
+                if (!newNotifList.length) return;
 
-        self.isPopupVisible = false;
-        self.$root.removeClass('b-notiflist_show');
-    }
+                self._sendViewedNewNotif(newNotifList);
+                self.setUnreadCount(self.unreadCount - newNotifList.length);
+            });
+    };
 
-    NotificationList.prototype.togglePopup = function(){
-        this.isPopupVisible? this.hidePopup(): this.showPopup();
-    }
-
+    /**
+     * Set unread count
+     * @param {Number} count - new value for unread count
+     */
     NotificationList.prototype.setUnreadCount = function(count){
         this.unreadCount = (count > 0)? count: 0;
 
         this.locals.$count.text(this.unreadCount);
         this.$root.toggleClass('b-notiflist_have_notification', Boolean(this.unreadCount));
-    }
+    };
+
+    NotificationList.prototype.showPopup = function(){
+        if (this.isVisible) return;
+
+        this.isVisible = true;
+        this.$root.addClass('b-notiflist_show');
+    };
+
+    NotificationList.prototype.hidePopup = function(){
+        if (!this.isVisible) return;
+
+        this.isVisible = false;
+        this.$root.removeClass('b-notiflist_show');
+    };
+
+    NotificationList.prototype.togglePopup = function(){
+        this.isVisible? this.hidePopup(): this.showPopup();
+    };
+
+    // transport
+    NotificationList.prototype._recieveUnreadCount = function(){
+        var defer = $.Deferred(),
+            url = jsRoutes.controllers.core.Notifications.unread().url;
+
+        $.get(url, function (data) {
+            var count = ($.parseJSON(data)).unread;
+            defer.resolve(count);
+        });
+
+        return defer.promise();
+    };
+
+    NotificationList.prototype._recieveNotification = function(offset){
+        var defer = $.Deferred(),
+            limit = 5,
+            url = jsRoutes.controllers.core.Notifications.list(offset, limit).url;
+
+        $.get(url, function(data){
+            var notifList = $.parseJSON(data)[0];
+
+            defer.resolve(notifList);
+        });
+
+        return defer.promise();
+    };
+
+    /**
+     * Send to the server id of the viewed notification
+     * @param {NotificationItem[]} notifList
+     * @private
+     */
+    NotificationList.prototype._sendViewedNewNotif = function(notifList){
+        var ids = [],
+            url = jsRoutes.controllers.core.Notifications.read().url;
+
+        notifList.forEach(function(item){
+            ids.push(item.id);
+        });
+
+        $.post(url, {ids: ids})
+    };
+
 
     App.widgets.NotificationList = NotificationList;
 })(jQuery, App);
@@ -691,7 +791,7 @@
             return false;
         }
         return true;
-    }
+    };
 
     /**
      * Set error for input
@@ -708,7 +808,7 @@
         $('<div class="b-error" />')
             .text(errorText)
             .prependTo($parent);
-    }
+    };
 
     /**
      * Set errors
@@ -722,7 +822,7 @@
 
             if ($currentInput.length) self.setError($currentInput, item.error)
         })
-    }
+    };
 
     /**
      * Remove error for input
@@ -735,7 +835,7 @@
         $parent
             .removeClass('b-error_show')
             .find('.b-error').remove();
-    }
+    };
 
     /**
      * Remove all errors
@@ -748,7 +848,7 @@
             var $el = $(el);
             self.removeError($el)
         })
-    }
+    };
 
     FormValidation.prototype.clearForm = function(){
         var self = this;
@@ -757,7 +857,7 @@
             var $el = $(el);
             if (!$el.attr("disabled"))  $el.val('');
         })
-    }
+    };
 
     /**
      * Is Email valid?

@@ -23,17 +23,6 @@
  */
 @import "settings";
 
-html, body {
-  height: 100%;
-}
-body {
-  min-width: 850px;
-}
-body.with-melly {
-  background-image: url(../images/melly_right.png);
-  background-repeat: no-repeat;
-  background-position: right 51px;
-}
 
 .form {
   .block {
@@ -84,32 +73,7 @@ body.with-melly {
     color: #fff;
   }
 }
-#wrapper {
-  min-height: 100%;
-  position: relative;
-}
-#content {
-  padding-bottom: 100px;   /* Height of the footer element */
-}
-#footer {
-  width: 100%;
-  height: 80px;
-  position: absolute;
-  padding: 15px;
-  bottom: 0;
-  left: 0;
-  text-align: right;
-  border-top: 1px solid #e5e5e5;
-  color: #cccccc;
-}
-#footer a {
-  color: rgba(0, 0, 0, 0.53);
-}
-.switcher {
-  padding-top: 15px;
-  padding-right: 30px;
-  color: @grey;
-}
+
 .block {
   margin-bottom: 48px;
   .fa {
@@ -138,27 +102,7 @@ h3 a.font-sm {
     padding-right: 0;
   }
 }
-.profile-header {
-  height: 162px;
-  background-color: @light-grey;
-  &.funder {
-    background-color: @light-pink;
-  }
-  &.supporter {
-    background-color: @butterscotch;
-  }
-  .content-block {
-    margin-left: 240px;
-    .membership-type {
-      font-family: "kg_skinny_latteregular";
-      text-transform: uppercase;
-      font-size: 20px;
-      padding-right: 10px;
-      margin-top: 10px;
-      float: right;
-    }
-  }
-}
+
 .left {
   float: left;
   width: 199px;

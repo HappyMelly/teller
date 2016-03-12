@@ -52,6 +52,7 @@
   min-height: 100%;
   margin-bottom: -80px;
   text-align: center;
+  background-color: #f3f3f3;
 
   &:before{
     content: '';
@@ -83,6 +84,7 @@
 
   .top-stripe{
     padding-top: 140px;
+    z-index: 2;
   }
 
   .subpage {
@@ -123,10 +125,11 @@
 }
 
 .unauth__footer {
+  position: relative;
   width: 100%;
   text-align: center;
   padding: 30px 0 30px 0;
-  background-color: @light-grey;
+  background-color: #f3f3f3;
   color: @grey;
 
   a {

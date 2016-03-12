@@ -39,6 +39,7 @@ import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
+import securesocial.core.providers.MailToken
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
@@ -333,17 +334,18 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   protected def createFacilitatorAccount(person: Person, brand: Brand)(implicit request: RequestHeader): Unit = {
     createToken(person.email, isSignUp = false).map { token =>
+      val unexpirable = unexpirableToken(token)
       repos.userAccount.findByPerson(person.identifier) map {
         case None =>
           val account = UserAccount.empty(person.identifier).copy(byEmail = true, facilitator = true, registered = true)
           repos.userAccount.insert(account)
-          setupLoginByEmailEnvironment(person, token)
-          sendFacilitatorWelcomeEmail(person, brand.name, token.uuid)
+          setupLoginByEmailEnvironment(person, unexpirable)
+          sendFacilitatorWelcomeEmail(person, brand.name, unexpirable.uuid)
         case Some(account) =>
           if (!account.byEmail) {
             repos.userAccount.update(account.copy(byEmail = true, facilitator = true, registered = true))
-            setupLoginByEmailEnvironment(person, token)
-            sendFacilitatorWelcomeEmail(person, brand.name, token.uuid)
+            setupLoginByEmailEnvironment(person, unexpirable)
+            sendFacilitatorWelcomeEmail(person, brand.name, unexpirable.uuid)
           } else {
             repos.userAccount.update(account.copy(facilitator = true, registered = true))
           }
@@ -366,4 +368,11 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       (None, Some(mail.templates.password.html.facilitator(person.firstName, token, brand)))
     )
   }
+
+  /**
+    * Returns a token which will expire only in 10 years
+    * @param token Token
+    */
+  protected def unexpirableToken(token: MailToken): MailToken =
+    token.copy(expirationTime = token.expirationTime.plusYears(10))
 }

@@ -164,7 +164,7 @@ class MembersApi @Inject() (val services: Repositories,
     implicit token ⇒
       services.member.findAll flatMap { members =>
         val activeMembers = members.filter(_.active)
-        val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse members
+        val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse activeMembers
         val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
         jsonOk(Json.toJson(views.sortBy(_.member.name)))
       }

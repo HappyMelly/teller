@@ -1,0 +1,27 @@
+@(user: ActiveUser,
+        menu: String)(implicit request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
+
+@import be.objectify.deadbolt.core.utils.TemplateUtils.as
+@import be.objectify.deadbolt.scala.views.html._
+@import models.UserRole.Role._
+
+<div class="b-headmenu">
+    <a class="b-headmenu__link @if(menu == "members") { state_selected }" href="@controllers.community.routes.Members.index()">
+        Members
+    </a>
+    @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
+        <a class="b-headmenu__link @if(menu == "orgs") { active }" href="@controllers.core.routes.Organisations.index()">
+            Organizations
+        </a>
+    }
+    <a class="b-headmenu__link @if(menu == "brands") { state_selected }" href="@routes.Brands.index()">
+        Brands
+    </a>
+    <a class="b-headmenu__link @if(menu == "products") { active }" href="@controllers.community.routes.Products.index()">
+        Products
+    </a>
+    <a class="b-headmenu__link @if(menu == "people") { active }" href="@controllers.core.routes.People.index()">
+        People
+    </a>
+</div>
