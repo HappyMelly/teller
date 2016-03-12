@@ -44,6 +44,7 @@ import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
 import play.twirl.api.Html
+import securesocial.core.providers.MailToken
 import services._
 
 import scala.concurrent.Future
@@ -553,17 +554,18 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   protected def giveCoordinatorAccess(person: Person, brand: Brand)(implicit request: RequestHeader): Unit = {
     createToken(person.email, isSignUp = false).map { token =>
+      val unexpirable = unexpirableToken(token)
       repos.userAccount.findByPerson(person.identifier) map {
         case None =>
           val account = UserAccount.empty(person.identifier).copy(
             byEmail = true, coordinator = true, registered = true, activeRole = true)
           repos.userAccount.insert(account)
-          setupLoginByEmailEnvironment(person, token)
-          sendCoordinatorWelcomeEmail(person, brand.name, token.uuid)
+          setupLoginByEmailEnvironment(person, unexpirable)
+          sendCoordinatorWelcomeEmail(person, brand.name, unexpirable.uuid)
         case Some(account) =>
           if (!account.hasAccess) {
-            setupLoginByEmailEnvironment(person, token)
-            sendCoordinatorWelcomeEmail(person, brand.name, token.uuid)
+            setupLoginByEmailEnvironment(person, unexpirable)
+            sendCoordinatorWelcomeEmail(person, brand.name, unexpirable.uuid)
             repos.userAccount.update(account.copy(byEmail = true))
           }
       }
@@ -583,6 +585,14 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
       (None, Some(mail.templates.password.html.coordinator(person.firstName, token, brand)))
     )
   }
+
+  /**
+    * Returns a token which will expire only in 10 years
+    *
+    * @param token Token
+    */
+  protected def unexpirableToken(token: MailToken): MailToken =
+    token.copy(expirationTime = token.expirationTime.plusYears(10))
 }
 
 object Brands {

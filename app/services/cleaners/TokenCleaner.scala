@@ -23,17 +23,29 @@
  */
 package services.cleaners
 
+import scala.util.{Failure, Success}
 import models.repository.Repositories
-import org.joda.time.LocalDate
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Removes expired event requests from database
+  * Removes expired email and password tokens from database
   */
-class ExpiredEventRequestCleaner(repos: Repositories) {
+class TokenCleaner(repos: Repositories) {
 
   def clean() = {
-    println("ExpiredEventRequestClearer: start")
-    repos.eventRequest.deleteExpired(LocalDate.now())
-    println("ExpiredEventRequestClearer: end")
+    println("TokenCleaner: start")
+    val request = for {
+      p <- repos.mailToken.deleteExpiredTokens()
+      e <- repos.emailToken.deleteExpiredTokens()
+    } yield (p, e)
+    request onComplete {
+      case Success((passwordTokens, emailTokens)) =>
+        println(s"TokenCleaner: $passwordTokens password and $emailTokens email tokens were deleted")
+        println("TokenCleaner: end")
+      case Failure(t) =>
+        println(s"[ERROR] Token Cleaner: ${t.getMessage}")
+        println("TokenCleaner: end")
+    }
   }
 }
