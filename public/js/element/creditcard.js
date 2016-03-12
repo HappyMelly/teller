@@ -1,26 +1,4 @@
-/*
- * Happy Melly Teller
- * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
- *
- * This file is part of the Happy Melly Teller.
- *
- * Happy Melly Teller is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Happy Melly Teller is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
- *
- * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
- * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
- */
+
 
 function showError(message) {
     var obj = $('.alert');
@@ -80,38 +58,55 @@ var stripeResponseHandler = function(status, response) {
  * @returns {boolean}
  */
 var validateDetails = function() {
-    var flag = true;
-    var validateNumber = $.payment.validateCardNumber($('.cc-number').val());
-    var validateExpiry = $.payment.validateCardExpiry($('.cc-exp-month').val(),
-        $('.cc-exp-year').val());
-    var validateCVC = $.payment.validateCardCVC($('.cc-cvc').val());
-    if (validateNumber) {
-        $('.cc-number').parent().removeClass('has-error');
-    } else {
-        $('.cc-number').parent().addClass('has-error');
-        flag = false;
-    }
-    if (validateExpiry) {
-        $('.cc-exp-year').parent().removeClass('has-error');
-    } else {
-        $('.cc-exp-year').parent().addClass('has-error');
-        flag = false;
-    }
-    if (validateCVC) {
-        $('.cc-cvc').parent().removeClass('has-error');
-    } else {
-        $('.cc-cvc').parent().addClass('has-error');
-        flag = false;
-    }
-    var name = $('.cc-name');
-    if (name.val().length < 1) {
-        name.parent().addClass('has-error');
-        flag = false;
-    } else {
-        name.parent().removeClass('has-error');
-    }
-    return flag;
+    // var flag = true;
+    // var validateNumber = $.payment.validateCardNumber($('.cc-number').val());
+    // var validateExpiry = $.payment.validateCardExpiry($('.cc-exp-month').val(),
+    //     $('.cc-exp-year').val());
+    // var validateCVC = $.payment.validateCardCVC($('.cc-cvc').val());
+    // if (validateNumber) {
+    //     $('.cc-number').parent().removeClass('has-error');
+    // } else {
+    //     $('.cc-number').parent().addClass('has-error');
+    //     flag = false;
+    // }
+    // if (validateExpiry) {
+    //     $('.cc-exp-year').parent().removeClass('has-error');
+    // } else {
+    //     $('.cc-exp-year').parent().addClass('has-error');
+    //     flag = false;
+    // }
+    // if (validateCVC) {
+    //     $('.cc-cvc').parent().removeClass('has-error');
+    // } else {
+    //     $('.cc-cvc').parent().addClass('has-error');
+    //     flag = false;
+    // }
+    // var name = $('.cc-name');
+    // if (name.val().length < 1) {
+    //     name.parent().addClass('has-error');
+    //     flag = false;
+    // } else {
+    //     name.parent().removeClass('has-error');
+    // }
+    // return flag;
 };
+
+/**
+ * Returns true if entered amount is valid
+ * @returns {boolean}
+ */
+var validateAmount = function() {
+    var field = $('#fee');
+    if (field.val().length < 1 || isNaN(field.val())) {
+        field.parent().addClass('has-error');
+        return false;
+    } else {
+        field.parent().removeClass('has-error');
+        return true;
+    }
+};
+
+
 
 $(document).ready(function($) {
     $('.alert').hide();
@@ -126,12 +121,98 @@ $(document).ready(function($) {
             $("body").css("cursor", "progress");
             Stripe.card.createToken($form, stripeResponseHandler);
         }
-        // Prevent the form from submitting with the default action
+
         return false;
     });
-    $('input.cc-name').bind('change paste keyup', function() {
-        this.value = this.value.toUpperCase();
-    });
-    $('input.cc-number').payment('formatCardNumber');
-    $('input.cc-cvc').payment('formatCardCVC');
+    // $('input.cc-name').bind('change paste keyup', function() {
+    //     this.value = this.value.toUpperCase();
+    // });
+    // $('input.cc-number').payment('formatCardNumber');
+    // $('input.cc-cvc').payment('formatCardCVC');
 });
+
+function PaymentForm(selector){
+    this.$root = $(selector);
+    this.locals = this._getDom();
+
+    this._init();
+    this._assignEvents();
+}
+
+PaymentForm.prototype._getFom = function(){
+    var $root = this.$root;
+    
+    return {
+        $inputNumber: $root.find('.cc-number'),
+        $inputName: $root.find('.cc-number'),
+        $inputMonth: $root.find('.cc-exp-month'),
+        $inputYear: $root.find('.cc-exp-year'),
+        $inputCVC: $root.find('.cc-cvc')
+    }
+};
+
+PaymentForm.prototype._init = function(){
+    if (!$.fn.payment){
+        console.log('There is no payment plugin on this page');
+        return;
+    }
+
+    this.locals.$inputNumber.payment('formatCardNumber');
+    this.locals.$inputCVC.payment('formatCardCVC');
+
+    this.loadStripeScript()
+};
+
+PaymentForm.prototype._assignEvents = function(){
+    var self = this;
+    
+    self.$root  
+        .on('keyup', 'input', function(){
+            self._removeError($(this));
+            $(this).parent().removeClass('has-error');
+        })
+        .on('change paste keyup', '[data-card-name]', function(e){
+            var $this = $(this);
+            $this.val($this.val().toUpperCase())
+        })
+};
+
+PaymentForm.prototype.isValidForm = function(){
+    var valid = true,
+        locals = this.locals,
+        isValidNumber = $.payment.validateCardNumber(locals.$inputNumber.val()),
+        isValidExpiry = $.payment.validateCardExpiry(locals.$inputMonth.val(), locals.$inputYear.val()),
+        isValidCVC = $.payment.validateCardCVC(locals.$inputCVC.val()),
+        isValidName = $.trim(locals.$inputName.val().length);
+
+    if (!isValidNumber){
+        self._setError(locals.$inputNumber);
+        valid = false;
+    }
+
+    if (!isValidExpiry){
+        self._setError(locals.$inputMonth);
+        self._setError(locals.$inputYear);
+        valid = false;
+    }
+
+    if (!isValidCVC){
+        self._setError(locals.$inputCVC);
+        valid = false;
+    }
+
+    if (!isValidName){
+        self._setError(locals.$inputName);
+        valid = false;
+    }
+
+    return valid;
+};
+
+PaymentForm.prototype._setError = function($el){
+    $el.parent().addClass('has-error');
+};
+
+PaymentForm.prototype._removeError = function($el){
+    $el.parent().removeClass('has-error');
+};

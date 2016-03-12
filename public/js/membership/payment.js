@@ -188,9 +188,13 @@ $(document).ready(function($) {
     $('input.cc-number').payment('formatCardNumber');
     $('input.cc-cvc').payment('formatCardCVC');
     updateAmount('#fee');
+
+
+    /*==*/
     $('#supporters').on('click', function(e) {
         switchSupportersFundersFees(true)
-    });
+    });   
+    
     $('#funders').on('click', function(e) {
         switchSupportersFundersFees(false)
     });
