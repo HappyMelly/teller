@@ -1,5 +1,13 @@
 @(person: Person, card: models.core.payment.CreditCard, customerId: Long, apiKey: String)
 
+@import models.core.payment.Payment
+
+<script src="@routes.Assets.at("js/person/widgets/fee-form.js")" type="text/javascript"></script>
+<script>
+    $(function(){
+        new App.widgets.FeeForm('.js-fee-form');
+    })
+</script>
 
 <div class="b-contrib block">
     <h4 class="b-contrib__title">Contribution</h4>
@@ -47,20 +55,20 @@
         Changing contribution level doesn’t reflect on membership exparation date.
     </div>
 
-    <form class="b-payment__form " action="@controllers.core.routes.Customers.updateCard(customerId)"
+    <form class="b-payment__form js-fee-form" action="@controllers.core.routes.Customers.updateCard(customerId)"
     method="POST" id="payment-form" autocomplete="on">
 
-        @views.html.v2.element.fee((12,12,12), person);
-
+        @views.html.v2.element.fee()
         <div class="b-card__buttons">
-            ubscription fee &euro;<span id="amount">30</span>
-            plus % tax &euro; <span id="tax">0.00</span>
+            Subscription fee &euro;<span data-fee-amount>30</span>
+            plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span data-fee-tax>0.00</span>
 
-            <button type="submit" class="btn btn-primary b-card__submit">Pay &euro;<span>0.00</span></button>
+            <div>
+                <button type="submit" class="btn btn-primary b-card__submit">Pay &euro;<span data-fee-pay>0.00</span></button>
+            </div>
         </div>
     </form>
     @views.html.v2.element.paymentInfo()
-
 }
 </div>
 
