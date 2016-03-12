@@ -31,7 +31,9 @@ import javax.inject.Inject
 import controllers.api.json.PersonConverter
 import controllers.brand.Badges
 import models._
-import models.brand.Badge
+import models.cm.brand.Badge
+import models.cm.facilitator.{Endorsement, Material, FacilitatorLanguage, FacilitatorCountry}
+import models.cm.{Facilitator, LicenseView}
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.MessagesApi
@@ -44,9 +46,9 @@ import scala.concurrent.Future
 /**
  * Facilitators API
  */
-class FacilitatorsApi @Inject() (val services: Repositories,
+class FacilitatorsApi @Inject() (val repos: Repositories,
                                  override val messagesApi: MessagesApi)
-  extends ApiAuthentication(services, messagesApi) {
+  extends ApiAuthentication(repos, messagesApi) {
 
   case class FacilitatorSummary(person: Person,
                                 address: Address,
@@ -86,16 +88,16 @@ class FacilitatorsApi @Inject() (val services: Repositories,
    * @param code Brand code
    */
   def facilitators(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.brand.find(code) flatMap {
+    repos.cm.brand.find(code) flatMap {
       case None => jsonNotFound("Brand not found")
       case Some(brand) =>
         (for {
-          f <- services.license.licensees(brand.identifier, LocalDate.now())
-          data <- services.facilitator.findByBrand(brand.identifier)
-          c <- services.facilitator.countries(f.map(_.identifier))
-          l <- services.facilitator.languages(f.map(_.identifier))
-          a <- services.address.find(f.map(_.addressId))
-          b <- services.brandBadge.findByBrand(brand.identifier)
+          f <- repos.cm.license.licensees(brand.identifier, LocalDate.now())
+          data <- repos.cm.facilitator.findByBrand(brand.identifier)
+          c <- repos.cm.facilitator.countries(f.map(_.identifier))
+          l <- repos.cm.facilitator.languages(f.map(_.identifier))
+          a <- repos.address.find(f.map(_.addressId))
+          b <- repos.cm.rep.brand.badge.findByBrand(brand.identifier)
         } yield facilitatorsSummary(f, c, l, a, data, b)) flatMap { summaries =>
           val collator = Collator.getInstance(Locale.ENGLISH)
           val ord = new Ordering[String] {
@@ -160,7 +162,7 @@ class FacilitatorsApi @Inject() (val services: Repositories,
         "website" -> view.person.webSite,
         "blog" -> view.person.blog,
         "active" -> view.person.active,
-        "organizations" -> view.person.organisations(services),
+        "organizations" -> view.person.organisations(repos),
         "licenses" -> view.licenses,
         "endorsements" -> view.endorsements,
         "materials" -> view.materials,
@@ -190,13 +192,13 @@ class FacilitatorsApi @Inject() (val services: Repositories,
     implicit request ⇒ implicit token ⇒
       val mayBePerson = try {
         val id = identifier.toLong
-        services.person.findComplete(id)
+        repos.person.findComplete(id)
       } catch {
-        case e: NumberFormatException ⇒ services.person.find(URLDecoder.decode(identifier, "ASCII"))
+        case e: NumberFormatException ⇒ repos.person.find(URLDecoder.decode(identifier, "ASCII"))
       }
       val view = (for {
         person <- mayBePerson
-        brand <- code.map(value => services.brand.find(value)).getOrElse(Future.successful(None))
+        brand <- code.map(value => repos.cm.brand.find(value)).getOrElse(Future.successful(None))
       } yield (person, brand)) flatMap {
         case (None, _) => Future.successful(None)
         case (Some(person), None) => withoutBrandData(person).map(value => Some(value))
@@ -241,9 +243,9 @@ class FacilitatorsApi @Inject() (val services: Repositories,
     */
   protected def withoutBrandData(person: Person) = {
     (for {
-      e <- services.person.endorsements(person.identifier)
-      m <- services.person.materials(person.identifier)
-      l <- services.license.activeLicenses(person.identifier)
+      e <- repos.person.endorsements(person.identifier)
+      m <- repos.person.materials(person.identifier)
+      l <- repos.cm.license.activeLicenses(person.identifier)
     } yield (e, m, l)) map { case (endorsements, materials, licenses) =>
       val filteredEndorsements = endorsements.filter(_.brandId == 0)
       val filteredMaterials = materials.filter(_.brandId == 0)
@@ -259,11 +261,11 @@ class FacilitatorsApi @Inject() (val services: Repositories,
     */
   protected def withBrandData(person: Person, brand: Brand) = {
     (for {
-      e <- services.person.endorsements(person.identifier)
-      m <- services.person.materials(person.identifier)
+      e <- repos.person.endorsements(person.identifier)
+      m <- repos.person.materials(person.identifier)
       f <- retrieveFacilitatorStat(brand, person.identifier)
-      b <- services.brandBadge.findByBrand(brand.identifier)
-      l <- services.license.activeLicenses(person.identifier)
+      b <- repos.cm.rep.brand.badge.findByBrand(brand.identifier)
+      l <- repos.cm.license.activeLicenses(person.identifier)
     } yield (e, m, f, b, l)) map { case (endorsements, materials, facilitator, badges, licenses) =>
       val urls = badgeUrls(badges, facilitator.badges)
       val filteredMaterials = materials.filter(_.brandId == 0) ::: materials.filter(_.brandId == brand.identifier)
@@ -292,7 +294,7 @@ class FacilitatorsApi @Inject() (val services: Repositories,
    * @param personId Person identifier
    */
   protected def retrieveFacilitatorStat(brand: Brand, personId: Long): Future[Facilitator] = {
-    services.facilitator.find(brand.identifier, personId) map {
+    repos.cm.facilitator.find(brand.identifier, personId) map {
       case None => Facilitator(None, personId, brand.identifier)
       case Some(facilitator) => facilitator
     }

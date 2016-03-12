@@ -1,6 +1,7 @@
+@import models.cm.brand.EventType
 @(user: ActiveUser,
   brand: Brand,
-  form: Form[models.brand.EventType])(implicit flash: Flash,
+  form: Form[EventType])(implicit flash: Flash,
         request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,

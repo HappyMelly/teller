@@ -27,7 +27,8 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Brands
 import helpers._
-import models.repository.{ BrandRepository, ProductRepository }
+import models.repository.ProductRepository
+import models.repository.cm.BrandRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import stubs._

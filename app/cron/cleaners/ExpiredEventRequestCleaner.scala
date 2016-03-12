@@ -33,7 +33,7 @@ class ExpiredEventRequestCleaner(repos: Repositories) {
 
   def clean() = {
     println("ExpiredEventRequestClearer: start")
-    repos.eventRequest.deleteExpired(LocalDate.now())
+    repos.cm.rep.event.request.deleteExpired(LocalDate.now())
     println("ExpiredEventRequestClearer: end")
   }
 }

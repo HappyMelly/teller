@@ -23,7 +23,7 @@
  */
 package models
 
-import models.brand.Settings
+import models.cm.brand.Settings
 import models.repository._
 import play.api.libs.Crypto
 

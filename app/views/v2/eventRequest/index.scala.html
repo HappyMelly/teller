@@ -1,7 +1,8 @@
+@import models.cm.event.EventRequest
 @(user: ActiveUser,
         brand: Brand,
         brands: List[Brand],
-        requests: List[models.event.EventRequest])(implicit request: Request[Any],
+        requests: List[EventRequest])(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler)
 

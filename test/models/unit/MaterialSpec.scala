@@ -24,6 +24,7 @@
 package models.unit
 
 import models._
+import models.cm.facilitator.Material
 import org.specs2.mutable._
 
 class MaterialSpec extends Specification {

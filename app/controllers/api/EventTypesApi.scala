@@ -24,8 +24,7 @@
 package controllers.api
 
 import javax.inject.Inject
-
-import models.brand.EventType
+import models.cm.brand.EventType
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -54,10 +53,10 @@ class EventTypesApi @Inject() (val services: Repositories,
    * @param code Brand code
    */
   def types(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.brand.find(code) flatMap {
+    services.cm.brand.find(code) flatMap {
       case None => jsonNotFound("Brand not found")
       case Some(brand) =>
-        services.eventType.findByBrand(brand.identifier) flatMap { eventTypes =>
+        services.cm.rep.brand.eventType.findByBrand(brand.identifier) flatMap { eventTypes =>
           jsonOk(Json.toJson(eventTypes.map(x => (x, code))))
         }
     }

@@ -25,8 +25,8 @@
 package models.database.event
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.cm.event.EventCancellation
 import models.database.BrandTable
-import models.event.EventCancellation
 import org.joda.time.LocalDate
 import slick.driver.JdbcProfile
 

@@ -25,7 +25,7 @@
 package models.database.brand
 
 import models.JodaMoney._
-import models.brand.BrandFee
+import models.cm.brand.BrandFee
 import slick.driver.JdbcProfile
 
 private[models] trait BrandFeeTable {

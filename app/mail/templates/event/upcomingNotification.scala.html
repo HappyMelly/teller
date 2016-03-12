@@ -1,5 +1,9 @@
 @import models.repository.Repositories
-@(events: List[Event], brand: Brand, request: models.event.EventRequest, unsubscribeLink: String)(implicit services: Repositories)
+@import models.cm.event.EventRequest
+@(events: List[models.cm.Event],
+        brand: Brand,
+        request: EventRequest,
+        unsubscribeLink: String)(implicit repos: Repositories)
 
 @import views.ViewHelpersV2._
 @import views.{Countries, Languages}
@@ -42,7 +46,7 @@
                     @dateInterval(event.schedule.start, event.schedule.end) in @event.location.city,
                     @Countries.name(event.location.countryCode) <br/>
                     Language: @Languages.all.get(event.language.spoken) <br/>
-                    Facilitators: @event.facilitators(services).tail.foldRight("")(_.fullName + ", " + _) @event.facilitators(services).head.fullName
+                    Facilitators: @event.facilitators(repos).tail.foldRight("")(_.fullName + ", " + _) @event.facilitators(repos).head.fullName
                 </td>
             </tr>
             <tr>

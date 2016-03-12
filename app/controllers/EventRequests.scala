@@ -28,7 +28,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def details(brandId: Long, requestId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
-      repos.eventRequest.find(requestId) flatMap {
+      repos.cm.rep.event.request.find(requestId) flatMap {
         case None => jsonBadRequest("Event request not found")
         case Some(eventRequest) => ok(views.html.v2.eventRequest.details(eventRequest))
       }
@@ -41,7 +41,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def index(brandId: Long) = RestrictedAction(List(Role.Facilitator, Role.Coordinator)) {
     implicit request => implicit handler => implicit user =>
-      repos.eventRequest.findByBrand(brandId) flatMap { requests =>
+      repos.cm.rep.event.request.findByBrand(brandId) flatMap { requests =>
         roleDiffirentiator(user.account, Some(brandId)) { (view, brands) =>
           ok(views.html.v2.eventRequest.index(user, view.brand, brands, requests))
         } { (brand, brands) =>
@@ -58,10 +58,10 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param hashedId Hashed unique id
     */
   def unsubscribe(hashedId: String) = Action.async { implicit request ⇒
-    repos.eventRequest.find(hashedId) flatMap {
+    repos.cm.rep.event.request.find(hashedId) flatMap {
       case None => notFound(views.html.v2.eventRequest.notfound())
       case Some(eventRequest) =>
-        repos.eventRequest.update(eventRequest.copy(unsubscribed = true)) flatMap { _ =>
+        repos.cm.rep.event.request.update(eventRequest.copy(unsubscribed = true)) flatMap { _ =>
           ok(views.html.v2.eventRequest.unsubscribed())
         }
     }

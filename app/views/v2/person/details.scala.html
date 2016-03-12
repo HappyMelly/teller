@@ -1,9 +1,10 @@
+@import models.cm.brand.Badge
 @(user: ActiveUser,
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
     conf: controllers.core.PeopleDetailConfig,
-    badges: List[(models.brand.Badge, String)],
+    badges: List[(Badge, String)],
     member: Option[Member])(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,

@@ -27,6 +27,9 @@ package stubs
 import models.repository._
 import models.repository.admin.ApiTokenRepository
 import models.repository.brand._
+import models.repository.cm._
+import models.repository.cm.brand.{EventTypeRepository, CertificateTemplateRepository, BrandFeeRepository, BrandCoordinatorRepository}
+import models.repository.cm.event.{EventInvoiceRepository, EventCancellationRepository}
 import models.repository.event._
 
 trait FakeRepositories extends Repositories {

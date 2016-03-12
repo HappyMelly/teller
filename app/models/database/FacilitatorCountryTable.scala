@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.FacilitatorCountry
+import models.cm.facilitator.FacilitatorCountry
 import slick.driver.JdbcProfile
 
 private[models] trait FacilitatorCountryTable {

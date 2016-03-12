@@ -26,8 +26,8 @@ package models.database.event
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.DateStamp
+import models.cm.event.Attendee
 import models.database.EventTable
-import models.event.Attendee
 import org.joda.time.{DateTime, LocalDate}
 import slick.collection.heterogeneous._
 import slick.collection.heterogeneous.syntax._

@@ -27,9 +27,9 @@ package controllers.acceptance.eventtypes
 import controllers.EventTypes
 import helpers.BrandHelper
 import integration.PlayAppSpec
-import models.brand.EventType
-import models.repository.BrandRepository
-import models.repository.brand.EventTypeRepository
+import models.cm.brand.EventType
+import models.repository.cm.BrandRepository
+import models.repository.cm.brand.EventTypeRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
 import play.api.mvc.AnyContentAsEmpty
@@ -103,9 +103,9 @@ class EventTypesSpec extends PlayAppSpec with IsolatedMockFactory {
 
   def e5 = {
     val req = withPostData(editorPostRequest)
-    (services.eventTypeService.find _).expects(1L).returning(Some(eventType))
-    (services.eventTypeService.findByBrand _).expects(1L).returning(List(eventType))
-    (services.eventTypeService.update _).expects(*)
+    (services.cm.rep.brand.eventTypeService.find _).expects(1L).returning(Some(eventType))
+    (services.cm.rep.brand.eventTypeService.findByBrand _).expects(1L).returning(List(eventType))
+    (services.cm.rep.brand.eventTypeService.update _).expects(*)
     (services.brandService.find(_: Long)).expects(1L).returning(Some(brand))
 
     val res = controller.update(1L, 1L).apply(req)

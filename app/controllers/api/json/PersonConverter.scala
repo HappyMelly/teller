@@ -2,6 +2,7 @@ package controllers.api.json
 
 import controllers.api.OrganisationsApi
 import models._
+import models.cm.LicenseView
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
 

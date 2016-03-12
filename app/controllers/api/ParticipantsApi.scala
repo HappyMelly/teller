@@ -26,7 +26,7 @@ package controllers.api
 import javax.inject.Inject
 
 import models._
-import models.event.Attendee
+import models.cm.event.Attendee
 import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.data.Form
@@ -88,7 +88,7 @@ class ParticipantsApi @Inject() (val services: Repositories,
         badRequest(Json.prettyPrint(json))
       },
       data ⇒ {
-        services.attendee.insert(data) flatMap { attendee =>
+        services.cm.rep.event.attendee.insert(data) flatMap { attendee =>
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
         }
       })
@@ -111,7 +111,7 @@ class ParticipantsApi @Inject() (val services: Repositories,
    * @param eventId Event identifier
    */
   def attendees(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.attendee.findByEvents(List(eventId)) flatMap { attendees =>
+    services.cm.rep.event.attendee.findByEvents(List(eventId)) flatMap { attendees =>
       jsonOk(Json.toJson(attendees.map(_._2)))
     }
   }

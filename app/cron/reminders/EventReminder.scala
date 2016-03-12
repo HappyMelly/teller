@@ -27,7 +27,7 @@ package cron.reminders
 import javax.inject.Inject
 
 import models.Activity
-import models.event.EventRequest
+import models.cm.event.EventRequest
 import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
 import play.api.Play
@@ -45,9 +45,9 @@ class EventReminder @Inject() (val email: Email, val repos: Repositories) extend
    * Sends email notifications to facilitators asking to confirm or delete
    *  past events which are unconfirmed
    */
-  def sendPostFactumConfirmation() = repos.brand.findAll map { brands =>
+  def sendPostFactumConfirmation() = repos.cm.brand.findAll map { brands =>
     brands.foreach { brand ⇒
-      repos.event.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
+      repos.cm.event.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
         events.foreach { event ⇒
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
@@ -72,11 +72,11 @@ class EventReminder @Inject() (val email: Email, val repos: Repositories) extend
   /**
     * Sends email notifications about upcoming events to the users who left
     */
-  def sendUpcomingEventsNotification() = repos.eventRequest.findWithOneParticipant map { results =>
+  def sendUpcomingEventsNotification() = repos.cm.rep.event.request.findWithOneParticipant map { results =>
     results.groupBy(_.brandId).foreach { case (brandId, requests) =>
       val endOfPeriod = LocalDate.now().plusMonths(3)
-      repos.brand.get(brandId).foreach { brand =>
-        val futureEvents = repos.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
+      repos.cm.brand.get(brandId).foreach { brand =>
+        val futureEvents = repos.cm.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
           archived = Some(false))
         futureEvents map { unfilteredEvents =>
           val events = unfilteredEvents.filter(_.schedule.start.isBefore(endOfPeriod))
@@ -98,10 +98,10 @@ class EventReminder @Inject() (val email: Email, val repos: Repositories) extend
    * Sends email notifications to facilitators asking to confirm
    *  upcoming events which are unconfirmed
    */
-  def sendUpcomingConfirmation() = repos.brand.findAll map { brands =>
+  def sendUpcomingConfirmation() = repos.cm.brand.findAll map { brands =>
     brands.foreach { brand ⇒
       val today = LocalDate.now().toDate.getTime
-      repos.event.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
+      repos.cm.event.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
         events.filter { x =>
           val duration = new Duration(today, x.schedule.start.toDate.getTime)
           duration.getStandardDays == 7 || duration.getStandardDays == 30

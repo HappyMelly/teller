@@ -78,8 +78,8 @@ class ProfileStrengths @Inject()(override implicit val env: TellerRuntimeEnviron
     else
       strength
     val query = for {
-      licenses <- repos.license.activeLicenses(id)
-      languages <- repos.facilitator.languages(id)
+      licenses <- repos.cm.license.activeLicenses(id)
+      languages <- repos.cm.facilitator.languages(id)
     } yield (licenses, languages)
     val strengthWithFacilitator = query map { case (licenses, languages) =>
       if (licenses.nonEmpty) {

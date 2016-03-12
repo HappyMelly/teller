@@ -1,5 +1,6 @@
+@import models.cm.brand.BrandCoordinator
 @(brandId: Long,
-    members: List[(Person, models.brand.BrandCoordinator)],
+    members: List[(Person, BrandCoordinator)],
     people: List[Person])(implicit request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler,

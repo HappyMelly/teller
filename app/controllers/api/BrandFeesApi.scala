@@ -25,8 +25,7 @@
 package controllers.api
 
 import javax.inject.Inject
-
-import models.brand.BrandFee
+import models.cm.brand.BrandFee
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -57,7 +56,7 @@ class BrandFeesApi @Inject() (override val messagesApi: MessagesApi,
     * @param brand Brand code
    */
   def fees(brand: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.brand.find(brand) flatMap {
+    services.cm.brand.find(brand) flatMap {
       case None => jsonNotFound("Brand not found")
       case Some(x) =>
         services.fee.findByBrand(x.id.get) flatMap { fees =>

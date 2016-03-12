@@ -26,8 +26,9 @@ package controllers.acceptance.events
 import _root_.integration.PlayAppSpec
 import controllers.Events
 import helpers.{EventHelper, OrganisationHelper}
-import models.repository.event.EventInvoiceRepository
-import models.repository.{EventRepository, OrganisationRepository}
+import models.repository.cm.EventRepository
+import models.repository.OrganisationRepository
+import models.repository.cm.event.EventInvoiceRepository
 import models.{EventInvoice, EventView}
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._

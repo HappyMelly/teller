@@ -26,7 +26,7 @@ package models.database.brand
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.DateStamp
-import models.brand.Badge
+import models.cm.brand.Badge
 import org.joda.time.DateTime
 import slick.driver.JdbcProfile
 

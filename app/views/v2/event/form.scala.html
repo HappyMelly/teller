@@ -2,7 +2,7 @@
   id: Option[Long],
   brands: List[Brand],
   emptyForm: Boolean,
-  form: Form[EventView])(implicit request: Request[Any],
+  form: Form[models.cm.EventView])(implicit request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token,

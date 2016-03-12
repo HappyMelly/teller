@@ -28,7 +28,8 @@ import javax.inject.Inject
 import controllers.Brands
 import controllers.api.json.{PersonConverter, ProductConverter}
 import models._
-import models.brand.{BrandLink, BrandTestimonial}
+import models.cm.Event
+import models.cm.brand.{BrandLink, BrandTestimonial}
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -39,8 +40,8 @@ import scala.concurrent.Future
 /**
  * Brands API
  */
-class BrandsApi @Inject() (val services: Repositories,
-                           override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
+class BrandsApi @Inject() (val repos: Repositories,
+                           override val messagesApi: MessagesApi) extends ApiAuthentication(repos, messagesApi) {
 
   implicit val brandWrites = new Writes[(Brand, Int)] {
     def writes(view: (Brand, Int)): JsValue = {
@@ -133,10 +134,10 @@ class BrandsApi @Inject() (val services: Repositories,
     * @param code Brand code
    */
   def brand(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    val view = services.brand.find(code) flatMap {
+    val view = repos.cm.brand.find(code) flatMap {
       case Some(brand) => fullView(brand)
       case None =>
-        services.brand.findByName(code) flatMap {
+        repos.cm.brand.findByName(code) flatMap {
           case None => Future.successful(None)
           case Some(brand) => fullView(brand)
         }
@@ -152,8 +153,8 @@ class BrandsApi @Inject() (val services: Repositories,
    */
   def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
     (for {
-      brands <- services.brand.findAll
-      products <- services.product.findNumberPerBrand
+      brands <- repos.cm.brand.findAll
+      products <- repos.product.findNumberPerBrand
     } yield (brands, products)) flatMap { case (brands, products) =>
       val brandsWithProducts = brands.filter(_.active).map(brand => (brand, products.getOrElse(brand.identifier, 0)))
       jsonOk(Json.toJson(brandsWithProducts))
@@ -168,13 +169,13 @@ class BrandsApi @Inject() (val services: Repositories,
   protected def fullView(brand: Brand): Future[Option[BrandFullView]] = {
     val id = brand.identifier
     (for {
-      owner <- services.person.findComplete(brand.ownerId)
-      member <- services.member.findByObject(brand.ownerId, person = true)
-      events <- services.event.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
-      links <- services.brand.links(id)
-      testimonials <- services.brand.testimonials(id)
-      products <- services.product.findByBrand(id)
-      profile <- services.socialProfile.find(id, ProfileType.Brand)
+      owner <- repos.person.findComplete(brand.ownerId)
+      member <- repos.member.findByObject(brand.ownerId, person = true)
+      events <- repos.cm.event.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
+      links <- repos.cm.brand.links(id)
+      testimonials <- repos.cm.brand.testimonials(id)
+      products <- repos.product.findByBrand(id)
+      profile <- repos.socialProfile.find(id, ProfileType.Brand)
     } yield (owner, member, events, links, testimonials, products, profile)) map {
       case (None, _, _, _, _, _, _) => None
       case (Some(owner), None, events, links, testimonials, products, profile) =>

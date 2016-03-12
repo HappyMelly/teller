@@ -28,7 +28,7 @@ import controllers.Statistics
 import helpers.EventHelper
 import integration.PlayAppSpec
 import models.License
-import models.repository.{ EventRepository, LicenseRepository }
+import models.repository.cm.{LicenseRepository, EventRepository}
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory

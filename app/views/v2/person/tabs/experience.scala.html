@@ -1,5 +1,7 @@
+@import models.cm.facilitator.Material
+@import models.cm.facilitator.Endorsement
 @(person: Person,
-  experiencePerBrand: List[(Facilitator, String)],
+  experiencePerBrand: List[(models.cm.Facilitator, String)],
   endorsements: List[(Endorsement, String)],
   materials: List[Material])(implicit request: Request[Any],
   handler: be.objectify.deadbolt.scala.DeadboltHandler)

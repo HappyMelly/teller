@@ -1,7 +1,8 @@
+@import models.cm.brand.BrandLink
 @(brand: Brand,
     profile: SocialProfile,
     coordinator: Option[Person],
-    links: List[models.brand.BrandLink])(implicit request: Request[Any],
+    links: List[BrandLink])(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import _root_.templates.Formatters._

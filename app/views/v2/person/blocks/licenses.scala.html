@@ -1,6 +1,9 @@
 @(person: Person,
-  facilitationData: List[(LicenseView, Float)]
-  )(implicit request: Request[Any], flash: Flash, handler: be.objectify.deadbolt.scala.DeadboltHandler, token: play.filters.csrf.CSRF.Token)
+  facilitationData: List[(models.cm.LicenseView, Float)]
+  )(implicit request: Request[Any],
+        flash: Flash,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token)
 
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import be.objectify.deadbolt.scala.views.html._
@@ -13,7 +16,7 @@
 }
 <div class="list-group licenses">
 @for( (view, rating) <- facilitationData) {
-  @defining(view.license) { license: License =>
+  @defining(view.license) { license: models.cm.License =>
       <div class="list-group-item">
         <div class="list-group-item-heading">@view.brand.name
           &nbsp;&nbsp;&nbsp; @views.html.v2.element.rating(rating)

@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
-import models.brand.BrandTestimonial
+import models.cm.brand.BrandTestimonial
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
@@ -62,7 +62,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
     "company" -> optional(nonEmptyText))(TestimonialFormData.apply)(TestimonialFormData.unapply))
 
   def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.brand.find(brandId) flatMap {
+    services.cm.brand.find(brandId) flatMap {
       case None => notFound(Messages("error.brand.notFound"))
       case Some(brand) ⇒ ok(views.html.v2.testimonial.form(user, brandId, form))
     }
@@ -71,8 +71,8 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
   def edit(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brand.find(brandId)
-        testimonial <- services.brand.findTestimonial(id)
+        brand <- services.cm.brand.find(brandId)
+        testimonial <- services.cm.brand.findTestimonial(id)
       } yield (brand, testimonial)) flatMap {
         case (None, _) => notFound(Messages("error.brand.notFound"))
         case (_, None) => notFound("Testimonial not found")
@@ -89,7 +89,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    */
   def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brand.find(brandId) flatMap {
+      services.cm.brand.find(brandId) flatMap {
         case None => notFound(Messages("error.brand.notFound"))
         case Some(brand) =>
           form.bindFromRequest.fold(
@@ -98,7 +98,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
               val testimonial = BrandTestimonial(None, brandId,
                 testimonialData.content, testimonialData.name,
                 testimonialData.company)
-              services.brand.insertTestimonial(testimonial) flatMap { _ =>
+              services.cm.brand.insertTestimonial(testimonial) flatMap { _ =>
                 redirect(routes.Brands.details(brandId).url + "#testimonials")
               }
             })
@@ -116,7 +116,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
    */
   def remove(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brand.deleteTestimonial(brandId, id) flatMap { _ =>
+      services.cm.brand.deleteTestimonial(brandId, id) flatMap { _ =>
         jsonSuccess("Testimonial was successfully removed")
       }
   }
@@ -134,7 +134,7 @@ class BrandTestimonials @Inject() (override implicit val env: TellerRuntimeEnvir
         testimonialData ⇒ {
           val testimonial = BrandTestimonial(Some(id), brandId, testimonialData.content, testimonialData.name,
             testimonialData.company)
-          services.brand.updateTestimonial(testimonial) flatMap { _ =>
+          services.cm.brand.updateTestimonial(testimonial) flatMap { _ =>
             redirect(routes.Brands.details(brandId).url + "#testimonials")
           }
         })

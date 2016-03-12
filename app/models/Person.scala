@@ -210,7 +210,7 @@ object Person {
 
   def deletable(id: Long, services: Repositories): Future[Boolean] = for {
     c <- services.contribution.contributions(id, isPerson = true)
-    l <- services.license.licensesWithBrands(id)
+    l <- services.cm.license.licensesWithBrands(id)
     o <- services.person.memberships(id)
   } yield c.isEmpty && l.isEmpty && o.isEmpty
 

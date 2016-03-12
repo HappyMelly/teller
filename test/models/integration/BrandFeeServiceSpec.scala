@@ -25,8 +25,8 @@
 package models.integration
 
 import integration.PlayAppSpec
-import models.brand.BrandFee
-import models.repository.brand.BrandFeeRepository
+import models.cm.brand.BrandFee
+import models.repository.cm.brand.BrandFeeRepository
 import org.joda.money.Money
 
 class BrandFeeServiceSpec extends PlayAppSpec {

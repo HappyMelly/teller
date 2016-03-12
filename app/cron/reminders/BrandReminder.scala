@@ -37,8 +37,8 @@ class BrandReminder @Inject() (val email: Email, val repos: Repositories) extend
 
   def sendLicenseExpirationReminder(): Unit = {
     (for {
-      brands <- repos.brand.findAllWithSettings
-      licenses <- repos.license.findAll
+      brands <- repos.cm.brand.findAllWithSettings
+      licenses <- repos.cm.license.findAll
     } yield (brands, licenses)) map { case (brands, licenses) =>
       brands.filter(_.settings.licenseExpirationEmail).foreach { view =>
         val facilitatorIds = licenses.filter(_.expiring).map(_.licenseeId).distinct

@@ -74,7 +74,7 @@ class PeopleApi @Inject() (val services: Repositories,
       case None => notFound("Person not found")
       case Some(person) =>
         (for {
-          l <- services.license.activeLicenses(person.identifier)
+          l <- services.cm.license.activeLicenses(person.identifier)
           c <- services.contribution.contributions(person.identifier, isPerson = true)
           o <- services.person.memberships(person.identifier)
         } yield (l, c, o)) flatMap { case (licenses, contributions, organisations) =>

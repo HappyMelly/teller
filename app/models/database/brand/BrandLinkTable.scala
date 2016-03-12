@@ -24,7 +24,7 @@
 
 package models.database.brand
 
-import models.brand.BrandLink
+import models.cm.brand.BrandLink
 import slick.driver.JdbcProfile
 
 private[models] trait BrandLinkTable {

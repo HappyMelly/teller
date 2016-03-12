@@ -30,7 +30,7 @@ import akka.actor.ActorSystem
 import cron.SubscriptionUpdater
 import cron.cleaners.{ExpiredEventRequestCleaner, TokenCleaner}
 import cron.reminders._
-import models.Facilitator
+import models.cm.Facilitator
 import models.repository.Repositories
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment

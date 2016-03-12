@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import models.brand.BrandLink
+import models.cm.brand.BrandLink
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
@@ -57,7 +57,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * @param brandId Brand identifier
    */
   def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.brand.find(brandId) flatMap {
+    services.cm.brand.find(brandId) flatMap {
       case None => jsonNotFound(Messages("error.brand.notFound"))
       case Some(brand) =>
         val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
@@ -65,7 +65,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
           error ⇒ jsonBadRequest("Link cannot be empty"),
           linkData ⇒ {
             val link = BrandLink(None, brandId, linkData._1, linkData._2)
-            services.brand.insertLink(BrandLink.updateType(link)) flatMap { insertedLink =>
+            services.cm.brand.insertLink(BrandLink.updateType(link)) flatMap { insertedLink =>
               jsonOk(Json.toJson(insertedLink))
             }
           })
@@ -83,7 +83,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def remove(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brand.deleteLink(brandId, id) flatMap { _ =>
+      services.cm.brand.deleteLink(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }

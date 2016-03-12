@@ -24,7 +24,7 @@
 
 package models.database.brand
 
-import models.brand.BrandTestimonial
+import models.cm.brand.BrandTestimonial
 import slick.driver.JdbcProfile
 
 private[models] trait BrandTestimonialTable {

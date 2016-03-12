@@ -26,9 +26,9 @@ package controllers.unit
 
 import controllers.Events
 import helpers.EventHelper
-import models.brand.EventType
-import models.repository.LicenseRepository
-import models.repository.brand.EventTypeRepository
+import models.cm.brand.EventType
+import models.repository.cm.LicenseRepository
+import models.repository.cm.brand.EventTypeRepository
 import models.{Event, UserAccount}
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
@@ -69,7 +69,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
     }
     "if the event type doesn't belong to the brand" in {
       val eventType = EventType(None, 2L, "test", None, 16, false)
-      (services.eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.cm.rep.brand.eventTypeService.find _) expects 1L returning Some(eventType)
       val event = EventHelper.one
       val res = controller.callValidateEventType(event)
       res.nonEmpty must_== true
@@ -77,7 +77,7 @@ class EventsSpec extends Specification with IsolatedMockFactory {
       res.get._2 must_== "error.eventType.wrongBrand"
     }
     "if the event type doesn't exist" in {
-      (services.eventTypeService.find _) expects 1L returning None
+      (services.cm.rep.brand.eventTypeService.find _) expects 1L returning None
       val event = EventHelper.one
       val res = controller.callValidateEventType(event)
       res.nonEmpty must_== true

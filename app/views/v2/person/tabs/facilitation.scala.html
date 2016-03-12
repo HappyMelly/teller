@@ -1,5 +1,7 @@
+@import models.cm.facilitator.FacilitatorCountry
+@import models.cm.facilitator.FacilitatorLanguage
 @(person: Person,
-    facilitationData: List[(LicenseView, Float)],
+    facilitationData: List[(models.cm.LicenseView, Float)],
     languages: List[FacilitatorLanguage],
     countries: List[FacilitatorCountry])(implicit request: Request[Any],
         flash: Flash,

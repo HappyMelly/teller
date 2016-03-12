@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import models.Material
+import models.cm.facilitator.Material
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._

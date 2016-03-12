@@ -155,7 +155,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
         case (page, productId, brandId) ⇒ {
           (for {
             p <- repos.product.find(productId)
-            b <- repos.brand.find(brandId)
+            b <- repos.cm.brand.find(brandId)
           } yield (p, b)) flatMap {
             case (None, _) => notFound("Product not found")
             case (_, None) => notFound("Brand not found")
@@ -203,7 +203,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     implicit handler ⇒ implicit user ⇒
       (for {
         p <- repos.product.find(productId)
-        b <- repos.brand.find(brandId)
+        b <- repos.cm.brand.find(brandId)
       } yield (p, b)) flatMap {
         case (None, _) => notFound("Product not found")
         case (_, None) => notFound("Brand not found")
@@ -261,7 +261,7 @@ class Products @javax.inject.Inject() (override implicit val env: TellerRuntimeE
         p <- repos.product.find(id)
         b <- repos.product.brands(id)
         d <- repos.product.findDerivatives(id)
-        bs <- repos.brand.findAllWithCoordinator
+        bs <- repos.cm.brand.findAllWithCoordinator
         o <- repos.org.findActive
         c <- repos.contribution.contributors(id)
       } yield (p, b, d, bs, o, c)) flatMap {

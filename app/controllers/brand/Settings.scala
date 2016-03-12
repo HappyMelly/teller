@@ -48,11 +48,11 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   def turnLicenseExpirationReminderOff(brandId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
-      services.brand.findWithSettings(brandId) flatMap {
+      services.cm.brand.findWithSettings(brandId) flatMap {
         case None => jsonNotFound("Brand not found")
         case Some(view) =>
           if (view.settings.licenseExpirationEmail) {
-            services.brand.updateSettings(view.settings.copy(licenseExpirationEmail = false))
+            services.cm.brand.updateSettings(view.settings.copy(licenseExpirationEmail = false))
           }
           jsonSuccess("Reminder is turned off")
       }
@@ -68,16 +68,16 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       Form(single("content" -> nonEmptyText)).bindFromRequest().fold(
         errors => jsonBadRequest("Email body is empty"),
         content => {
-          services.brand.findWithSettings(brandId) flatMap {
+          services.cm.brand.findWithSettings(brandId) flatMap {
             case None => jsonNotFound("Brand not found")
             case Some(view) =>
               if (view.settings.licenseExpirationEmail) {
-                services.brand.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
+                services.cm.brand.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
                 jsonSuccess("Reminder email is updated")
               } else {
                 val settings = view.settings.copy(licenseExpirationEmailBody = Some(content),
                   licenseExpirationEmail = true)
-                services.brand.updateSettings(settings)
+                services.cm.brand.updateSettings(settings)
                 jsonSuccess("Reminder is turned on")
               }
           }

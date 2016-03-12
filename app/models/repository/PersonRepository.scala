@@ -26,6 +26,7 @@ package models.repository
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
+import models.cm.facilitator.{Endorsement, Material}
 import models.core.payment.CustomerType
 import models.database._
 import models.database.event.AttendeeTable

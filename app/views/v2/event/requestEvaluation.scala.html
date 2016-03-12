@@ -1,4 +1,6 @@
-@(event: Event, facilitatorId: Long, evaluationUrl: Option[String])(implicit token: play.filters.csrf.CSRF.Token)
+@(event: models.cm.Event,
+    facilitatorId: Long,
+    evaluationUrl: Option[String])(implicit token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 

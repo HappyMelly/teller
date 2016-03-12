@@ -24,7 +24,7 @@
 
 package models.unit
 
-import models.repository.EvaluationRepository
+import models.repository.cm.EvaluationRepository
 import models.{DateStamp, EvaluationStatus, Evaluation, Activity}
 import org.joda.time.{ LocalDate, DateTime }
 import org.scalamock.specs2.MockContext

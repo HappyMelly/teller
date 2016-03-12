@@ -26,7 +26,8 @@ package controllers.api
 import javax.inject.Inject
 
 import controllers.api.json.PersonConverter
-import models.{Person, Event}
+import models.Person
+import models.cm.Event
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -37,8 +38,8 @@ import scala.concurrent.Future
 /**
  * Events API
  */
-class EventsApi @Inject() (val services: Repositories,
-                           override val messagesApi: MessagesApi) extends ApiAuthentication(services, messagesApi) {
+class EventsApi @Inject() (val repos: Repositories,
+                           override val messagesApi: MessagesApi) extends ApiAuthentication(repos, messagesApi) {
 
   implicit val personWrites = (new PersonConverter).personWrites
 
@@ -76,12 +77,12 @@ class EventsApi @Inject() (val services: Repositories,
    * @param id Event identifier
    */
   def event(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.event.find(id) flatMap {
+    repos.cm.event.find(id) flatMap {
       case None => jsonNotFound("Event not found")
       case Some(event) =>
         val futureFacilitators = for {
-          f <- services.event.facilitators(id)
-          _ <- services.person.collection.addresses(f)
+          f <- repos.cm.event.facilitators(id)
+          _ <- repos.person.collection.addresses(f)
         } yield f
         futureFacilitators flatMap { facilitators =>
           jsonOk(Json.toJson((event, facilitators))(eventDetailsWrites))
@@ -107,11 +108,11 @@ class EventsApi @Inject() (val services: Repositories,
     facilitatorId: Option[Long],
     countryCode: Option[String],
     eventType: Option[Long]) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-      services.brand.find(code) flatMap {
+      repos.cm.brand.find(code) flatMap {
         case None => jsonNotFound("Brand not found")
         case Some(brand) =>
           (for {
-            types <- services.eventType.findByBrand(brand.identifier)
+            types <- repos.cm.rep.brand.eventType.findByBrand(brand.identifier)
             events <- facilitatorId map { value ⇒
               eventsByFacilitator(value, brand.identifier, future, public)
             } getOrElse {
@@ -119,7 +120,7 @@ class EventsApi @Inject() (val services: Repositories,
             }
           } yield (types, events)) flatMap { case (types, events) =>
             val typeNames = types.map(eventType => eventType.identifier -> eventType.name).toMap
-            services.event.applyFacilitators(events) flatMap { _ =>
+            repos.cm.event.applyFacilitators(events) flatMap { _ =>
               jsonOk(eventsToJson(events, typeNames))
             }
           }
@@ -149,7 +150,7 @@ class EventsApi @Inject() (val services: Repositories,
           "end" -> event.schedule.end,
           "hoursPerDay" -> event.schedule.hoursPerDay,
           "totalHours" -> event.schedule.totalHours,
-          "facilitators" -> event.facilitators(services),
+          "facilitators" -> event.facilitators(repos),
           "city" -> event.location.city,
           "country" -> event.location.countryCode,
           "website" -> event.pageUrl(controllers.routes.Events.public(event.hashedId).url),
@@ -175,7 +176,7 @@ class EventsApi @Inject() (val services: Repositories,
     brandId: Long,
     future: Option[Boolean],
     public: Option[Boolean]): Future[List[Event]] = {
-    services.event.findByFacilitator(facilitatorId, Some(brandId), future, public, archived = Some(false))
+    repos.cm.event.findByFacilitator(facilitatorId, Some(brandId), future, public, archived = Some(false))
   }
 
   /**
@@ -194,7 +195,7 @@ class EventsApi @Inject() (val services: Repositories,
     archived: Option[Boolean],
     countryCode: Option[String],
     eventType: Option[Long]): Future[List[Event]] = {
-    services.event.findByParameters(Some(brandId), future, public, archived, None, countryCode, eventType)
+    repos.cm.event.findByParameters(Some(brandId), future, public, archived, None, countryCode, eventType)
   }
 }
 

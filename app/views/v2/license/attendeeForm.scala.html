@@ -1,7 +1,8 @@
+@import models.cm.event.Attendee
 @(user: ActiveUser,
-    form: Form[License],
+    form: Form[models.cm.License],
     brands: List[Brand],
-    attendee: models.event.Attendee)(implicit flash: Flash,
+    attendee: Attendee)(implicit flash: Flash,
         request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,

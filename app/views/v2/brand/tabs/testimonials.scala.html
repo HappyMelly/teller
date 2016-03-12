@@ -1,5 +1,6 @@
+@import models.cm.brand.BrandTestimonial
 @(brandId: Long,
-    testimonials: List[models.brand.BrandTestimonial])(implicit request: Request[Any],
+    testimonials: List[BrandTestimonial])(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._

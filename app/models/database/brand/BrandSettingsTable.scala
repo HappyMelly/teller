@@ -24,7 +24,7 @@
 
 package models.database.brand
 
-import models.brand.Settings
+import models.cm.brand.Settings
 import slick.driver.JdbcProfile
 
 private[models] trait BrandSettingsTable {

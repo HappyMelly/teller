@@ -28,6 +28,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
 import models.UserRole.Role
 import models._
+import models.cm.{Event, License}
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.MessagesApi
@@ -41,11 +42,11 @@ import scala.concurrent.Future
   */
 class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                     override val messagesApi: MessagesApi,
-                                    val services: Repositories,
+                                    val repos: Repositories,
                                     deadbolt: DeadboltActions,
                                     handlers: HandlerCache,
                                     actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   case class StatByCountry(stat: Map[String, List[(LocalDate, Int)]])
   case class Item(brand: Long, month: LocalDate, fee: Float)
@@ -55,7 +56,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     */
   def index() = RestrictedAction(Role.Admin) { implicit request => implicit handler => implicit user =>
     val result = for {
-      brands <- services.brand.findAll
+      brands <- repos.cm.brand.findAll
       licenses <- licensesInChargeablePeriod() flatMap { licenses =>
         licenseStatsByCountry(licenses) map { stats =>
           licenseUsageByMonth(stats)
@@ -142,7 +143,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     * Returns events valid in a chargeable period with tweaked start date
     */
   protected def eventsInChargeablePeriod(): Future[List[Event]] =
-    services.event.findAll map { events =>
+    repos.cm.event.findAll map { events =>
       filterEventsByDate(events).map { event =>
         val start = event.schedule.start.withDayOfMonth(1)
         event.copy(schedule = event.schedule.copy(start = start))
@@ -194,7 +195,7 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     * Returns licenses valid in a chargeable period with tweaked start/end dates
     */
   protected def licensesInChargeablePeriod(): Future[List[License]] =
-    services.license.findAll map { licenses =>
+    repos.cm.license.findAll map { licenses =>
       filterLicensesByDate(licenses).sortBy(_.start.toString).map { license =>
         val start = license.start.withDayOfMonth(1)
         license.copy(start = start, end = start.plusMonths(1).minusDays(1))
@@ -208,8 +209,8 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     */
   protected def licenseStatsByCountry(licenses: List[License]) = {
     val (start, _) = chargeablePeriod()
-    services.person.find(licenses.map(_.licenseeId).distinct) map { facilitators =>
-      services.person.collection.addresses(facilitators)
+    repos.person.find(licenses.map(_.licenseeId).distinct) map { facilitators =>
+      repos.person.collection.addresses(facilitators)
       licenses.map { license =>
         (license, facilitators.find(_.identifier == license.licenseeId).map(_.address.countryCode).get)
       }.groupBy(_._1.brandId).map { byBrand =>

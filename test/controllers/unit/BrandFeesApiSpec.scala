@@ -26,9 +26,9 @@ package controllers.unit
 
 import controllers.api.BrandFeesApi
 import helpers.BrandHelper
-import models.brand.BrandFee
-import models.repository.BrandRepository
-import models.repository.brand.BrandFeeRepository
+import models.cm.brand.BrandFee
+import models.repository.cm.BrandRepository
+import models.repository.cm.brand.BrandFeeRepository
 import org.joda.money.Money
 import org.scalamock.specs2.MockContext
 import org.specs2.mutable._

@@ -28,7 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.Endorsements
 import helpers._
 import models.Person
-import models.Endorsement
+import models.cm.facilitator.Endorsement
 import models.repository.PersonRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._

@@ -1,7 +1,8 @@
+@import models.cm.brand.Badge
 @(person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-    badges: List[(models.brand.Badge, String)])(implicit request: Request[Any],
+    badges: List[(Badge, String)])(implicit request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)

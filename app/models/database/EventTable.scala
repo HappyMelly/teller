@@ -25,7 +25,7 @@
 package models.database
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models._
+import models.cm._
 import org.joda.time.LocalDate
 import slick.collection.heterogeneous._
 import slick.collection.heterogeneous.syntax._

@@ -46,7 +46,7 @@ class ProfileStrengthReminder @Inject() (val email: Email, val repos: Repositori
    */
   def sendToFacilitators() = {
     val queries = for {
-      l <- repos.license.findActive
+      l <- repos.cm.license.findActive
       p <- repos.profileStrength.find(l.map(_.licenseeId).distinct, org = false)
     } yield p
     val withRanks = queries map { profiles =>

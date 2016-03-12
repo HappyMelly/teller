@@ -1,4 +1,5 @@
-@(brand: Brand, attendee: models.event.Attendee, body: String)
+@import models.cm.event.Attendee
+@(brand: Brand, attendee: Attendee, body: String)
 @import laika.api._
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML

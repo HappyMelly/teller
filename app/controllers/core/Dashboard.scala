@@ -30,6 +30,7 @@ import controllers.{Security, BrandAware}
 import controllers.security.LoginReminder
 import models.UserRole.Role._
 import models._
+import models.cm.Event
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -67,14 +68,14 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
       if (user.account.registered) {
         roleDiffirentiator(user.account) { (view, brands) =>
           (for {
-            l <- repos.license.expiring(List(view.brand.identifier))
+            l <- repos.cm.license.expiring(List(view.brand.identifier))
             e <- unbilledEvents(view.brand)
           } yield (l, e)) flatMap { case (licenses, events) =>
             ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands, licenses, events))
           }
         } { (view, brands) =>
           (for {
-            events <- repos.event.findByFacilitator(user.account.personId, brandId = None)
+            events <- repos.cm.event.findByFacilitator(user.account.personId, brandId = None)
             evals <- unhandledEvaluations(events, brands)
           } yield (events, evals)) flatMap { case (events, evaluations) =>
             ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
@@ -102,7 +103,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
     implicit handler ⇒ implicit user ⇒
       roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
         (for {
-          l <- repos.license.expiring(List(view.brand.identifier))
+          l <- repos.cm.license.expiring(List(view.brand.identifier))
           e <- unbilledEvents(view.brand)
         } yield (l, e)) flatMap { case (licenses, events) =>
           ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
@@ -110,7 +111,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
         }
       } { (view, brands) =>
         (for {
-          events <- repos.event.findByFacilitator(user.account.personId, brandId = Some(id))
+          events <- repos.cm.event.findByFacilitator(user.account.personId, brandId = Some(id))
           evaluations <- unhandledEvaluations(events, brands)
         } yield (events, evaluations)) flatMap { case (events, evaluations) =>
           ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
@@ -151,7 +152,7 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
     * @param events List of events
     */
   protected def unhandledEvaluations(events: List[Event], brands: List[Brand]) = {
-    repos.evaluation.findUnhandled(events) map { evaluations =>
+    repos.cm.evaluation.findUnhandled(events) map { evaluations =>
       evaluations.sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
         .map(value => (value, brands.find(_.identifier == value._1.brandId)))
 
@@ -177,8 +178,8 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
     */
   protected def unbilledEvents(brand: Brand): Future[List[Event]] = {
     (for {
-      e <- repos.event.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
-      i <- repos.event.withInvoices(e)
+      e <- repos.cm.event.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
+      i <- repos.cm.event.withInvoices(e)
     } yield i) map { withInvoices =>
       val TELLER_LAUNCHED_DATE = LocalDate.parse("2015-01-01")
       withInvoices.filter(_.invoice.invoiceBy.isEmpty).

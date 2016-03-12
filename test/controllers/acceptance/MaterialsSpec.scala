@@ -27,7 +27,7 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.Materials
 import helpers._
-import models.Material
+import models.cm.facilitator.Material
 import models.repository.PersonRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._

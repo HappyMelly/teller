@@ -27,36 +27,23 @@ package models.repository
 import javax.inject.{Inject, Singleton}
 
 import models.repository.admin.{ApiTokenRepository, TransactionTypeRepository}
-import models.repository.brand._
-import models.repository.event._
+import models.repository.cm.brand._
 import play.api.Application
 
 trait IRepositories {
   val core: models.repository.core.Repositories
+  val cm: models.repository.cm.Repositories
 
   val address: AddressRepository
   val activity: ActivityRepository
   val apiToken: ApiTokenRepository
-  val attendee: AttendeeRepository
-  val brand: BrandRepository
-  val brandBadge: BadgeRepository
-  val brandCoordinator: BrandCoordinatorRepository
-  val certificate: CertificateTemplateRepository
   val contribution: ContributionRepository
   val emailToken: EmailTokenRepository
-  val evaluation: EvaluationRepository
-  val event: EventRepository
-  val eventInvoice: EventInvoiceRepository
-  val eventCancellation: EventCancellationRepository
-  val eventRequest: EventRequestRepository
-  val eventType: EventTypeRepository
   val exchange: ExchangeRateRepository
   val experiment: ExperimentRepository
-  val facilitator: FacilitatorRepository
   val fee: BrandFeeRepository
   val mailToken: PasswordTokenRepository
   val member: MemberRepository
-  val license: LicenseRepository
   val org: OrganisationRepository
   val notification: NotificationRepository
   val person: PersonRepository
@@ -73,6 +60,8 @@ trait IRepositories {
 @Singleton
 class Repositories @Inject()(val app: Application) extends IRepositories {
 
+  lazy val cm: models.repository.cm.Repositories = new models.repository.cm.Repositories(app, this)
+
   lazy val core: models.repository.core.Repositories = new models.repository.core.Repositories(app)
 
   lazy val address: AddressRepository = new AddressRepository(app)
@@ -81,37 +70,13 @@ class Repositories @Inject()(val app: Application) extends IRepositories {
 
   lazy val apiToken: ApiTokenRepository = new ApiTokenRepository(app)
 
-  lazy val attendee: AttendeeRepository = new AttendeeRepository(app)
-
-  lazy val brand: BrandRepository = new BrandRepository(app, this)
-
-  lazy val brandBadge: BadgeRepository = new BadgeRepository(app)
-
-  lazy val brandCoordinator: BrandCoordinatorRepository = new BrandCoordinatorRepository(app)
-
-  lazy val certificate: CertificateTemplateRepository = new CertificateTemplateRepository(app)
-
   lazy val contribution: ContributionRepository = new ContributionRepository(app)
 
   lazy val emailToken: EmailTokenRepository = new EmailTokenRepository(app)
 
-  lazy val evaluation: EvaluationRepository = new EvaluationRepository(app, this)
-
-  lazy val event: EventRepository = new EventRepository(app, this)
-
-  lazy val eventInvoice: EventInvoiceRepository = new EventInvoiceRepository(app)
-
-  lazy val eventCancellation: EventCancellationRepository = new EventCancellationRepository(app)
-
-  lazy val eventRequest: EventRequestRepository = new EventRequestRepository(app)
-
-  lazy val eventType: EventTypeRepository = new EventTypeRepository(app)
-
   lazy val exchange: ExchangeRateRepository = new ExchangeRateRepository(app)
 
   lazy val experiment: ExperimentRepository = new ExperimentRepository(app)
-
-  lazy val facilitator: FacilitatorRepository = new FacilitatorRepository(app)
 
   lazy val fee: BrandFeeRepository = new BrandFeeRepository(app)
 
@@ -120,8 +85,6 @@ class Repositories @Inject()(val app: Application) extends IRepositories {
   lazy val member: MemberRepository = new MemberRepository(app)
 
   lazy val notification: NotificationRepository = new NotificationRepository(app)
-
-  lazy val license: LicenseRepository = new LicenseRepository(app)
 
   lazy val org: OrganisationRepository = new OrganisationRepository(app, this)
 

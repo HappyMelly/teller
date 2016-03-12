@@ -24,7 +24,7 @@
 package controllers.event
 
 import controllers.Forms._
-import models._
+import models.cm._
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.data._

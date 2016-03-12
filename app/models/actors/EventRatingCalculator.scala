@@ -36,10 +36,10 @@ class EventRatingCalculator @Inject() (val services: Repositories) extends Actor
 
   def receive = {
     case eventId: Long ⇒
-      services.evaluation.findByEvent(eventId) map { unfilteredEvaluations =>
+      services.cm.evaluation.findByEvent(eventId) map { unfilteredEvaluations =>
         val evaluations = unfilteredEvaluations.filter(_.approved)
         val rating = evaluations.foldLeft(0.0f)(_ + _.facilitatorImpression.toFloat / evaluations.length)
-        services.event.updateRating(eventId, rating)
+        services.cm.event.updateRating(eventId, rating)
       }
   }
 

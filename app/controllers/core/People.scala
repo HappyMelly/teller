@@ -194,7 +194,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       p <- repos.person.findComplete(id)
-      f <- repos.facilitator.findByPerson(id)
+      f <- repos.cm.facilitator.findByPerson(id)
       m <- repos.person.memberships(id)
       o <- repos.org.findActive
       deletable <- Person.deletable(id, repos)
@@ -206,8 +206,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         val otherOrganisations = orgs.filterNot(organisation ⇒ memberships.contains(organisation))
         val badgesInfo = if (conf.facilitator) {
           val query = for {
-            badges <- repos.brandBadge.find(facilitators.flatMap(_.badges))
-            brands <- repos.brand.find(badges.map(_.brandId).distinct)
+            badges <- repos.cm.rep.brand.badge.find(facilitators.flatMap(_.badges))
+            brands <- repos.cm.brand.find(badges.map(_.brandId).distinct)
           } yield (badges, brands)
           query map { case (badges, brands) =>
             badges.map { badge =>
@@ -304,10 +304,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         case "facilitation" ⇒
           (for {
             p <- repos.person.find(id)
-            l <- repos.license.licensesWithBrands(id)
-            f <- repos.facilitator.findByPerson(id)
-            langs <- repos.facilitator.languages(id)
-            c <- repos.facilitator.countries(id)
+            l <- repos.cm.license.licensesWithBrands(id)
+            f <- repos.cm.facilitator.findByPerson(id)
+            langs <- repos.cm.facilitator.languages(id)
+            c <- repos.cm.facilitator.countries(id)
           } yield (p, l, f, langs, c)) flatMap {
             case (None, _, _, _, _) => notFound("Person not found")
             case (Some(person), licenses, facilitation, languages, countries) =>
@@ -371,8 +371,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
     */
   protected def retrieveByBrandStatistics(id: Long) = {
     (for {
-      l <- repos.license.licensesWithBrands(id)
-      f <- repos.facilitator.findByPerson(id)
+      l <- repos.cm.license.licensesWithBrands(id)
+      f <- repos.cm.facilitator.findByPerson(id)
     } yield (l, f)) map { case (licenses, facilitations) =>
       licenses.sortBy(_.brand.name).map { view ⇒
         val facilitator = facilitations.find(_.brandId == view.brand.identifier).get

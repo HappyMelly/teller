@@ -1,6 +1,7 @@
+@import models.cm.event.Attendee
 @(user: ActiveUser,
-    form: Form[Evaluation],
-    attendee: models.event.Attendee)(implicit flash: Flash,
+    form: Form[models.cm.Evaluation],
+    attendee: Attendee)(implicit flash: Flash,
         request: Request[Any],
         token: play.filters.csrf.CSRF.Token,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,

@@ -25,7 +25,8 @@
 package models.database
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.{DateStamp, Evaluation, EvaluationStatus}
+import models.DateStamp
+import models.cm.{Evaluation, EvaluationStatus}
 import org.joda.time.{DateTime, LocalDate}
 import slick.driver.JdbcProfile
 

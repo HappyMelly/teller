@@ -25,8 +25,8 @@
 package models.integration
 
 import integration.PlayAppSpec
-import models.brand.CertificateTemplate
-import models.repository.brand.CertificateTemplateRepository
+import models.cm.brand.CertificateTemplate
+import models.repository.cm.brand.CertificateTemplateRepository
 
 class CertificateTemplateServiceSpec extends PlayAppSpec {
 

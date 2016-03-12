@@ -24,8 +24,7 @@
 package controllers.api
 
 import javax.inject.Inject
-
-import models.event.EventRequest
+import models.cm.event.EventRequest
 import models.repository.Repositories
 import models.{APIError, DateStamp}
 import org.joda.time.DateTime
@@ -73,7 +72,7 @@ class EventRequestsApi @Inject() (val services: Repositories,
   def create(brandCode: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
     val name = token.appName
 
-    services.brand.find(brandCode) flatMap {
+    services.cm.brand.find(brandCode) flatMap {
       case None => jsonNotFound(s"Brand $brandCode not found")
       case Some(brand) =>
         val requestData = form(brand.identifier, name).bindFromRequest()
@@ -83,7 +82,7 @@ class EventRequestsApi @Inject() (val services: Repositories,
             badRequest(Json.prettyPrint(json))
           },
           eventRequest =>
-            services.eventRequest.insert(eventRequest) flatMap { value =>
+            services.cm.rep.event.request.insert(eventRequest) flatMap { value =>
               jsonOk(Json.obj("request_id" -> value.id))
             }
         )

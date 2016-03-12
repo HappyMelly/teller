@@ -1,7 +1,7 @@
 @(user: ActiveUser,
     funders: List[Organisation],
-    event: Event,
-    view: InvoiceView)(implicit
+    event: models.cm.Event,
+    view: models.cm.InvoiceView)(implicit
     request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler,

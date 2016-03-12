@@ -28,8 +28,8 @@ import _root_.integration.PlayAppSpec
 import controllers.BrandLinks
 import helpers._
 import models.Brand
-import models.brand.BrandLink
-import models.repository.BrandRepository
+import models.cm.brand.BrandLink
+import models.repository.cm.BrandRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json._
 import play.api.test.FakeRequest

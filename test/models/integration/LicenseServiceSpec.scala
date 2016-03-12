@@ -26,8 +26,8 @@ package models.integration
 
 import helpers.{ BrandHelper, PersonHelper }
 import integration.{ TruncateBefore, PlayAppSpec }
+import models.repository.cm.{LicenseRepository, FacilitatorRepository}
 import models.{ Facilitator, License }
-import models.repository.{ FacilitatorRepository, LicenseRepository }
 import org.joda.money.Money
 import org.joda.money.CurrencyUnit._
 import org.joda.time.LocalDate
@@ -129,9 +129,9 @@ class LicenseServiceSpec extends PlayAppSpec {
         "1", LocalDate.now().minusYears(1), now.minusDays(1), now.plusDays(2),
         true, Money.of(EUR, 100), None)
       val facilitatorService = mock[FacilitatorRepository]
-      (services.facilitatorService.find _) expects (1, 1) returning None
+      (services.cm.facilitator.Service.find _) expects (1, 1) returning None
       val facilitator = Facilitator(None, 1L, 1L)
-      (services.facilitatorService.insert _) expects facilitator
+      (services.cm.facilitator.Service.insert _) expects facilitator
       service.facilitatorService_=(facilitatorService)
       service.update(license)
       ok
@@ -143,7 +143,7 @@ class LicenseServiceSpec extends PlayAppSpec {
         true, Money.of(EUR, 100), None)
       val facilitatorService = mock[FacilitatorRepository]
       val facilitator = Facilitator(None, 1L, 1L)
-      (services.facilitatorService.find _) expects (1, 1) returning Some(facilitator)
+      (services.cm.facilitator.Service.find _) expects (1, 1) returning Some(facilitator)
       service.facilitatorService_=(facilitatorService)
       service.update(license)
       ok

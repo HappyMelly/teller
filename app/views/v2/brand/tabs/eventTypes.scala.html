@@ -1,5 +1,6 @@
+@import models.cm.brand.EventType
 @(brandId: Long,
-    eventTypes: List[models.brand.EventType]
+    eventTypes: List[EventType]
     )(implicit request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler)

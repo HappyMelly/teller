@@ -1,10 +1,11 @@
-@(event: Event,
+@import models.cm.event.Comparator
+@(event: models.cm.Event,
     eventType: String,
     brand: Brand,
-    changes: List[models.event.Comparator.FieldChange])(implicit request: RequestHeader,
+    changes: List[Comparator.FieldChange])(implicit request: RequestHeader,
         messages: Messages)
+@import models.repository.cm.brand.EventTypeRepository
 
-@import models.repository.brand.EventTypeRepository
 @import laika.api._
 @import laika.parse.markdown.Markdown
 @import laika.render.HTML

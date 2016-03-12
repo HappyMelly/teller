@@ -24,7 +24,7 @@
 
 package models.database.brand
 
-import models.brand.EventType
+import models.cm.brand.EventType
 import models.database.BrandTable
 import slick.driver.JdbcProfile
 
