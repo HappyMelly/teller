@@ -6750,6 +6750,15 @@ button.close {
 .h-weight400 {
   font-weight: 400;
 }
+.h-aright {
+  text-align: right !important;
+}
+.h-aleft {
+  text-align: left !important;
+}
+.h-acenter {
+  text-align: center !important;
+}
 /*== colors ==*/
 .h-pink {
   color: #ee929f;
@@ -6945,13 +6954,13 @@ textarea.form-control {
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-.b-modal .modal-dialog {
-  box-shadow: none;
-}
 .b-modal .modal-body,
 .b-modal .modal-footer {
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+.b-modal__dlg {
+  box-shadow: none !important;
 }
 .b-modal__close {
   position: absolute;
@@ -8052,6 +8061,212 @@ textarea.form-control {
 }
 .b-rating__star .fa-star {
   vertical-align: 0;
+}
+.b-payment {
+  margin-bottom: 20px;
+}
+.b-payment__text {
+  right: auto;
+}
+.b-payment__errors {
+  margin-bottom: 15px;
+}
+.b-payment__form {
+  margin-bottom: 30px;
+}
+/* fee strip */
+.b-feestrip {
+  background-color: rgba(255, 197, 80, 0.44);
+  margin: 22px -56px 22px;
+  padding: 20px 56px 16px;
+  display: block;
+  zoom: 1;
+}
+.b-feestrip:after {
+  content: " ";
+  display: block;
+  font-size: 0;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.b-feestrip__col {
+  position: relative;
+  float: left;
+  text-align: left;
+  width: 50%;
+  min-height: 1px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.b-feestrip__col:first-of-type {
+  padding-right: 15px;
+}
+.b-feestrip__col:last-of-type {
+  padding-left: 15px;
+}
+.b-feestrip__title {
+  font-size: 18px;
+  font-weight: 400;
+  margin: 0 0 23px 0 ;
+}
+.b-feestrip__input {
+  background: rgba(255, 255, 255, 0.5) !important;
+  width: 98px !important;
+}
+.b-card {
+  height: 279px;
+  text-align: center;
+}
+.b-card .form-control {
+  height: 40px;
+  background: #ffffff !important;
+}
+.b-card .cc-exp-month,
+.b-card .cc-exp-year {
+  display: inline-block;
+  width: 58px;
+  margin-right: 10px;
+}
+.b-card__con {
+  position: relative;
+  width: 403px;
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(51, 51, 51, 0.2);
+  margin: 0 0 20px 10px;
+  min-height: 240px;
+  padding: 33px 19px 10px 16px;
+  z-index: 2;
+}
+[class^="b-card__icon-"] {
+  display: block;
+  position: absolute;
+  top: 19px;
+  background-image: url(../images/payment-logo.png);
+  background-repeat: no-repeat;
+}
+.b-card__icon-mastercard {
+  right: 19px;
+  background-position: 0 -26px;
+  height: 24px;
+  width: 41px;
+}
+.b-card__icon-visa {
+  right: 70px;
+  background-position: 0 0;
+  height: 24px;
+  width: 41px;
+}
+.b-card__i {
+  padding-bottom: 23px;
+  text-align: left;
+  display: block;
+  zoom: 1;
+}
+.b-card__i:after {
+  content: " ";
+  display: block;
+  font-size: 0;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.b-card__i.no-bottom-pad {
+  padding-bottom: 0;
+}
+.b-card__i-label {
+  padding-bottom: 5px;
+  text-align: left;
+  text-transform: uppercase;
+}
+.b-card__i-number {
+  width: 200px;
+}
+.b-card__i-holder {
+  width: 200px;
+}
+.b-card__i-valid {
+  margin-left: 20px;
+}
+.b-card__cvv {
+  display: inline-block;
+  vertical-align: top;
+  width: 80px;
+}
+.b-card__cvv .form-control {
+  margin-top: -4px;
+}
+.b-card__alert {
+  float: left;
+  padding: 5px 30px 5px 10px;
+  margin: 10px 0 0;
+  color: #ee929f;
+}
+.b-card__back {
+  display: inline-block;
+  position: relative;
+  width: 400px;
+  left: 33px;
+  top: -228px;
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(51, 51, 51, 0.2);
+  margin-bottom: 20px;
+  min-height: 222px;
+  padding: 24px 26px 19px;
+  z-index: 1;
+  text-align: right;
+}
+.b-card__back-line {
+  background: -moz-linear-gradient(left center, #232733 0px, #5e616a 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+  background: -webkit-gradient(linear, left top, right top, color-stop(0%, #232733), color-stop(100%, #5e616a));
+  background: -o-linear-gradient(top, #232733 0, #5e616a 100%);
+  border-top: 1px solid #93979e;
+  height: 40px;
+  margin: 16px -26px 30px;
+  position: relative;
+  z-index: 10;
+}
+.b-card__buttons {
+  text-align: center;
+}
+.b-card__submit {
+  font-size: 18px;
+  margin-top: 9px;
+  min-width: 280px;
+}
+.dlg-hmfees .b-modal__dlg {
+  width: 710px;
+}
+.dlg-hmfees__content {
+  padding: 25px;
+  text-align: left;
+}
+.dlg-hmfees__title {
+  font-size: 18px;
+  margin: 30px 0 10px 0;
+}
+.dlg-hmfees__link.deactivated {
+  color: black !important;
+  border-bottom: none !important;
+  text-decoration: none;
+  cursor: default;
+}
+.b-payinfo {
+  margin-top: 52px;
+}
+.b-payinfo__img {
+  float: left;
+  margin-right: 20px;
+}
+.b-payinfo__text {
+  margin-top: -2px;
+  margin-left: 113px;
+  text-align: left;
 }
 .b-error {
   position: absolute;
