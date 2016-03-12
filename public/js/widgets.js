@@ -615,12 +615,16 @@
         })
     };
 
-    NotificationList.prototype._setNoMoreNotification = function(){
-        if (this.offset){
-            this.$root.addClass('b-notiflist_load_all');
-        } else {
+    NotificationList.prototype._isHaveNotification = function(notifList){
+        if (!notifList.length && !this.offset) {
             this.$root.addClass('b-notiflist_empty');
+            return false;
         }
+
+        if (notifList.length <= 5){
+            this.$root.addClass('b-notiflist_load_all');
+        }
+        return true;
     };
 
     /**
@@ -632,10 +636,7 @@
 
         self._recieveNotification(offset)
             .done(function(notifList){
-                if (!notifList.length) {
-                    self._setNoMoreNotification();
-                    return;
-                }
+                if (!self._isHaveNotification(notifList)) return;
 
                 self.offset += notifList.length;
                 self._renderNotification(notifList);
