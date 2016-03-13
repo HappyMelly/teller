@@ -22,11 +22,11 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.apiv2
+package controllers.api
 
 import javax.inject.Inject
 
-import controllers.apiv2.json.ProductConverter
+import controllers.api.json.ProductConverter
 import models.ProductView
 import models.repository.Repositories
 import play.api.i18n.{I18nSupport, MessagesApi}

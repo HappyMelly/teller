@@ -1,4 +1,4 @@
-package controllers.apiv2.json
+package controllers.api.json
 
 import models.ContributorView
 import play.api.i18n.Messages

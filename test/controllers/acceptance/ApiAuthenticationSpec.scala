@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.apiv2.ApiAuthentication
+import controllers.api.ApiAuthentication
 import models.admin.ApiToken
 import models.repository.admin.ApiTokenRepository
 import org.scalamock.specs2.IsolatedMockFactory

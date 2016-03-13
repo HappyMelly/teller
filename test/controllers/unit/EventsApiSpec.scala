@@ -24,7 +24,7 @@
 */
 package controllers.unit
 
-import controllers.apiv2.{ ApiAuthentication, EventsApi }
+import controllers.api.{ ApiAuthentication, EventsApi }
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models.Event
 import models.repository.{ BrandRepository, EventRepository }

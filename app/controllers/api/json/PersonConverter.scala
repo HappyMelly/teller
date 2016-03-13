@@ -1,6 +1,6 @@
-package controllers.apiv2.json
+package controllers.api.json
 
-import controllers.apiv2.OrganisationsApi
+import controllers.api.OrganisationsApi
 import models._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}

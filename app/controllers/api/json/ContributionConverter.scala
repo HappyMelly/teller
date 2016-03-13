@@ -1,4 +1,4 @@
-package controllers.apiv2.json
+package controllers.api.json
 
 import javax.inject.Singleton
 

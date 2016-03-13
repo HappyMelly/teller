@@ -21,14 +21,14 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers.apiv2
+package controllers.api
 
 import java.net.URLDecoder
 import java.text.Collator
 import java.util.Locale
 import javax.inject.Inject
 
-import controllers.apiv2.json.PersonConverter
+import controllers.api.json.PersonConverter
 import controllers.brand.Badges
 import models._
 import models.brand.Badge

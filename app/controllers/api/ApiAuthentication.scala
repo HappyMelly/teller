@@ -22,7 +22,7 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.apiv2
+package controllers.api
 
 import controllers.AsyncController
 import models.admin.ApiToken

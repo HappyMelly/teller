@@ -24,7 +24,7 @@
 
 package controllers.unit
 
-import controllers.apiv2.BrandFeesApi
+import controllers.api.BrandFeesApi
 import helpers.BrandHelper
 import models.brand.BrandFee
 import models.repository.BrandRepository

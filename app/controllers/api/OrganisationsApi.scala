@@ -22,47 +22,23 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers.apiv2
+package controllers.api
 
-import javax.inject.Inject
-
-import models.brand.BrandFee
-import models.repository.Repositories
-import play.api.i18n.MessagesApi
+import models.Organisation
 import play.api.libs.json._
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 /**
- * Provides API for working with event fees
+ * Organisations API.
  */
-class BrandFeesApi @Inject() (override val messagesApi: MessagesApi,
-                              val services: Repositories) extends ApiAuthentication(services, messagesApi) {
+object OrganisationsApi  {
 
-  /**
-   * EventFee to JSON converter
-   */
-  implicit val feeWrites = new Writes[BrandFee] {
-    def writes(fee: BrandFee): JsValue = {
+  implicit val organisationWrites = new Writes[Organisation] {
+    def writes(organisation: Organisation): JsValue = {
       Json.obj(
-        "id" -> fee.id.get,
-        "country" -> fee.country,
-        "fee" -> fee.fee.toString)
-    }
-  }
-
-  /**
-   * Returns list of fees for the given brand in JSON format
-    *
-    * @param brand Brand code
-   */
-  def fees(brand: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.brand.find(brand) flatMap {
-      case None => jsonNotFound("Brand not found")
-      case Some(x) =>
-        services.fee.findByBrand(x.id.get) flatMap { fees =>
-          jsonOk(Json.toJson(fees))
-        }
+        "name" -> organisation.name,
+        "city" -> organisation.city,
+        "country" -> organisation.countryCode,
+        "website" -> organisation.webSite)
     }
   }
 }

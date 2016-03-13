@@ -24,7 +24,7 @@
 
 package controllers.integration
 
-import controllers.apiv2.MembersApi
+import controllers.api.MembersApi
 import helpers.{ MemberHelper, OrganisationHelper, PersonHelper }
 import integration.PlayAppSpec
 import models._

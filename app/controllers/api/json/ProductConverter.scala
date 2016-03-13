@@ -1,4 +1,4 @@
-package controllers.apiv2.json
+package controllers.api.json
 
 import controllers.Brands
 import controllers.community.Products
