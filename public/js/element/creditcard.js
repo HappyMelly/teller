@@ -91,20 +91,6 @@ var validateDetails = function() {
     // return flag;
 };
 
-/**
- * Returns true if entered amount is valid
- * @returns {boolean}
- */
-var validateAmount = function() {
-    var field = $('#fee');
-    if (field.val().length < 1 || isNaN(field.val())) {
-        field.parent().addClass('has-error');
-        return false;
-    } else {
-        field.parent().removeClass('has-error');
-        return true;
-    }
-};
 
 
 

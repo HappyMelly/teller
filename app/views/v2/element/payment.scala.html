@@ -69,9 +69,9 @@
                 <p><a href="#" class="link-mblue" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
             </div>
         </div>
-        @views.html.v2.element.fees()
       </div>
-        @card()
+        @views.html.v2.element.card()
+
         <div class="b-card__buttons">
             Subscription fee &euro;<span id="amount">30</span>
             plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span id="tax">0.00</span>
@@ -82,3 +82,9 @@
         </div>
     </form>
   </div>
+
+<div class="modal fade dlg-hmfees" id="hmfees" tabindex="-1" role="dialog" aria-labelledby="feeModal" aria-hidden="true">
+    @views.html.v2.element.fees()
+</div>
+
+
