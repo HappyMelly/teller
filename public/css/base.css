@@ -8748,10 +8748,15 @@ body.with-melly-old {
 }
 .b-headava__name {
   display: inline-block;
-  max-width: 120px;
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+@media screen and (max-width: 1200px) {
+  .b-headava__name {
+    max-width: 120px;
+  }
 }
 .b-brandhead {
   min-height: 62px;
