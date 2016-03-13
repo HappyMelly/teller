@@ -1,6 +1,11 @@
 (function ($, App) {
     'use strict';
 
+    /**
+     * Form for updating contribution level
+     * @param selector
+     * @constructor
+     */
     function FeeForm(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
@@ -37,7 +42,9 @@
         
         if (!this.isValidForm()) return;
 
-        this._sendFeeData()
+        var feeAmount = this.locals.$inputFee.val();
+
+        this._sendFeeData(feeAmount)
             .done(function () {
                 success('Succefully update payment');
             })
@@ -58,6 +65,11 @@
         $el.parent().removeClass('has-error');
     };
 
+    /**
+     * Update tax and pay price on the from, based on input value $el
+     * @param {jQuery} $el - $(input)
+     * @private
+     */
     FeeForm.prototype._updateAmount = function($el){
         var locals = this.locals,
             amount = $el.val() < 1? 0.00: parseInt($el.val()),            
@@ -72,6 +84,10 @@
         locals.$payPlace.text(amountWithTax);
     };
 
+    /**
+     * Check, is Form valid?
+     * @returns {boolean}
+     */
     FeeForm.prototype.isValidForm = function () {
         var valid = true,
             $inputFee = this.locals.$inputFee,
@@ -86,9 +102,14 @@
     };    
     
     //transport 
-    FeeForm.prototype._sendFeeData = function(){
-        var url = this.$root.attr('action'),
-            feeAmount = this.locals.$inputFee.val();
+    /**
+     * 
+     * @param {Number} feeAmount
+     * @returns {$.Deffered} - промис
+     * @private
+     */
+    FeeForm.prototype._sendFeeData = function(feeAmount){
+        var url = this.$root.attr('action');
         
         return $.post(url, {fee: feeAmount})
     };

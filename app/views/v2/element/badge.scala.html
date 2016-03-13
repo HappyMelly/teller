@@ -1,6 +1,6 @@
 @(member: Member)(implicit request: Request[Any])
 
-<div id="badgeCodeDialog" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+<div id="badgeCodeDialog" class="modal fade b-modal" tabindex="-1" role="dialog" aria-hidden="true">
   @v2.html.alert("updateReason", "Copy the code") {
     <textarea class="form-control" cols="30" rows="5" id="badge-code" data-src="http://bit.ly/hm_badge_"><a href="http://happymelly.com/members#@member.id.get" target="_blank"><img src="http://bit.ly/hm_badge_pink"/></a></textarea>
   }

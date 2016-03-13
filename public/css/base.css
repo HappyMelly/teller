@@ -8242,6 +8242,9 @@ textarea.form-control {
 .dlg-hmfees .b-modal__dlg {
   width: 710px;
 }
+.dlg-hmfees .b-modal__title {
+  text-align: center;
+}
 .dlg-hmfees__content {
   padding: 25px;
   text-align: left;
