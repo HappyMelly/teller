@@ -621,7 +621,7 @@
             return false;
         }
 
-        if (notifList.length <= 5){
+        if (notifList.length < 5){
             this.$root.addClass('b-notiflist_load_all');
         }
         return true;
