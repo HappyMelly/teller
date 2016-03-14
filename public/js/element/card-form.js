@@ -88,9 +88,8 @@
         var $root = this.$root,
             template = '<input type="hidden" value="' +  token +'" name="token" />';
 
-        $root
-            .find('input[name="token"]').remove()
-            .append(template);
+        $root.find('input[name="token"]').remove()
+        $root.append(template);
     };
 
     CardForm.prototype._onSubmitHandler = function(e){
