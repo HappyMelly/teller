@@ -25,8 +25,8 @@
 package models.repository
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.JodaMoney._
 import models._
+import models.core.payment.CustomerType
 import models.database._
 import models.database.event.AttendeeTable
 import play.api.Application
@@ -36,7 +36,7 @@ import slick.driver.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class PersonRepository(app: Application, services: Repositories) extends HasDatabaseConfig[JdbcProfile]
+class PersonRepository(app: Application, repos: Repositories) extends HasDatabaseConfig[JdbcProfile]
   with AddressTable
   with AttendeeTable
   with EndorsementTable
@@ -77,10 +77,10 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
    * @param person Person
    */
   def delete(person: Person): Unit = {
-    services.member.delete(person.identifier, person = true)
-    services.paymentRecord.delete(person.identifier, person = true)
-    services.userAccount.delete(person.identifier)
-    services.socialProfile.delete(person.identifier, ProfileType.Person)
+    repos.member.delete(person.identifier, person = true)
+    repos.core.customer.delete(person.identifier, CustomerType.Person)
+    repos.userAccount.delete(person.identifier)
+    repos.socialProfile.delete(person.identifier, ProfileType.Person)
     val actions = (for {
       _ <- TableQuery[Attendees].filter(_.personId === person.identifier).delete
       _ <- TableQuery[People].filter(_.id === person.identifier).delete
@@ -140,19 +140,20 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
   /**
    * Inserts new person object into database
     *
-    * @param person Person object
+    * @param value Person object
    * @return Returns saved person
    */
-  def insert(person: Person): Future[Person] = {
-    services.address.insert(person.address).flatMap { address =>
-      val query = people returning people.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-      val futureInserted = db.run(query += person.copy(addressId = address.id.get))
-      futureInserted.map { inserted =>
-        services.socialProfile.insert(person.profile.copy(objectId = inserted.identifier))
-        services.profileStrength.insert(ProfileStrength.empty(inserted.identifier, false))
-        inserted.address_=(address)
-        inserted
-      }
+  def insert(value: Person): Future[Person] = {
+    val query = people returning people.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    val request = for {
+      address <- repos.address.insert(value.address)
+      person <- db.run(query += value.copy(addressId = address.id.get))
+      _ <- repos.socialProfile.insert(SocialProfile(objectId = person.identifier))
+      _ <- repos.profileStrength.insert(ProfileStrength.empty(person.identifier, false))
+    } yield (address, person)
+    request map { case (address, person) =>
+      person.address_=(address)
+      person
     }
   }
 
@@ -370,7 +371,7 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
 
     val personUpdateTuple = (person.firstName, person.lastName, person.email, person.birthday,
       person.photo.url, person.signature, person.bio, person.interests,
-      person.webSite, person.blog, person.customerId, person.virtual,
+      person.webSite, person.blog, person.virtual,
       person.active, person.dateStamp.updated, person.dateStamp.updatedBy)
     val updateQuery = people.filter(_.id === person.id).map(_.forUpdate)
     db.run(updateQuery.update(personUpdateTuple))
@@ -446,8 +447,8 @@ class PersonRepository(app: Application, services: Repositories) extends HasData
    * @param person Person object to update profile strength for
    */
   protected def updateProfileStrength(person: Person): Unit = {
-    services.profileStrength.find(person.id.get, false).filter(_.isDefined) map { strength ⇒
-      services.profileStrength.update(ProfileStrength.forPerson(strength.get, person))
+    repos.profileStrength.find(person.id.get, false).filter(_.isDefined) map { strength ⇒
+      repos.profileStrength.update(ProfileStrength.forPerson(strength.get, person))
     }
   }
 }

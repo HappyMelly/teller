@@ -44,6 +44,14 @@
                 @v2.html.select(form("role"),
                     ("", "I don't know") :: Attendees.roles.map(x => (x, x)), '_label -> "Role", '_help -> "")
             }
+            @if(attendeeId.isEmpty) {
+                @v2.html.block("OptOut") {
+                    @v2.html.checkboxWithDescription(form("optOut"), '_label -> "OptOut",
+                        '_desc -> "I don't want to use this attendee in any marketing campaign")
+                }
+            } else {
+                <input type="hidden" name="outPut" value="@form("outPut").value"/>
+            }
 
             @if(form.hasErrors) {
                 @v2.html.block("") {

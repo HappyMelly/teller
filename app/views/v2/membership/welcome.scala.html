@@ -1,0 +1,65 @@
+@(user: ActiveUser,
+    orgs: List[Organisation])(implicit request: Request[Any],
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
+    flash: Flash)
+
+@v2.main("Welcome", "membership", user, withMelly = true) {
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/payment.css")">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
+    <script type="text/javascript" src="@routes.Assets.at("membership/welcome.js")"></script>
+
+  <div class="col-md-12 text-center">
+    <h3>Join Happy Melly network</h3>
+  </div>
+  <div class="row text-center welcome">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="text-left">
+            @v2.element.supporter()
+        </div>
+        <div class="row">
+          <div class="col-md-5 text-center button-block">
+            <h5>I want to be a Supporter</h5>
+            <div class="button-line text-center">
+              @user.member.map { m =>
+                  @if(m.funder) {
+                    <a href="" disabled="disabled" class="btn btn-primary">
+                      You're a Funder
+                    </a>
+                  } else {
+                    <a href="" disabled="disabled" class="btn btn-primary">
+                      You're already a Supporter
+                    </a>
+                  }
+              }.getOrElse {
+                <a href="@routes.Membership.payment(None)" class="btn btn-primary">
+                  Become a Supporter</a>
+              }
+            </div>
+          </div>
+          <div class="col-md-7 text-center button-block">
+            <h5>My organisation wants to be a Supporter</h5>
+            @if(orgs.nonEmpty) {
+              <div class="col-md-10 col-md-offset-1">
+                <select class="form-control" id="org">
+                  <option value="0">Select organisation</option>
+                  @for(org <- orgs) {
+                    <option value="@org.id.get">@org.name</option>
+                  }
+                </select>
+              </div>
+              <div class="button-line text-center">
+                <a href="@routes.Membership.payment(None)" id="orgSupporter" class="btn btn-primary">
+                  Make My Organisation a Supporter</a>
+              </div>
+            } else {
+              <div class="button-line text-center">
+                <a href="" disabled="disabled" class="btn btn-primary">
+                  All your organisations are members
+                </a>
+              </div>
+            }
+          </div>
+        </div>
+    </div>
+  </div>
+}

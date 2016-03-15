@@ -10,7 +10,8 @@
   <div style="display: none ;" id="org">@org.identifier</div>
 
   @dynamicOr(handler, Role.OrgMember.toString, org.identifier.toString) {
-    <img width="@width" class="b-avatar__img b-avatar__img-real" src="@core.Organisations.logoUrl(org.identifier)"/>
+    <img width="@width" class="b-avatar__img b-avatar__img-real"
+      src="@controllers.core.Organisations.logoUrl(org.identifier)"/>
 
     <a href="#" class="js-choose-link">
         <img width="@width" class="b-avatar__img b-avatar__img-fake"
@@ -48,9 +49,11 @@
         <div class="b-photoupload">
           <div class="b-photoupload__item type_active" id="custom">
             @if(org.logo) {
-              <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto" src="@core.Organisations.logoUrl(org.identifier)"/>
+              <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto"
+                src="@controllers.core.Organisations.logoUrl(org.identifier)"/>
             } else {
-              <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
+              <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto"
+                src="@routes.Assets.at("images/happymelly-face-white.png")"/>
             }
             <div class="b-photoupload__desc">
               <br/>
@@ -62,7 +65,7 @@
                   id="photoUpload"
                   class="b-fileupload__ctr"
                   name="logo"
-                  data-url="@core.routes.Organisations.uploadLogo(org.identifier)"/>
+                  data-url="@controllers.core.routes.Organisations.uploadLogo(org.identifier)"/>
               </div>
             </div>
           </div>

@@ -24,7 +24,7 @@
  */
 package models.repository
 
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 
 import models.repository.admin.{ApiTokenRepository, TransactionTypeRepository}
 import models.repository.brand._
@@ -32,6 +32,8 @@ import models.repository.event._
 import play.api.Application
 
 trait IRepositories {
+  val core: models.repository.core.Repositories
+
   val address: AddressRepository
   val activity: ActivityRepository
   val apiToken: ApiTokenRepository
@@ -56,7 +58,6 @@ trait IRepositories {
   val member: MemberRepository
   val license: LicenseRepository
   val org: OrganisationRepository
-  val paymentRecord: PaymentRecordRepository
   val notification: NotificationRepository
   val person: PersonRepository
   val product: ProductRepository
@@ -71,6 +72,8 @@ trait IRepositories {
 /** Contains references to all services so we can stub them in tests */
 @Singleton
 class Repositories @Inject()(val app: Application) extends IRepositories {
+
+  lazy val core: models.repository.core.Repositories = new models.repository.core.Repositories(app)
 
   lazy val address: AddressRepository = new AddressRepository(app)
 
@@ -121,8 +124,6 @@ class Repositories @Inject()(val app: Application) extends IRepositories {
   lazy val license: LicenseRepository = new LicenseRepository(app)
 
   lazy val org: OrganisationRepository = new OrganisationRepository(app, this)
-
-  lazy val paymentRecord: PaymentRecordRepository = new PaymentRecordRepository(app)
 
   lazy val person: PersonRepository = new PersonRepository(app, this)
 

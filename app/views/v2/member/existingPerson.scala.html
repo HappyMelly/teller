@@ -1,0 +1,44 @@
+@(user: ActiveUser,
+    people: List[(String, String)],
+    form: Form[Long])(implicit request: Request[Any],
+        flash: Flash,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("People", "members", user) {
+    <div class="form">
+        @v2.html.block("") {
+            <h1>Add Funder</h1>
+            <h3>Step 2: Select person</h3>
+        }
+        @v2.html.form(action = CSRF(routes.Members.updateExistingPerson())) {
+            @v2.html.block("") {
+                @v2.html.select(form("id"), ("", "Select person") +: people, '_label -> "Person", '_help -> "")
+            }
+            @if(form.hasErrors) {
+                @v2.html.block("") {
+                    <div class="errors">
+                    @for((error, index) <- form.errors.zipWithIndex) {
+                        @{index + 1}. @Messages(error.message)<br/>
+                    }
+                    </div>
+                }
+            }
+            @v2.html.block("") {
+                <div class="row">
+                    <div class="col-md-5">
+                        <button class="btn btn-primary btn-block btn-lg" type="submit">
+                            Save
+                        </button>
+                    </div>
+                    <div class="col-md-3 cancel">
+                        <a href="javascript:history.back()">Cancel changes</a></div>
+                </div>
+            }
+        }
+    </div>
+}

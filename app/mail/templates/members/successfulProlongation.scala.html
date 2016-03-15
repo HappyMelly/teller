@@ -1,0 +1,26 @@
+@(name: String)
+
+@mail.templates.hm.html.tmpl("Your Happy Melly Membership") {
+    @mail.templates.hm.html.title(name + ",")
+    @mail.templates.hm.html.paragraph {
+        You made us smile! Thank you so much for renewing your Happy Melly membership.
+    }
+    @mail.templates.hm.html.paragraph {
+        Give us a shout if you have experiments you’d like to share, blog posts you want to publish, ideas around
+        membership, our community, or just about anything at all related to happiness at work. You can post those
+        thoughts in HM slack, or <a href="http://www.happymelly.com/contact/">send us an email</a>.
+    }
+    @mail.templates.hm.html.paragraph {
+        And you can spread more smiles by clicking to tweet:
+    }
+    @mail.templates.hm.html.paragraph {
+        <a href="http://ctt.ec/0pw6O">I’m a proud member of the @@Happy_Melly network!
+            Join us in the #happinessatwork movement! http://ctt.ec/GkcdW+</a>
+    }
+    @mail.templates.hm.html.paragraph {
+        Here’s to another year of Happiness!
+    }
+    @mail.templates.hm.html.paragraph {
+        Happy Melly
+    }
+} { }

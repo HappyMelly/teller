@@ -61,16 +61,19 @@ class ParticipantsApi @Inject() (val services: Repositories,
     "province" -> optional(nonEmptyText),
     "organisation" -> optional(nonEmptyText),
     "comment" -> optional(nonEmptyText),
-    "role" -> optional(nonEmptyText))({
+    "role" -> optional(nonEmptyText),
+    "opt_out" -> optional(boolean))({
       (id, event_id, first_name, last_name, birthday, email, city, country,
-       street_1, street_2, postcode, province, organisation, comment, role) ⇒
-        Attendee(id, event_id, None, first_name, last_name, email, birthday, Some(country), Some(city),
-          street_1, street_2, province, postcode, None, None, None, organisation, comment, role,
+       street_1, street_2, postcode, province, organisation, comment, role, optOut) ⇒
+        Attendee(id, event_id, None, first_name, last_name, email, birthday,
+          Some(country), Some(city), street_1, street_2, province, postcode,
+          None, None, None, organisation, comment, role, optOut.getOrElse(false),
           DateStamp(DateTime.now(), appName, DateTime.now(), appName))
     })({
       (a: Attendee) ⇒
-        Some((a.id, a.eventId, a.firstName, a.lastName, a.dateOfBirth, a.email, a.countryCode.getOrElse(""),
-          a.city.getOrElse(""), a.street_1, a.street_2, a.province, a.postcode, a.organisation, a.comment, a.role))
+        Some((a.id, a.eventId, a.firstName, a.lastName, a.dateOfBirth, a.email,
+          a.countryCode.getOrElse(""), a.city.getOrElse(""), a.street_1, a.street_2, a.province, a.postcode,
+          a.organisation, a.comment, a.role, Some(a.optOut)))
     }))
 
   /**

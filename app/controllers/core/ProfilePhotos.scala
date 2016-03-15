@@ -38,9 +38,9 @@ import services.TellerRuntimeEnvironment
 
 class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
-                               val services: Repositories,
+                               val repos: Repositories,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
     with Files {
 
   /**
@@ -49,7 +49,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param id Person identifier
     */
   def choose(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.person.find(id) flatMap {
+    repos.person.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
         val active = person.photo.id getOrElse "nophoto"
@@ -64,11 +64,11 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param id Person identifier
     */
   def delete(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.person.find(id) flatMap {
+    repos.person.findComplete(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
         Person.photo(id).remove()
-        services.person.update(person.copy(photo = Photo.empty)) flatMap { _ =>
+        repos.person.update(person.copy(photo = Photo.empty)) flatMap { _ =>
           val route = routes.People.details(id).url
           jsonOk(Json.obj("link" -> controllers.routes.Assets.at("images/add-photo.png").url))
         }
@@ -92,7 +92,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     form.fold(
       withError ⇒ jsonBadRequest("No option is provided"),
       photoType ⇒
-        services.person.findComplete(id) flatMap {
+        repos.person.findComplete(id) flatMap {
           case None => notFound("Person not found")
           case Some(person) =>
             val photo = photoType match {
@@ -100,7 +100,7 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
               case "gravatar" ⇒ Photo(photoType, person.email)
               case _ ⇒ Photo(Some(photoType), photoUrl(id))
             }
-            services.person.update(person.copy(photo = photo)) flatMap { _ =>
+            repos.person.update(person.copy(photo = photo)) flatMap { _ =>
               jsonSuccess("ok")
             }
         })

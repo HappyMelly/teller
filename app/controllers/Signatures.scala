@@ -37,9 +37,9 @@ import scala.concurrent.Future
 
 class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
-                            val services: Repositories,
+                            val repos: Repositories,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Files
   with Activities {
 
@@ -50,12 +50,12 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def delete(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.person.find(personId) flatMap {
+      repos.person.findComplete(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
           val result = if (person.signature) {
             Person.signature(personId).remove()
-            services.person.update(person.copy(signature = false))
+            repos.person.update(person.copy(signature = false))
           } else {
             Future.successful(None)
           }
@@ -80,12 +80,12 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def upload(personId: Long) = ProfileAction(personId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.person.find(personId) flatMap {
+      repos.person.findComplete(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
           val route: String = core.routes.People.details(personId).url + "#facilitation"
           uploadFile(Person.signature(personId), "signature") map { _ ⇒
-            services.person.update(person.copy(signature = true))
+            repos.person.update(person.copy(signature = true))
             Redirect(route).flashing("success" -> "Signature was uploaded")
           } recover {
             case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)

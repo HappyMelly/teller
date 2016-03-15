@@ -32,7 +32,7 @@ import models.Facilitator
 import models.repository.Repositories
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment
-import services.cleaners.ExpiredEventRequestCleaner
+import services.cleaners.{TokenCleaner, ExpiredEventRequestCleaner}
 import services.integrations.Email
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -52,15 +52,15 @@ class Scheduler @Inject() (val env: Environment,
 
   private def start = {
     if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
-      scheduleDailyAlerts
-      scheduleMonthlyAlerts
+      scheduleDailyActions
+      scheduleMonthlyActions
     }
   }
 
   /**
     * Sends event confirmation alert in the beginning of each day
     */
-  private def scheduleDailyAlerts = {
+  private def scheduleDailyActions = {
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
@@ -74,7 +74,7 @@ class Scheduler @Inject() (val env: Environment,
       (new EventReminder(email, repos)).sendPostFactumConfirmation()
       (new EvaluationReminder(email, repos)).sendToAttendees()
       Facilitator.updateFacilitatorExperience(repos)
-      (new ExpiredEventRequestCleaner(repos)).clean()
+      runCleaners()
       println("INFO: End of daily routines")
     }
   }
@@ -82,7 +82,7 @@ class Scheduler @Inject() (val env: Environment,
   /**
     * Sends event confirmation alert on the first day of each month
     */
-  private def scheduleMonthlyAlerts = {
+  private def scheduleMonthlyActions = {
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
@@ -99,5 +99,10 @@ class Scheduler @Inject() (val env: Environment,
         println("INFO: End of monthly routines")
       }
     }
+  }
+
+  private def runCleaners() = {
+    (new ExpiredEventRequestCleaner(repos)).clean()
+    (new TokenCleaner(repos).clean())
   }
 }

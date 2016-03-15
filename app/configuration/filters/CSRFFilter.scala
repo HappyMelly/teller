@@ -41,7 +41,8 @@ class CSRFFilter(config: => CSRFConfig,
     override def apply(request: RequestHeader) = {
       val api = """/api/v""".r findPrefixOf request.path
       val userpass = """/authenticate/userpass""".r findPrefixOf request.path
-      if (api.nonEmpty || userpass.nonEmpty)
+      val webhooks = """/webhook""".r findPrefixOf request.path
+      if (api.nonEmpty || userpass.nonEmpty || webhooks.nonEmpty)
         next(request)
       else
         super.apply(request)

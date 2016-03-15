@@ -8,7 +8,7 @@
         messages: Messages)
 
 @v2.layout.unauthorized("Add Organisation Data") {
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.min.css")">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.css")">
     <div class="registration-menu">
         <span>Join Happy Melly</span>
         <span>Create account</span>
@@ -16,7 +16,7 @@
         <span>Organisation Data</span>
         <span>Payment</span>
         <span class="inactive">Congratulations</span>
-        <span><a class="stop-registration" href="@core.routes.LoginPage.logout()">Back to login</a></span>
+        <span><a class="stop-registration" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
     </div>
     <div class="action-block registration">
         <h3>Make Payment</h3>

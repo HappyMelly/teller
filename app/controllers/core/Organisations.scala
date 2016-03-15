@@ -31,7 +31,7 @@ import controllers._
 import controllers.Forms._
 import models.UserRole.Role
 import models._
-import models.payment.{GatewayWrapper, PaymentException, RequestException}
+import models.core.payment.{CustomerType, GatewayWrapper, PaymentException, RequestException}
 import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Play.current
@@ -46,9 +46,9 @@ import scala.concurrent.Future
 
 class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
-                               val services: Repositories,
+                               val repos: Repositories,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
     with Activities
     with Files
     with I18nSupport {
@@ -59,15 +59,15 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   def activation(id: Long) = RestrictedAction(Role.Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val index: String = routes.Organisations.index().url
-      services.org.find(id) flatMap {
+      repos.org.find(id) flatMap {
         case None => redirect(index, "error" -> "Organisation not found")
         case Some(organisation) ⇒
           Form("active" -> boolean).bindFromRequest.fold(
             error ⇒ badRequest("invalid form data"),
             active ⇒ {
-              services.org.activate(id, active)
+              repos.org.activate(id, active)
               val activity = Activity.insert(user.name,
-                if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)(services)
+                if (active) Activity.Predicate.Activated else Activity.Predicate.Deactivated, organisation.name)(repos)
               redirect(routes.Organisations.details(id),"success" -> "Activation status was changed")
             })
       }
@@ -90,18 +90,18 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     implicit handler ⇒ implicit user ⇒
       val url: String = routes.Organisations.details(id).url + "#membership"
       (for {
-        o <- services.org.find(id)
-        m <- services.org.member(id)
-      } yield (o, m)) flatMap {
-        case (None, _) => notFound("Organisation not found")
+        c <- repos.core.customer.find(id, CustomerType.Organisation)
+        m <- repos.org.member(id)
+      } yield (c, m)) flatMap {
+        case (None, _) => notFound("Customer record not found")
         case (_, None) => redirect(url, "error" -> Messages("error.membership.noSubscription"))
-        case (Some(org), Some(member)) =>
+        case (Some(customer), Some(member)) =>
           if (member.renewal) {
             val key = Play.configuration.getString("stripe.secret_key").get
             val gateway = new GatewayWrapper(key)
             try {
-              gateway.cancel(org.customerId.get)
-              services.member.update(member.copy(renewal = false))
+              gateway.cancel(customer.remoteId)
+              repos.member.update(member.copy(renewal = false))
             } catch {
               case e: PaymentException ⇒
                 redirect(url,"error" -> Messages(e.msg))
@@ -125,8 +125,8 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, None, formWithErrors)),
         view ⇒ {
-          services.org.insert(view) flatMap { orgView =>
-            val activity = Activity.insert(user.name, Activity.Predicate.Created, orgView.org.name)(services)
+          repos.org.insert(view) flatMap { orgView =>
+            val activity = Activity.insert(user.name, Activity.Predicate.Created, orgView.org.name)(repos)
             redirect(routes.Organisations.index(), "success" -> "Organisation was created")
           }
         })
@@ -140,8 +140,8 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
       Organisations.organisationForm.bindFromRequest.fold(
         formWithErrors ⇒ badRequest(formWithErrors.errorsAsJson),
         view ⇒ {
-          services.org.insert(view) flatMap { orgView =>
-            activity(orgView.org, user.person).created.insert(services)
+          repos.org.insert(view) flatMap { orgView =>
+            activity(orgView.org, user.person).created.insert(repos)
             jsonOk(Json.obj("id" -> orgView.org.id, "name" -> orgView.org.name))
           }
         })
@@ -154,11 +154,11 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def delete(id: Long) = RestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.org.find(id) flatMap {
+      repos.org.find(id) flatMap {
         case None => notFound("Organisation not found")
         case Some(organisation) ⇒
-          services.org.delete(id)
-          val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)(services)
+          repos.org.delete(id)
+          val activity = Activity.insert(user.name, Activity.Predicate.Deleted, organisation.name)(repos)
           redirect(routes.Organisations.index(), "success" -> "Organisation was deleted")
       }
   }
@@ -171,7 +171,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   def deleteLogo(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       Organisation.logo(id).remove()
-      services.org.updateLogo(id, false)
+      repos.org.updateLogo(id, false)
       val route = routes.Organisations.details(id).url
       jsonOk(Json.obj("link" -> controllers.routes.Assets.at("images/happymelly-face-white.png").url))
   }
@@ -184,23 +184,26 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   def details(id: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        o <- services.org.findWithProfile(id)
-        m <- services.org.people(id)
-        _ <- services.person.collection.addresses(m)
-        p <- services.person.findActive
-        c <- services.contribution.contributions(id, isPerson = false)
-        pr <- services.product.findAll
-        member <- services.org.member(id)
+        o <- repos.org.findWithProfile(id)
+        m <- repos.org.people(id)
+        _ <- repos.person.collection.addresses(m)
+        p <- repos.person.findActive
+        c <- repos.contribution.contributions(id, isPerson = false)
+        pr <- repos.product.findAll
+        member <- repos.org.member(id)
       } yield (o, m, p, c, pr, member)) flatMap {
         case (None, _, _, _, _, _) => notFound("Organisation not found")
         case (Some(view), members, people, contributions, products, member) =>
-          val result = member map { v ⇒
-            services.paymentRecord.findByOrganisation(id)
+          val chargesRequest = member map { value =>
+            for {
+              customer <- repos.core.customer.find(id, CustomerType.Organisation) if customer.nonEmpty
+              charges <- repos.core.charge.findByCustomer(customer.get.id.get)
+            } yield charges
           } getOrElse Future.successful(List())
-          result flatMap { payments =>
+          chargesRequest flatMap { charges =>
             val deletable = members.isEmpty && contributions.isEmpty
             ok(views.html.v2.organisation.details(user, view, members, people, contributions,
-              products, member, payments, deletable))
+              products, member, charges, deletable))
           }
       }
   }
@@ -212,7 +215,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def edit(id: Long) = DynamicAction(Role.OrgMember, id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.org.findWithProfile(id) flatMap {
+      repos.org.findWithProfile(id) flatMap {
         case None => notFound("Organisation not found")
         case Some(view) =>
           ok(views.html.v2.organisation.form(user, Some(id),
@@ -225,7 +228,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def index = RestrictedAction(List(Role.Admin, Role.Coordinator)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.org.findAll flatMap { organisations =>
+      repos.org.findAll flatMap { organisations =>
         ok(views.html.v2.organisation.index(user, organisations))
       }
   }
@@ -244,7 +247,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def name(id: Long) = RestrictedAction(Role.Viewer) {
     implicit request => implicit handler => implicit user =>
-      val name = services.org.find(id) map {
+      val name = repos.org.find(id) map {
         case None => ""
         case Some(org) => org.name
       }
@@ -272,7 +275,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
         if (q.length < 3)
           Future.successful(List())
         else
-          services.org.search(q)
+          repos.org.search(q)
       } getOrElse Future.successful(List())
       orgs flatMap { organisations =>
         jsonOk(Json.toJson(organisations))
@@ -286,16 +289,16 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def update(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      services.org.findWithProfile(id) flatMap {
+      repos.org.findWithProfile(id) flatMap {
         case None => notFound("Organisation not found")
         case Some(view) ⇒
           Organisations.organisationForm.bindFromRequest.fold(
             formWithErrors ⇒ badRequest(views.html.v2.organisation.form(user, Some(id), formWithErrors)),
             view ⇒ {
-              val updatedOrg = view.org.copy(id = Some(id), active = view.org.active, customerId = view.org.customerId)
+              val updatedOrg = view.org.copy(id = Some(id), active = view.org.active)
               val updatedProfile = view.profile.forOrg.copy(objectId = id)
-              services.org.update(OrgView(updatedOrg, updatedProfile)) flatMap { _ =>
-                val log = activity(updatedOrg, user.person).updated.insert(services)
+              repos.org.update(OrgView(updatedOrg, updatedProfile)) flatMap { _ =>
+                val log = activity(updatedOrg, user.person).updated.insert(repos)
                 redirect(routes.Organisations.details(id), "success" -> "Organisation was updated")
               }
             })
@@ -310,7 +313,7 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   def uploadLogo(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
       uploadFile(Organisation.logo(id), "logo") flatMap { _ ⇒
-        services.org.updateLogo(id, true)
+        repos.org.updateLogo(id, true)
         val route = routes.Organisations.details(id).url
         jsonOk(Json.obj("link" -> Organisations.logoUrl(id)))
       } recover {
@@ -334,7 +337,6 @@ object Organisations {
     "webSite" -> optional(webUrl),
     "blog" -> optional(webUrl),
     "email" -> optional(play.api.data.Forms.email),
-    "customerId" -> optional(text),
     "about" -> optional(text),
     "logo" -> ignored(false),
     "active" -> ignored(true),
@@ -344,12 +346,12 @@ object Organisations {
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(user.name))(DateStamp.apply)(DateStamp.unapply))({
     (id, name, address, vatNumber,
-     registrationNumber, profile, webSite, blog, email, customerId, about,
+     registrationNumber, profile, webSite, blog, email, about,
      logo, active, dateStamp) ⇒
       val org = Organisation(id, name, address.street1, address.street2,
         address.city, address.province, address.postCode, address.countryCode,
         vatNumber, registrationNumber, webSite,
-        blog, email, customerId, about, logo, active, dateStamp)
+        blog, email, about, logo, active, dateStamp)
       OrgView(org, profile)
   })({
     (v: OrgView) ⇒
@@ -357,7 +359,7 @@ object Organisations {
         v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
       Some((v.org.id, v.org.name, address, v.org.vatNumber,
         v.org.registrationNumber, v.profile, v.org.webSite,
-        v.org.blog, v.org.contactEmail, v.org.customerId, v.org.about, v.org.logo, v.org.active,
+        v.org.blog, v.org.contactEmail, v.org.about, v.org.logo, v.org.active,
         v.org.dateStamp))
   }))
 

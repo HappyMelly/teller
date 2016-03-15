@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -27,7 +27,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
-import models.payment.{Payment, PaymentException, RequestException}
+import models.core.payment._
 import models.repository.Repositories
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -297,12 +297,10 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                     throw new ValidationException("error.payment.minimum_fee")
                   }
                   val customerId = subscribe(person, org, data)
+                  addCustomerRecord(customerId, person, org)
                   org map { x ⇒
-                    repos.org.update(x.copy(customerId = Some(customerId), active = true))
                     repos.person.update(person.copy(active = true))
                     person.addRelation(x.id.get, repos)
-                  } getOrElse {
-                    repos.person.update(person.copy(customerId = Some(customerId), active = true))
                   }
                   val fee = Money.of(EUR, data.fee)
                   val futureMember = org map { x ⇒

@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -29,7 +29,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
 import models._
-import models.payment.{Payment, PaymentException, RequestException}
+import models.core.payment.{Payment, PaymentException, RequestException}
 import models.repository.Repositories
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
@@ -62,7 +62,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       o <- repos.person.memberships(user.person.identifier)
       m <- repos.member.findByObjects(o.map(_.identifier))
     } yield (o, m.filterNot(_.person))) flatMap { case (orgs, members) =>
-      ok(views.html.membership.welcome(user, orgs.filterNot(x => members.exists(_.objectId == x.identifier))))
+      ok(views.html.v2.membership.welcome(user, orgs.filterNot(x => members.exists(_.objectId == x.identifier))))
     }
   }
 
@@ -74,7 +74,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def congratulations(orgId: Option[Long]) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      ok(views.html.membership.congratulations(user, orgId))
+      ok(views.html.v2.membership.congratulations(user, orgId))
   }
 
   /**
@@ -94,7 +94,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
             repos.person.memberships(user.person.identifier) flatMap { orgs =>
               if (orgs.exists(_.id == org.id)) {
                 val fee = Payment.countryBasedFees(org.countryCode)
-                ok(views.html.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
+                ok(views.html.v2.membership.payment(user, paymentForm, publicKey, fee, Some(org)))
               } else {
                 redirect(welcomeCall, "error" -> Messages("error.person.notOrgMember"))
               }
@@ -103,7 +103,7 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       } getOrElse {
         val code = user.person.address.countryCode
         val fee = Payment.countryBasedFees(code)
-        ok(views.html.membership.payment(user, paymentForm, publicKey, fee))
+        ok(views.html.v2.membership.payment(user, paymentForm, publicKey, fee))
       }
   }
 
@@ -146,8 +146,8 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
     val customerId = subscribe(user.person, Some(org), data)
     val fee = Money.of(EUR, data.fee)
+    addCustomerRecord(customerId, user.person, Some(org))
     (for {
-      _ <- repos.org.update(org.copy(customerId = Some(customerId)))
       m <- org.becomeMember(funder = false, fee, user.person.identifier, repos)
     } yield m) map { member =>
       notify(user.person, Some(org), member)
@@ -171,13 +171,15 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
     val customerId = subscribe(person, None, data)
     val fee = Money.of(EUR, data.fee)
+    addCustomerRecord(customerId, person, None)
     (for {
-      _ <- repos.person.update(person.copy(customerId = Some(customerId)))
+      p <- repos.socialProfile.find(person.identifier, ProfileType.Person)
       m <- person.becomeMember(funder = false, fee, repos)
-    } yield m) map { member =>
+    } yield (p, m)) map { case (profile, member) =>
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
         _.updateUser(ActiveUser(user.id, user.providerId, user.account, user.person, Some(member)))
       })
+      person.profile_=(profile)
       notify(person, None, member)
       subscribe(person, member)
 

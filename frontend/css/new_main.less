@@ -1,0 +1,369 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+@import "settings";
+
+
+.form {
+  .block {
+    &.yellow { background-color: fadeout(@butterscotch, 90%); }
+    &.grey { background-color: fadeout(@grey3, 95%); }
+    .row {
+      position: relative;
+    }
+    margin-bottom: 0;
+    padding: 25px 0;
+    .name {
+      position: absolute;
+      text-align: right;
+      font-size: 24px;
+      color: @grey;
+      font-weight: 700;
+      top: 40%;
+      right: 0;
+    }
+  }
+  .field-type {
+    .font-sm;
+    padding-top: 15px;
+    span {
+      color: @pig-pink;
+    }
+  }
+  .help {
+    .font-sm;
+    padding-top: 1em;
+    color: @grey;
+  }
+  .errors {
+    color: @pig-pink;
+  }
+  .cancel {
+    padding-top: 13px;
+    padding-left: 50px;
+  }
+}
+.btn {
+  &.btn-cancel {
+    background-color: #fff;
+    color: @dark-sky-blue;
+  }
+  &.btn-upload {
+    background-color: @butterscotch;
+    color: #fff;
+  }
+}
+
+.block {
+  margin-bottom: 48px;
+  .fa {
+    color: @icon-grey;
+  }
+  img {
+    max-width: 100%;
+    max-height: auto;
+  }
+  .ratings {
+    padding-left: 2em;
+    padding-top: 0.5em;
+  }
+}
+h3 a.font-sm {
+  font-weight: initial;
+  padding-top: 5px;
+}
+.font-sm {
+  font-size: 12px;
+}
+.padding-fix {
+  padding-left: 0;
+  padding-right: 7px;
+  &.last {
+    padding-right: 0;
+  }
+}
+
+.left {
+  float: left;
+  width: 199px;
+  margin-right: 30px;
+  position: relative;
+}
+@media (min-width: 850px) {
+  .center {
+    float: left;
+    width: 68%;
+  }
+  .right {
+    float: left;
+    width: 68%;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+@media (min-width: 990px) {
+  .center {
+    float: left;
+    width: 50%;
+  }
+  .right {
+    float: left;
+    width: 23%;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+
+.licenses {
+  .list-group-item {
+    padding: 20px 0;
+    border-left: 0;
+    border-right: 0;
+    &:first-child, &:last-child {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    .list-group-item-heading {
+      font-size: 18px;
+      margin-top: 15px;
+      margin-bottom: 12px;
+      a {
+        font-size: 12px;
+      }
+    }
+    .fa {
+      color: @butterscotch;
+    }
+  }
+}
+.yellow-rating {
+  color: @butterscotch;
+}
+.experience {
+  .statistics {
+    .record {
+      .name {
+        font-size: 18px;
+      }
+      margin: 1em 2em 0 0;
+    }
+    padding-bottom: 2em;
+    border-bottom: solid 1px @light-grey;
+  }
+}
+.endorsements {
+  border-top: solid 1px @light-grey;
+  border-bottom: solid 1px @light-grey;
+  margin-top: 2em;
+  .endorsement {
+    cursor: pointer;
+    &.selected {
+      background-color: @light-blue;
+    }
+    &.highlighted-top {
+      border-top: solid 2px @dark-sky-blue;
+    }
+    &.highlighted-bottom {
+      border-bottom: solid 2px @dark-sky-blue;
+    }
+    .body {
+      padding: 1em;
+      border-bottom: solid 1px @light-grey;
+      .text-muted > .brand-name {
+        float: right;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .content {
+        margin: 1em 0;
+      }
+      .actions {
+        a {
+          padding-right: 15px;
+        }
+      }
+    }
+    &:last-child {
+      .content {
+        border-bottom: none;
+      }
+    }
+  }
+  #toolTip {
+    background-color: @dark-sky-blue;
+    color: white;
+    cursor: pointer;
+    padding: 1em;
+  }
+}
+
+.countries-languages {
+  div.pull-right, div.pull-left {
+    width: 40%;
+  }
+  a {
+    font-size: 12px;
+  }
+}
+.badge-selector {
+  .item {
+    margin-bottom: 20px;
+    img {
+      margin-right: 10px;
+    }
+    &.selected {
+      font-weight: 700;
+    }
+    a {
+      color: #000;
+      text-decoration: none;
+    }
+  }
+}
+.statistics-block {
+  .numbers {
+    .number {
+      font-family: Days;
+      font-size: 18px;
+      display: inline-block;
+    }
+    > div {
+      margin-top: 15px;
+      margin-bottom: 10px;
+      padding-left: 20px;
+    }
+  }
+  canvas {
+    margin-top: 15px;
+  }
+  .table {
+    thead > tr > th { padding: 8px; }
+    tbody > tr td { padding: 8px; }
+  }
+  margin-bottom: 50px;
+}
+#badge-picture {
+  margin-bottom: 15px;
+}
+.experiments {
+  border-top: 1px solid @light-grey;
+  .fa {
+    color: @warm-grey;
+  }
+  h3 {
+    font-weight: normal;
+  }
+  .actions {
+    padding-top: 15px;
+    a {
+      padding-right: 15px;
+    }
+  }
+}
+.subform-element{
+  margin-bottom: 0.5em;
+}
+
+
+
+.with-description {
+  &.checkbox {
+    padding-top: 0;
+  }
+  .control-label {
+    padding-top: 0;
+  }
+}
+
+.button {
+  float: left!important;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.autocomplete-suggestions {
+  border-radius: 4px;
+  border: 1px solid #999;
+  background: #FFF;
+  overflow: auto;
+}
+.autocomplete-suggestion {
+  padding: 5px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.autocomplete-selected {
+  background-color: #3875d7;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(20%, #3875d7), color-stop(90%, #2a62bc));
+  background-image: -webkit-linear-gradient(#3875d7 20%, #2a62bc 90%);
+  background-image: -moz-linear-gradient(#3875d7 20%, #2a62bc 90%);
+  background-image: -o-linear-gradient(#3875d7 20%, #2a62bc 90%);
+  background-image: linear-gradient(#3875d7 20%, #2a62bc 90%);
+  color: #fff;
+}
+.autocomplete-suggestions strong {
+  font-weight: normal;
+  text-decoration: underline;
+}
+.new-organizer {
+  padding: 10px 25px;
+}
+.autocomplete-group {
+  padding: 5px 5px;
+  strong {
+    display: block;
+    border-bottom: 1px solid #000;
+  }
+}
+.participant-details {
+  padding: 0 8px !important;
+  td {
+    border: 0 !important;
+  }
+  .person-actions, .evaluation-actions {
+    a {
+      padding-left: 2em;
+    }
+    .identical {
+      a {
+        padding-left: 0;
+        color: #a94442;
+        font-weight: bold;
+      }
+    }
+  }
+  table {
+    border: 0;
+    width: 100%;
+    tr {
+      td {
+        border-top: 1px solid @light-grey !important;
+      }
+      &:first-child {
+        td {
+          border: 0;
+        }
+      }
+    }
+  }
+}

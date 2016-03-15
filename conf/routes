@@ -6,10 +6,6 @@ GET           /apiv2                                                         con
 GET           /profile                                                       controllers.core.Dashboard.profile
 GET           /overview/:id                                                  controllers.core.Dashboard.overview(id: Long)
 
-GET           /admin/settings                                                controllers.admin.Administration.settings
-POST          /admin/transactiontype/new                                     controllers.admin.Administration.createTransactionType
-POST          /admin/transactiontype/:id/delete                              controllers.admin.Administration.deleteTransactionType(id: Long)
-
 GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
 POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
 
@@ -61,7 +57,6 @@ GET           /brand/:brandId/testimonial/:id                                con
 POST          /brand/:brandId/testimonial                                    controllers.BrandTestimonials.create(brandId: Long)
 POST          /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.update(brandId: Long, id: Long)
 DELETE        /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.remove(brandId: Long, id: Long)
-
 
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
@@ -156,13 +151,9 @@ GET           /login-reminder                                              contr
 
 GET           /members                                                     controllers.Members.index
 GET           /member/new                                                  controllers.Members.add
-GET           /member/new/organisation                                     controllers.Members.addOrganisation
-GET           /member/new/person                                           controllers.Members.addPerson
 GET           /member/existing/organisation                                controllers.Members.addExistingOrganisation
 GET           /member/existing/person                                      controllers.Members.addExistingPerson
 POST          /member                                                      controllers.Members.create
-POST          /member/organisation                                         controllers.Members.createNewOrganisation
-POST          /member/person                                               controllers.Members.createNewPerson
 POST          /member/existing/organisation/                               controllers.Members.updateExistingOrg
 POST          /member/existing/person/                                     controllers.Members.updateExistingPerson
 GET           /member/:id/edit                                             controllers.Members.edit(id: Long)
@@ -273,6 +264,8 @@ POST          /user/password                                                 con
 GET           /user/switch                                                   controllers.core.UserAccounts.switchRole
 POST          /user/email                                                    controllers.core.UserAccounts.changeEmail
 GET           /user/email/:token                                             controllers.core.UserAccounts.handleEmailChange(token: String)
+
+POST          /webhooks/stripe                                               controllers.webhooks.Stripe.event
 
 # API (v2)
 GET           /api/v2/brands                                                 controllers.apiv2.BrandsApi.brands

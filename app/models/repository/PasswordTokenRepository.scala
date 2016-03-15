@@ -55,7 +55,7 @@ class PasswordTokenRepository(app: Application) extends HasDatabaseConfig[JdbcPr
   /**
     * Deletes all expired tokens
     */
-  def deleteExpiredTokens(): Unit = db.run(tokens.filter(_.expire < DateTime.now()).delete)
+  def deleteExpiredTokens(): Future[Int] = db.run(tokens.filter(_.expire < DateTime.now()).delete)
 
   /**
     * Returns a mail token if it exists

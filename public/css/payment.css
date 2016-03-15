@@ -1,0 +1,118 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+.welcome .info-block {
+  min-height: 130px;
+}
+.welcome .right .info-block {
+  min-height: 87px;
+}
+.welcome .button-block {
+  min-height: 130px;
+}
+.welcome .right .button-block {
+  min-height: 87px;
+}
+.welcome .button-block .button-line {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+.welcome .button-block .button-line a {
+  margin-right: 30px;
+}
+.congratulation {
+  margin-top: 50px;
+}
+.congratulation .text {
+  margin-top: 50px;
+}
+.form-group {
+  padding-bottom: 10px;
+}
+.form-group.clearfix {
+  padding-bottom: 0;
+}
+.payment-bottom-space {
+  margin-bottom: 30px;
+}
+.payment-wide {
+  width: 100% !important;
+}
+.payment-year {
+  padding-left: 130px;
+}
+.valid-thru {
+  padding-right: 30px;
+}
+.payment-card {
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) inset;
+  margin-bottom: 20px;
+  min-height: 245px;
+  padding: 19px;
+}
+.payment-icons {
+  background-image: url(../images/payment-logo.png);
+  background-repeat: no-repeat;
+  display: inline-block;
+  margin-right: 10px;
+}
+.payment-visa {
+  background-position: 0 0;
+  height: 24px;
+  width: 41px;
+}
+.payment-mastercard {
+  background-position: 0 -26px;
+  height: 24px;
+  width: 41px;
+}
+.payment-code-line {
+  background: -moz-linear-gradient(left center, #232733 0px, #5e616a 100%) repeat scroll 0 0 rgba(0, 0, 0, 0);
+  background: -webkit-gradient(linear, left top, right top, color-stop(0%, #232733), color-stop(100%, #5e616a));
+  background: -o-linear-gradient(top, #232733 0, #5e616a 100%);
+  border-top: 1px solid #93979e;
+  display: block;
+  height: 45px;
+  margin: 6px -20px 50px;
+  position: relative;
+  z-index: 10;
+}
+.form-control.cc-cvc {
+  width: 60px;
+}
+.fee {
+  margin-bottom: 30px;
+}
+.fee label {
+  margin-top: 7px;
+}
+.amount {
+  font-size: 30px;
+}
+.btn-block {
+  margin-top: 10px;
+}

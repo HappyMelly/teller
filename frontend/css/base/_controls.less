@@ -1,0 +1,158 @@
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+@import "../settings";
+
+/* links */
+.link-simple{
+  display: inline-block;
+  line-height: 1;
+  text-decoration: none !important;
+  .transition(all .15s ease);
+  border-bottom:1px solid transparent;
+}
+
+// one line links
+.link-black{
+  .link-simple;
+  color: #333333 !important;
+
+  &:hover{
+    border-bottom-color: #333;
+  }
+}
+
+// one line links
+.link-white{
+  .link-simple;
+  color: #fff !important;
+
+  &:hover{
+    border-bottom-color: #fff;
+  }
+}
+
+.link-blue{
+  .link-simple;
+  color: #4a90e2 !important;
+
+  &:hover{
+    color: #4a90e2 !important;
+    border-bottom-color: #4a90e2;
+  }
+}
+
+
+// multiline links
+.link-m{
+  display: inline;
+  text-decoration: none !important;
+  .transition(all .15s ease);
+  border-bottom:1px solid transparent;
+}
+
+.link-mblack{
+  .link-m;
+  color: #333333 !important;
+
+  &:hover{
+    color: #4a90e2 !important;
+    border-bottom-color: #4a90e2;
+  }
+}
+
+.link-mblue{
+  .link-m;
+  color: #4a90e2 !important;
+
+  &:hover{
+    color: #4a90e2 !important;
+    border-bottom-color: #4a90e2;
+  }
+}
+
+
+/*== Forms ==*/
+textarea.form-control{
+  min-height: 114px;
+}
+
+// radio button
+.b-radio{
+  display: block;
+  position: relative;
+}
+
+.b-radio__input{
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: .0;
+
+  &:checked ~ .b-radio__icon{
+    border-color: #4A90E2;
+
+    &:after{
+      display: block;
+    }
+  }
+
+  &:checked ~ .b-radio__content{
+    display: block;
+  }
+}
+
+.b-radio__icon{
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #979797;
+  border-radius: 14px;
+  cursor: pointer;
+
+  &:after{
+    content: '';
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -5px 0 0 -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 10px;
+    background-color: #4A90E2;
+  }
+}
+
+.b-radio__text{
+  margin-left: 25px;
+  padding-top: 1px;
+  font-weight: 400;
+}
+
+.b-radio__content{
+  display: none;
+  margin-top: 8px;
+}

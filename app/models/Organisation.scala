@@ -51,7 +51,6 @@ case class Organisation(
     webSite: Option[String],
     blog: Option[String],
     contactEmail: Option[String],
-    customerId: Option[String] = None,
     about: Option[String] = None,
     logo: Boolean = false,
     active: Boolean = true,
@@ -68,7 +67,7 @@ case class Organisation(
   def becomeMember(funder: Boolean, fee: Money, userId: Long, services: Repositories): Future[Member] = {
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee,
       renewal = true, since = LocalDate.now(),
-      until = LocalDate.now().plusYears(1), existingObject = true,
+      until = LocalDate.now().plusYears(1),
       reason = None, created = DateTime.now(), userId, DateTime.now(), userId)
     services.member.insert(m)
   }
@@ -111,7 +110,7 @@ object Organisation {
   def apply(name: String, countryCode: String): Organisation = {
     val date = DateStamp(createdBy = "", updated = DateTime.now(), updatedBy = "")
     Organisation(None, name, None, None, None, None, None, countryCode,
-      None, None, None, None, None, None, None, logo = false, active = false, date)
+      None, None, None, None, None, None, logo = false, active = false, date)
   }
 }
 

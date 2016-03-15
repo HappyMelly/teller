@@ -26,6 +26,7 @@ case class Attendee(
   organisation: Option[String],
   comment: Option[String],
   role: Option[String],
+  optOut: Boolean = false,
   recordInfo: DateStamp) extends Recipient with ActivityRecorder {
 
   def fullName: String = firstName + " " + lastName

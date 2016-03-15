@@ -66,9 +66,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
       "person" -> number.transform(
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
-      "funder" -> number.transform(
-        (i: Int) ⇒ if (i == 0) false else true,
-        (b: Boolean) ⇒ if (b) 1 else 0),
+      "funder" -> ignored(true),
       "fee" -> jodaMoney().
         verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
         verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR"),
@@ -80,9 +78,6 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().dayOfMonth().withMaximumValue().plusDays(2))),
       "until" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
-      "existingObject" -> number.transform(
-        (i: Int) ⇒ if (i == 0) false else true,
-        (b: Boolean) ⇒ if (b) 1 else 0),
       "reason" -> ignored(None.asInstanceOf[Option[String]]),
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(modifierId),
@@ -90,16 +85,13 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
       "updatedBy" -> ignored(modifierId))(Member.apply)(Member.unapply))
   }
 
-  def existingOrgForm = Form(
-    single("id" -> longNumber))
+  def existingOrgForm = Form(single("id" -> longNumber))
 
-  def existingPersonForm = Form(
-    single("id" -> longNumber))
+  def existingPersonForm = Form(single("id" -> longNumber))
 
   /** Renders a list of all members */
   def index() = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.member.findAll flatMap { results =>
-      val members = results.filter(_.active)
+    repos.member.findAll flatMap { members =>
       val fee = members.find(m ⇒ m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
       var totalFee = Money.parse("EUR 0")
       members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
@@ -109,7 +101,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /** Renders Add form */
   def add() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.member.form(user, None, form(user.person.identifier)))
+    ok(views.html.v2.member.form(user, None, form(user.person.identifier)))
   }
 
   /**
@@ -118,15 +110,13 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def create() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     form(user.person.identifier).bindFromRequest.fold(
-      formWithErrors ⇒ badRequest(views.html.member.form(user, None, formWithErrors)),
+      formWithErrors ⇒ badRequest(views.html.v2.member.form(user, None, formWithErrors)),
       member ⇒ {
         val m = member.copy(id = None).copy(objectId = 0).copy(until = member.since.plusYears(1))
-        Cache.set(Members.cacheId(user.person.id.get), m, 1800)
-        (member.person, member.existingObject) match {
-          case (true, false) ⇒ redirect(routes.Members.addPerson())
-          case (false, false) ⇒ redirect(routes.Members.addOrganisation())
-          case (false, true) ⇒ redirect(routes.Members.addExistingOrganisation())
-          case (true, true) ⇒ redirect(routes.Members.addExistingPerson())
+        Cache.set(Members.cacheId(user.person.identifier), m, 1800)
+        member.person match {
+          case false ⇒ redirect(routes.Members.addExistingOrganisation())
+          case true ⇒ redirect(routes.Members.addExistingPerson())
         }
       })
   }
@@ -137,7 +127,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case None => notFound("Member not found")
       case Some(member) =>
         val formWithData = form(user.person.id.get).fill(member)
-        ok(views.html.member.form(user, Some(member), formWithData))
+        ok(views.html.v2.member.form(user, Some(member), formWithData))
     }
   }
 
@@ -151,7 +141,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case None => notFound("Member not found")
       case Some(existing) =>
         form(user.person.id.get).bindFromRequest.fold(
-          errors ⇒ badRequest(views.html.member.form(user, Some(existing), errors)),
+          errors ⇒ badRequest(views.html.v2.member.form(user, Some(existing), errors)),
           data ⇒ {
             val updated = data.copy(id = existing.id).
               copy(person = existing.person, objectId = existing.objectId).
@@ -210,21 +200,11 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
-  /** Renders Add new person page */
-  def addPerson() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.member.newPerson(user, None, core.People.personForm(user.name, None, repos)))
-  }
-
-  /** Renders Add new organisation page */
-  def addOrganisation() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.member.newOrg(user, None, core.Organisations.organisationForm))
-  }
-
   /** Renders Add existing organisation page */
   def addExistingOrganisation() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       orgsNonMembers flatMap { orgs =>
-        ok(views.html.member.existingOrg(user, orgs, existingOrgForm))
+        ok(views.html.v2.member.existingOrg(user, orgs, existingOrgForm))
       }
   }
 
@@ -232,78 +212,12 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   def addExistingPerson() = RestrictedAction(Admin) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       peopleNonMembers flatMap { people =>
-        ok(views.html.member.existingPerson(user, people, existingPersonForm))
+        ok(views.html.v2.member.existingPerson(user, people, existingPersonForm))
       }
   }
 
-  /** Records a new member-organisation to database */
-  def createNewOrganisation() = RestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val orgForm = core.Organisations.organisationForm.bindFromRequest
-      orgForm.fold(
-        hasErrors ⇒ badRequest(views.html.member.newOrg(user, None, hasErrors)),
-        view ⇒ {
-          val cached = Cache.getAs[Member](Members.cacheId(user.person.identifier))
-          cached map { m ⇒
-            val actions = for {
-              v <- repos.org.insert(view)
-              member <- repos.member.insert(m.copy(objectId = v.org.identifier, person = false))
-            } yield (v.org, member)
-            actions flatMap { case (org, member) =>
-              Cache.remove(Members.cacheId(user.person.id.get))
-              val profileUrl: String = core.routes.Organisations.details(org.identifier).url
-              val text = newMemberMsg(member, org.name, profileUrl)
-              slack.send(text)
-              redirect(profileUrl, "success" -> "Member was added")
-            }
-          } getOrElse {
-            val formWithError = orgForm.withGlobalError(Messages("error.membership.wrongStep"))
-            badRequest(views.html.member.newOrg(user, None, formWithError))
-          }
-        })
-  }
-
-  /** Records a new member-person to database */
-  def createNewPerson() = RestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      val personForm = core.People.personForm(user.name, None, repos).bindFromRequest
-      personForm.fold(
-        hasErrors ⇒
-          badRequest(views.html.member.newPerson(user, None, hasErrors)),
-        success ⇒ {
-          val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-          cached map { m ⇒
-            val actions = for {
-              person <- repos.person.insert(success)
-              member <- repos.member.insert(m.copy(objectId = person.identifier, person = true))
-            } yield (person, member)
-            actions flatMap { case (person, member) =>
-              repos.userAccount.findByPerson(person.identifier) map {
-                case None =>
-                  val account = UserAccount.empty(person.identifier).copy(member = true, registered = true)
-                  repos.userAccount.insert(account)
-                case Some(account) =>
-                  repos.userAccount.update(account.copy(member = true))
-              }
-              Cache.remove(Members.cacheId(user.person.id.get))
-              activity(person, user.person).created.insert(repos)
-              val log = activity(member, user.person).made.insert(repos)
-              notify(person, None, member)
-              subscribe(person, member)
-
-              val profileUrl: String = core.routes.People.details(person.id.get).url
-              redirect(profileUrl, "success" -> log.toString)
-            }
-          } getOrElse {
-            val formWithError = personForm.withGlobalError(Messages("error.membership.wrongStep"))
-            badRequest(views.html.member.newPerson(user, None, formWithError))
-          }
-        })
-  }
-
   /** Records an existing member-person to database */
-  def updateExistingPerson() = RestrictedAction(Admin) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
+  def updateExistingPerson() = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
       val personForm = existingPersonForm.bindFromRequest
       personForm.fold(
         hasErrors ⇒ personUpdateError(user, hasErrors),
@@ -311,7 +225,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
           val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
           cached map { m ⇒
             (for {
-              p <- repos.person.find(id)
+              p <- repos.person.findComplete(id)
               m <- repos.person.member(id)
             } yield (p, m)) flatMap {
               case (None, _) =>
@@ -335,7 +249,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
                   subscribe(person, m)
 
                   val profileUrl: String = core.routes.People.details(person.id.get).url
-                  redirect(profileUrl, "success" -> log.toString)
+                  redirect(profileUrl, "success" -> "New Funder was added")
                 }
             }
           } getOrElse {
@@ -348,7 +262,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def personUpdateError(user: ActiveUser, form: Form[Long])(
       implicit request: Request[AnyContent], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
     peopleNonMembers flatMap { people =>
-      badRequest(views.html.member.existingPerson(user, people, form))
+      badRequest(views.html.v2.member.existingPerson(user, people, form))
     }
   }
 
@@ -367,17 +281,17 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
             case (None, _) =>
               val formWithError = orgForm.withGlobalError(Messages("error.organisation.notExist"))
               orgUpdateError(user, formWithError)
-            case (_, None) =>
+            case (_, Some(member)) =>
               val formWithError = orgForm.withGlobalError(Messages("error.organisation.member"))
               orgUpdateError(user, formWithError)
-            case (Some(org), Some(member)) =>
+            case (Some(org), None) =>
               repos.member.insert(m.copy(objectId = org.id.get, person = false)) flatMap { member =>
                 Cache.remove(Members.cacheId(user.person.id.get))
                 val log = activity(member, user.person, Some(org)).made.insert(repos)
                 val profileUrl: String = core.routes.Organisations.details(org.id.get).url
                 val text = newMemberMsg(member, org.name, profileUrl)
                 slack.send(text)
-                redirect(profileUrl, "success" -> log.toString)
+                redirect(profileUrl, "success" -> "New member was added")
               }
           }
         } getOrElse {
@@ -391,7 +305,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
     implicit request: Request[AnyContent], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] = {
 
     orgsNonMembers flatMap { orgs =>
-      badRequest(views.html.member.existingOrg(user, orgs, form))
+      badRequest(views.html.v2.member.existingOrg(user, orgs, form))
     }
   }
 

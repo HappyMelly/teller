@@ -3,28 +3,24 @@
 <html>
 <head>
     <title>Page Not Found</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/404page.css")">
     <link rel="shortcut icon"href="@routes.Assets.at("images/favicon.ico")">
-    <style type="text/css">
-        body { padding-top: 60px; }
-    </style>
 </head>
-<body>
-<div class="container">
-    <h1>Sorry we lost your page...</h1>
+<body class="page404 with-melly" >
+    <div class="page404__con">
+        <h1 class="page404__title">
+            Oops!
+        </h1>
+        <div class="page404__text">
+            We can't seem to find the page you're looking for. <br>
+            Let’s go from the beginning:
+        </div>
 
-    <p>and we're working hard trying to find it. </p>
+        <a href="/" class="page404__btn">
+            Visit home page
+        </a>
+    </div>
 
-    <p><a href="mailto:sergey.kotlov@@happymelly.com?subject=@helper.urlEncode(path)">Send us</a> this link <b>@path</b> to speed up this process.</p>
-
-    <br/><br/>
-    <h3><a href="@core.routes.Dashboard.index">Back to action</a></h3>
-
-</div>
-</body>
-    <footer>
         <script>
           (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
           (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -35,5 +31,5 @@
           ga('send', 'pageview');
 
         </script>
-    </footer>
+</body>
 </html>

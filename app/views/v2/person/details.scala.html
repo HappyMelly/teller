@@ -2,7 +2,7 @@
     person: Person,
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
-    conf: core.PeopleDetailConfig,
+    conf: controllers.core.PeopleDetailConfig,
     badges: List[(models.brand.Badge, String)],
     member: Option[Member])(implicit request: Request[Any],
         flash: Flash,
@@ -16,23 +16,19 @@
 @import models.UserRole._
 
 @v2.main(person.fullName + " - Person", "people", user) {
-  <div class="row profile-header
+  <div class="b-headprofile
     @if(conf.member) { @if(member.get.funder) { funder } else { supporter }}">
-    <div class="container">
-      <div class="content-block">
-        <h2>@person.fullName
-            @if(conf.member) {
-                <div class="membership-type">
-                    @if(member.get.funder) { Funder } else { Supporter }
-                </div>
+    <div class="container h-rel">
 
-            }
-        </h2>
-        @views.html.v2.element.profiles(person.profile, member)
+      @if(conf.member) {
+      <div class="b-headprofile__type">
+        @if(member.get.funder) { Funder } else { Supporter }
+      </div>
+      }
 
-        <div class="actions pull-right">
+      <div class="b-headprofile__buttons">
           @restrict(handler, List(as(Role.Admin.toString))) {
-            <div class="button">
+            <div class="b-headprofile__btn">
               <form class="delete form-inline" method="post" text="person"
               action="@CSRF(controllers.core.routes.People.delete(person.id.getOrElse(0)))">
                 <div data-toggle="tooltip" data-placement="bottom"
@@ -47,7 +43,7 @@
             </div>
           }
           @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
-            <div class="button">
+            <div class="b-headprofile__btn">
               <form method="post" class="form-inline"
               action="@CSRF(controllers.core.routes.People.activation(person.identifier))">
                 <input name="active" value="@(!person.active)" type="hidden">
@@ -64,23 +60,33 @@
                 }
               </form>
             </div>
-            <div class="button">
-              @if(person.identifier == user.person.identifier) {
-                <a class="btn btn-default" href="@controllers.core.routes.UserAccounts.account()">
-                  Manage accounts
-                </a>
-              }
+            <div class="b-headprofile__btn">
+            @if(person.identifier == user.person.identifier) {
+              <a class="btn btn-default" href="@controllers.core.routes.UserAccounts.account()">
+                Manage accounts
+              </a>
+            }
             </div>
-            <div class="button">
+            <div class="b-headprofile__btn">
               <a class="btn btn-primary" href="@controllers.core.routes.People.edit(person.id.get)">
                 Edit Profile
               </a>
             </div>
           }
+      </div>
+
+      <div class="b-headprofile__content">
+        <h2 class="b-headprofile__title">
+          @person.fullName
+        </h2>
+        <div class="b-social">
+          @views.html.v2.element.profiles(person.profile, member)
         </div>
       </div>
     </div>
   </div>
+
+
   <input type="hidden" id="personId" disabled value="@person.id.get"/>
   <div class="row">
     <div class="container">
@@ -130,5 +136,5 @@
   <script src="@routes.Assets.at("javascripts/jquery.fileupload.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("javascripts/jquery.fileupload-process.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("javascripts/jquery.fileupload-image.js")" type="text/javascript"></script>
-  <script src="@routes.Assets.at("person/details.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("js/person/details.js")" type="text/javascript"></script>
 }

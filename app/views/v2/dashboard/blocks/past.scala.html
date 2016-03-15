@@ -20,7 +20,7 @@
         @if(withBrand) {
           <td>
             @brand.map { value =>
-              <a href="@core.routes.Dashboard.overview(value.identifier)">@value.name</a>
+              <a href="@controllers.core.routes.Dashboard.overview(value.identifier)">@value.name</a>
             }.getOrElse { No brand }
           </td>
         }

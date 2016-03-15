@@ -62,6 +62,7 @@ private[models] trait AttendeeTable extends EventTable {
     def organisation = column[Option[String]]("ORGANISATION")
     def comment = column[Option[String]]("COMMENT")
     def role = column[Option[String]]("ROLE")
+    def optOut = column[Boolean]("OPT_OUT")
     def created = column[DateTime]("CREATED")
     def createdBy = column[String]("CREATED_BY")
     def updated = column[DateTime]("UPDATED")
@@ -70,31 +71,32 @@ private[models] trait AttendeeTable extends EventTable {
     type AttendeeFields = Option[Long] :: Long :: Option[Long] :: String :: String :: String :: Option[LocalDate] ::
       Option[String] :: Option[String] :: Option[String] :: Option[String] :: Option[String] :: Option[String] ::
       Option[Long] :: Option[String] :: Option[LocalDate] :: Option[String] :: Option[String] :: Option[String] ::
-      DateTime :: String :: DateTime :: String :: HNil
+      Boolean :: DateTime :: String :: DateTime :: String :: HNil
 
     def event = foreignKey("EVENT_FK", eventId, TableQuery[Events])(_.id)
 
     def * = (id.? :: eventId :: personId :: firstName :: lastName :: email :: dateOfBirth ::
       countryCode :: city :: street_1 :: street_2 :: province :: postcode ::
-      evaluationId :: certificate :: issued :: organisation :: comment :: role ::
+      evaluationId :: certificate :: issued :: organisation :: comment :: role :: optOut ::
       created :: createdBy :: updated :: updatedBy :: HNil) <>(createAttendee, extractAttendee)
 
     def forUpdate = (personId, firstName, lastName, email, dateOfBirth, countryCode, city, street_1, street_2, province,
       postcode, role, updated, updatedBy)
 
     def createAttendee(a: AttendeeFields): Attendee = a match {
-      case id :: eventId :: personId :: firstName :: lastName :: email :: dateOfBirth :: countryCode :: city :: street_1 ::
-        street_2 :: province :: postcode :: evaluationId :: certificate :: issued :: organisation :: comment :: role ::
+      case id :: eventId :: personId :: firstName :: lastName :: email :: dateOfBirth ::
+        countryCode :: city ::  street_1 :: street_2 :: province :: postcode ::
+        evaluationId :: certificate :: issued :: organisation :: comment :: role :: optOut ::
         created :: createdBy :: updated :: updatedBy :: HNil =>
         Attendee(id, eventId, personId, firstName, lastName, email, dateOfBirth, countryCode, city, street_1,
-          street_2, province, postcode, evaluationId, certificate, issued, organisation, comment, role,
+          street_2, province, postcode, evaluationId, certificate, issued, organisation, comment, role, optOut,
           DateStamp(created, createdBy, updated, updatedBy))
     }
 
     def extractAttendee(a: Attendee): Option[AttendeeFields] =
       Some(a.id :: a.eventId :: a.personId :: a.firstName :: a.lastName :: a.email :: a.dateOfBirth :: a.countryCode ::
         a.city :: a.street_1 :: a.street_2 :: a.province :: a.postcode :: a.evaluationId :: a.certificate :: a.issued ::
-        a.organisation :: a.comment :: a.role :: a.recordInfo.created :: a.recordInfo.createdBy ::
+        a.organisation :: a.comment :: a.role :: a.optOut :: a.recordInfo.created :: a.recordInfo.createdBy ::
         a.recordInfo.updated :: a.recordInfo.updatedBy :: HNil)
 
   }

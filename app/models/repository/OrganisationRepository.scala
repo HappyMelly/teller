@@ -25,6 +25,7 @@
 package models.repository
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.core.payment.CustomerType
 import models.database._
 import models.{Member, OrgView, Organisation, Person, ProfileType}
 import play.api.Application
@@ -34,7 +35,7 @@ import slick.driver.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class OrganisationRepository(app: Application, services: Repositories) extends HasDatabaseConfig[JdbcProfile]
+class OrganisationRepository(app: Application, repos: Repositories) extends HasDatabaseConfig[JdbcProfile]
   with MemberTable
   with OrganisationTable
   with OrganisationMembershipTable
@@ -60,8 +61,9 @@ class OrganisationRepository(app: Application, services: Repositories) extends H
    * @param id Organisation identifier
    */
   def delete(id: Long): Future[Int] = {
-    services.member.delete(id, person = false)
-    services.socialProfile.delete(id, ProfileType.Organisation)
+    repos.member.delete(id, person = false)
+    repos.core.customer.delete(id, CustomerType.Organisation)
+    repos.socialProfile.delete(id, ProfileType.Organisation)
     db.run(orgs.filter(_.id === id).delete)
   }
 
@@ -112,7 +114,7 @@ class OrganisationRepository(app: Application, services: Repositories) extends H
     } yield org
     db.run(query.result).map(_.headOption)
   }
-  
+
   /**
    * Return the requested organisation with its social profile if exists
    *
@@ -145,7 +147,7 @@ class OrganisationRepository(app: Application, services: Repositories) extends H
   def insert(view: OrgView): Future[OrgView] = {
     val query = orgs returning orgs.map(_.id) into ((value, id) => value.copy(id = Some(id)))
     db.run(query += view.org).map { org =>
-      services.socialProfile.insert(view.profile.copy(objectId = org.identifier))
+      repos.socialProfile.insert(view.profile.copy(objectId = org.identifier))
       OrgView(org, view.profile)
     }
   }
@@ -166,7 +168,7 @@ class OrganisationRepository(app: Application, services: Repositories) extends H
    */
   def update(view: OrgView): Future[OrgView] = {
     assert(view.org.id.isDefined, "Can only update Organisations that have an id")
-    services.socialProfile.update(view.profile, view.profile.objectType)
+    repos.socialProfile.update(view.profile, view.profile.objectType)
     update(view.org).map { value =>
       OrgView(value, view.profile)
     }
@@ -211,7 +213,7 @@ class OrganisationRepository(app: Application, services: Repositories) extends H
     val updateTuple = (org.id, org.name, org.street1,
       org.street2, org.city, org.province, org.postCode,
       org.countryCode, org.vatNumber, org.registrationNumber,
-      org.webSite, org.blog, org.contactEmail, org.customerId, org.about,
+      org.webSite, org.blog, org.contactEmail, org.about,
       org.active, org.dateStamp.updated, org.dateStamp.updatedBy)
     db.run(query.update(updateTuple)).map(_ => org)
   }

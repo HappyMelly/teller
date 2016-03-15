@@ -24,16 +24,15 @@
 
 package controllers
 
-import models.{SocialProfile, Member, Organisation, Person}
+import models.core.payment.{CustomerType, Customer, Payment}
 import models.repository.Repositories
-import models.payment.Payment
-import org.joda.money.Money
+import models._
+import org.joda.time.DateTime
 import play.api.Play
+import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.mvc.{ AnyContent, Controller, Action }
 import services.integrations.Integrations
-import play.api.Play.current
 
 case class PaymentData(token: String,
   fee: Int,
@@ -42,9 +41,7 @@ case class PaymentData(token: String,
 /**
  * Defines an interface for enrollment classes
  */
-trait Enrollment extends AsyncController
-    with Integrations
-    with MemberNotifications {
+trait Enrollment extends AsyncController with Integrations with MemberNotifications {
 
   val repos: Repositories
 
@@ -77,6 +74,16 @@ trait Enrollment extends AsyncController
     mailChimp.subscribeToMembershipList(membershipListId, person, member.funder)
     val newsletterListId = Play.configuration.getString("mailchimp.newsletterListId").getOrElse("")
     mailChimp.subscribeToNewsletterList(newsletterListId, person)
+  }
+
+  protected def addCustomerRecord(customerId: String, person: Person, org: Option[Organisation]) = {
+    val recordInfo = DateStamp(DateTime.now(), person.fullName, DateTime.now(), person.fullName)
+    val customer = org map { x =>
+      Customer(None, customerId, x.identifier, CustomerType.Organisation, recordInfo)
+    } getOrElse {
+      Customer(None, customerId, person.identifier, CustomerType.Person, recordInfo)
+    }
+    repos.core.customer.insert(customer)
   }
 
   /**
