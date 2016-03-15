@@ -1,14 +1,18 @@
 @()(implicit request: Request[Any], flash: Flash)
 
-@layout.unauthorized("Error") {
-  <div class="container">
-    <h1>Sorry 8-( </h1>
+  @v2.layout.unauthorized("Error") {
+    <div class="b-unauth__content type_mt">
+      <h1>Sorry 8-( </h1>
 
-    <p>the evaluation you try to confirm does not exist.</p>
-    <p>Please contact your facilitator or <a href="mailto:sergey.kotlov@@happymelly.com?subject=Unknown evaluation">support team</a>.</p>
+      <p>the evaluation you try to confirm does not exist. <br>
+        Please contact your facilitator or <a class="link-blue" href="mailto:sergey.kotlov@@happymelly.com?subject=Unknown evaluation">
+          support team</a>.
+      </p>
 
-    <br/><br/>
-    <h3><a href="@controllers.core.routes.LoginPage.login()">Back to login page</a></h3>
+      <br/>
+      <h4>
+        <a class="link-blue" href="@controllers.core.routes.LoginPage.login()">Back to login page</a>
+      </h4>
 
-  </div>
-}
+    </div>
+  }

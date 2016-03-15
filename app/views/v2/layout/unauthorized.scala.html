@@ -1,17 +1,17 @@
 @(title: String)(content: Html)(implicit request: RequestHeader)
 
 @v2.layout.public("Happy Melly") {
-    <div class="unauthorized">
-        <img src="@routes.Assets.at("images/melly_right.png")" class="melly"/>
-        <div class="top-stripe h-rel">
-            <div class="subpage">
-                @content
-            </div>
+    <div class="unauth-page">
+        <img class="unauth-page__img" src="@routes.Assets.at("images/melly_right.png")" class="melly"/>
+
+        <div class="unauth-page__con">
+            @content
         </div>
     </div>
     <div class="unauth__footer">
-        Made with love at <a href="http://happymelly.com" target="_blank">Happy Melly</a>
+        Made with love at <a class="unauth__footer-link" href="http://happymelly.com" target="_blank">Happy Melly</a>
     </div>
 
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/unauthorized.css")">
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/unauth/unauth-pages.css")">
+
 }

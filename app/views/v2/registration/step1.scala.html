@@ -3,41 +3,40 @@
 @import helper.CSRF
 
 @v2.layout.unauthorized("Create account") {
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.css")">
-    <div class="registration-menu">
-        <span>Join Happy Melly</span>
-        <span>Create account</span>
-        <span class="inactive">Personal Data</span>
-        <span class="inactive">Organisation Data</span>
-        <span class="inactive">Payment</span>
-        <span class="inactive">Congratulations</span>
-        <span><a class="stop-registration" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
+
+    <div class="b-authmenu">
+        <span class="b-authmenu__i">Join Happy Melly</span>
+        <span class="b-authmenu__i">Create account</span>
+        <span class="b-authmenu__i state_inactive">Personal Data</span>
+        <span class="b-authmenu__i state_inactive">Organisation Data</span>
+        <span class="b-authmenu__i state_inactive">Payment</span>
+        <span class="b-authmenu__i state_inactive">Congratulations</span>
+        <span class="b-authmenu__back"><a class="link-blue " href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
     </div>
-    <div class="action-block registration">
-        <h3>Create Account</h3>
-        <div class="action-area">
-            <div class="column">
-                <div class="social">
-                    <a class="btn btn-twitter btn-login btn-block" href="@routes.Registration.authenticate("twitter")">
-                        <i class="fa fa-twitter"></i>  Sign Up with Twitter
-                    </a>
-                    <a class="btn btn-facebook btn-login btn-block" href="@routes.Registration.authenticate("facebook")">
-                        <i class="fa fa-facebook-square"></i>  Sign Up with Facebook
-                    </a>
-                    <a class="btn btn-linkedin btn-login btn-block" href="@routes.Registration.authenticate("linkedin")">
-                        <i class="fa fa-linkedin"></i>  Sign Up with LinkedIn
-                    </a>
-                    <a class="btn btn-google btn-login btn-block" href="@routes.Registration.authenticate("google")">
-                        <i class="fa fa-google-plus"></i>  Sign Up with Google
-                    </a>
-                </div>
+
+    <div class="b-unauth__content b-authreg">
+        <h3 class="b-unauth__title">Create Account</h3>
+        <div class="b-authreg__content">
+            <div class="b-authreg__col">
+                <a class="btn b-social-twitter" href="@routes.Registration.authenticate("twitter")">
+                    <i class="fa fa-twitter"></i>  Sign Up with Twitter
+                </a>
+                <a class="btn b-social-facebook" href="@routes.Registration.authenticate("facebook")">
+                    <i class="fa fa-facebook-square"></i>  Sign Up with Facebook
+                </a>
+                <a class="btn b-social-linkedin" href="@routes.Registration.authenticate("linkedin")">
+                    <i class="fa fa-linkedin"></i>  Sign Up with LinkedIn
+                </a>
+                <a class="btn b-social-google" href="@routes.Registration.authenticate("google")">
+                    <i class="fa fa-google-plus"></i>  Sign Up with Google
+                </a>
             </div>
-            <div class="middle-column">
+            <div class="b-authreg__middle">
                 <img src="@routes.Assets.at("images/login-or.png")" height="228px"/>
             </div>
-            <div class="column">
+            <div class="b-authreg__col">
                 @if(form.hasErrors) {
-                    <div class="errors text-left">
+                    <div class="b-authreg__errors">
                     @for((error, index) <- form.errors.zipWithIndex) {
                         @play.api.i18n.Messages(error.message)<br/>
                     }
@@ -54,7 +53,7 @@
                         <input class="form-control" type="password" name="password.password2" placeholder="Retype Password"/>
                     </div>
                     <div class="form-group">
-                        <button class="form-control btn btn-block btn-primary" type="submit">Sign Up</button>
+                        <button class="btn btn-primary b-authreg__submit" type="submit">Sign Up</button>
                     </div>
                 </form>
             </div>

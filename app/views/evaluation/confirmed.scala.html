@@ -1,14 +1,16 @@
 @()(implicit request: Request[Any], flash: Flash)
 
-@layout.unauthorized("W00t!") {
-  <div class="container">
+@v2.layout.unauthorized("W00t!") {
+  <div class="b-unauth__content type_mt">
     <h1>Congratulations</h1>
 
     <h3>You have just confirmed your evaluation</h3>
     <p>You will receive your certificate as soon as your facilitator approves the evaluation.</p>
 
-    <br/><br/>
-    <h3><a href="@controllers.core.routes.LoginPage.login()">Back to login page</a></h3>
+    <br/>
+    <h4>
+      <a class="link-blue" href="@controllers.core.routes.LoginPage.login()">Back to login page</a>
+    </h4>
 
   </div>
 }

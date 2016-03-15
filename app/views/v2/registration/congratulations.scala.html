@@ -1,31 +1,31 @@
 @(url: String, org: Boolean)(implicit request: Request[Any], flash: Flash)
 
 @v2.layout.unauthorized("Congratulations") {
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.css")">
-    <div class="registration-menu">
-        <span>Join Happy Melly</span>
-        <span>Create account</span>
-        <span>Personal Data</span>
-        <span>Organisation Data</span>
-        <span>Payment</span>
-        <span>Congratulations</span>
-        <span><a class="stop-registration" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
+    <div class="b-authmenu">
+        <span class="b-authmenu__i">Join Happy Melly</span>
+        <span class="b-authmenu__i">Create account</span>
+        <span class="b-authmenu__i">Personal Data</span>
+        <span class="b-authmenu__i">Organisation Data</span>
+        <span class="b-authmenu__i">Payment</span>
+        <span class="b-authmenu__i">Congratulations</span>
+        <span class="b-authmenu__back"><a class="link-blue" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
     </div>
-    <div class="action-block registration">
-        <h3>Congratulations!</h3>
-        <div class="congratulation">
-            <div class="col-md-4">
-                <img src="@routes.Assets.at("images/HM-character.png")" height="395px"/>
-            </div>
-            <div class="col-md-offset-1 col-md-7 right-column">
+    <div class="b-unauth__content b-authcongrat">
+        <h3 class="b-unauth__title">Congratulations!</h3>
+
+        <div class="b-authcongrat__con">
+            <img class="b-authcongrat__img" src="@routes.Assets.at("images/HM-character.png")" height="395" />
+
+
+            <div class="b-authcongrat__text">
                 <p>You joined the international business
                     network of awesome people and organizations helping others to be happy
                     at work. YOU ROCK!</p>
                 <p>Check your mailbox! Your welcome email is already waiting for you with
                     more advice on how to enjoy
-                    being a member of <a href="http://happymelly.com" target="_blank">Happy Melly</a>.
+                    being a member of <a class="link-mblue" href="http://happymelly.com" target="_blank">Happy Melly</a>.
                 </p>
-                <a class="btn btn-primary action-button" href="@(url)#membership">Go to your profile</a>
+                <a class="btn btn-primary b-authcongrat__btn" href="@(url)#membership">Go to your profile</a>
             </div>
         </div>
     </div>

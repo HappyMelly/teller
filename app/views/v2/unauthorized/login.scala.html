@@ -6,32 +6,30 @@
 @import securesocial.core.providers.UsernamePasswordProvider
 
 @v2.layout.unauthorized("Log In") {
-    <div class="action-block">
-        <h3>Login to Happy Melly Teller</h3>
+    <div class="b-unauth__content b-authreg">
+        <h3 class="b-unauth__title">Login to Happy Melly Teller</h3>
         @v2.element.flash()(request.flash)
-        <div class="action-area">
-            <div class="column">
-                <div class="social">
-                    <a class="btn btn-twitter btn-login btn-block" href="@env.routes.authenticationUrl("twitter")">
-                        <i class="fa fa-twitter"></i>  Login with Twitter
-                    </a>
-                    <a class="btn btn-facebook btn-login btn-block" href="@env.routes.authenticationUrl("facebook")">
-                        <i class="fa fa-facebook-square"></i>  Login with Facebook
-                    </a>
-                    <a class="btn btn-linkedin btn-login btn-block" href="@env.routes.authenticationUrl("linkedin")">
-                        <i class="fa fa-linkedin"></i>  Login with LinkedIn
-                    </a>
-                    <a class="btn btn-google btn-login btn-block" href="@env.routes.authenticationUrl("google")">
-                        <i class="fa fa-google-plus"></i>  Login with Google
-                    </a>
-                </div>
+        <div class="b-authreg__content">
+            <div class="b-authreg__col">
+                <a class="btn b-social-twitter" href="@env.routes.authenticationUrl("twitter")">
+                    <i class="fa fa-twitter"></i>  Login with Twitter
+                </a>
+                <a class="btn b-social-facebook" href="@env.routes.authenticationUrl("facebook")">
+                    <i class="fa fa-facebook-square"></i>  Login with Facebook
+                </a>
+                <a class="btn b-social-linkedin" href="@env.routes.authenticationUrl("linkedin")">
+                    <i class="fa fa-linkedin"></i>  Login with LinkedIn
+                </a>
+                <a class="btn b-social-google" href="@env.routes.authenticationUrl("google")">
+                    <i class="fa fa-google-plus"></i>  Login with Google
+                </a>
             </div>
-            <div class="middle-column">
+            <div class="b-authreg__middle">
                 <img src="@routes.Assets.at("images/login-or.png")" height="228px"/>
             </div>
-            <div class="column">
+            <div class="b-authreg__col">
                 @errorMsg.map { msg =>
-                    <div class="errors text-left">
+                    <div class="b-authreg__errors">
                         @Messages(msg)
                     </div>
                 }
@@ -54,16 +52,15 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <button class="form-control btn btn-block btn-primary" type="submit" data-login-submit>Login</button>
+                        <button class="btn btn-primary b-authreg__submit" type="submit" data-login-submit>Login</button>
                     </div>
                 </form>
-                <div class="join-now">
-                    Not a member? <a href="@routes.Registration.welcome()">Join now!</a>
+                <div class="b-authreg__join-now">
+                    Not a member? <a class="link-blue" href="@routes.Registration.welcome()">Join now!</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <link rel="stylesheet" href="@routes.Assets.at("css/login.css")">
     <script src="@routes.Assets.at("js/unauthorized/login.js")" type="text/javascript"></script>
 }

@@ -1,23 +1,23 @@
 @()(implicit request: Request[Any], flash: Flash)
 
 @v2.layout.unauthorized("Welcome") {
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/payment.css")">
-    <link rel="stylesheet" media="screen" href="@routes.Assets.at("css/registration.css")">
     <script type="text/javascript" src="@routes.Assets.at("js/membership/welcome.js")"></script>
-    <div class="registration-menu">
-        <span>Join Happy Melly</span>
-        <span class="inactive">Create account</span>
-        <span class="inactive">Personal Data</span>
-        <span class="inactive">Organisation Data</span>
-        <span class="inactive">Payment</span>
-        <span class="inactive">Congratulations</span>
-        <span><a class="stop-registration" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
+
+    <div class="b-authmenu">
+        <span class="b-authmenu__i">Join Happy Melly</span>
+        <span class="b-authmenu__i state_inactive">Create account</span>
+        <span class="b-authmenu__i state_inactive">Personal Data</span>
+        <span class="b-authmenu__i state_inactive">Organisation Data</span>
+        <span class="b-authmenu__i state_inactive">Payment</span>
+        <span class="b-authmenu__i state_inactive">Congratulations</span>
+        <span class="b-authmenu__back"><a class="link-blue" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
     </div>
-    <div class="action-block registration welcome">
-        <h3>Join the Happy Melly network</h3>
-        <div class="action-area text-left">
+    <div class="b-unauth__content b-authwelcome">
+        <h3 class="b-unauth__title">Join the Happy Melly network</h3>
+        <div class="b-authwelcome__content">
             @views.html.v2.element.supporter()
-            <div class="selector">
+
+            <div class="b-authwelcome__selector">
                 <div class="radio">
                     <label>
                         <input type="radio" name="supporterType" id="optionsRadios1" value="person" checked>
@@ -33,7 +33,7 @@
             </div>
         </div>
 
-        <div class="button-line text-center">
+        <div class="b-authwelcome__buttons">
             <a href="@routes.Registration.step1(false)" class="btn btn-primary" id="registrationButton">
                 Continue with Sign Up
             </a>
