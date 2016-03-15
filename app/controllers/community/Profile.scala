@@ -28,13 +28,17 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
-import models.core.payment.CustomerType
+import models.{Person, ActiveUser, Member}
+import models.core.payment.{Payment, CustomerType}
 import models.repository.Repositories
 import models.UserRole.Role._
+import play.api.mvc.{Result, Request}
 import play.api.Play
 import play.api.Play.current
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
+
+import scala.concurrent.Future
 
 /**
   * Manages community-related part of person or organisation profile
@@ -54,18 +58,30 @@ class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def membership(id: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
     (for {
-      person <- repos.person.find(id)
+      person <- repos.person.findComplete(id)
       member <- repos.person.member(id)
-      customer <- repos.core.customer.find(id, CustomerType.Person) if customer.nonEmpty
-      charges <- repos.core.charge.findByCustomer(customer.get.id.get)
-      cards <- repos.core.card.findByCustomer(customer.get.id.get)
-    } yield (person, member, charges, cards, customer.get.id.get)) flatMap {
-      case (_, None, _, _, _) => ok("Person is not a member")
-      case (None, _, _, _, _) => notFound("Person not found")
-      case (Some(person), Some(member), charges, cards, customerId) =>
-        val card = cards.filter(_.active).head
-        ok(views.html.v2.person.tabs.membership(user, person, member, charges, card, customerId, apiPublicKey))
+    } yield (person, member)) flatMap {
+      case (_, None) => ok("Person is not a member")
+      case (None, _) => notFound("Person not found")
+      case (Some(person), Some(member)) =>
+        if (member.funder)
+          ok(views.html.v2.person.tabs.funder(user, person, member))
+        else
+          renderSupporterTab(user, person, member)
     }
   }
+
+  protected def renderSupporterTab(user: ActiveUser, person: Person, member: Member)(
+      implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] =
+
+    (for {
+      customer <- repos.core.customer.find(person.identifier, CustomerType.Person) if customer.nonEmpty
+      charges <- repos.core.charge.findByCustomer(customer.get.id.get)
+      cards <- repos.core.card.findByCustomer(customer.get.id.get)
+    } yield (customer.get.id.get, charges, cards)) flatMap { case (customerId, charges, cards) =>
+      val card = cards.filter(_.active).head
+      val fee = Payment.countryBasedFees(person.address.countryCode)
+      ok(views.html.v2.person.tabs.supporter(user, person, member, charges, card, customerId, fee, apiPublicKey))
+    }
 
 }

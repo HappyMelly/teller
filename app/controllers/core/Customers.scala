@@ -53,8 +53,28 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   val apiPublicKey = Play.configuration.getString("stripe.public_key").get
 
+  def changeContributionLevel(customerId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler =>
+    implicit user =>
+      repos.core.customer.find(customerId) flatMap {
+        case None => notFound("Customer not found")
+        case Some(customer) =>
+          isAllowed(user.person, customer) flatMap { allowed =>
+            if (allowed) {
+              val form = Form(single("amount" -> bigDecimal))
+              form.bindFromRequest().fold(
+                error => badRequest("Amount parameter is empty or doesn't exist"),
+                amount => replaceCard(customer, amount)
+              )
+            } else {
+              badRequest("You are not allowed to update card details")
+            }
+          }
+      }
+  }
+
   /**
     * Adds new card for the given customer and removes the old ones
+    *
     * @param customerId Customer identifier
     */
   def updateCard(customerId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>

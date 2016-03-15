@@ -1,4 +1,9 @@
-@(person: Person, card: models.core.payment.CreditCard, customerId: Long, apiKey: String)
+@(person: Person,
+    card: models.core.payment.CreditCard,
+    customerId: Long,
+    currentLevel: BigDecimal,
+    fee: (Int, Int, Int),
+    apiKey: String)
 
 @import models.core.payment.Payment
 
@@ -63,17 +68,16 @@
     <form class="b-payment__form js-fee-form" action="@controllers.core.routes.Customers.updateCard(customerId)"
     method="POST" id="payment-form" autocomplete="on">
 
-        @views.html.v2.element.fee()
+        @views.html.v2.element.fee(currentLevel, fee)
         <div class="b-card__buttons">
-            Subscription fee &euro;<span data-fee-amount>30</span>
+            Contribution level &euro;<span data-fee-amount>30</span>
             plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span data-fee-tax>0.00</span>
 
             <div>
-                <button type="submit" class="btn btn-primary b-card__submit">Pay &euro;<span data-fee-pay>0.00</span></button>
+                <button type="submit" class="btn btn-primary b-card__submit">Change to &euro;<span data-fee-pay>0.00</span></button>
             </div>
         </div>
     </form>
-    @views.html.v2.element.paymentInfo()
 }
 </div>
 
