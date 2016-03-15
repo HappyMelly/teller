@@ -6747,6 +6747,9 @@ button.close {
 .h-d-inline {
   display: inline-block;
 }
+.h-hidden {
+  display: none;
+}
 .h-weight400 {
   font-weight: 400;
 }
@@ -8253,7 +8256,7 @@ textarea.form-control {
   font-size: 18px;
   margin: 30px 0 10px 0;
 }
-.dlg-hmfees__link.deactivated {
+.dlg-hmfees__link.state_active {
   color: black !important;
   border-bottom: none !important;
   text-decoration: none;

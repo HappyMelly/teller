@@ -7,7 +7,7 @@
             <div class="b-card__i-number">
                 <div class="b-card__i-label">CARD NUMBER</div>
                 <input type="tel" placeholder="XXXX XXXX XXXX XXXX" autocompletetype="cc-number"
-                class="form-control cc-number"
+                class="form-control " data-card-number
                 data-stripe="number"/>
             </div>
         </div>
@@ -15,16 +15,16 @@
             <div class="pull-left">
                 <div class="b-card__i-holder">
                     <div class="b-card__i-label">CARD HOLDER</div>
-                    <input type="text" class="form-control cc-name" placeholder="HAPPY MELLY" data-stripe="name"/>
+                    <input type="text" class="form-control " placeholder="HAPPY MELLY" data-card-name data-stripe="name"/>
                 </div>
             </div>
             <div class="pull-left">
                 <div class="b-card__i-valid">
                     <div class="b-card__i-label">VALID THRU</div>
                     <input type="tel" class="form-control cc-exp-month" placeholder="09"
-                    size="2" data-stripe="exp-month"/>
+                    size="2" data-stripe="exp-month" data-card-month />
                     <input type="tel" class="form-control cc-exp-year" placeholder="2018"
-                    size="4" data-stripe="exp-year"/>
+                    size="4" data-stripe="exp-year" data-card-year />
                 </div>
             </div>
             <div class="b-card__alert alert"></div>
@@ -37,7 +37,7 @@
             <div class="b-card__i-label">
                     CVC/CVV
             </div>
-            <input type="tel" class="form-control cc-cvc" autocomplete="off" data-stripe="cvc" placeholder="000"/>
+            <input type="tel" class="form-control" autocomplete="off" data-stripe="cvc" placeholder="000" data-card-cvc />
         </div>
     </div>
 </div>

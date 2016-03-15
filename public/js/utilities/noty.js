@@ -24,18 +24,25 @@
 
 /**
  * Shows success notification in the bottom of webpage
- * @param message {string}
+ * @param {String} message 
+ * @param {Number = 2500} time
+
  */
-function success(message) {
+function success(message, time) {
+    var interval = time || 2500;
+    
     noty({text: message, layout: 'bottom',
-        theme: 'relax', timeout: 2500 , type: 'success'});
+        theme: 'relax', timeout: interval , type: 'success'});
 }
 
 /**
  * Shows error notification in the bottom of webpage
- * @param message {string}
+ * @param {String} message
+ * @param {Number =2500} time
  */
-function error(message) {
+function error(message, time) {
+    var interval = time || 2500;
+
     noty({text: message, layout: 'bottom',
-        theme: 'relax', timeout: 2500 , type: 'error'});
+        theme: 'relax', timeout: interval , type: 'error'});
 }

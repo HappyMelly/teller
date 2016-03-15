@@ -11,6 +11,7 @@
         this.locals = this._getDom();
 
         this._assignEvents();
+        self._updateAmount(this.locals.$inputFee);
     }
 
     FeeForm.prototype._getDom = function () {
