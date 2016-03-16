@@ -15,46 +15,46 @@
             </div>
         </div>
         <div class="page-peer__left">
-            <form class="peer-credit js-form-credit" action="#">
-                <div class="peer-credit__title">
+            <form class="b-credits js-form-credit" action="#">
+                <div class="b-credits__title">
                     You can spend <span data-credict-count>88</span> more bonuses this month
                 </div>
-                <div class="peer-credit__i">
-                    <div class="peer-credit__value type-credit" data-credit-item>
-                        <span class="peer-credit__value-hint">
+                <div class="b-credits__i">
+                    <div class="b-credits__value type-credit" data-credit-item>
+                        <span class="b-credits__value-hint">
                             Give <i class="fa fa-heart-o"></i>
                         </span>
                         <div class="h-ovh">
-                            <input type="text" class="peer-credit__input" placeholder="" data-credit-value>
+                            <input type="text" class="b-credits__input" placeholder="" data-credit-value>
                         </div>
                     </div>
-                    <div class="peer-credit__value type-name" data-credit-item>
-                        <span class="peer-credit__value-hint">
+                    <div class="b-credits__value type-name" data-credit-item>
+                        <span class="b-credits__value-hint">
                             To
                         </span>
                         <div class="h-ovh">
-                            <input type="text" class="peer-credit__input" placeholder="Name or email" data-credit-to>
+                            <input type="text" class="b-credits__input" placeholder="Name or email" data-credit-to>
                         </div>
                     </div>
                 </div>
-                <div class="peer-credit__i">
-                    <button type="submit" class="btn btn-primary peer-credit__submit">
+                <div class="b-credits__i">
+                    <button type="submit" class="btn btn-primary b-credits__submit">
                         Give
                     </button>
                     <div class="h-ovh">
-                        <input type="text" class="peer-credit__input" placeholder="Message" data-credit-message>
+                        <input type="text" class="b-credits__input" placeholder="Message" data-credit-message>
                     </div>
                 </div>
 
-                <div class="peer-credit__error" data-credit-error></div>
+                <div class="b-credits__error" data-credit-error></div>
 
-                <div class="peer-credit__send" >
+                <div class="b-credits__send" >
                     You have send bonuses successfully!
                 </div>
             </form>
 
-            <div class="credit-history js-credit-history">
-                <div class="credit-history__head">
+            <div class="b-credithis js-credit-history">
+                <div class="b-credithis__head">
                     <div class="text">
                         Show bonuses
                     </div>
@@ -68,10 +68,10 @@
                         I recieved
                     </a>
                 </div>
-                <div class="credit-history__list" data-filter-list>
-                    <div class="credit-history-i" data-filter-text="">
-                        <div class="credit-history-i__img"></div>
-                        <div class="credit-history-i__con">
+                <div class="b-credithis__list" data-filter-list>
+                    <div class="b-credithis-i" data-filter-text="">
+                        <a href="#" class="b-credithis-i__img" style="background-image : url() ;"></a>
+                        <div class="b-credithis-i__con">
                             <div class="date">
                                 2h
                             </div>
@@ -81,9 +81,9 @@
                             For brining holistic aproach to Happy Melly
                         </div>
                     </div>
-                    <div class="credit-history-i" data-filter-text="irecieve">
-                        <div class="credit-history-i__img"></div>
-                        <div class="credit-history-i__con">
+                    <div class="b-credithis-i" data-filter-text="irecieve">
+                        <a href="#" class="b-credithis-i__img" style="background-image : url() ;"></a>
+                        <div class="b-credithis-i__con">
                             <div class="date">
                                 2h
                             </div>
@@ -93,9 +93,9 @@
                             For leading our meetings even when all are not quite sure what’s going on!!! (Or may be that’s just me) :-)
                         </div>
                     </div>
-                    <div class="credit-history-i" data-filter-text="isend">
-                        <div class="credit-history-i__img"></div>
-                        <div class="credit-history-i__con">
+                    <div class="b-credithis-i" data-filter-text="isend">
+                        <a href="#" class="b-credithis-i__img" style="background-image : url() ;"></a>
+                        <div class="b-credithis-i__con">
                             <div class="date">
                                 2h
                             </div>
@@ -113,7 +113,6 @@
 
     <link rel="stylesheet" href="@routes.Assets.at("css/person/credit-page.css")">
 
-    <script src="@routes.Assets.at("js/person/widgets-credit/filter-history.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("js/person/widgets-credit/send-credit-form.js")" type="text/javascript"></script>
-    <script src="@routes.Assets.at("js/person/credit-page.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("js/package/credit-page.js")"></script>
 }

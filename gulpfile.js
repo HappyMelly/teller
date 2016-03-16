@@ -26,11 +26,11 @@ lazyLoad('scripts', './gulp/scripts.js', {
 });
 
 lazyLoad('jscs', './gulp/js-codestyle.js', {
-    target: 'app/**/*.js'
+    target: 'frontend/**/*.js'
 });
 
 lazyLoad('jslint', './gulp/js-lint.js', {
-    target: 'app/**/*.js'
+    target: 'frontend/**/*.js'
 });
 
 lazyLoad('watch', './gulp/watch.js');

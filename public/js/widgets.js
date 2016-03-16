@@ -768,9 +768,9 @@
             var $input = $(input);
 
             if (!self.isValidInput($input)) error += 1;
-        })
+        });
         return !error;
-    }
+    };
 
     /**
      * Validate input
