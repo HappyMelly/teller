@@ -24,17 +24,13 @@
                         <span class="b-credits__value-hint">
                             Give <i class="fa fa-heart-o"></i>
                         </span>
-                        <div class="h-ovh">
-                            <input type="text" class="b-credits__input" placeholder="" data-credit-value>
-                        </div>
+                        <input type="text" name="give" class="b-credits__input" placeholder="" data-credit-value>
                     </div>
                     <div class="b-credits__value type-name" data-credit-item>
                         <span class="b-credits__value-hint">
                             To
                         </span>
-                        <div class="h-ovh">
-                            <input type="text" class="b-credits__input" placeholder="Name or email" data-credit-to>
-                        </div>
+                        <input type="text" name="to" class="b-credits__input" placeholder="Name or email" data-credit-to>
                     </div>
                 </div>
                 <div class="b-credits__i">
@@ -42,7 +38,7 @@
                         Give
                     </button>
                     <div class="h-ovh">
-                        <input type="text" class="b-credits__input" placeholder="Message" data-credit-message>
+                        <input type="text" name="message" class="b-credits__input" placeholder="Message" data-credit-message>
                     </div>
                 </div>
 
@@ -113,6 +109,5 @@
 
     <link rel="stylesheet" href="@routes.Assets.at("css/person/credit-page.css")">
 
-    <script src="@routes.Assets.at("js/person/widgets-credit/send-credit-form.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("js/package/credit-page.js")"></script>
 }

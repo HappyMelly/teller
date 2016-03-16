@@ -42,6 +42,9 @@
   margin-bottom: 13px;
   overflow: hidden;
 }
+.b-credits__i .b-error {
+  display: none;
+}
 .b-credits__value {
   float: left;
 }
@@ -52,22 +55,27 @@
   width: 19%;
   margin-right: 1.4%;
 }
+.b-credits__value.type-credit .b-credits__value-hint {
+  width: 51%;
+}
+.b-credits__value.type-credit .b-credits__input {
+  width: 49%;
+}
 .b-credits__value.type-credit .b-credits__input {
   text-align: right;
 }
 .b-credits__value.type-name {
   width: 79.6%;
 }
-.b-credits__value.state_error .b-credits__input {
-  border-color: #EE929F;
+.b-credits__value.type-name .b-credits__value-hint {
+  width: 8%;
 }
-.b-credits__value.state_error .b-credits__value-hint {
-  background-color: #ee929f;
+.b-credits__value.type-name .b-credits__input {
+  width: 92%;
 }
 .b-credits__value-hint {
   display: block;
   float: left;
-  padding: 0 10px;
   min-width: 40px;
   position: relative;
   height: 37px;
@@ -111,6 +119,9 @@
   width: 19%;
   margin-left: 1.4%;
 }
+.b-credits__submit:focus {
+  outline: none !important;
+}
 .b-credits__error {
   position: absolute;
   top: 146px;
@@ -133,6 +144,12 @@
   -moz-transition: all 0.15s ease;
   -o-transition: all 0.15s ease;
   transition: all 0.15s ease;
+}
+.b-error_show .b-credits__input {
+  border-color: #EE929F;
+}
+.b-error_show .b-credits__value-hint {
+  background-color: #ee929f;
 }
 .b-credits_state_send .b-credits__send {
   opacity: 1;
