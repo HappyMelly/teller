@@ -32,12 +32,10 @@ import models.UserRole.Role._
 import models._
 import models.core.payment.{Payment, PaymentException, RequestException}
 import models.repository.Repositories
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
+import play.api.Play.current
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json._
 import play.api.mvc._
-import play.api.Play.current
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 import services.integrations.Email
@@ -146,10 +144,9 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     validatePaymentData(data, user.person, user.member, Some(org))
 
     val (customerId, card) = subscribe(user.person, Some(org), data)
-    val fee = Money.of(EUR, data.fee)
     addCustomerRecord(customerId, card, user.person, Some(org))
     (for {
-      m <- org.becomeMember(funder = false, fee, user.person.identifier, repos)
+      m <- org.becomeMember(funder = false, data.fee, user.person.identifier, repos)
     } yield m) map { member =>
       notify(user.person, Some(org), member)
       subscribe(user.person, member)
@@ -171,11 +168,10 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     validatePaymentData(data, person, user.member, None)
 
     val (customerId, card) = subscribe(person, None, data)
-    val fee = Money.of(EUR, data.fee)
     addCustomerRecord(customerId, card, person, None)
     (for {
       p <- repos.socialProfile.find(person.identifier, ProfileType.Person)
-      m <- person.becomeMember(funder = false, fee, repos)
+      m <- person.becomeMember(funder = false, data.fee, repos)
     } yield (p, m)) map { case (profile, member) =>
       env.authenticatorService.fromRequest.foreach(auth ⇒ auth.foreach {
         _.updateUser(ActiveUser(user.id, user.providerId, user.account, user.person, Some(member)))

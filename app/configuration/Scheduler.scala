@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
-import mail.reminder._
+import cron.cleaners.{ExpiredEventRequestCleaner, TokenCleaner}
+import cron.reminders._
 import models.Facilitator
 import models.repository.Repositories
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment
-import services.cleaners.{TokenCleaner, ExpiredEventRequestCleaner}
 import services.integrations.Email
 
 import scala.concurrent.ExecutionContext.Implicits.global

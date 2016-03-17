@@ -1,10 +1,11 @@
 @(person: Person,
     card: models.core.payment.CreditCard,
     customerId: Long,
-    currentLevel: BigDecimal,
+    member: Member,
     fee: (Int, Int, Int),
     apiKey: String)
 
+@import views.ViewHelpersV2._
 @import models.core.payment.Payment
 
     <script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
@@ -29,13 +30,29 @@
             </td>
             <td>
                 <div class="b-contrib__price">
-                    <span>30&#8364;</span>
+                    <span>@member.fee.toInt&#8364;</span>
                 </div>
             </td>
+
             <td class="h-aright">
                 <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">Change level</a>
             </td>
         </tr>
+        @member.newFee.map { amount =>
+            <tr class="text-muted">
+                <td>
+                    <b>Contribution level</b>
+                </td>
+                <td>
+                    <div class="b-contrib__price">
+                        <span>@amount.toInt&#8364;</span>
+                    </div>
+                </td>
+                <td class="h-aright">
+                    from @date(member.until)
+                </td>
+            </tr>
+        }
         <tr>
             <td>
                 <b>Payment card</b>
@@ -56,26 +73,29 @@
 </div>
 
 <div id="dlg-change-level" class="modal fade b-modal dlg-contrib" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
-@v2.html.modal("", "") {
+@v2.html.modal("contribution-level", "") {
     <h2 class="dlg-contrib__title">
         Change contribution level
     </h2>
     <div class="dlg-contrib__text">
-        You can change contribution level, but it should be equal or above the minimum level. Minimum  level is depend on your country. <br>
-        If you decrease contribution level, we’ll not return money but next year your membership will chiper for amount of difference. <br>
-        Changing contribution level doesn’t reflect on membership exparation date.
+        You can change your contribution level, however it should be equal to or great than the minimum level.
+        (The minimum level depends on your country.)<br>
+        If you decrease your contribution level, we will not refund any money but instead upon renewal,
+            we will credit your account for the difference.<br>
+        Changing your contribution level will not impact your current membership expiration date.
     </div>
 
-    <form class="b-payment__form js-fee-form" action="@controllers.core.routes.Customers.updateCard(customerId)"
-    method="POST" id="payment-form" autocomplete="on" >
+    <form class="b-payment__form js-fee-form"
+        action="@controllers.core.routes.Customers.changeContributionLevel(customerId)"
+        method="POST" id="payment-form" autocomplete="on" >
 
-        @views.html.v2.element.fee(currentLevel, fee)
+        @views.html.v2.element.fee(member.fee.toInt, fee)
         <div class="b-card__buttons">
-            Contribution level &euro;<span data-fee-amount>30</span>
+            Contribution level &euro;<span data-fee-amount></span>
             plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span data-fee-tax>0.00</span>
 
             <div>
-                <button type="submit" class="btn btn-primary b-card__submit">Change to &euro;<span data-fee-pay>0.00</span></button>
+                <button type="submit" class="btn btn-primary b-card__submit">Change level</button>
             </div>
         </div>
     </form>
@@ -92,7 +112,8 @@
         Change payment card information
     </h2>
     <div class="b-payment">
-        <form class="b-payment__form js-card-form" action="#"
+        <form class="b-payment__form js-card-form"
+            action="@controllers.core.routes.Customers.updateCard(customerId)"
             method="POST" id="payment-form" autocomplete="on" data-apikey="@apiKey">
             @views.html.v2.element.card()
             <div class="b-card__buttons">

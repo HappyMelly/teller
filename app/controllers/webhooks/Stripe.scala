@@ -172,7 +172,7 @@ class Stripe @Inject() (val repos: Repositories,
   }
 
   protected def prolongMembership(customerId: Long, chargeId: String, member: Member): Future[Boolean] = {
-    val amount = member.fee.getAmount.floatValue()
+    val amount = member.fee.floatValue()
     repos.core.charge.findByCustomer(customerId) flatMap { charges =>
       if (!charges.exists(_.remoteId == chargeId)) {
         val charge = Charge(None, chargeId, customerId, Payment.DESC, amount, Payment.TAX_PERCENT_AMOUNT)
@@ -189,7 +189,7 @@ class Stripe @Inject() (val repos: Repositories,
     retrieveOrganisationCustomer(customer, data) { (organisation, member, people) =>
       prolongMembership(customer.id.get, data.chargeId, member) flatMap { prolonged =>
         val msg = "Organisation %s (id = %s) paid membership fee EUR %s".format(
-          organisation.name, organisation.identifier, member.fee.getAmount)
+          organisation.name, organisation.identifier, member.fee)
         Logger.info(msg)
         if (prolonged)
           sendSuccessfulProlongationEmail(people.head, organisation.name)
@@ -201,7 +201,7 @@ class Stripe @Inject() (val repos: Repositories,
     retrievePersonCustomer(customer, data) { (person, member) =>
       prolongMembership(customer.id.get, data.chargeId, member) flatMap { prolonged =>
         val msg = "Person %s (id = %s) paid membership fee EUR %s".format(
-          person.fullName, person.identifier, member.fee.getAmount)
+          person.fullName, person.identifier, member.fee)
         Logger.info(msg)
         if (prolonged)
           sendSuccessfulProlongationEmail(person, person.fullName)

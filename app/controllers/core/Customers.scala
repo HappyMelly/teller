@@ -25,19 +25,19 @@ package controllers.core
 
 import javax.inject.Inject
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
 import models.Person
 import models.UserRole.Role._
+import models.core.payment._
 import models.repository.Repositories
-import models.core.payment.{Payment, CustomerType, Customer}
-import play.api.Play
 import play.api.Play.current
-import play.api.i18n.MessagesApi
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc.Result
+import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
@@ -51,7 +51,7 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
-  val apiPublicKey = Play.configuration.getString("stripe.public_key").get
+  val apiSecretKey = Play.configuration.getString("stripe.secret_key").get
 
   def changeContributionLevel(customerId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler =>
     implicit user =>
@@ -60,10 +60,10 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
         case Some(customer) =>
           isAllowed(user.person, customer) flatMap { allowed =>
             if (allowed) {
-              val form = Form(single("amount" -> bigDecimal))
+              val form = Form(single("fee" -> bigDecimal))
               form.bindFromRequest().fold(
                 error => badRequest("Amount parameter is empty or doesn't exist"),
-                amount => replaceCard(customer, amount)
+                amount => updateContributionLevel(customer, amount)
               )
             } else {
               badRequest("You are not allowed to update card details")
@@ -95,19 +95,6 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
-  protected def replaceCard(customer: Customer, cardToken: String): Future[Result] = {
-    repos.core.card.findByCustomer(customer.id.get) flatMap { cards =>
-      val payment = Payment(apiPublicKey)
-      val card = payment.updateCards(customer.remoteId, cardToken, cards)
-      (for {
-        _ <- repos.core.card.insert(card.copy(customerId = customer.id.get))
-        _ <- repos.core.card.delete(cards.map(_.id.get))
-      } yield ()) flatMap { _ =>
-        ok("Card was successfully added")
-      }
-    }
-  }
-
   /**
     * Returns true if the given person is allowed to manage the given customer
     *
@@ -120,4 +107,48 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
     else
       repos.org.people(customer.objectId).map(_.exists(_.identifier == person.identifier))
   }
+
+  protected def replaceCard(customer: Customer, cardToken: String): Future[Result] = {
+    repos.core.card.findByCustomer(customer.id.get) flatMap { cards =>
+      val payment = Payment(apiSecretKey)
+      val card = payment.updateCards(customer.remoteId, cardToken, cards)
+      (for {
+        _ <- repos.core.card.insert(card.copy(customerId = customer.id.get))
+        _ <- repos.core.card.delete(cards.map(_.id.get))
+      } yield ()) flatMap { _ =>
+        jsonSuccess("Your card was changed")
+      }
+    }
+  }
+
+  protected def updateContributionLevel(customer: Customer, amount: BigDecimal): Future[Result] = {
+    repos.member.findByObject(customer.objectId, customer.objectType == CustomerType.Person) flatMap {
+      case None => badRequest("Member not found")
+      case Some(member) =>
+        if (member.fee == amount) {
+          ok("Your contribution level was changed")
+        } else {
+          if (member.newFee.nonEmpty) {
+            repos.member.update(member.copy(newFee = Some(amount))) flatMap { _ =>
+              ok("Your contribution level was changed")
+            }
+          } else {
+            val gateway = new GatewayWrapper(apiSecretKey)
+            try {
+              gateway.cancel(customer.remoteId)
+              repos.member.update(member.copy(newFee = Some(amount))) flatMap { _ =>
+                ok("Your contribution level was changed")
+              }
+            } catch {
+              case e: PaymentException ⇒
+                jsonBadRequest(Messages(e.msg))
+              case e: RequestException ⇒
+                e.log.foreach(Logger.error(_))
+                jsonBadRequest(Messages(e.getMessage))
+            }
+          }
+        }
+    }
+  }
+
 }

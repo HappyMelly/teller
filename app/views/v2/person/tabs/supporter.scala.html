@@ -40,7 +40,7 @@
 
 @views.html.v2.element.badge(member)
 @if(person.identifier == user.account.personId) {
-    @views.html.v2.person.blocks.contribution(person, card, customerId, member.fee.getAmount, fee, apiKey)
+    @views.html.v2.person.blocks.contribution(person, card, customerId, member, fee, apiKey)
 }
 
 <div class="block">

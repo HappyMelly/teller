@@ -144,6 +144,17 @@ class GatewayWrapper(apiKey: String) {
   }
 
   /**
+    * Creates new subscription for the given customer
+    * @param customerId Customer identifier
+    * @param fee Subscription amount
+    */
+  def subscribe(customerId: String, fee: BigDecimal) = stripeCall {
+    val customer = com.stripe.model.Customer.retrieve(customerId)
+    val planId = plan(fee.intValue())
+    customer.createSubscription(Map("plan" -> planId, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+  }
+
+  /**
     * Deletes old cards and add a new one to the given customer
     *
     * @param customerId Customer identifier

@@ -67,9 +67,8 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
       "funder" -> ignored(true),
-      "fee" -> jodaMoney().
-        verifying("error.money.negativeOrZero", (m: Money) ⇒ m.isPositive).
-        verifying("error.money.onlyEuro", (m: Money) ⇒ m.getCurrencyUnit.getCode == "EUR"),
+      "fee.amount" -> bigDecimal,
+      "newFee" -> ignored(None.asInstanceOf[Option[BigDecimal]]),
       "renewal" -> boolean,
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
@@ -92,10 +91,9 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /** Renders a list of all members */
   def index() = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     repos.member.findAll flatMap { members =>
-      val fee = members.find(m ⇒ m.person && m.objectId == user.person.id.get) map { m ⇒ Some(m.fee) } getOrElse None
-      var totalFee = Money.parse("EUR 0")
-      members.foreach(m ⇒ totalFee = totalFee.plus(m.fee))
-      ok(views.html.v2.member.index(user, members, fee, totalFee))
+      var totalFee = BigDecimal(0.0)
+      members.foreach(m ⇒ totalFee = totalFee + m.fee)
+      ok(views.html.v2.member.index(user, members, totalFee))
     }
   }
 

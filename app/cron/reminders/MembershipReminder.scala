@@ -21,7 +21,7 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package mail.reminder
+package cron.reminders
 
 import javax.inject.Inject
 

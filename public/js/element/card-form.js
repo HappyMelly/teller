@@ -116,6 +116,8 @@
                 .done(function (data) {
                     if (data.hasOwnProperty("redirect")) {
                         window.location = data.redirect;
+                    } else if (data.hasOwnProperty("message")) {
+                        success(data.message);
                     } else {
                         var msg = "Internal error #2001. Your card has been charged. ";
                         msg += "Do not make payment again. Please proceed to your profile directly.";
@@ -140,7 +142,8 @@
         return $.ajax({
             type: "POST",
             url: this.$root.attr("action"),
-            data: dataForm
+            data: dataForm,
+            dataType: "json"
         })
     };
 

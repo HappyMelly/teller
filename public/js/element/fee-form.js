@@ -11,7 +11,7 @@
         this.locals = this._getDom();
 
         this._assignEvents();
-        self._updateAmount(this.locals.$inputFee);
+        this._updateAmount(this.locals.$inputFee);
     }
 
     FeeForm.prototype._getDom = function () {
@@ -39,6 +39,7 @@
     };
 
     FeeForm.prototype._onSubmitForm = function(e){
+        var self = this;
         e.preventDefault();
         
         if (!this.isValidForm()) return;
@@ -46,11 +47,11 @@
         var feeAmount = this.locals.$inputFee.val();
 
         this._sendFeeData(feeAmount)
-            .done(function () {
-                success('Succefully update payment');
+            .done(function (data) {
+                success(data);
             })
             .fail(function(data){
-                error('Something wrong just happend');
+                error('Something wrong just happened');
             })
     };
 
@@ -106,7 +107,7 @@
     /**
      * 
      * @param {Number} feeAmount
-     * @returns {$.Deffered} - промис
+     * @returns {$.Deffered} - promise
      * @private
      */
     FeeForm.prototype._sendFeeData = function(feeAmount){

@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.{Activities, Security}
-import mail.reminder.EvaluationReminder
+import cron.reminders.EvaluationReminder
 import models.Activity
 import models.UserRole.Role
 import models.event.Attendee

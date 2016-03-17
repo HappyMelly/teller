@@ -61,7 +61,8 @@ DELETE        /brand/:brandId/testimonial/:id                                con
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
 
-POST          /customer/:id/card/update                                      controllers.core.Customers.updateCard(id: Long)
+POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
+POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
 
 GET           /certificate/:id                                               controllers.Certificates.certificate(id: String)
 GET           /certificate/new/:eventId/:personId                            controllers.Certificates.create(eventId: Long, personId: Long)

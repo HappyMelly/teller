@@ -21,7 +21,7 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package services.cleaners
+package cron.cleaners
 
 import models.repository.Repositories
 import org.joda.time.LocalDate

@@ -303,11 +303,10 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                     repos.person.update(person.copy(active = true))
                     person.addRelation(x.id.get, repos)
                   }
-                  val fee = Money.of(EUR, data.fee)
                   val futureMember = org map { x ⇒
-                    x.becomeMember(funder = false, fee, person.id.get, repos)
+                    x.becomeMember(funder = false, data.fee, person.id.get, repos)
                   } getOrElse {
-                    person.becomeMember(funder = false, fee, repos)
+                    person.becomeMember(funder = false, data.fee, repos)
                   }
                   futureMember flatMap { member =>
                     createUserAccount(user.id, user.providerId, person, member)

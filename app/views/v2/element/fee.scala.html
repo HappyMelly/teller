@@ -1,7 +1,6 @@
-@(currentLevel: BigDecimal, fee: (Int, Int, Int))
+@(currentLevel: Int, fee: (Int, Int, Int))
 
 @import models.core.payment.Payment
-
 
 <div class="b-feestrip">
     <div class="b-feestrip__col">
@@ -9,7 +8,7 @@
         <div class="input-group">
             <label class="input-group-addon">€</label>
                 <input class="form-control b-feestrip__input"
-                    name=""
+                    name="fee"
                     type="number"
                     step="1"
                     value="@currentLevel"

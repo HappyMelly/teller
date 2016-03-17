@@ -25,7 +25,7 @@
 package models
 
 import controllers.Utilities
-import mail.reminder.EvaluationReminder
+import cron.reminders.EvaluationReminder
 import models.event.Attendee
 import models.repository._
 import org.joda.time.LocalDate

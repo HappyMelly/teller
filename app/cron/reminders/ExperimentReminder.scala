@@ -21,7 +21,7 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package mail.reminder
+package cron.reminders
 
 import javax.inject.Inject
 
@@ -37,12 +37,12 @@ import scala.concurrent.Future
 /**
  * Contains methods for notifying Teller users about their experiments
  */
-class ExperimentReminder @Inject() (val email: Email, val services: Repositories) extends Integrations {
+class ExperimentReminder @Inject() (val email: Email, val repos: Repositories) extends Integrations {
 
   def sendStatus(): Unit = {
     (for {
-      experiments <- services.experiment.findAll()
-      members <- services.member.findAll
+      experiments <- repos.experiment.findAll()
+      members <- repos.member.findAll
     } yield (experiments.groupBy(_.memberId), members)) map { case (experiments, unfilteredMembers) =>
       val members = unfilteredMembers.map(member =>
           (member, experiments.find(_._1 == member.identifier).map(_._2).getOrElse(List()))).
@@ -55,7 +55,7 @@ class ExperimentReminder @Inject() (val email: Email, val services: Repositories
         val recipient = if (member._1.person)
           Future.successful(member._1.memberObj._1.get)
         else
-          services.org.people(member._1.objectId).map(_.head)
+          repos.org.people(member._1.objectId).map(_.head)
         recipient map { value =>
           email.send(Set(value), None, None, subject, body, richMessage = true)
         }
