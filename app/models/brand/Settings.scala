@@ -27,12 +27,16 @@ package models.brand
 /**
  * Represents settings for brand
  * @param brandId Brand id
- * @param certificates If true certificate generation is possible
+ * @param certificates If true, certificate generation is possible
  * @param licenseExpirationEmail If true brand's facilitators get emails one month before their license ends
  * @param licenseExpirationEmailBody Content of license expriation email
+ * @param credits If true, peer crediting between facilitators is possible
+ * @param creditLimit Amount of credits per month available to each facilitator
  */
 case class Settings(brandId: Long,
-                   certificates: Boolean = false,
-                   licenseExpirationEmail: Boolean = false,
-                   licenseExpirationEmailBody: Option[String] = None) {
+                    certificates: Boolean = false,
+                    licenseExpirationEmail: Boolean = false,
+                    licenseExpirationEmailBody: Option[String] = None,
+                    credits: Boolean = false,
+                    creditLimit: Int = 100) {
 }

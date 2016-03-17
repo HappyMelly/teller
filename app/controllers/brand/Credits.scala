@@ -27,10 +27,13 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
-import controllers.Security
+import controllers.{Utilities, Security}
 import models.repository.Repositories
 import models.UserRole.Role._
 import play.api.i18n.MessagesApi
+import play.api.data.Form
+import play.api.data.Forms._
+import play.api.libs.json.Json
 import services.TellerRuntimeEnvironment
 
 /**
@@ -44,18 +47,38 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /**
     * Activates credits for the given brand
+    *
     * @param brandId Brand identifier
     */
   def activate(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
-    jsonSuccess("Credits were activated")
+    repos.brand.findWithSettings(brandId) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(view) =>
+        if (view.settings.credits)
+          jsonSuccess("Credits were activated")
+        else
+          repos.brand.updateSettings(view.settings.copy(credits = true)) flatMap { _ =>
+            jsonSuccess("Credits were activated")
+          }
+    }
   }
 
   /**
     * Deactivates credits for the given brand
+    *
     * @param brandId Brand identifier
     */
   def deactivate(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
-    jsonSuccess("Credits were deactivated")
+    repos.brand.findWithSettings(brandId) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(view) =>
+        if (!view.settings.credits)
+          jsonSuccess("Credits were deactivated")
+        else
+          repos.brand.updateSettings(view.settings.copy(credits = false)) flatMap { _ =>
+            jsonSuccess("Credits were deactivated")
+          }
+    }
   }
 
   /**
@@ -67,17 +90,33 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /**
     * Renders credit settings tab for the given brand
+    *
     * @param brandId Brand identifier
     */
   def settings(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
-    ok(views.html.v2.brand.tabs.credits(true, 100))
+    repos.brand.findWithSettings(brandId) flatMap {
+      case None => notFound("Brand not found")
+      case Some(view) =>
+        ok(views.html.v2.brand.tabs.credits(view.settings.credits, view.settings.creditLimit))
+    }
   }
 
   /**
-    * Updates montly limits for the given brand
+    * Updates monthly limits for the given brand
+    *
     * @param brandId Brand identifier
     */
   def update(brandId: Long)= BrandAction(brandId) { implicit request => implicit handler => implicit user =>
-    jsonSuccess("Monthly limits were updated")
+    repos.brand.findWithSettings(brandId) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(view) =>
+        val form = Form(single("limit" -> number(min = 1)))
+        form.bindFromRequest().fold(
+          errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
+          limit => repos.brand.updateSettings(view.settings.copy(creditLimit = limit)) flatMap { _ =>
+            jsonSuccess("Monthly limits were updated")
+          }
+        )
+    }
   }
 }
