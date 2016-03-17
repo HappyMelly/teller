@@ -51,13 +51,13 @@ object Facilitator {
   /**
    * Update number of events and years of experience for all facilitators
    */
-  def updateFacilitatorExperience(services: Repositories): Unit = services.license.findAll map { licenses =>
+  def updateFacilitatorExperience(repos: Repositories): Unit = repos.license.findAll map { licenses =>
     licenses.foreach { license =>
       val yearsOfExperience = license.length.getStandardDays / 365
-      calculateNumberOfEvents(license, services) map { number =>
+      calculateNumberOfEvents(license, repos) map { number =>
         val facilitator = Facilitator(None, license.licenseeId, license.brandId,
           yearsOfExperience.toInt, number)
-        services.facilitator.updateExperience(facilitator)
+        repos.facilitator.updateExperience(facilitator)
       }
     }
   }
@@ -67,6 +67,6 @@ object Facilitator {
     *
     * @param license License
    */
-  protected def calculateNumberOfEvents(license: License, services: Repositories): Future[Int] =
-    services.event.findByFacilitator(license.licenseeId, Some(license.brandId)).map(_.count(_.confirmed))
+  protected def calculateNumberOfEvents(license: License, repos: Repositories): Future[Int] =
+    repos.event.findByFacilitator(license.licenseeId, Some(license.brandId)).map(_.count(_.confirmed))
 }

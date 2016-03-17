@@ -1,0 +1,14 @@
+@(user: ActiveUser,
+    org: Organisation,
+    member: Member)(implicit request: Request[Any],
+      handler: be.objectify.deadbolt.scala.DeadboltHandler)
+
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import be.objectify.deadbolt.scala.views.html._
+@import models.UserRole._
+
+@views.html.v2.element.badge(member)
+
+@restrict(handler, List(as(Role.Admin.toString))) {
+  @views.html.v2.element.administration(member)
+}

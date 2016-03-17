@@ -88,7 +88,6 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
       c <- repos.core.customer.insert(customer)
       cd <- repos.core.card.insert(card.copy(customerId = c.id.get))
     } yield (c, cd)) map { case (_, creditCard) =>
-        println(creditCard)
     }
   }
 

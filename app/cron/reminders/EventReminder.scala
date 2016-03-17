@@ -39,21 +39,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Contains methods for notifying Teller users about the status of their events
  */
-class EventReminder @Inject() (val email: Email, val services: Repositories) extends Integrations {
+class EventReminder @Inject() (val email: Email, val repos: Repositories) extends Integrations {
 
   /**
    * Sends email notifications to facilitators asking to confirm or delete
    *  past events which are unconfirmed
    */
-  def sendPostFactumConfirmation() = services.brand.findAll map { brands =>
+  def sendPostFactumConfirmation() = repos.brand.findAll map { brands =>
     brands.foreach { brand ⇒
-      services.event.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
+      repos.event.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
         events.foreach { event ⇒
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
           val body = mail.templates.event.html.confirm(event, brand, url).toString()
           email.send(
-            event.facilitators(services).toSet,
+            event.facilitators(repos).toSet,
             None,
             None,
             subject,
@@ -63,7 +63,7 @@ class EventReminder @Inject() (val email: Email, val services: Repositories) ext
           val msg = "confirmation email for event %s (id = %s)".format(
             event.title,
             event.id.get.toString)
-          Activity.insert("Teller", Activity.Predicate.Sent, msg)(services)
+          Activity.insert("Teller", Activity.Predicate.Sent, msg)(repos)
         }
       }
     }
@@ -72,11 +72,11 @@ class EventReminder @Inject() (val email: Email, val services: Repositories) ext
   /**
     * Sends email notifications about upcoming events to the users who left
     */
-  def sendUpcomingEventsNotification() = services.eventRequest.findWithOneParticipant map { results =>
+  def sendUpcomingEventsNotification() = repos.eventRequest.findWithOneParticipant map { results =>
     results.groupBy(_.brandId).foreach { case (brandId, requests) =>
       val endOfPeriod = LocalDate.now().plusMonths(3)
-      services.brand.get(brandId).foreach { brand =>
-        val futureEvents = services.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
+      repos.brand.get(brandId).foreach { brand =>
+        val futureEvents = repos.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
           archived = Some(false))
         futureEvents map { unfilteredEvents =>
           val events = unfilteredEvents.filter(_.schedule.start.isBefore(endOfPeriod))
@@ -84,7 +84,7 @@ class EventReminder @Inject() (val email: Email, val services: Repositories) ext
             val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
             if (suitableEvents.nonEmpty) {
               val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
-              val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)(services)
+              val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)(repos)
               val subject = s"Upcoming ${brand.name} events"
               email.send(Set(request), None, None, subject, body.toString(), from = brand.name, richMessage = true)
             }
@@ -98,10 +98,10 @@ class EventReminder @Inject() (val email: Email, val services: Repositories) ext
    * Sends email notifications to facilitators asking to confirm
    *  upcoming events which are unconfirmed
    */
-  def sendUpcomingConfirmation() = services.brand.findAll map { brands =>
+  def sendUpcomingConfirmation() = repos.brand.findAll map { brands =>
     brands.foreach { brand ⇒
       val today = LocalDate.now().toDate.getTime
-      services.event.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
+      repos.event.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
         events.filter { x =>
           val duration = new Duration(today, x.schedule.start.toDate.getTime)
           duration.getStandardDays == 7 || duration.getStandardDays == 30
@@ -110,7 +110,7 @@ class EventReminder @Inject() (val email: Email, val services: Repositories) ext
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
           val body = mail.templates.event.html.confirmUpcoming(event, brand, url).toString()
           email.send(
-            event.facilitators(services).toSet,
+            event.facilitators(repos).toSet,
             None,
             None,
             subject,
@@ -119,7 +119,7 @@ class EventReminder @Inject() (val email: Email, val services: Repositories) ext
           val msg = "upcoming confirmation email for event %s (id = %s)".format(
             event.title,
             event.id.get.toString)
-          Activity.insert("Teller", Activity.Predicate.Sent, msg)(services)
+          Activity.insert("Teller", Activity.Predicate.Sent, msg)(repos)
         }
       }
     }

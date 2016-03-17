@@ -26,23 +26,20 @@ package cron
 
 import javax.inject.Inject
 
-import models.core.payment.{GatewayWrapper, CustomerType}
+import models.core.payment.{CustomerType, GatewayWrapper}
 import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
 import play.api.Play
 import play.api.Play.current
-import services.integrations.{Email, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Manages membership subscription update
   */
-class MembershipUpdater @Inject()(val email: Email, val repos: Repositories) extends Integrations {
+class SubscriptionUpdater @Inject() (val repos: Repositories) {
 
-  val apiSecretKey = Play.configuration.getString("stripe.secret_key").get
-
-  def updateSubscription() = {
+  def update() = {
     println("INFO: Start updating subscriptions")
     repos.member.findAll map { members =>
       val membersOfInterest = members.filter(_.renewal).filterNot(_.funder).
@@ -52,6 +49,7 @@ class MembershipUpdater @Inject()(val email: Email, val repos: Repositories) ext
         repos.core.customer.find(member.objectId, typ) map {
           case None => println(s"ERROR: Member ${member.identifier} doesn't have customer record")
           case Some(customer) =>
+            val apiSecretKey = Play.configuration.getString("stripe.secret_key").get
             val gateway = new GatewayWrapper(apiSecretKey)
             try {
               gateway.subscribe(customer.remoteId, member.newFee.get.intValue())

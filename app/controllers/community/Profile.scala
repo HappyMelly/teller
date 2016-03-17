@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
-import models.{Person, ActiveUser, Member}
+import models.{Organisation, Person, ActiveUser, Member}
 import models.core.payment.{Payment, CustomerType}
 import models.repository.Repositories
 import models.UserRole.Role._
@@ -70,6 +70,40 @@ class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
           renderSupporterTab(user, person, member)
     }
   }
+
+  /**
+    * Renders Membership tab for the given person
+    *
+    * @param id Person identifier
+    */
+  def orgMembership(id: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
+    (for {
+      o <- repos.org.find(id)
+      p <- repos.org.people(id)
+      m <- repos.org.member(id)
+    } yield (o, p, m)) flatMap {
+      case (_, _, None) => ok("Organisation is not a member")
+      case (None, _, _) => notFound("Organisation not found")
+      case (Some(organisation), members, Some(member)) =>
+        if (member.funder)
+          ok(views.html.v2.organisation.tabs.funder(user, organisation, member))
+        else
+          renderOrgSupporterTab(user, organisation, member)
+    }
+  }
+
+  protected def renderOrgSupporterTab(user: ActiveUser, org: Organisation, member: Member)(
+    implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] =
+
+    (for {
+      customer <- repos.core.customer.find(org.identifier, CustomerType.Organisation) if customer.nonEmpty
+      charges <- repos.core.charge.findByCustomer(customer.get.id.get)
+      cards <- repos.core.card.findByCustomer(customer.get.id.get)
+    } yield (customer.get.id.get, charges, cards)) flatMap { case (customerId, charges, cards) =>
+      val card = cards.filter(_.active).head
+      val fee = Payment.countryBasedFees(org.countryCode)
+      ok(views.html.v2.organisation.tabs.supporter(user, org, member, charges, card, customerId, fee, apiPublicKey))
+    }
 
   protected def renderSupporterTab(user: ActiveUser, person: Person, member: Member)(
       implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] =

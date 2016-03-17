@@ -23,7 +23,6 @@
  */
 package models
 
-import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
 case class Member(

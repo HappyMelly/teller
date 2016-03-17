@@ -227,6 +227,7 @@ POST          /product/brand/new                                             con
 GET           /product/:productId/brand/:brandId/delete                      controllers.community.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
 GET           /profile/:id/person/membership                                 controllers.community.Profile.membership(id: Long)
+GET           /profile/:id/org/membership                                    controllers.community.Profile.orgMembership(id: Long)
 GET           /profile/:id/person/steps/:steps                               controllers.core.ProfileStrengths.personWidget(id: Long, steps: Boolean)
 
 GET           /registration/welcome                                          controllers.Registration.welcome

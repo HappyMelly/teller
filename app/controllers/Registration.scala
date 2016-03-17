@@ -299,10 +299,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                   }
                   val (customerId, card) = subscribe(person, org, data)
                   addCustomerRecord(customerId, card, person, org)
-                  org map { x ⇒
-                    repos.person.update(person.copy(active = true))
-                    person.addRelation(x.id.get, repos)
-                  }
+                  activeRecord(person, org)
                   val futureMember = org map { x ⇒
                     x.becomeMember(funder = false, data.fee, person.id.get, repos)
                   } getOrElse {
@@ -371,6 +368,19 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       if (providerId == "linkedin") Some(remoteUserId) else None,
       if (providerId == "google") Some(remoteUserId) else None,
       member = true, registered = true)
+
+  /**
+    * Activates temporary records making them valid ones
+    * @param person Person
+    * @param org Organisation
+    */
+  protected def activeRecord(person: Person, org: Option[Organisation]): Unit = {
+    repos.person.update(person.copy(active = true))
+    org map { value =>
+      repos.org.update(value.copy(active = true))
+      person.addRelation(value.identifier, repos)
+    }
+  }
 
   /**
     * Adds new person as a member and updates cached object
