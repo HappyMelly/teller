@@ -1,0 +1,65 @@
+@(user: ActiveUser, feed: Seq[(models.brand.PeerCredit, Person, Person)])
+
+@import controllers.core.People
+
+@receiverName(receiver: Person) = {
+    @if(receiver.identifier == user.person.identifier) {
+        You
+    } else {
+        <a href="@controllers.core.routes.People.details(receiver.identifier)" class="link-blue">@receiver.fullName</a>
+    }
+}
+
+@giverName(giver: Person) = {
+    @if(giver.identifier == user.person.identifier) {
+        you
+    } else {
+        @giver.fullName
+    }
+}
+
+@lineClass(giver: Person, receiver: Person) = {
+    @if(giver.identifier == user.person.identifier) {
+        data-filter-text="isent"
+    } else {
+        @if(receiver.identifier == user.person.identifier) {
+            data-filter-text="ireceived"
+        } else {
+            data-filter-text=""
+        }
+    }
+}
+
+<div class="b-credithis js-credit-history">
+    <div class="b-credithis__head">
+        <div class="text">
+            Show bonuses
+        </div>
+        <a href="#" data-filter-link="all" class="link-blue item-link state_selected">
+            All
+        </a>
+        <a href="#" data-filter-link="isent" class="link-blue item-link">
+            Send by me
+        </a>
+        <a href="#" data-filter-link="ireceived" class="link-blue item-link">
+            I received
+        </a>
+    </div>
+    <div class="b-credithis__list" data-filter-list>
+        @for((credit, giver, receiver) <- feed) {
+            <div class="b-credithis-i" @lineClass(giver, receiver)>
+                <a href="@controllers.core.routes.People.details(receiver.identifier)" class="b-credithis-i__img"
+                style="background-image : url(@People.pictureUrl(receiver)) ;"></a>
+                <div class="b-credithis-i__con">
+                    <div class="date">
+                    @credit.created.formatted("dd MM yyyy")
+                    </div>
+                    <div class="title">
+                        @receiverName(receiver) <i class="fa fa-heart-o"></i>@credit.amount from @giverName(giver)
+                    </div>
+                    @credit.reason
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -52,7 +52,8 @@ import scala.io.Source
 
 case class BrandProfileView(brand: Brand, profile: SocialProfile)
 
-class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
+class
+Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                         override val messagesApi: MessagesApi,
                         val repos: Repositories,
                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)

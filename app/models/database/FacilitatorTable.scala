@@ -51,25 +51,30 @@ private[models] trait FacilitatorTable extends BrandTable {
     def numberOfPublicEvaluations = column[Int]("NUMBER_OF_PUBLIC_EVALUATIONS")
     def numberOfPrivateEvaluations = column[Int]("NUMBER_OF_PRIVATE_EVALUATIONS")
     def badges = column[Option[String]]("BADGES")
+    def creditsGiven = column[Int]("CREDITS_GIVEN")
+    def creditsReceived = column[Int]("CREDITS_RECEIVED")
+
     def person = foreignKey("FACILITATOR_PERSON_FK", personId, TableQuery[People])(_.id)
     def brand = foreignKey("FACILITATOR_BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
     type FacilitatorFields = (Option[Long], Long, Long, Int, Int, Float, Float, Float, Float, Float, Float,
-      Int, Int, Option[String])
+      Int, Int, Option[String], Int, Int)
 
     def * = (id, personId, brandId, yearsOfExperience, numberOfEvents,
       publicRating, privateRating, publicMedian, privateMedian, publicNps,
-      privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations, badges) <> (
+      privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations, badges, creditsGiven, creditsReceived) <> (
       (f: FacilitatorFields) => Facilitator(f._1, f._2, f._3, f._4, f._5, f._6, f._7, f._8, f._9, f._10, f._11,
-        f._12, f._13, f._14.map(x => x.split(",").map(_.toLong).toList).getOrElse(List[Long]())),
+        f._12, f._13, f._14.map(x => x.split(",").map(_.toLong).toList).getOrElse(List[Long]()), f._15, f._16),
+
       (f: Facilitator) => Some((f.id, f.personId, f.brandId, f.yearsOfExperience, f.numberOfEvents, f.publicRating,
         f.privateRating, f.publicMedian, f.privateMedian, f.publicNps, f.privateNps, f.numberOfPublicEvaluations,
         f.numberOfPublicEvaluations,
-        if (f.badges.isEmpty) None else Option[String](f.badges.mkString(","))))
+        if (f.badges.isEmpty) None else Option[String](f.badges.mkString(",")),
+        f.creditsGiven, f.creditsReceived))
       )
 
     def forUpdate = (publicRating, privateRating, publicMedian, privateMedian,
-      publicNps, privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations)
+      publicNps, privateNps, numberOfPublicEvaluations, numberOfPrivateEvaluations, creditsGiven, creditsReceived)
   }
 
 }
