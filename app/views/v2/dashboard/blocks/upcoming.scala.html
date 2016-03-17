@@ -5,37 +5,45 @@
 <div class="row block">
   <div class="col-md-12">
     <h4>Upcoming events (<span class="upcoming-number">@events.length</span>)</h4>
+
+    <div class="b-eventlist">
     @for(((event, brand), index) <- events.zipWithIndex) {
-      <div class="upcoming-event @if(index % 2 == 0) { left-widget }">
+      <div class="b-eventfut js-event-future">
         @if(withBrand) {
           @brand.map { value =>
-            <small class="text-muted">@value.name</small>
+            <div class="b-eventfut__brand">@value.name</div>
           }
         }
-        <div class="title">
-          <a href="@routes.Events.details(event.id.get).url">
-          <strong>@event.title</strong>
+        <div class="b-eventfut__title">
+          <a class="link-mblue" href="@routes.Events.details(event.id.get).url">
+              @event.title
           </a>
         </div>
-        <div class="info">
-          <i class="fa fa-calendar"></i> @dateInterval(event.schedule.start, event.schedule.end)
-          <br/>
-          <i class="fa fa-clock-o"></i> @event.schedule.totalHours hours
-          <br/>
-          @v2.element.location(event.location)
+        <div class="b-eventfut__info">
+          <div>
+            <i class="fa fa-calendar"></i> @dateInterval(event.schedule.start, event.schedule.end)
+          </div>
+          <div>
+            <i class="fa fa-clock-o"></i> @event.schedule.totalHours hours
+          </div>
+          <div>
+            @v2.element.location(event.location)
+          </div>
         </div>
-        <div class="links">
+        <div class="b-eventfut__buttons">
           @if(event.confirmed) {
-            <span>Confirmed</span>
+            <span class="link-confirmed">Confirmed</span>
           } else {
-            <span><a class="event-confirm" href="#" data-id="@event.identifier">Confirm</a></span>
+            <a class="link-confirm link-blue" data-event-confirm href="#" data-id="@event.identifier">Confirm</a>
           }
-          <span><a href="@routes.Events.edit(event.identifier)">Edit</a></span>
-          <span><a href="@routes.Events.duplicate(event.identifier)">Duplicate</a></span>
-          <span class="last"><a class="event-cancel" data-id="@event.identifier" href="#">Cancel</a></span>
+          <a class="link-blue" href="@routes.Events.edit(event.identifier)">Edit</a>
+          <a class="link-blue"  href="@routes.Events.duplicate(event.identifier)">Duplicate</a>
+          <a class="event-cancel link-blue" data-event-cancel data-id="@event.identifier" href="#">Cancel</a>
         </div>
       </div>
     }
+    </div>
+
   </div>
 </div>
-<script src="@routes.Assets.at("js/element/events.js")" type="text/javascript"></script>
+

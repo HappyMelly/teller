@@ -1,0 +1,72 @@
+
+
+.b-eventlist{
+  .clearfix();
+}
+
+.b-eventfut{
+  position: relative;
+  border: 1px solid #E7E7E7;
+  float: left;
+  width: 48%;
+  margin-bottom: 25px;
+  .box-sizing(border-box);
+  padding: 14px 12px 15px;
+  min-height: 170px;
+  text-align: left;
+
+  &:nth-child(2n + 1){
+    margin-right: 4%;
+  }
+}
+
+.b-eventfut__brand{
+  position: absolute;
+  font-size: 11px;
+  left: 12px;
+  top: 2px;
+  text-align: left;
+  line-height: 1;
+  color: #999;
+}
+
+.b-eventfut__title{
+  font-size: 14px;
+  font-weight: bold;
+  height: 40px;
+  overflow: hidden;
+  margin-bottom: 9px;
+}
+
+.b-eventfut__info{
+  margin-bottom: 30px;
+}
+
+.b-eventfut__buttons{
+  text-align: justify;
+  height: 15px;
+  max-width: 260px;
+
+  &:after{
+    content: '';
+    display: inline-block;
+    vertical-align: top;
+    width: 100%;
+    overflow: hidden;
+  }
+}
+
+/*== States ==*/
+.b-eventfut_state_disabled{
+  opacity: .2;
+}
+
+.b-eventfut_state_confirm{
+  .link-confirmed{
+    display: inline-block;
+  }
+
+  .link-confirm{
+    display: none;
+  }
+}
