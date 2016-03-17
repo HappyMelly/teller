@@ -242,8 +242,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   }
 
   /**
-    * Returns a list of facilitators for the given brand on today,
-    * including the coordinator of the brand
+    * Returns a list of facilitators for the given brand on today
     */
   def list(brandId: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒

@@ -45,26 +45,9 @@ class PeerCreditRepository(app: Application) extends HasDatabaseConfig[JdbcProfi
 
   /**
     * Returns all peer credits for the given brand
- *
     * @param brandId Brand identifier
     */
   def find(brandId: Long): Future[Seq[PeerCredit]] =
     db.run(credits.filter(_.brandId === brandId).sortBy(_.created.desc).result)
 
-  /**
-    * Returns peer credits given by the given person in the given month
-    * @param brandId Brand identifier
-    * @param giverId Giver identifier
-    * @param month Month
-    */
-  def find(brandId: Long, giverId: Long, month: DateTime): Future[Seq[PeerCredit]] = {
-    val start = month.withDayOfMonth(1)
-    val end = month.plusMonths(1).withDayOfMonth(1).minusDays(1)
-    val query = credits.
-      filter(_.brandId === brandId).
-      filter(_.giverId === giverId).
-      filter(_.created >= start).
-      filter(_.created <= end)
-    db.run(query.result)
-  }
 }

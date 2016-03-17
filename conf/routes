@@ -43,7 +43,7 @@ GET           /brand/:id/eventrequest/:requestId                             con
 POST          /brand/:id/credits/activate                                    controllers.brand.Credits.activate(id: Long)
 POST          /brand/:id/credits/deactivate                                  controllers.brand.Credits.deactivate(id: Long)
 GET           /brand/:id/credits/settings                                    controllers.brand.Credits.settings(id: Long)
-POST          /brand/:id/credits                                             controllers.brand.Credits.update(id: Long)
+POST          /brand/:id/credits/settings                                    controllers.brand.Credits.update(id: Long)
 
 GET           /brand/:id/badge                                               controllers.brand.Badges.add(id: Long)
 POST          /brand/:id/badge                                               controllers.brand.Badges.create(id: Long)
@@ -72,6 +72,8 @@ GET           /certificate/new/:eventId/:personId                            con
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
 
+GET           /credits/brand/:id                                             controllers.brand.Credits.credits(id: Long)
+POST          /credits/brand/:id                                             controllers.brand.Credits.give(id: Long)
 GET           /credits                                                       controllers.brand.Credits.index()
 
 POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword

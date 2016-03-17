@@ -243,13 +243,15 @@ class BrandRepository(app: Application, services: Repositories) extends HasDatab
     *
     * @param licenseeId License holder identifier
     */
-  def findByLicense(licenseeId: Long): Future[List[BrandWithSettings]] = {
+  def findByLicense(licenseeId: Long, onlyActive: Boolean = false): Future[List[BrandWithSettings]] = {
     val query = for {
       license <- TableQuery[Licenses] if license.licenseeId === licenseeId
       brand <- brands if brand.id === license.brandId
       settings <- settings if settings.brandId === brand.id
-    } yield (brand, settings)
-    db.run(query.result).map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
+    } yield (brand, settings, license)
+    val result = db.run(query.result)
+    val filteredResult = if (onlyActive) result.map(_.filter(_._3.active)) else result
+    filteredResult.map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
