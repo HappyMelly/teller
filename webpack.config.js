@@ -9,14 +9,18 @@ module.exports = {
     output: {
         filename: '[name].js'
     },
-    devtool: config.isBuild? false: 'cheap-eval-source-map',
+    devtool: config.isBuild? false :'inline-source-map',
     cache: true,
     module: {
         loaders: [
             {
-                test: /\.jsx$/,
+                test: /\.js$/,
                 exclude: /node_modules/,
-                loaders: ['babel?presets[]=es2015']
+                loader: 'babel',
+                query: {
+                    presets: ['es2015'],
+                    plugins: ['transform-runtime']
+                }
             }
         ]
     },
