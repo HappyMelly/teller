@@ -40,6 +40,11 @@ POST          /brand/:id/coordinator/:personId/type/:notification/on         con
 GET           /brand/:id/eventrequests                                       controllers.EventRequests.index(id: Long)
 GET           /brand/:id/eventrequest/:requestId                             controllers.EventRequests.details(id: Long, requestId: Long)
 
+POST          /brand/:id/credits/activate                                    controllers.brand.Credits.activate(id: Long)
+POST          /brand/:id/credits/deactivate                                  controllers.brand.Credits.deactivate(id: Long)
+GET           /brand/:id/credits/settings                                    controllers.brand.Credits.settings(id: Long)
+POST          /brand/:id/credits                                             controllers.brand.Credits.update(id: Long)
+
 GET           /brand/:id/badge                                               controllers.brand.Badges.add(id: Long)
 POST          /brand/:id/badge                                               controllers.brand.Badges.create(id: Long)
 DELETE        /brand/:id/badge/:badgeId                                      controllers.brand.Badges.delete(id: Long, badgeId: Long)

@@ -43,10 +43,41 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   /**
+    * Activates credits for the given brand
+    * @param brandId Brand identifier
+    */
+  def activate(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
+    jsonSuccess("Credits were activated")
+  }
+
+  /**
+    * Deactivates credits for the given brand
+    * @param brandId Brand identifier
+    */
+  def deactivate(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
+    jsonSuccess("Credits were deactivated")
+  }
+
+  /**
     * Renders main screen with peer credits
     */
   def index() = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
     ok(views.html.v2.person.credit(user))
   }
 
+  /**
+    * Renders credit settings tab for the given brand
+    * @param brandId Brand identifier
+    */
+  def settings(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
+    ok(views.html.v2.brand.tabs.credits(true, 100))
+  }
+
+  /**
+    * Updates montly limits for the given brand
+    * @param brandId Brand identifier
+    */
+  def update(brandId: Long)= BrandAction(brandId) { implicit request => implicit handler => implicit user =>
+    jsonSuccess("Monthly limits were updated")
+  }
 }
