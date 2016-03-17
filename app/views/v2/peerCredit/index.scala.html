@@ -1,19 +1,19 @@
 @(user: ActiveUser, brands: List[Brand])(implicit request: Request[Any], flash: Flash, handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.main("Credit", "Credit", user) {
-    <div class="container page-peer js-sidemenu-tabs">
+    <div class="container page-peer ">
 
-        <div class="b-creditnav">
+        <div class="b-creditnav js-sidemenu-tabs">
             <a href="#managment"  role="tab"
-            class="b-creditnav__i active"
-            data-menuside>
+                class="b-creditnav__i active"
+                data-menuside>
                 Managment 3.0
             </a>
             <a href="#learning"
-            role="tab"
-            data-href="#"
-            class="b-creditnav__i"
-            data-menuside>
+                role="tab"
+                data-href="#"
+                class="b-creditnav__i"
+                data-menuside>
                 Learning 3.0
             </a>
         </div>

@@ -68,7 +68,7 @@ export default class Widget {
     };
     
     // static
-    static interface(selector) {
+    static plugin(selector) {
         const $elems = $(selector);
         if (!$elems.length) return;
 

@@ -264,6 +264,9 @@
   clear: both;
   visibility: hidden;
 }
+.page-peer .tab-pane {
+  padding: 0;
+}
 /*== Right block ==*/
 .page-peer__side {
   float: right;
