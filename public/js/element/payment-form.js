@@ -135,8 +135,6 @@
             self._enabledForm();
         } else {
 
-            debugger;
-
             self._addTokenInput(response.id);
 
             data = this.$root.serialize();
