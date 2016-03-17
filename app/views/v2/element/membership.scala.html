@@ -2,15 +2,16 @@
     customerId: Long,
     member: Member,
     fee: (Int, Int, Int),
-    apiKey: String)
+    apiKey: String,
+    editor: Boolean = true)
 
 @import views.ViewHelpersV2._
 @import models.core.payment.Payment
 
-    <script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
-    <script src="@routes.Assets.at("js/element/supporters-table.js")" type="text/javascript"></script>
-    <script src="@routes.Assets.at("js/element/fee-form.js")" type="text/javascript"></script>
-    <script src="@routes.Assets.at("js/element/card-form.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("js/element/supporters-table.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("js/element/fee-form.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("js/element/card-form.js")" type="text/javascript"></script>
 
 <script>
     $(function(){
@@ -29,13 +30,14 @@
             </td>
             <td>
                 <div class="b-contrib__price">
-                    <span>@member.fee.toInt&#8364;</span>
+                    <span>&#8364;@member.fee.toInt</span>
                 </div>
             </td>
-
-            <td class="h-aright">
-                <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">Change level</a>
-            </td>
+            @if(editor) {
+                <td class="h-aright">
+                    <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">Change level</a>
+                </td>
+            }
         </tr>
         @member.newFee.map { amount =>
             <tr class="text-muted">
@@ -44,7 +46,7 @@
                 </td>
                 <td>
                     <div class="b-contrib__price">
-                        <span>@amount.toInt&#8364;</span>
+                        <span>&#8364;@amount.toInt</span>
                     </div>
                 </td>
                 <td class="h-aright">
@@ -64,9 +66,11 @@
                     <span class="b-contrib__hint">expire @{"%02d".format(card.expMonth)}/@card.expYear</span>
                 }
             </td>
-            <td class="h-aright">
-                <a href="#" class="link-mblue" data-toggle="modal"  data-target="#dlg-change-card">Change card</a>
-            </td>
+            @if(editor) {
+                <td class="h-aright">
+                    <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-card">Change card</a>
+                </td>
+            }
         </tr>
     </table>
 </div>

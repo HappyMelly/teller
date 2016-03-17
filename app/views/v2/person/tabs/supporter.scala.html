@@ -39,8 +39,8 @@
 </div>
 
 @views.html.v2.element.badge(member)
-@if(person.identifier == user.account.personId) {
-    @views.html.v2.element.membership(card, customerId, member, fee, apiKey)
+@dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
+    @views.html.v2.element.membership(card, customerId, member, fee, apiKey, person.identifier == user.person.identifier)
 }
 
 <div class="block">
