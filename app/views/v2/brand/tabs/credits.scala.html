@@ -1,1 +1,64 @@
 @(active: Boolean, monthLimit: Int)
+
+<div class="b-setcredit b-setcredit_state_active">
+    <h4 class="b-setcredit__title">Set credits</h4>
+    <p>
+        You can activate and set a number of credits, so facilitators can show their
+        appreciation for each others work. Further you can use this information and
+        transform it into badges.
+    </p>
+
+    <div class="b-setcredit__deactive">
+        <a href="#" class="btn btn-primary b-setcredit__btn">Activate</a>
+    </div>
+
+    <div class="b-setcredit__active">
+        <a href="#" class="btn btn-default">Deactivate</a>
+
+        <form action="#" class="b-setcredit__form">
+            <div class="b-setcredit__inner">
+                Spending limit for person is <input type="text" name="credits" class="b-setcredit__input form-control" value="0" /> credits per month.
+                <button type="submit" class="b-setcredit__submit btn btn-primary">Save</button>
+            </div>
+
+        </form>
+    </div>
+
+    <div id="dlg-reminder" class="modal fade b-modal " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+    @v2.html.modal("", "License Expiration Reminder") {
+        When this feature is <b>on</b>, your facilitators
+        will get a reminder that their license is expiring
+        at the end of the month. You need to define the content of the email
+
+        <form action="#">
+            <div>
+                <label class="b-radio type_inline">
+                    <input type="radio" class="b-radio__input" name="reminder" >
+                    <i class="b-radio__icon"></i>
+                    <div class="b-radio__text">
+                        Turn the reminder off
+                    </div>
+                </label>
+
+                <label class="b-radio type_inline">
+                    <input type="radio" class="b-radio__input" name="reminder" checked >
+                    <i class="b-radio__icon"></i>
+                    <div class="b-radio__text">
+                        Turn the reminder on
+                    </div>
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+
+    }
+</div>
+
+</div>
+
+
+
+
+
+
+

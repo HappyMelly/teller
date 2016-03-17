@@ -76,7 +76,6 @@ export default class Widget {
             let $element = $(el);
             let data     = $element.data('widget');
 
-            debugger;
             if (!data) {
                 data = new Widget(el);
                 $element.data('widget', data);

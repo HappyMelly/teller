@@ -288,40 +288,53 @@
     'use strict';
 
     function Sidemenu(selector, options){
-        var self = this,
-            hash = '',
-            hashSelector;
+        var hashSelector,
+            defaultOptions = {
+                hashDefault: ''
+            };
 
-        self.options = $.extend({
-            hashDefault: '',
-            afterShowTab: null
-        }, options)
+        this.options = $.extend({}, defaultOptions, options);
 
-        self.selector = selector;
-        self.$el = $(selector);
-        self.loadedTabs = [];
+        this.$root = $(selector);
+        this.loadedTabs = [];
 
         // get the id of active tab from url or use default id
-        hash = window.location.hash.substring(1) || self.options.hashDefault;
+        var hash = window.location.hash.substring(1) || this.options.hashDefault;
 
         if (hash){
-            hashSelector = '[href="#'+ hash +'"].b-sidemenu__link';
-            self.showTabByLink($(hashSelector));
+            hashSelector = '[href="#'+ hash +'"][data-menuside]';
+            this._showTabByLink($(hashSelector));
         }
 
-        self.assignEvents();
+        this._assignEvents();
     }
 
-    Sidemenu.prototype.assignEvents = function(){
+    Sidemenu.prototype._assignEvents = function(){
         var self = this;
 
-        self.$el
-            .on('click', '.b-sidemenu__link', function (e) {
+        self.$root
+            .on('click', '[data-menuside]', function (e) {
                 var $this = $(this);
 
-                self.showTabByLink($this);
+                self._showTabByLink($this);
                 e.preventDefault();
             })
+    };
+
+    Sidemenu.prototype._showTabByLink = function($selector){
+        var self = this,
+            $link = $selector,
+            url = $link.attr('data-href'),
+            target = $link.attr('href');
+
+        if ($link.hasClass('active')) return;
+
+        self.loadContentForTab(url, target, function(){
+            self.$root.find('[data-menuside]').removeClass('active');
+            $link.addClass('active').tab('show');
+
+            self.$root.trigger('hmt.menuLoadTab');
+        })
     };
 
     Sidemenu.prototype.loadContentForTab = function(url, targetSelector, cb){
@@ -337,22 +350,6 @@
         } else {
             cb && cb();
         }
-    };
-
-    Sidemenu.prototype.showTabByLink = function($selector){
-        var self = this,
-            $link = $selector,
-            url = $link.attr('data-href'),
-            target = $link.attr('href');
-
-        if ($link.hasClass('active')) return;
-
-        self.loadContentForTab(url, target, function(){
-            self.$el.find('.b-sidemenu__link').removeClass('active');
-            $link.addClass('active').tab('show');
-
-            self.options.afterShowTab && self.options.afterShowTab();
-        })
     };
 
     App.widgets.Sidemenu = Sidemenu;

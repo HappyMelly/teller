@@ -10,12 +10,14 @@
             Personal
         </div>
         <a href="#personal-details" role="tab"
-            class="b-sidemenu__link active">
+            class="b-sidemenu__link active"
+            data-menuside>
             Details
         </a>
         <a  data-href="@controllers.core.routes.People.renderTabs(person.id.get, "contributions")"
             class="b-sidemenu__link"
-            href="#contributions" role="tab">
+            href="#contributions" role="tab"
+            data-menuside>
             Contributions
         </a>
     </div>
@@ -28,13 +30,15 @@
             <a  data-href="@controllers.core.routes.People.renderTabs(person.id.get, "facilitation")"
                 href="#facilitation"
                 class="b-sidemenu__link"
-                role="tab">
+                role="tab"
+                data-menuside>
                 Settings
             </a>
             <a  data-href="@controllers.core.routes.People.renderTabs(person.id.get, "experience")"
                 href="#experience"
                 class="b-sidemenu__link"
-                role="tab">
+                role="tab"
+                data-menuside>
                 Experience
             </a>
         </div>
@@ -45,15 +49,17 @@
                 Membership
             </div>
             <a data-href="@controllers.core.routes.People.renderTabs(person.id.get, "membership")"
-            href="#membership"
-            class="b-sidemenu__link"
-            role="tab">
+                href="#membership"
+                class="b-sidemenu__link"
+                role="tab"
+                data-menuside>
                 Membership
             </a>
             <a  data-href="@routes.Experiments.experiments(member.get.identifier)"
-            href="#experiments"
-            class="b-sidemenu__link"
-            role="tab">
+                href="#experiments"
+                class="b-sidemenu__link"
+                role="tab"
+                data-menuside>
                 Experiments
             </a>
         </div>

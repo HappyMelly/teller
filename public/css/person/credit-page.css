@@ -24,6 +24,31 @@
 /* colors */
 /* z-indexes */
 /* mixins */
+.b-creditnav {
+  margin: 20px 0 30px;
+}
+.b-creditnav__i {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 30px;
+  font-size: 24px;
+  line-height: 1.05;
+  text-decoration: none !important;
+  color: #4a90e2;
+  border-bottom: 2px dotted #4A90E2;
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+}
+.b-creditnav__i:hover {
+  opacity: .9;
+}
+.b-creditnav__i.active {
+  color: #333333 !important;
+  border-bottom-color: transparent !important;
+  cursor: default;
+}
 .b-credits {
   position: relative;
   display: block;

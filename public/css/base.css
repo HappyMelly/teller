@@ -6876,6 +6876,10 @@ textarea.form-control {
   display: block;
   position: relative;
 }
+.b-radio.type_inline {
+  display: inline-block;
+  vertical-align: top;
+}
 .b-radio__input {
   position: absolute;
   left: 0;
