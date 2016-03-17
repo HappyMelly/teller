@@ -15,7 +15,7 @@
             <h1>Add Funder</h1>
             <h3>Step 2: Select person</h3>
         }
-        @v2.html.form(action = CSRF(controllers.community.routes.Members.updateExistingPerson())) {
+        @v2.html.form(action = CSRF(controllers.hm.routes.Members.updateExistingPerson())) {
             @v2.html.block("") {
                 @v2.html.select(form("id"), ("", "Select person") +: people, '_label -> "Person", '_help -> "")
             }

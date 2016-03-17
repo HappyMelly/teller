@@ -19,8 +19,8 @@
                     <h3>Step 1: Fee</h3>
                 }
             }
-            @v2.html.form(action = CSRF(if(edit) { controllers.community.routes.Members.update(member.get.id.get)
-            } else { controllers.community.routes.Members.create() } )) {
+            @v2.html.form(action = CSRF(if(edit) { controllers.hm.routes.Members.update(member.get.id.get)
+            } else { controllers.hm.routes.Members.create() } )) {
                 <input type="hidden" value="@form("objectId").value.getOrElse(0)" id="objectId" name="objectId"/>
                 <input type="hidden" value="@form("person").value.getOrElse(1)" id="person" name="person"/>
                 @v2.html.block("") {

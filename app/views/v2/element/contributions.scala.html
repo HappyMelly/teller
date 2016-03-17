@@ -20,7 +20,7 @@
     <tbody>
     @for(contribution <- contributions) {
       <tr>
-        <td><a href="@community.routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
+        <td><a href="@hm.routes.Products.details(contribution.product.id.getOrElse(0))">@contribution.product.title</a></td>
         <td>@contribution.contribution.role</td>
         <td>
         @restrict(handler, List(as(Admin.toString))) {
@@ -34,6 +34,6 @@
   </table>
 }
 <div>
-  Visit <a href="@community.routes.Products.index()">Products</a> page to find a list of
+  Visit <a href="@hm.routes.Products.index()">Products</a> page to find a list of
     products you can contribute to.
 </div>

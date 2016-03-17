@@ -27,7 +27,7 @@ import java.net.URLDecoder
 import javax.inject.Inject
 
 import controllers.api.json.{ContributionConverter, PersonConverter}
-import controllers.community.Experiments
+import controllers.hm.Experiments
 import controllers.core.Organisations
 import models._
 import models.repository.Repositories

@@ -25,7 +25,7 @@ package cron.reminders
 
 import javax.inject.Inject
 
-import controllers.community.Members
+import controllers.hm.Members
 import models.repository.Repositories
 import play.api.Play
 import play.api.Play.current

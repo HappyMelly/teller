@@ -26,7 +26,7 @@ package controllers.webhooks
 import javax.inject.Inject
 
 import controllers.{Utilities, AsyncController}
-import controllers.community.Members
+import controllers.hm.Members
 import models.core.payment.{Charge, Customer, CustomerType, Payment}
 import models.repository.Repositories
 import models.{Organisation, Person, Member, Recipient}

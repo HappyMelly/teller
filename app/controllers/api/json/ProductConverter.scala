@@ -1,7 +1,7 @@
 package controllers.api.json
 
 import controllers.Brands
-import controllers.community.Products
+import controllers.hm.Products
 import models.{Brand, Product, ProductCategory, ProductView}
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}

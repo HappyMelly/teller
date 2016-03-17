@@ -7,7 +7,7 @@
 @import models.UserRole.Role._
 
 <div class="b-headmenu">
-    <a class="b-headmenu__link @if(menu == "members") { state_selected }" href="@controllers.community.routes.Members.index()">
+    <a class="b-headmenu__link @if(menu == "members") { state_selected }" href="@controllers.hm.routes.Members.index()">
         Members
     </a>
     @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
@@ -18,7 +18,7 @@
     <a class="b-headmenu__link @if(menu == "brands") { state_selected }" href="@routes.Brands.index()">
         Brands
     </a>
-    <a class="b-headmenu__link @if(menu == "products") { active }" href="@controllers.community.routes.Products.index()">
+    <a class="b-headmenu__link @if(menu == "products") { active }" href="@controllers.hm.routes.Products.index()">
         Products
     </a>
     <a class="b-headmenu__link @if(menu == "people") { active }" href="@controllers.core.routes.People.index()">

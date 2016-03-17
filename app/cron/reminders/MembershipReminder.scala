@@ -26,7 +26,7 @@ package cron.reminders
 import javax.inject.Inject
 
 import controllers.Utilities
-import controllers.community.Members
+import controllers.hm.Members
 import models.Member
 import models.repository.Repositories
 import org.joda.time.{DateTime, Duration, LocalDate}
