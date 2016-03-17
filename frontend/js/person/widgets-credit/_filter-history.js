@@ -1,6 +1,7 @@
 'use strict';
 
-export default class FilterHistory {
+
+export default class Widget {
     /**
      * Filter history
      * @param {String} selector
@@ -65,5 +66,23 @@ export default class FilterHistory {
         $el.addClass('state_selected')
             .siblings().removeClass('state_selected');
     };
+    
+    // static
+    static interface(selector) {
+        const $elems = $(selector);
+        if (!$elems.length) return;
+
+        return $elems.each(function (index, el) {
+            let $element = $(el);
+            let data     = $element.data('widget');
+
+            debugger;
+            if (!data) {
+                data = new Widget(el);
+                $element.data('widget', data);
+            }
+        })
+    }
 }
+
 
