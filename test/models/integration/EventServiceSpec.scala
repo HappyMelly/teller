@@ -27,9 +27,10 @@ package models.integration
 import _root_.integration.PlayAppSpec
 import helpers.{ EvaluationHelper, BrandHelper, EventHelper, PersonHelper }
 import models._
-import models.brand.EventType
-import models.repository.{ ActivityRepository, EvaluationRepository, BrandRepository, EventRepository }
-import models.repository.brand.EventTypeRepository
+import models.cm.brand.EventType
+import models.repository.cm.EventRepository
+import models.repository.ActivityRepository
+import models.repository.cm.brand.EventTypeRepository
 import org.joda.time.{ DateTime, LocalDate }
 import org.scalamock.specs2.MockContext
 import services.integrations.Email

@@ -24,9 +24,9 @@
 package models.integration
 
 import integration.PlayAppSpec
-import models.brand.EventType
-import models.repository.brand.EventTypeRepository
+import models.cm.brand.EventType
 import helpers.{ BrandHelper, PersonHelper }
+import models.repository.cm.brand.EventTypeRepository
 
 class EventTypeServiceSpec extends PlayAppSpec {
 

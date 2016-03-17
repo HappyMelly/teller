@@ -27,7 +27,8 @@ package controllers.unit
 import controllers.{ ProfileStrengths, Security }
 import helpers._
 import models._
-import models.repository.{ LicenseRepository, FacilitatorRepository }
+import models.cm.facilitator.FacilitatorLanguage
+import models.repository.cm.{LicenseRepository, FacilitatorRepository}
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
@@ -83,7 +84,7 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
 
     "and has no signature and languages, then a profile strength with facilitator steps should be returned" in {
       (services.licenseService.activeLicenses _) expects 1L returning List(licenseView)
-      (services.facilitatorService.languages _) expects 1L returning List()
+      (services.cm.facilitator.Service.languages _) expects 1L returning List()
       val person = PersonHelper.one()
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
       steps.exists(_.name == "signature") must_== true
@@ -92,7 +93,7 @@ class ProfileStrengthsSpec extends Specification with IsolatedMockFactory {
     "and has a signature and 1 language, then a profile strength with facilitator steps should be returned" in {
       (services.licenseService.activeLicenses _) expects 1L returning List(licenseView)
       val language = FacilitatorLanguage(1L, "EN")
-      (services.facilitatorService.languages _) expects 1L returning List(language)
+      (services.cm.facilitator.Service.languages _) expects 1L returning List(language)
       val person = PersonHelper.one().copy(signature = true)
       val steps = controller.callInitializeProfileStrength(person).incompleteSteps
       steps.exists(_.name == "signature") must_== false

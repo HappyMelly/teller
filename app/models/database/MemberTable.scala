@@ -24,7 +24,6 @@
 package models.database
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import models.JodaMoney._
 import models.Member
 import org.joda.time.{DateTime, LocalDate}
 import slick.driver.JdbcProfile
@@ -40,8 +39,8 @@ private[models] trait MemberTable {
     def objectId = column[Long]("OBJECT_ID")
     def person = column[Boolean]("PERSON")
     def funder = column[Boolean]("FUNDER")
-    def feeCurrency = column[String]("FEE_CURRENCY")
     def fee = column[BigDecimal]("FEE")
+    def newFee = column[Option[BigDecimal]]("NEW_FEE")
     def renewal = column[Boolean]("RENEWAL")
     def since = column[LocalDate]("SINCE")
     def until = column[LocalDate]("END")
@@ -51,15 +50,15 @@ private[models] trait MemberTable {
     def updated = column[DateTime]("UPDATED")
     def updatedBy = column[Long]("UPDATED_BY")
 
-    type MembersFields = (Option[Long], Long, Boolean, Boolean, String, BigDecimal, Boolean, LocalDate, LocalDate, Option[String], DateTime, Long, DateTime, Long)
+    type MembersFields = (Option[Long], Long, Boolean, Boolean, BigDecimal, Option[BigDecimal], Boolean,
+      LocalDate, LocalDate, Option[String], DateTime, Long, DateTime, Long)
 
-    def * = (id.?, objectId, person, funder, feeCurrency, fee, renewal,
+    def * = (id.?, objectId, person, funder, fee, newFee, renewal,
       since, until, reason, created, createdBy, updated, updatedBy) <>(
       (m: MembersFields) ⇒
-        Member(m._1, m._2, m._3, m._4, m._5 -> m._6, m._7, m._8, m._9, m._10, m._11, m._12, m._13, m._14),
+        Member(m._1, m._2, m._3, m._4, m._5, m._6, m._7, m._8, m._9, m._10, m._11, m._12, m._13, m._14),
       (m: Member) ⇒
-        Some(m.id, m.objectId, m.person, m.funder, m.fee.getCurrencyUnit.getCode,
-          BigDecimal(m.fee.getAmount), m.renewal, m.since,
+        Some(m.id, m.objectId, m.person, m.funder, m.fee, m.newFee, m.renewal, m.since,
           m.until, m.reason, m.created, m.createdBy, m.updated, m.updatedBy))
   }
 

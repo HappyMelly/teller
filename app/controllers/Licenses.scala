@@ -32,7 +32,9 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.JodaMoney.jodaMoney
 import models.UserRole.Role._
 import models._
-import models.event.Attendee
+import models.cm.License
+import models.cm.event.Attendee
+import models.core.notification.NewFacilitator
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
@@ -104,8 +106,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   def addForAttendee(attendeeId: Long, eventId: Long) = RestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        attendee <- repos.attendee.find(attendeeId, eventId)
-        event <- repos.event.find(eventId)
+        attendee <- repos.cm.rep.event.attendee.find(attendeeId, eventId)
+        event <- repos.cm.event.find(eventId)
         brands <- coordinatedBrands(user.account.personId)
       } yield (attendee, event, brands)) flatMap {
         case (None, _, _) => notFound("Attendee not found")
@@ -137,7 +139,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
               brands.find(_.identifier == license.brandId) map { brand =>
                 checkOtherAccountEmail(person) flatMap { result =>
                   if (!result) {
-                    repos.license.add(license.copy(licenseeId = personId)) flatMap { addedLicense =>
+                    repos.cm.license.add(license.copy(licenseeId = personId)) flatMap { addedLicense =>
                       val query = for {
                         strength <- repos.profileStrength.find(personId, org = false) if strength.isDefined
                       } yield strength.get
@@ -171,8 +173,8 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   def createFromAttendee(attendeeId: Long, eventId: Long) = RestrictedAction(Coordinator) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        a <- repos.attendee.find(attendeeId, eventId)
-        e <- repos.event.get(eventId)
+        a <- repos.cm.rep.event.attendee.find(attendeeId, eventId)
+        e <- repos.cm.event.get(eventId)
         b <- coordinatedBrands(user.account.personId)
       } yield (a, e, b)) flatMap {
         case (None, _, _) => notFound("Attendee not found")
@@ -192,7 +194,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                   case None =>
                     val actions = for {
                       person <- createPersonFromAttendee(attendee)
-                      license <- repos.license.add(license.copy(licenseeId = person.identifier))
+                      license <- repos.cm.license.add(license.copy(licenseeId = person.identifier))
                     } yield (person, license)
                     actions flatMap { case (person, license) =>
                       repos.profileStrength.find(person.identifier, org = false).filter(_.isDefined) map { x ⇒
@@ -220,12 +222,12 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    */
   def delete(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      repos.license.findWithBrandAndLicensee(id) flatMap {
+      repos.cm.license.findWithBrandAndLicensee(id) flatMap {
         case None => notFound("License not found")
         case Some(view) =>
           val licenseeId = view.licensee.identifier
-          repos.license.delete(id)
-          repos.license.licenses(licenseeId) map { licenses =>
+          repos.cm.license.delete(id)
+          repos.cm.license.licenses(licenseeId) map { licenses =>
             if (licenses.isEmpty) {
               repos.userAccount.findByPerson(licenseeId).filter(_.isDefined).map(_.get) map { account =>
                 repos.userAccount.update(account.copy(facilitator = false, activeRole = true))
@@ -246,7 +248,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   def edit(id: Long) = RestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      license <- repos.license.find(id)
+      license <- repos.cm.license.find(id)
       brands <- coordinatedBrands(user.account.personId)
     } yield (license, brands)) flatMap {
       case (None, _) => notFound("License not found")
@@ -266,7 +268,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
    */
   def update(id: Long) = RestrictedAction(Coordinator) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      l <- repos.license.findWithBrandAndLicensee(id)
+      l <- repos.cm.license.findWithBrandAndLicensee(id)
       b <- coordinatedBrands(user.account.personId)
     } yield (l, b)) flatMap {
       case (None, _) => redirect(core.routes.Dashboard.index(), "error" -> Messages("error.notFound", Messages("models.License")))
@@ -278,7 +280,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
           license ⇒ {
             brands.find(_.identifier == license.brandId) map { brand =>
               val editedLicense = license.copy(id = Some(id), licenseeId = view.license.licenseeId)
-              repos.license.update(editedLicense)
+              repos.cm.license.update(editedLicense)
 
               activity(license, user.person).updated.insert(repos)
               val route: String = core.routes.People.details(view.license.licenseeId).url + "#facilitation"
@@ -297,7 +299,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * @param coordinatorId Coordinator identifier
     */
   protected def coordinatedBrands(coordinatorId: Long): Future[List[Brand]] =
-    repos.brand.findByCoordinator(coordinatorId) map { brands =>
+    repos.cm.brand.findByCoordinator(coordinatorId) map { brands =>
       brands.map(_.brand)
     }
 
@@ -320,7 +322,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       attendee.postcode, attendee.countryCode.getOrElse("XX")))
     person.profile_=(SocialProfile(objectType = ProfileType.Person))
     repos.person.insert(person) map { inserted =>
-      repos.attendee.update(attendee.copy(personId = inserted.id))
+      repos.cm.rep.event.attendee.update(attendee.copy(personId = inserted.id))
       inserted
     }
   }
@@ -371,6 +373,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
 
   /**
     * Returns a token which will expire only in 10 years
+    *
     * @param token Token
     */
   protected def unexpirableToken(token: MailToken): MailToken =

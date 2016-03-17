@@ -1,4 +1,4 @@
-@(form: Form[PaymentData],
+@(form: Form[hm.PaymentData],
     person: Person,
     apiKey: String,
     fee: (Int, Int, Int),
@@ -22,13 +22,11 @@
         <h3 class="b-unauth__title">Make Payment</h3>
 
         @views.html.v2.element.payment(form, person, apiKey, fee, org)
-        <div class="row payment-info">
-            <div class="col-md-2">
-                <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")"/>
-            </div>
-            <div class="col-md-10 text-left">
+        <div class="b-payinfo">
+            <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")" alt="" class="b-payinfo__img">
+            <div class="b-payinfo__text">
                 <p class="text-muted">Happy Melly does not store your card details. All payments are securily
-                    processed by <a href="http://stripe.com" target="_blank">Stripe, Inc.</a>
+                    processed by <a class="link-mblue" href="http://stripe.com" target="_blank">Stripe, Inc.</a>
                 </p>
                 <p class="text-muted">
                     The information transfer is secured and verified by SSL 128 bit certificate

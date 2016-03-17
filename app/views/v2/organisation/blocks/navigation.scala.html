@@ -22,11 +22,13 @@
             <div class="b-sidemenu__head">
                 Membership
             </div>
-            <a href="#membership" role="tab"
+            <a href="#membership"
+                role="tab"
+                data-href="@hm.routes.Profile.orgMembership(view.org.identifier)"
                 class="b-sidemenu__link">
                 Membership
             </a>
-            <a data-href="@routes.Experiments.experiments(m.id.get)"
+            <a data-href="@hm.routes.Experiments.experiments(m.id.get)"
                 href="#experiments"
                 class="b-sidemenu__link"
                 role="tab">

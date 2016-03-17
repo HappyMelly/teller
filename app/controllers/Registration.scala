@@ -25,6 +25,7 @@ package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.hm.Enrollment
 import models.UserRole.Role._
 import models._
 import models.core.payment._
@@ -296,17 +297,13 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                   if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
                     throw new ValidationException("error.payment.minimum_fee")
                   }
-                  val customerId = subscribe(person, org, data)
-                  addCustomerRecord(customerId, person, org)
-                  org map { x ⇒
-                    repos.person.update(person.copy(active = true))
-                    person.addRelation(x.id.get, repos)
-                  }
-                  val fee = Money.of(EUR, data.fee)
+                  val (customerId, card) = subscribe(person, org, data)
+                  addCustomerRecord(customerId, card, person, org)
+                  activeRecord(person, org)
                   val futureMember = org map { x ⇒
-                    x.becomeMember(funder = false, fee, person.id.get, repos)
+                    x.becomeMember(funder = false, data.fee, person.id.get, repos)
                   } getOrElse {
-                    person.becomeMember(funder = false, fee, repos)
+                    person.becomeMember(funder = false, data.fee, repos)
                   }
                   futureMember flatMap { member =>
                     createUserAccount(user.id, user.providerId, person, member)
@@ -371,6 +368,19 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       if (providerId == "linkedin") Some(remoteUserId) else None,
       if (providerId == "google") Some(remoteUserId) else None,
       member = true, registered = true)
+
+  /**
+    * Activates temporary records making them valid ones
+    * @param person Person
+    * @param org Organisation
+    */
+  protected def activeRecord(person: Person, org: Option[Organisation]): Unit = {
+    repos.person.update(person.copy(active = true))
+    org map { value =>
+      repos.org.update(value.copy(active = true))
+      person.addRelation(value.identifier, repos)
+    }
+  }
 
   /**
     * Adds new person as a member and updates cached object

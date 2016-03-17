@@ -27,9 +27,9 @@ package controllers.acceptance
 import _root_.integration.PlayAppSpec
 import controllers.BrandFees
 import helpers._
-import models.brand.BrandFee
-import models.repository.BrandRepository
-import models.repository.brand.BrandFeeRepository
+import models.cm.brand.BrandFee
+import models.repository.cm.BrandRepository
+import models.repository.cm.brand.BrandFeeRepository
 import org.joda.money.Money
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs._

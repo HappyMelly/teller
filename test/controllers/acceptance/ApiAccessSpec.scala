@@ -24,7 +24,7 @@
 
 package controllers.acceptance
 
-import controllers.apiv2._
+import controllers.api._
 import org.specs2.mutable.Specification
 import play.api.test.FakeRequest
 import stubs.FakeNoCallApiAuthentication

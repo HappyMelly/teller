@@ -28,10 +28,10 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.{Activities, Security}
-import mail.reminder.EvaluationReminder
+import cron.reminders.EvaluationReminder
 import models.Activity
 import models.UserRole.Role
-import models.event.Attendee
+import models.cm.event.Attendee
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
@@ -73,8 +73,8 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
           redirect(controllers.routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
         requestData ⇒ {
           (for {
-            a <- services.attendee.findByEvents(List(event.identifier))
-            b <- services.brand.get(event.brandId)
+            a <- services.cm.rep.event.attendee.findByEvents(List(event.identifier))
+            b <- services.cm.brand.get(event.brandId)
           } yield (a, b)) flatMap { case (unfilteredAttendees, brand) =>
             val attendees = unfilteredAttendees.map(_._2).filter(a => requestData.attendeeIds.contains(a.identifier))
             if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {

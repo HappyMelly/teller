@@ -81,9 +81,9 @@ class Security(deadbolt: DeadboltActions,
     * @param evaluationId Evaluation identifier
     */
   def EvaluationAction(roles: List[UserRole.Role.Role], evaluationId: Long)(
-    f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.cm.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      repos.event.findByEvaluation(evaluationId) flatMap {
+      repos.cm.event.findByEvaluation(evaluationId) flatMap {
         case None => notFound("Evaluation not found")
         case Some(event) =>
           eventManager(user.account, roles, event) flatMap {
@@ -102,9 +102,9 @@ class Security(deadbolt: DeadboltActions,
     * @param eventId Event identifier
     */
   def EventAction(roles: List[UserRole.Role.Role], eventId: Long)(
-    f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.Event => Future[Result]): Action[AnyContent] = {
+    f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.cm.Event => Future[Result]): Action[AnyContent] = {
     asyncSecuredAction() { implicit request => implicit user =>
-      repos.event.find(eventId) flatMap {
+      repos.cm.event.find(eventId) flatMap {
         case None => notFound("Event not found")
         case Some(event) =>
           eventManager(user.account, roles, event) flatMap {
@@ -178,9 +178,9 @@ class Security(deadbolt: DeadboltActions,
   }
 
   protected def eventManager(account: UserAccount,
-                             roles: List[UserRole.Role.Role], event: models.Event): Future[Boolean] = {
+                             roles: List[UserRole.Role.Role], event: models.cm.Event): Future[Boolean] = {
     if (account.isCoordinatorNow && roles.contains(UserRole.Role.Coordinator))
-      repos.brand.isCoordinator(event.brandId, account.personId)
+      repos.cm.brand.isCoordinator(event.brandId, account.personId)
     else if (account.isFacilitatorNow && roles.contains(UserRole.Role.Facilitator))
       Future.successful(event.isFacilitator(account.personId, repos))
     else

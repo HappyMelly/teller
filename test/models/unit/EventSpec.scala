@@ -27,11 +27,12 @@ package models.unit
 import _root_.integration.PlayAppSpec
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models._
-import models.brand.EventType
-import models.event.EventCancellation
+import models.cm.brand.EventType
+import models.cm.event.EventCancellation
 import models.repository._
-import models.repository.brand.EventTypeRepository
-import models.repository.event.EventCancellationRepository
+import models.repository.cm.EventRepository
+import models.repository.cm.brand.EventTypeRepository
+import models.repository.cm.event.EventCancellationRepository
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.MockContext
@@ -175,10 +176,10 @@ class EventSpec extends PlayAppSpec {
         "Berlin", "DE", now, now.plusDays(1), false,
         Some("Small number of participants"),
         Some(2), Some("some data"))
-      (services.eventCancellationService.insert _) expects cancellation returning cancellation
+      (services.cm.rep.event.cancellationService.insert _) expects cancellation returning cancellation
       val eventTypeService = mock[EventTypeRepository]
       val eventType = EventType(Some(1L), 1L, "Regular event", None, 8, false)
-      (services.eventTypeService.find _) expects 1L returning Some(eventType)
+      (services.cm.rep.brand.eventTypeService.find _) expects 1L returning Some(eventType)
       one.eventService_=(eventService)
       one.eventCancellationService_=(eventCancellationService)
       one.eventTypeService_=(eventTypeService)

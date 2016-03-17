@@ -76,7 +76,7 @@ $(document).ready( function() {
     }
     $('#activate').on('click', function(e) {
         e.preventDefault();
-        var url = jsRoutes.controllers.Products.activation($(this).data('id')).url;
+        var url = jsRoutes.controllers.hm.Products.activation($(this).data('id')).url;
         var active = $(this).hasClass('btn-success');
         $.post(url, {active: active}, function(data, textStatus, xhr) {
             switchState(active);

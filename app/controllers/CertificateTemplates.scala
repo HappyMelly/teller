@@ -29,7 +29,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role._
-import models.brand.CertificateTemplate
+import models.cm.brand.CertificateTemplate
 import models.repository.Repositories
 import play.api.data.Forms._
 import play.api.data._
@@ -73,8 +73,8 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
   def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brand.find(brandId)
-        templates <- services.certificate.findByBrand(brandId)
+        brand <- services.cm.brand.find(brandId)
+        templates <- services.cm.certificate.findByBrand(brandId)
       } yield (brand, templates)) flatMap {
         case (None, _) => Future.successful(NotFound)
         case (Some(brand), templates) =>
@@ -91,8 +91,8 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
   def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.brand.find(brandId)
-        templates <- services.certificate.findByBrand(brandId)
+        brand <- services.cm.brand.find(brandId)
+        templates <- services.cm.certificate.findByBrand(brandId)
       } yield (brand, templates)) flatMap {
         case (None, _) => Future.successful(NotFound)
         case (Some(brand), templates) =>
@@ -125,7 +125,7 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
                     secondSource.toArray.map(_.toByte))
                   firstSource.close()
                   secondSource.close()
-                  services.certificate.insert(tpl) flatMap { _ =>
+                  services.cm.certificate.insert(tpl) flatMap { _ =>
                     redirect(routes.Brands.details(brandId).url + "#templates", "success" -> "Template was added")
                   }
                 }
@@ -144,7 +144,7 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
   def template(id: Long, single: Boolean) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val contentType = "image/jpeg"
-      services.certificate.find(id) flatMap {
+      services.cm.certificate.find(id) flatMap {
         case None => Future.successful(Ok(Array[Byte]()).as(contentType))
         case Some(template) =>
           if (single) {
@@ -163,10 +163,10 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
    */
   def delete(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.certificate.find(id) flatMap {
+      services.cm.certificate.find(id) flatMap {
         case None => notFound("Template not found")
         case Some(template) =>
-          services.certificate.delete(id) flatMap { _ =>
+          services.cm.certificate.delete(id) flatMap { _ =>
             redirect(routes.Brands.details(template.brandId).url + "#templates", "success" -> "Template was deleted")
           }
       }

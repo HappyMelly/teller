@@ -42,7 +42,7 @@ class ResourceHandler(user: ActiveUser, services: IRepositories) extends Dynamic
   def isAllowed[A](name: String, meta: String, handler: DeadboltHandler, request: Request[A]) = {
     val objectId = meta.toLong
     UserRole.forName(name).role match {
-      case Coordinator => services.brand.isCoordinator(objectId, user.account.personId)
+      case Coordinator => services.cm.brand.isCoordinator(objectId, user.account.personId)
       case Member ⇒ checkMemberPermission(user, objectId)
       case Funder => Future.successful(user.account.admin || user.member.exists(_.funder))
       case ProfileEditor => Future.successful(user.account.admin || user.account.personId == objectId)

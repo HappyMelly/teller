@@ -23,7 +23,6 @@
  */
 package models
 
-import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
 case class Member(
@@ -31,7 +30,8 @@ case class Member(
     objectId: Long,
     person: Boolean,
     funder: Boolean,
-    fee: Money,
+    fee: BigDecimal,
+    newFee: Option[BigDecimal] = None,
     renewal: Boolean = true,
     since: LocalDate,
     until: LocalDate,

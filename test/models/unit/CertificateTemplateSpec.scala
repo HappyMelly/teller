@@ -24,7 +24,7 @@
 package models.unit
 
 import models.Activity
-import models.brand.CertificateTemplate
+import models.cm.brand.CertificateTemplate
 import org.specs2.mutable._
 
 class CertificateTemplateSpec extends Specification {

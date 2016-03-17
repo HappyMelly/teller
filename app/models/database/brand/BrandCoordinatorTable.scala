@@ -24,7 +24,7 @@
 
 package models.database.brand
 
-import models.brand.{BrandCoordinator, BrandNotifications}
+import models.cm.brand.{BrandNotifications, BrandCoordinator}
 import slick.driver.JdbcProfile
 
 private[models] trait BrandCoordinatorTable {

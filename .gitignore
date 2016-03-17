@@ -11,6 +11,7 @@ dist
 *.iml
 run-server.sh
 keystore.jks
+npm-debug.log
 TODO
 .vagrant
 node_modules

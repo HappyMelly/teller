@@ -13,7 +13,7 @@
 experiments will be shown on <a href="http://happymelly.com" target="_blank">Happy Melly</a>
 website.</i></p>
   @dynamic(handler, Role.Member.toString, memberId.toString) {
-  <p><a href="@routes.Experiments.add(memberId)">
+  <p><a href="@hm.routes.Experiments.add(memberId)">
     + Add Experiment</a></p>
 }
 </div>
@@ -29,18 +29,18 @@ website.</i></p>
       }
       <p>@experiment.description.markdown</p>
       @if(experiment.picture) {
-        <img class="picture" src="@Experiments.pictureUrl(experiment)"/>
+        <img class="picture" src="@hm.Experiments.pictureUrl(experiment)"/>
       }
       @dynamic(handler, Role.Member.toString, memberId.toString) {
         <div class="actions font-sm">
-          <a href="@routes.Experiments.update(memberId, experiment.id.get)">
+          <a href="@hm.routes.Experiments.update(memberId, experiment.id.get)">
             Edit</a>
           <a href="#" data-id="@experiment.id.get" class="remove"
-            data-href="@routes.Experiments.delete(memberId, experiment.id.get)">
+            data-href="@hm.routes.Experiments.delete(memberId, experiment.id.get)">
             Delete</a>
           @if(experiment.picture) {
             <a href="#" data-id="@experiment.id.get" class="deletePicture"
-              data-href="@routes.Experiments.deletePicture(memberId, experiment.id.get)">
+              data-href="@hm.routes.Experiments.deletePicture(memberId, experiment.id.get)">
             Delete Picture</a>
           }
         </div>

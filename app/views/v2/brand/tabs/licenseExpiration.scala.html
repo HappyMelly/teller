@@ -1,4 +1,5 @@
-@(settings: models.brand.Settings)(implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler)
+@import models.cm.brand.Settings
+@(settings: Settings)(implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 <h4>License Expiration Reminder</h4>
 <p>When this feature is <strong>on</strong>, your facilitators will get a reminder that their license is expiring

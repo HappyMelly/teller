@@ -27,8 +27,9 @@ package models.integration
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.brand._
-import models.repository.BrandRepository
-import models.repository.brand.BrandCoordinatorRepository
+import models.cm.brand.{BrandNotifications, BrandCoordinator, BrandLink, BrandTestimonial}
+import models.repository.cm.BrandRepository
+import models.repository.cm.brand.BrandCoordinatorRepository
 
 /**
  * Tests for BrandService class

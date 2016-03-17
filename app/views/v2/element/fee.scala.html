@@ -1,0 +1,26 @@
+@(currentLevel: Int, fee: (Int, Int, Int))
+
+@import models.core.payment.Payment
+
+<div class="b-feestrip">
+    <div class="b-feestrip__col">
+        <h4 class="b-feestrip__title">Update your contribution level</h4>
+        <div class="input-group">
+            <label class="input-group-addon">€</label>
+                <input class="form-control b-feestrip__input"
+                    name="fee"
+                    type="number"
+                    step="1"
+                    value="@currentLevel"
+                data-tax="@Payment.TAX_PERCENT_AMOUNT"
+                >
+        </div>
+    </div>
+    <div class="b-feestrip__col">
+        <p> For this country a Token contribution is <b>&#8364;@fee._1</b>,
+            a Generous contribution is <b>&#8364;@fee._2</b>
+            and a Big hearted contribution is <b>&#8364;@fee._3</b>.
+        </p>
+            <p><a href="#" class="link-mblue" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
+    </div>
+</div>

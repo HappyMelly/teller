@@ -23,7 +23,7 @@
  */
 package models.database
 
-import models.OldEvaluation
+import models.cm.OldEvaluation
 import slick.driver.JdbcProfile
 
 private[models] trait OldEvaluationTable {

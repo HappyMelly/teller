@@ -1,7 +1,8 @@
-@(attendee: models.event.Attendee,
-    evaluation: Option[Evaluation],
+@import models.cm.event.Attendee
+@(attendee: Attendee,
+    evaluation: Option[models.cm.Evaluation],
     coordinator: Boolean,
-    identicalEvaluation: Option[Evaluation])(implicit request: Request[Any],
+    identicalEvaluation: Option[models.cm.Evaluation])(implicit request: Request[Any],
     token: play.filters.csrf.CSRF.Token)
 
 @import views.Countries

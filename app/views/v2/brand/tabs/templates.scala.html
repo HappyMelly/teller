@@ -1,5 +1,6 @@
+@import models.cm.brand.CertificateTemplate
 @(brandId: Long,
-    templates: List[models.brand.CertificateTemplate])(implicit request: Request[Any],
+    templates: List[CertificateTemplate])(implicit request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import be.objectify.deadbolt.scala.views.html._

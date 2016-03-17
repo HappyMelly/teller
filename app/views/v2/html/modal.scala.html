@@ -3,7 +3,7 @@
  *@
 @(id: String, title: String, small: Boolean = false)(body: => Html)
 
-<div class="b-modal modal-dialog @if(small) {modal-sm}" id="@id">
+<div class="b-modal__dlg modal-dialog @if(small) {modal-sm}" id="@id">
   <a href="#" class="b-modal__close" data-dismiss="modal" aria-hidden="true">×</a>
   <div class="b-modal__content">
     <div class="b-modal__title">

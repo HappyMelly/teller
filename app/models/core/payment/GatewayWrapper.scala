@@ -39,7 +39,8 @@ class RequestException(msg: String, logMsg: Option[String] = None)
 
 /**
  * Wrapper around stripe.CardException
- * @param msg Human-readable message
+  *
+  * @param msg Human-readable message
  * @param code Unique error code
  * @param param Optional parameter
  */
@@ -52,136 +53,130 @@ case class PaymentException(msg: String, code: String, param: String)
 class GatewayWrapper(apiKey: String) {
 
   /**
-   * Retrieves plan or creates a plan if the required one doesn't exist
-   * @param fee Plan amount
-   * @return Returns plan identifier
-   */
-  def plan(fee: Int): String = {
-    try {
-      Stripe.apiKey = apiKey
-      val amount = fee * 100
-      val params = Map[String, AnyRef]("limit" -> 100.asInstanceOf[AnyRef])
-      val plans = Plan.all(params).getData
-      val plan = plans.
-        find(p ⇒ p.getCurrency == "eur" && p.getAmount == amount).
-        getOrElse {
-          val params = Map("amount" -> Int.box(amount),
-            "interval" -> "year",
-            "currency" -> "eur",
-            "name" -> Payment.DESC,
-            "id" -> "custom_%s".format(fee))
-          Plan.create(params)
-        }
-      plan.getId
-    } catch {
-      case e: InvalidRequestException ⇒
-        throw new RequestException("error.payment.invalid_request", Some(e.toString))
-      case e: AuthenticationException ⇒
-        throw new RequestException("error.payment.authorisation")
-      case e: APIConnectionException ⇒
-        throw new RequestException("error.payment.api.connection", Some(e.toString))
-      case e: APIException ⇒
-        throw new RequestException("error.payment.api", Some(e.toString))
-    }
-  }
-
-  /**
-   * Creates a new customer and subscribes him/her to the given plan
-   * @param customerName Name of the customer
-   * @param customerId Internal id of the customer
-   * @param payerEmail Email of the person who pays
-   * @param plan Plan identifier
-   * @param token Card token
-   * @return Returns customer identifier
-   */
-  def customer(customerName: String, customerId: Long, payerEmail: String, plan: String, token: String): String = {
-    try {
-      val params = Map(
-        "description" -> "Customer %s (id = %s) ".format(customerName, customerId),
-        "email" -> payerEmail,
-        "source" -> token)
-      Stripe.apiKey = apiKey
-      val customer = com.stripe.model.Customer.create(params)
-      customer.createSubscription(Map("plan" -> plan,
-        "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
-      customer.getId
-    } catch {
-      case e: CardException ⇒
-        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
-      case e: InvalidRequestException ⇒
-        throw new RequestException("error.payment.invalid_request", Some(e.toString))
-      case e: AuthenticationException ⇒
-        throw new RequestException("error.payment.authorisation")
-      case e: APIConnectionException ⇒
-        throw new RequestException("error.payment.api.connection", Some(e.toString))
-      case e: APIException ⇒
-        throw new RequestException("error.payment.api", Some(e.toString))
-    }
-  }
-
-  /**
    * Cancels subscriptions
-   * @param customerId Customer
+    *
+    * @param customerId Customer
    * @return
    */
-  def cancel(customerId: String) = {
-    try {
-      Stripe.apiKey = apiKey
-      val subscriptions = com.stripe.model.Customer.retrieve(customerId).getSubscriptions.getData
-      subscriptions.foreach(_.cancel(Map[String, AnyRef]()))
-    } catch {
-      case e: CardException ⇒
-        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
-      case e: InvalidRequestException ⇒
-        throw new RequestException("error.payment.invalid_request", Some(e.toString))
-      case e: AuthenticationException ⇒
-        throw new RequestException("error.payment.authorisation")
-      case e: APIConnectionException ⇒
-        throw new RequestException("error.payment.api.connection", Some(e.toString))
-      case e: APIException ⇒
-        throw new RequestException("error.payment.api", Some(e.toString))
-    }
-  }
-
-  /**
-   * Returns a list of invoices for the given customer
-   * @param customerId Customer
-   * @return
-   */
-  def invoices(customerId: String): List[String] = {
-    try {
-      Stripe.apiKey = apiKey
-      Invoice.all(Map("customer" -> customerId)).getData.map(_.getId).toList
-    } catch {
-      case e: CardException ⇒
-        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
-      case e: InvalidRequestException ⇒
-        throw new RequestException("error.payment.invalid_request", Some(e.toString))
-      case e: AuthenticationException ⇒
-        throw new RequestException("error.payment.authorisation")
-      case e: APIConnectionException ⇒
-        throw new RequestException("error.payment.api.connection", Some(e.toString))
-      case e: APIException ⇒
-        throw new RequestException("error.payment.api", Some(e.toString))
-    }
+  def cancel(customerId: String) = stripeCall {
+    val subscriptions = com.stripe.model.Customer.retrieve(customerId).getSubscriptions.getData
+    subscriptions.foreach(_.cancel(Map[String, AnyRef]()))
   }
 
   /**
    * Charges user's card using Stripe
-   * @param sum Amount to be charged
+    *
+    * @param sum Amount to be charged
    * @param payer User object
    * @param token Stripe token for a single session
    * @return Returns Stripe JSON response
    */
-  def charge(sum: Int, payer: Person, token: Option[String]) = {
+  def charge(sum: Int, payer: Person, token: Option[String]) = stripeCall {
     val params = Map("amount" -> Int.box(sum * 100),
       "currency" -> "eur",
       "card" -> token.getOrElse(""),
       "description" -> Payment.DESC,
       "receipt_email" -> payer.email)
+    com.stripe.model.Charge.create(params)
+  }
+
+  /**
+    * Creates a new customer and subscribes him/her to the given plan
+    *
+    * @param customerName Name of the customer
+    * @param customerId Internal id of the customer
+    * @param payerEmail Email of the person who pays
+    * @param plan Plan identifier
+    * @param token Card token
+    * @return Returns customer identifier and credit card info
+    */
+  def customer(customerName: String,
+               customerId: Long,
+               payerEmail: String,
+               plan: String,
+               token: String): (String, CreditCard) = stripeCall {
+    val params = Map(
+      "description" -> "Customer %s (id = %s) ".format(customerName, customerId),
+      "email" -> payerEmail,
+      "source" -> token)
+    val customer = com.stripe.model.Customer.create(params)
+    try {
+      customer.createSubscription(Map("plan" -> plan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+      (customer.getId, creditCard(customer))
+    } catch {
+      case e: StripeException =>
+        customer.delete()
+        throw e
+    }
+  }
+
+  /**
+    * Returns a list of invoices for the given customer
+    *
+    * @param customerId Customer
+    * @return
+    */
+  def invoices(customerId: String): List[String] = stripeCall {
+    Invoice.all(Map("customer" -> customerId)).getData.map(_.getId).toList
+  }
+
+  /**
+    * Retrieves plan or creates a plan if the required one doesn't exist
+    *
+    * @param fee Plan amount
+    * @return Returns plan identifier
+    */
+  def plan(fee: Int): String = stripeCall {
+    val amount = fee * 100
+    val params = Map[String, AnyRef]("limit" -> 100.asInstanceOf[AnyRef])
+    val plans = Plan.all(params).getData
+    val plan = plans.
+      find(p ⇒ p.getCurrency == "eur" && p.getAmount == amount).
+      getOrElse {
+        val params = Map("amount" -> Int.box(amount),
+          "interval" -> "year",
+          "currency" -> "eur",
+          "name" -> Payment.DESC,
+          "id" -> "custom_%s".format(fee))
+        Plan.create(params)
+      }
+    plan.getId
+  }
+
+  /**
+    * Creates new subscription for the given customer
+    * @param customerId Customer identifier
+    * @param fee Subscription amount
+    */
+  def subscribe(customerId: String, fee: BigDecimal) = stripeCall {
+    val customer = com.stripe.model.Customer.retrieve(customerId)
+    val planId = plan(fee.intValue())
+    customer.createSubscription(Map("plan" -> planId, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+  }
+
+  /**
+    * Deletes old cards and add a new one to the given customer
+    *
+    * @param customerId Customer identifier
+    * @param cardToken New card token
+    * @param cards Old cards
+    * @return New card data
+    */
+  def updateCards(customerId: String, cardToken: String, cards: Seq[CreditCard]): CreditCard = stripeCall {
+    val customer = com.stripe.model.Customer.retrieve(customerId)
+    val remoteCards = customer.getCards
+    cards.foreach { card =>
+      remoteCards.retrieve(card.remoteId).delete()
+    }
+    val card = customer.createCard(cardToken)
+    customer.setDefaultCard(card.getId)
+    CreditCard(None, 0, card.getId, card.getBrand, card.getLast4, card.getExpMonth, card.getExpYear)
+  }
+
+  protected def stripeCall[A](f: => A) = {
     try {
       Stripe.apiKey = apiKey
-      com.stripe.model.Charge.create(params)
+      f
     } catch {
       case e: CardException ⇒
         throw new PaymentException(e.getMessage, e.getCode, e.getParam)
@@ -194,5 +189,15 @@ class GatewayWrapper(apiKey: String) {
       case e: APIException ⇒
         throw new RequestException("error.payment.api", Some(e.toString))
     }
+  }
+
+  /**
+    * Returns default credit card info
+    *
+    * @param customer Stripe customer object
+    */
+  protected def creditCard(customer: com.stripe.model.Customer): CreditCard = {
+    val card = customer.getCards.retrieve(customer.getDefaultCard)
+    CreditCard(None, 0, card.getId, card.getBrand, card.getLast4, card.getExpMonth, card.getExpYear)
   }
 }

@@ -27,12 +27,13 @@ import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
-import mail.reminder._
-import models.Facilitator
+import cron.SubscriptionUpdater
+import cron.cleaners.{ExpiredEventRequestCleaner, TokenCleaner}
+import cron.reminders._
+import models.cm.Facilitator
 import models.repository.Repositories
 import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
 import play.api.Environment
-import services.cleaners.{TokenCleaner, ExpiredEventRequestCleaner}
 import services.integrations.Email
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -57,52 +58,55 @@ class Scheduler @Inject() (val env: Environment,
     }
   }
 
+  private def runCleaners() = {
+    (new ExpiredEventRequestCleaner(repos)).clean()
+    (new TokenCleaner(repos).clean())
+  }
+
   /**
     * Sends event confirmation alert in the beginning of each day
     */
-  private def scheduleDailyActions = {
-    val now = LocalDateTime.now()
-    val targetDate = LocalDate.now.plusDays(1)
-    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
-    val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    actors.scheduler.schedule(
-      Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
-      Duration.create(24, TimeUnit.HOURS)) {
-      println("INFO: Start of daily routines")
-      val membership = new MembershipReminder(email, repos)
-      membership.sendOneMonthExpirationReminder()
-      (new EventReminder(email, repos)).sendPostFactumConfirmation()
-      (new EvaluationReminder(email, repos)).sendToAttendees()
-      Facilitator.updateFacilitatorExperience(repos)
-      runCleaners()
-      println("INFO: End of daily routines")
-    }
+  private def scheduleDailyActions = scheduler {
+    println("INFO: Start of daily routines")
+
+    val membership = new MembershipReminder(email, repos)
+    membership.sendOneMonthExpirationReminder()
+    val event = new EventReminder(email, repos)
+    event.sendPostFactumConfirmation()
+    val evaluation = new EvaluationReminder(email, repos)
+    evaluation.sendToAttendees()
+    Facilitator.updateFacilitatorExperience(repos)
+    val subscription = new SubscriptionUpdater(repos)
+    subscription.update()
+    runCleaners()
+
+    println("INFO: End of daily routines")
   }
 
   /**
     * Sends event confirmation alert on the first day of each month
     */
-  private def scheduleMonthlyActions = {
+  private def scheduleMonthlyActions = scheduler {
+    if (LocalDateTime.now().getDayOfMonth == 1) {
+      println("INFO: Start of monthly routines")
+
+      (new ProfileStrengthReminder(email, repos)).sendToFacilitators()
+      (new ExperimentReminder(email, repos)).sendStatus()
+      (new BrandReminder(email, repos)).sendLicenseExpirationReminder()
+
+      println("INFO: End of monthly routines")
+    }
+  }
+
+  private def scheduler[A](f: => A) = {
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
     val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
-    actors.scheduler.schedule(
-      Duration.create(waitPeriod, TimeUnit.MILLISECONDS),
-      Duration.create(24, TimeUnit.HOURS)) {
-      if (now.getDayOfMonth == 1) {
-        println("INFO: Start of monthly routines")
-        (new ProfileStrengthReminder(email, repos)).sendToFacilitators()
-        (new ExperimentReminder(email, repos)).sendStatus()
-        (new BrandReminder(email, repos)).sendLicenseExpirationReminder()
-//        (new EventReminder(email, app)).sendUpcomingEventsNotification()
-        println("INFO: End of monthly routines")
-      }
+    val initialDelay = Duration.create(waitPeriod, TimeUnit.MILLISECONDS)
+    val interval = Duration.create(24, TimeUnit.HOURS)
+    actors.scheduler.schedule(initialDelay, interval) {
+      f
     }
-  }
-
-  private def runCleaners() = {
-    (new ExpiredEventRequestCleaner(repos)).clean()
-    (new TokenCleaner(repos).clean())
   }
 }

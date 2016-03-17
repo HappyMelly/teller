@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.EventInvoice
+import models.cm.EventInvoice
 import slick.driver.JdbcProfile
 
 private[models] trait EventInvoiceTable

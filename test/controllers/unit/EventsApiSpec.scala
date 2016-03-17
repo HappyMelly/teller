@@ -24,11 +24,11 @@
 */
 package controllers.unit
 
-import controllers.apiv2.{ ApiAuthentication, EventsApi }
+import controllers.api.{ ApiAuthentication, EventsApi }
 import helpers.{ BrandHelper, EventHelper, PersonHelper }
 import models.Event
-import models.repository.{ BrandRepository, EventRepository }
-import models.repository.brand.EventTypeRepository
+import models.repository.cm.brand.EventTypeRepository
+import models.repository.cm.{EventRepository, BrandRepository}
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable._
 import play.api.libs.json._
@@ -106,7 +106,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
     "pass all parameters to findByFacilitator in a right order" in {
       inSequence {
         (services.brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
-        (services.eventTypeService.findByBrand _) expects 1L returning List()
+        (services.cm.rep.brand.eventTypeService.findByBrand _) expects 1L returning List()
         (services.eventService.findByFacilitator _)
           .expects(1, Some(1L), None, Some(true), Some(false))
           .returning(List[Event]())
@@ -127,7 +127,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
     "pass all parameters to findByParameters in a right order" in {
       inSequence {
         (services.brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
-        (services.eventTypeService.findByBrand _) expects 1L returning List()
+        (services.cm.rep.brand.eventTypeService.findByBrand _) expects 1L returning List()
         (services.eventService.findByParameters _)
           .expects(Some(1L), None, Some(true), Some(false), None, Some("UK"), Some(1L))
           .returning(List[Event]())
@@ -148,7 +148,7 @@ class EventsApiSpec extends Specification with IsolatedMockFactory {
     "return events in JSON format" in {
       inSequence {
         (services.brandService.find(_: String)) expects "TEST" returning Some(BrandHelper.one)
-        (services.eventTypeService.findByBrand _) expects 1L returning List()
+        (services.cm.rep.brand.eventTypeService.findByBrand _) expects 1L returning List()
         (services.eventService.findByFacilitator _)
           .expects(*, *, *, *, *)
           .returning(List[Event](EventHelper.one, EventHelper.two))

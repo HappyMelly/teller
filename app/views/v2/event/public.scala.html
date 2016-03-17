@@ -1,10 +1,10 @@
-@(event: Event, brand: Brand, facilitators: List[(Person, Float, String)])(implicit request: RequestHeader)
+@(event: models.cm.Event, brand: Brand, facilitators: List[(Person, Float, String)])(implicit request: RequestHeader)
 
 @import templates.Formatters._
 @import views.{Countries, Languages}
 @import views.ViewHelpersV2._
 
-@language(lang: Language) = {
+@language(lang: models.cm.Language) = {
     @defining(lang.secondSpoken.map(value => s" and $value").getOrElse("")) { suffix =>
     Event is in @Languages.name(lang.spoken)@Languages.name(suffix)
     }

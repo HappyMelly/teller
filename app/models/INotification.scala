@@ -23,82 +23,36 @@
  */
 package models
 
-import controllers.brand.Badges
-import controllers.core.People
-import models.brand.Badge
+import models.core.notification.{NewBadge, NewFacilitator, NewPersonalBadge}
 import org.joda.time.DateTime
-import play.api.libs.json.{JsValue, Json, JsObject}
+import play.api.libs.json.{JsObject, JsValue}
 
 case class Notification(id: Option[Long],
                         personId: Long,
                         body: JsValue,
                         typ: String,
+                        version: Int = 1,
                         unread: Boolean = true,
                         created: DateTime = DateTime.now()) {
 
   def render: String = typ match {
-    case NotificationType.NewBadge =>
-      val img = (body \ "img").get.as[String]
-      val name = (body \ "name").get.as[String]
-      val badge = (body \ "badge").get.as[String]
-      val url = (body \ "url").get.as[String]
-      views.html.v2.core.notification.newBadge(img, name, badge, url).toString()
-
-    case NotificationType.NewFacilitator =>
-      val img = (body \ "img").get.as[String]
-      val name = (body \ "name").get.as[String]
-      val brand = (body \ "brand").get.as[String]
-      val url = (body \ "url").get.as[String]
-      views.html.v2.core.notification.newFacilitator(img, name, brand, url).toString()
-
-    case NotificationType.NewPersonalBadge =>
-      val img = (body \ "img").get.as[String]
-      val badge = (body \ "badge").get.as[String]
-      views.html.v2.core.notification.newPersonalBadge(img, badge).toString()
+    case NotificationType.Badge => NewBadge.render(this)
+    case NotificationType.Facilitator => NewFacilitator.render(this)
+    case NotificationType.PersonalBadge => NewPersonalBadge.render(this)
   }
 }
 
 trait INotification {
   val typ: String
-  def notification(personId: Long): Notification
+  val version: Int
+  def body: JsObject
+  def toNotification(personId: Long): Notification = Notification(None, personId, body, typ, version)
 }
 
 object NotificationType {
-  val NewBadge = "new-badge"
-  val NewFacilitator = "new-facilitator"
-  val NewPersonalBadge = "new-personal-badge"
+  val Badge = "new-badge"
+  val Facilitator = "new-facilitator"
+  val PersonalBadge = "new-personal-badge"
 }
 
-case class NewBadge(person: Person, badge: Badge) extends INotification {
-  override val typ: String = NotificationType.NewBadge
-
-  def body: JsObject = Json.obj("img" -> Badges.pictureUrl(badge, "icon"),
-    "name" -> person.name,
-    "badge" -> badge.name,
-    "url" -> controllers.core.routes.People.details(person.identifier).url)
-
-  def notification(personId: Long): Notification = Notification(None, personId, body, typ)
-}
-
-case class NewFacilitator(person: Person, brand: Brand) extends INotification {
-  override val typ: String = NotificationType.NewFacilitator
-
-  def body: JsObject = Json.obj("img" -> People.pictureUrl(person),
-    "name" -> person.name,
-    "brand" -> brand.name,
-    "url" -> controllers.core.routes.People.details(person.identifier).url)
-
-  def notification(personId: Long): Notification = Notification(None, personId, body, typ)
-}
-
-case class NewPersonalBadge(person: Person, badge: Badge) extends INotification {
-  override val typ: String = NotificationType.NewPersonalBadge
-
-  def body: JsObject = Json.obj("img" -> Badges.pictureUrl(badge, "icon"),
-    "badge" -> badge.name)
-
-  def notification: Notification = notification(person.identifier)
-
-  def notification(personId: Long): Notification = Notification(None, personId, body, typ)
-}
 

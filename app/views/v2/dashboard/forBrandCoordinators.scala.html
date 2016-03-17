@@ -1,8 +1,8 @@
 @(user: ActiveUser,
   brand: Brand,
   brands: List[Brand],
-  licenses: List[LicenseLicenseeView],
-  events: List[Event])(implicit flash: Flash,
+  licenses: List[models.cm.LicenseLicenseeView],
+  events: List[models.cm.Event])(implicit flash: Flash,
     request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 

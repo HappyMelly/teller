@@ -1,7 +1,6 @@
 @(user: ActiveUser,
   members: List[Member],
-  fee: Option[org.joda.money.Money],
-  totalFee: org.joda.money.Money)(implicit request: Request[Any],
+  totalFee: BigDecimal)(implicit request: Request[Any],
     flash: Flash,
     handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
@@ -18,9 +17,10 @@
                     <div class="row block">
                         <div class="col-md-12">
                             <div class="page-header">
-                                <h2>Total Fee €@totalFee.getAmount
+                                <h2>Total Fee €@totalFee
                                     @restrict(handler, List(as(Admin.toString))) {
-                                        <a class="btn btn-primary pull-right" href="@routes.Members.add()">Add Funder</a>
+                                        <a class="btn btn-primary pull-right"
+                                        href="@controllers.hm.routes.Members.add()">Add Funder</a>
                                     }
                                 </h2>
                             </div>

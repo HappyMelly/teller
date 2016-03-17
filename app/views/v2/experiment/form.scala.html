@@ -14,9 +14,9 @@
   <div class="form">
     @v2.html.block("") { <h1>Add Experiment</h1> }
     @v2.html.form(action = experimentId.map { id =>
-      CSRF(routes.Experiments.update(memberId, id))
+      CSRF(hm.routes.Experiments.update(memberId, id))
     }.getOrElse {
-      CSRF(routes.Experiments.create(memberId))
+      CSRF(hm.routes.Experiments.create(memberId))
     }, 'enctype -> "multipart/form-data") {
       @v2.html.block("") {
         @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")

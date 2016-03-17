@@ -30,9 +30,10 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import fly.play.s3.{BucketFile, S3Exception}
+import models.cm.Event
 import models.UserRole.Role._
 import models._
-import models.brand.BrandCoordinator
+import models.cm.brand.BrandCoordinator
 import models.repository.Repositories
 import org.joda.time._
 import play.api.Play.current
@@ -66,7 +67,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /** Shows all brands **/
   def index = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.brand.findAllWithCoordinator flatMap { brands =>
+    repos.cm.brand.findAllWithCoordinator flatMap { brands =>
       ok(views.html.v2.brand.index(user, brands))
     }
   }
@@ -77,15 +78,15 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Product id
     */
   def activation(id: Long) = RestrictedAction(Admin) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.brand.find(id) flatMap { maybeBrand =>
+    repos.cm.brand.find(id) flatMap { maybeBrand =>
       maybeBrand map { brand ⇒
         Form("active" -> boolean).bindFromRequest.fold(
           error ⇒ jsonBadRequest("active parameter is not found"),
           active ⇒ {
             if (active) {
-              repos.brand.activate(id)
+              repos.cm.brand.activate(id)
             } else {
-              repos.brand.deactivate(id)
+              repos.cm.brand.deactivate(id)
               repos.product.findByBrand(id) map { products =>
                 for (product <- products) {
                   repos.product.deactivate(product.id.get)
@@ -119,8 +120,8 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
         errors ⇒ badRequest(views.html.v2.brand.form(user, None, people, errors)),
         view ⇒ {
           (for {
-            existance <- repos.brand.exists(view.brand.code)
-            nameExistance <- repos.brand.nameExists(view.brand.uniqueName)
+            existance <- repos.cm.brand.exists(view.brand.code)
+            nameExistance <- repos.cm.brand.nameExists(view.brand.uniqueName)
           } yield (existance, nameExistance)) flatMap {
             case (true, _) =>
               badRequest(views.html.v2.brand.form(user, None, people,
@@ -135,7 +136,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                 val byteArray = source.toArray.map(_.toByte)
                 source.close()
                 S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                  repos.brand.insert(BrandProfileView(view.brand.copy(picture = Some(filename)), view.profile))
+                  repos.cm.brand.insert(BrandProfileView(view.brand.copy(picture = Some(filename)), view.profile))
                   val log = activity(view.brand, user.person).created.insert(repos)
                   Redirect(indexCall).flashing("success" -> "Brand was added")
                 }.recover {
@@ -143,7 +144,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                     form.withError("picture", "Image cannot be temporary saved")))
                 }
               }.getOrElse {
-                repos.brand.insert(view) flatMap { inserted =>
+                repos.cm.brand.insert(view) flatMap { inserted =>
                   val log = activity(inserted, user.person).created.insert(repos)
                   redirect(indexCall, "success" -> "Brand was added")
                 }
@@ -160,13 +161,13 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Brand identifier
     */
   def delete(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.brand.find(id) flatMap { maybeBrand =>
+    repos.cm.brand.find(id) flatMap { maybeBrand =>
       maybeBrand map { brand =>
         brand.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Brand.cacheId(brand.code))
         }
-        repos.brand.delete(brand)
+        repos.cm.brand.delete(brand)
         val log = activity(brand, user.person).deleted.insert(repos)
         redirect(indexCall, "success" -> "Brand was deleted")
       } getOrElse notFound(views.html.notFoundPage(request.path))
@@ -179,13 +180,13 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Brand string identifier
     */
   def deletePicture(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.brand.find(id) flatMap { maybeBrand =>
+    repos.cm.brand.find(id) flatMap { maybeBrand =>
       maybeBrand map { brand ⇒
         brand.picture.foreach { picture ⇒
           S3Bucket.remove(picture)
           Cache.remove(Brand.cacheId(brand.code))
         }
-        repos.brand.updatePicture(id, None)
+        repos.cm.brand.updatePicture(id, None)
         val log = activity(brand, user.person).deletedImage.insert(repos)
         val call: Call = routes.Brands.details(id)
         redirect(call, "success" -> "Brand picture was removed")
@@ -199,14 +200,14 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * @param id Brand identifier
     */
   def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.brand.find(id) flatMap {
+    repos.cm.brand.find(id) flatMap {
       case None => notFound(views.html.notFoundPage(request.path))
       case Some(brand) =>
         (for {
-          links <- repos.brand.links(id)
+          links <- repos.cm.brand.links(id)
           coordinator <- repos.person.find(brand.ownerId)
           p <- repos.socialProfile.find(id, ProfileType.Brand)
-          deletable <- repos.brand.deletable(id)
+          deletable <- repos.cm.brand.deletable(id)
         } yield (links, coordinator, p, deletable)) flatMap { case (links, coordinator, profile, deletable) =>
           ok(views.html.v2.brand.details(user, brand, profile, coordinator, links, deletable))
         }
@@ -223,7 +224,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "testimonials" ⇒
-          repos.brand.testimonials(id) flatMap { testimonials =>
+          repos.cm.brand.testimonials(id) flatMap { testimonials =>
             ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
           }
         case _ ⇒
@@ -244,7 +245,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
       tab match {
         case "team" ⇒
           (for {
-            coordinators <- repos.brand.coordinators(id)
+            coordinators <- repos.cm.brand.coordinators(id)
             people <- repos.person.findActive
           } yield (coordinators, people)) flatMap { case (coordinators, people) =>
             val members = coordinators.sortBy(_._1.fullName)
@@ -252,19 +253,19 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
             ok(views.html.v2.brand.tabs.team(id, members, filtered))
           }
         case "templates" ⇒
-          repos.certificate.findByBrand(id) flatMap { templates =>
+          repos.cm.certificate.findByBrand(id) flatMap { templates =>
             ok(views.html.v2.brand.tabs.templates(id, templates))
           }
         case "types" ⇒
-          repos.eventType.findByBrand(id) flatMap { eventTypes =>
+          repos.cm.rep.brand.eventType.findByBrand(id) flatMap { eventTypes =>
             ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes.sortBy(_.name)))
           }
         case "badges" ⇒
-          repos.brandBadge.findByBrand(id) flatMap { badges =>
+          repos.cm.rep.brand.badge.findByBrand(id) flatMap { badges =>
             ok(views.html.v2.brand.tabs.badges(id, badges.sortBy(_.name)))
           }
         case _ =>
-          repos.brand.findWithSettings(id) flatMap { maybeView =>
+          repos.cm.brand.findWithSettings(id) flatMap { maybeView =>
             maybeView map { view =>
               ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))
             } getOrElse {
@@ -285,9 +286,9 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
       hasErrors ⇒ jsonBadRequest("personId should be a positive number"),
       personId ⇒
         (for {
-          coordinators <- repos.brand.coordinators(id)
+          coordinators <- repos.cm.brand.coordinators(id)
           person <- repos.person.find(personId)
-          brand <- repos.brand.get(id)
+          brand <- repos.cm.brand.get(id)
         } yield (coordinators, person, brand)) flatMap {
           case (coordinators, None, brand) => jsonNotFound(Messages("error.notFound", "person"))
           case (coordinators, Some(person), brand) =>
@@ -295,7 +296,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
               jsonConflict(Messages("error.brand.alreadyMember"))
             } else {
               val coordinator = BrandCoordinator(None, id, personId)
-              repos.brandCoordinator.save(coordinator).flatMap { coordinator =>
+              repos.cm.rep.brand.coordinator.save(coordinator).flatMap { coordinator =>
                 giveCoordinatorAccess(person, brand)
                 val data = Json.obj("personId" -> personId, "brandId" -> id, "name" -> person.fullName)
                 jsonSuccess(Messages("success.brand.newMember"), Some(data))
@@ -312,15 +313,15 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def removeCoordinator(id: Long, personId: Long) = BrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      repos.brand.find(id) flatMap {
+      repos.cm.brand.find(id) flatMap {
         case None => jsonNotFound(Messages("error.notFound", "brand"))
         case Some(x) =>
           if (x.ownerId == personId) {
             jsonConflict(Messages("error.brand.removeOwner"))
           } else {
             (for {
-              _ <- repos.brandCoordinator.delete(id, personId)
-              brand <- repos.brand.findByCoordinator(personId)
+              _ <- repos.cm.rep.brand.coordinator.delete(id, personId)
+              brand <- repos.cm.brand.findByCoordinator(personId)
             } yield brand.isEmpty) flatMap { noEntries =>
               if (noEntries) {
                 repos.userAccount.findByPerson(personId) map {
@@ -344,7 +345,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def turnNotificationOff(id: Long, personId: Long, notification: String) = BrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      repos.brandCoordinator.update(id, personId, notification, false).flatMap { _ =>
+      repos.cm.rep.brand.coordinator.update(id, personId, notification, false).flatMap { _ =>
         jsonSuccess("Changes saved")
       }
   }
@@ -358,7 +359,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def turnNotificationOn(id: Long, personId: Long, notification: String) = BrandAction(id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      repos.brandCoordinator.update(id, personId, notification, true).flatMap { _ =>
+      repos.cm.rep.brand.coordinator.update(id, personId, notification, true).flatMap { _ =>
         jsonSuccess("Changes saved")
       }
   }
@@ -370,7 +371,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def edit(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      b <- repos.brand.find(id)
+      b <- repos.cm.brand.find(id)
       p <- repos.socialProfile.find(id, ProfileType.Brand)
     } yield (b, p)) flatMap {
       case (None, _) => notFound(views.html.notFoundPage(request.path))
@@ -433,7 +434,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def update(id: Long) = BrandAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
-      brand <- repos.brand.find(id)
+      brand <- repos.cm.brand.find(id)
       people <- repos.person.findActive
     } yield (brand, people)) flatMap { case (maybeBrand, people) =>
       maybeBrand map { x ⇒
@@ -442,8 +443,8 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
           formWithErrors ⇒ badRequest(views.html.v2.brand.form(user, Some(id), people, form)),
           view ⇒ {
             (for {
-              sameCode <- repos.brand.exists(view.brand.code, Some(id))
-              sameName <- repos.brand.nameExists(view.brand.uniqueName, Some(id))
+              sameCode <- repos.cm.brand.exists(view.brand.code, Some(id))
+              sameName <- repos.cm.brand.nameExists(view.brand.uniqueName, Some(id))
             } yield (sameCode, sameName)) flatMap {
               case (true, _) => badRequest(views.html.v2.brand.form(user, Some(id), people,
                 form.withError("code", "constraint.brand.code.exists", view.brand.code)))
@@ -456,7 +457,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                   val byteArray = source.toArray.map(_.toByte)
                   source.close()
                   S3Bucket.add(BucketFile(filename, contentType, byteArray)).map { unit ⇒
-                    val updatedBrand = repos.brand.update(x, view, Some(filename))
+                    val updatedBrand = repos.cm.brand.update(x, view, Some(filename))
                     Cache.remove(Brand.cacheId(x.code))
                     if (x.code != updatedBrand.code) {
                       Cache.remove(Brand.cacheId(updatedBrand.code))
@@ -472,7 +473,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                         form.withError("picture", "Image cannot be temporary saved. Please, try again later.")))
                   }
                 }.getOrElse {
-                  val updatedBrand = repos.brand.update(x, view, x.picture)
+                  val updatedBrand = repos.cm.brand.update(x, view, x.picture)
                   val log = activity(updatedBrand, user.person).updated.insert(repos)
                   val route = routes.Brands.details(id)
                   Future.successful(Redirect(route).flashing("success" -> "Brand was updated"))
@@ -494,7 +495,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
       Future.successful(Ok(cached.get).as(contentType))
     } else {
       val empty = Array[Byte]()
-      val image: Future[Array[Byte]] = repos.brand.find(code) flatMap {
+      val image: Future[Array[Byte]] = repos.cm.brand.find(code) flatMap {
         case None => Future.successful(empty)
         case Some(brand) =>
           brand.picture map { picture ⇒
@@ -530,14 +531,14 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
         }
       }
 
-      repos.brand.findWithCoordinators(brandId) flatMap {
+      repos.cm.brand.findWithCoordinators(brandId) flatMap {
         case None => notFound("Brand not found")
         case Some(x) =>
           val account = user.account
           val events = if (x.coordinators.exists(_._1.id == Some(account.personId))) {
-            repos.event.findByParameters(x.brand.id, future, archived = Some(false))
+            repos.cm.event.findByParameters(x.brand.id, future, archived = Some(false))
           } else {
-            repos.event.findByFacilitator(account.personId, x.brand.id, future, archived = Some(false))
+            repos.cm.event.findByFacilitator(account.personId, x.brand.id, future, archived = Some(false))
           }
           events.flatMap { value =>
             ok(Json.toJson(value))

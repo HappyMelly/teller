@@ -53,7 +53,7 @@ class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def update(id: Long) = EventAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.event.findWithInvoice(id) flatMap {
+      services.cm.event.findWithInvoice(id) flatMap {
         case None => notFound("")
         case Some(view) =>
           EventForms.invoice.bindFromRequest.fold(
@@ -64,7 +64,7 @@ class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
                 case None => notFound("Organisation not found")
                 case Some(_) =>
                   val invoice = view.invoice.copy(invoiceBy = Some(invoiceBy), number = number)
-                  services.eventInvoice.update(invoice)
+                  services.cm.rep.event.invoice.update(invoice)
                   activity(view.event, user.person).updated.insert(services)
                   success(id, "Invoice data was successfully updated")
               }

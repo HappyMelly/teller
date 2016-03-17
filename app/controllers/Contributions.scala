@@ -69,7 +69,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
       } else if (page == "person") {
         core.routes.People.details(contributorId).url + "#contributions"
       } else {
-        routes.Products.details(boundForm.data("productId").toLong).url
+        hm.routes.Products.details(boundForm.data("productId").toLong).url
       }
       boundForm.bindFromRequest.fold(
         formWithErrors ⇒ redirect(route, "error" -> "A role for a contributor cannot be empty"),
@@ -104,7 +104,7 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
             val route: String = if (page == "organisation") {
               core.routes.Organisations.details(contribution.contributorId).url
             } else if (page == "product") {
-              routes.Products.details(contribution.productId).url
+              hm.routes.Products.details(contribution.productId).url
             } else {
               core.routes.People.details(contribution.contributorId).url + "#contributions"
             }

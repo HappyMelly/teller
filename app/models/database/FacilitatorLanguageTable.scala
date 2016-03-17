@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.FacilitatorLanguage
+import models.cm.facilitator.FacilitatorLanguage
 import slick.driver.JdbcProfile
 
 private[models] trait FacilitatorLanguageTable {

@@ -28,6 +28,7 @@ import _root_.integration.PlayAppSpec
 import controllers.People
 import helpers._
 import models.repository._
+import models.repository.cm.LicenseRepository
 import models.{License, LicenseView, SocialProfile}
 import org.joda.money.Money
 import org.joda.time.LocalDate

@@ -3,8 +3,8 @@
     brand: Brand,
     brands: List[Brand],
     funders: List[Organisation],
-    event: Event,
-    view: InvoiceView,
+    event: models.cm.Event,
+    view: models.cm.InvoiceView,
     typeName: String,
     fees: List[(String, String)],
     deletable: Boolean)(implicit
@@ -17,7 +17,6 @@
 @import templates.Formatters._
 @import views.Countries
 @import views.ViewHelpers.dateInterval
-@import controllers.Utilities
 
 @v2.main(event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
@@ -90,7 +89,7 @@
               <div class="title">Facilitators</div>
               @for(facilitator <- event.facilitators(services)) {
                 <a href="@controllers.core.routes.People.details(facilitator.id.getOrElse(0))">
-                  @element.photo(facilitator, "70")
+                  @v2.element.photo(facilitator, "70")
                 </a>
                 <span class="name">@facilitator.fullName</span><br/>
               }
@@ -135,7 +134,7 @@
               }
             </div>
           </div>
-          @views.html.element.brandFees(brand.name, fees)
+          @views.html.v2.element.brandFees(brand.name, fees)
         </div>
         @views.html.v2.event.invoice(user, funders, event, view)
         <div class="col-md-12">

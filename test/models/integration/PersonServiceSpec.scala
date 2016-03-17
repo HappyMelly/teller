@@ -26,9 +26,10 @@ package models.integration
 
 import helpers.{MemberHelper, PersonHelper}
 import integration.PlayAppSpec
+import models.cm.facilitator.{Endorsement, Material}
 import models.payment.Record
 import models.repository.{PersonRepository, UserAccountRepository}
-import models.{Endorsement, Material, Member, UserAccount}
+import models.{Member, UserAccount}
 import org.joda.money.CurrencyUnit._
 import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}

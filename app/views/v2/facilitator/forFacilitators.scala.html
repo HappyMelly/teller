@@ -1,12 +1,12 @@
+@import models.cm.brand.Badge
 @(user: ActiveUser,
     brand: Brand,
     brands: List[Brand],
-    facilitators: List[(License, Person, Facilitator, Boolean, Boolean, List[models.brand.Badge])])(implicit
+    facilitators: List[(models.cm.License, Person, models.cm.Facilitator, Boolean, Boolean, List[Badge])])(implicit
         request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
-@import controllers.brand.Badges
 @import views.Countries
 @import views.ViewHelpersV2._
 

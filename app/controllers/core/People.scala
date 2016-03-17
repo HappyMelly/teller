@@ -25,24 +25,24 @@ package controllers.core
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.{Security, Files, Activities, MemberNotifications, Utilities }
 import controllers.Forms._
+import controllers.hm.MemberNotifications
+import controllers.{Activities, Files, Security, Utilities}
 import models.UserRole.Role._
 import models._
 import models.core.payment.{CustomerType, GatewayWrapper, PaymentException, RequestException}
 import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Play.current
+import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints
-import play.api.data.{Form, FormError}
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.mvc._
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 import services.integrations.{Email, Integrations}
 
-import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
@@ -194,7 +194,7 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   def details(id: Long) = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     (for {
       p <- repos.person.findComplete(id)
-      f <- repos.facilitator.findByPerson(id)
+      f <- repos.cm.facilitator.findByPerson(id)
       m <- repos.person.memberships(id)
       o <- repos.org.findActive
       deletable <- Person.deletable(id, repos)
@@ -206,8 +206,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         val otherOrganisations = orgs.filterNot(organisation ⇒ memberships.contains(organisation))
         val badgesInfo = if (conf.facilitator) {
           val query = for {
-            badges <- repos.brandBadge.find(facilitators.flatMap(_.badges))
-            brands <- repos.brand.find(badges.map(_.brandId).distinct)
+            badges <- repos.cm.rep.brand.badge.find(facilitators.flatMap(_.badges))
+            brands <- repos.cm.brand.find(badges.map(_.brandId).distinct)
           } yield (badges, brands)
           query map { case (badges, brands) =>
             badges.map { badge =>
@@ -304,10 +304,10 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
         case "facilitation" ⇒
           (for {
             p <- repos.person.find(id)
-            l <- repos.license.licensesWithBrands(id)
-            f <- repos.facilitator.findByPerson(id)
-            langs <- repos.facilitator.languages(id)
-            c <- repos.facilitator.countries(id)
+            l <- repos.cm.license.licensesWithBrands(id)
+            f <- repos.cm.facilitator.findByPerson(id)
+            langs <- repos.cm.facilitator.languages(id)
+            c <- repos.cm.facilitator.countries(id)
           } yield (p, l, f, langs, c)) flatMap {
             case (None, _, _, _, _) => notFound("Person not found")
             case (Some(person), licenses, facilitation, languages, countries) =>
@@ -315,22 +315,9 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
                 .map(x ⇒ (x, facilitation.find(_.brandId == x.license.brandId).get.publicRating))
               ok(views.html.v2.person.tabs.facilitation(person, facilitatorData, languages, countries))
           }
-        case "membership" ⇒
-          (for {
-            person <- repos.person.find(id)
-            member <- repos.person.member(id)
-            customer <- repos.core.customer.find(id, CustomerType.Person) if customer.nonEmpty
-            charges <- repos.core.charge.findByCustomer(customer.get.id.get)
-          } yield (person, member, charges)) flatMap {
-            case (_, None, _) => ok("Person is not a member")
-            case (None, _, _) => notFound("Person not found")
-            case (Some(person), Some(member), charges) =>
-              ok(views.html.v2.person.tabs.membership(user, person, member, charges))
-          }
         case _ ⇒ ok("")
       }
   }
-
 
   /**
     * Render a list of people in the network
@@ -377,32 +364,6 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
   }
 
   /**
-    * Compares social profiles and returns a list of errors for a form
-    *
-    * @param left Social profile object
-    * @param right Social profile object
-    */
-  protected def compareSocialProfiles(left: SocialProfile, right: SocialProfile): List[FormError] = {
-
-    val list = mutable.MutableList[FormError]()
-    val msg = Messages("error.socialProfile.exist")
-    if (left.twitterHandle.nonEmpty && left.twitterHandle == right.twitterHandle) {
-      list += FormError("profile.twitterHandle", msg)
-    }
-    if (left.facebookUrl.nonEmpty && left.facebookUrl == right.facebookUrl) {
-      list += FormError("profile.facebookUrl", msg)
-    }
-    if (left.linkedInUrl.nonEmpty && left.linkedInUrl == right.linkedInUrl) {
-      list += FormError("profile.linkedInUrl", msg)
-    }
-    if (left.googlePlusUrl.nonEmpty && left.googlePlusUrl == right.googlePlusUrl) {
-      list += FormError("profile.googlePlusUrl", msg)
-    }
-    list.toList
-  }
-
-
-  /**
     * Retrieve facilitator statistics by brand, including years of experience,
     *  number of events and rating
     *
@@ -410,8 +371,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
     */
   protected def retrieveByBrandStatistics(id: Long) = {
     (for {
-      l <- repos.license.licensesWithBrands(id)
-      f <- repos.facilitator.findByPerson(id)
+      l <- repos.cm.license.licensesWithBrands(id)
+      f <- repos.cm.facilitator.findByPerson(id)
     } yield (l, f)) map { case (licenses, facilitations) =>
       licenses.sortBy(_.brand.name).map { view ⇒
         val facilitator = facilitations.find(_.brandId == view.brand.identifier).get

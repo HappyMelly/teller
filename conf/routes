@@ -61,6 +61,9 @@ DELETE        /brand/:brandId/testimonial/:id                                con
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
 
+POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
+POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
+
 GET           /certificate/:id                                               controllers.Certificates.certificate(id: String)
 GET           /certificate/new/:eventId/:personId                            controllers.Certificates.create(eventId: Long, personId: Long)
 
@@ -122,15 +125,15 @@ GET           /event/:id/attendees                                         contr
 
 GET           /eventrequest/:id/unsubscribe                                controllers.EventRequests.unsubscribe(id: String)
 
-GET           /member/:id/experiment                                       controllers.Experiments.add(id: Long)
-POST          /member/:id/experiment                                       controllers.Experiments.create(id: Long)
-DELETE        /member/:id/experiment/:experimentId                         controllers.Experiments.delete(id: Long, experimentId: Long)
-DELETE        /member/:id/experiment/:experimentId/picture                 controllers.Experiments.deletePicture(id: Long, experimentId: Long)
-GET           /member/:id/experiment/:experimentId                         controllers.Experiments.edit(id: Long, experimentId: Long)
-GET           /member/:id/experiments                                      controllers.Experiments.experiments(id: Long)
-POST          /member/:id/experiment/:experimentId                         controllers.Experiments.update(id: Long, experimentId: Long)
+GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
+POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)
+DELETE        /member/:id/experiment/:experimentId                         controllers.hm.Experiments.delete(id: Long, experimentId: Long)
+DELETE        /member/:id/experiment/:experimentId/picture                 controllers.hm.Experiments.deletePicture(id: Long, experimentId: Long)
+GET           /member/:id/experiment/:experimentId                         controllers.hm.Experiments.edit(id: Long, experimentId: Long)
+GET           /member/:id/experiments                                      controllers.hm.Experiments.experiments(id: Long)
+POST          /member/:id/experiment/:experimentId                         controllers.hm.Experiments.update(id: Long, experimentId: Long)
 
-GET           /experiment/:id/picture                                      controllers.Experiments.picture(id: Long, size: String ?= "")
+GET           /experiment/:id/picture                                      controllers.hm.Experiments.picture(id: Long, size: String ?= "")
 
 POST          /facilitator/:id/country                                     controllers.Facilitators.addCountry(id: Long)
 POST          /facilitator/:id/language                                    controllers.Facilitators.addLanguage(id: Long)
@@ -147,21 +150,21 @@ POST          /license/:id/brand/:brandId/delete                           contr
 POST          /login-reminder                                              controllers.security.LoginReminder.handle()
 GET           /login-reminder                                              controllers.security.LoginReminder.page()
 
-GET           /members                                                     controllers.Members.index
-GET           /member/new                                                  controllers.Members.add
-GET           /member/existing/organisation                                controllers.Members.addExistingOrganisation
-GET           /member/existing/person                                      controllers.Members.addExistingPerson
-POST          /member                                                      controllers.Members.create
-POST          /member/existing/organisation/                               controllers.Members.updateExistingOrg
-POST          /member/existing/person/                                     controllers.Members.updateExistingPerson
-GET           /member/:id/edit                                             controllers.Members.edit(id: Long)
-POST          /member/:id                                                  controllers.Members.update(id: Long)
-POST          /member/:personId/reason                                     controllers.Members.updateReason(personId: Long)
-POST          /member/:id/delete                                           controllers.Members.delete(id: Long)
-GET           /membership/welcome                                            controllers.Membership.welcome
-GET           /membership/payment                                            controllers.Membership.payment(orgId: Option[Long] ?= None)
-POST          /membership/payment                                            controllers.Membership.charge
-GET           /membership/congratulations                                    controllers.Membership.congratulations(orgId: Option[Long] ?= None)
+GET           /members                                                     controllers.hm.Members.index
+GET           /member/new                                                  controllers.hm.Members.add
+GET           /member/existing/organisation                                controllers.hm.Members.addExistingOrganisation
+GET           /member/existing/person                                      controllers.hm.Members.addExistingPerson
+POST          /member                                                      controllers.hm.Members.create
+POST          /member/existing/organisation/                               controllers.hm.Members.updateExistingOrg
+POST          /member/existing/person/                                     controllers.hm.Members.updateExistingPerson
+GET           /member/:id/edit                                             controllers.hm.Members.edit(id: Long)
+POST          /member/:id                                                  controllers.hm.Members.update(id: Long)
+POST          /member/:personId/reason                                     controllers.hm.Members.updateReason(personId: Long)
+POST          /member/:id/delete                                           controllers.hm.Members.delete(id: Long)
+GET           /membership/welcome                                          controllers.hm.Membership.welcome
+GET           /membership/payment                                          controllers.hm.Membership.payment(orgId: Option[Long] ?= None)
+POST          /membership/payment                                          controllers.hm.Membership.charge
+GET           /membership/congratulations                                  controllers.hm.Membership.congratulations(orgId: Option[Long] ?= None)
 
 GET           /notifications/:offset/:limit                                  controllers.core.Notifications.list(offset: Long, limit: Long)
 POST          /notifications                                                 controllers.core.Notifications.read()
@@ -208,21 +211,23 @@ POST          /person/:id/licenses/new                                       con
 POST          /person/relation/new                                           controllers.core.People.addRelationship
 GET           /person/:personId/relation/:organisationId/delete              controllers.core.People.deleteRelationship(page: String, personId: Long, organisationId: Long)
 
-GET           /products                                                      controllers.Products.index
-GET           /product/new                                                   controllers.Products.add
-POST          /product/:id/activation                                        controllers.Products.activation(id: Long)
-POST          /product/new                                                   controllers.Products.create
-GET           /product/:id                                                   controllers.Products.details(id: Long)
-POST          /product/:id                                                   controllers.Products.update(id: Long)
-GET           /product/:id/edit                                              controllers.Products.edit(id: Long)
-POST          /product/:id/delete                                            controllers.Products.delete(id: Long)
+GET           /products                                                      controllers.hm.Products.index
+GET           /product/new                                                   controllers.hm.Products.add
+POST          /product/:id/activation                                        controllers.hm.Products.activation(id: Long)
+POST          /product/new                                                   controllers.hm.Products.create
+GET           /product/:id                                                   controllers.hm.Products.details(id: Long)
+POST          /product/:id                                                   controllers.hm.Products.update(id: Long)
+GET           /product/:id/edit                                              controllers.hm.Products.edit(id: Long)
+POST          /product/:id/delete                                            controllers.hm.Products.delete(id: Long)
 
-GET           /product/:id/picture                                           controllers.Products.picture(id: Long)
-POST          /product/:id/picture/delete                                    controllers.Products.deletePicture(id: Long)
+GET           /product/:id/picture                                           controllers.hm.Products.picture(id: Long)
+POST          /product/:id/picture/delete                                    controllers.hm.Products.deletePicture(id: Long)
 
-POST          /product/brand/new                                             controllers.Products.addBrand
-GET           /product/:productId/brand/:brandId/delete                      controllers.Products.deleteBrand(page: String, productId: Long, brandId: Long)
+POST          /product/brand/new                                             controllers.hm.Products.addBrand
+GET           /product/:productId/brand/:brandId/delete                      controllers.hm.Products.deleteBrand(page: String, productId: Long, brandId: Long)
 
+GET           /profile/:id/person/membership                                 controllers.hm.Profile.membership(id: Long)
+GET           /profile/:id/org/membership                                    controllers.hm.Profile.orgMembership(id: Long)
 GET           /profile/:id/person/steps/:steps                               controllers.core.ProfileStrengths.personWidget(id: Long, steps: Boolean)
 
 GET           /registration/welcome                                          controllers.Registration.welcome
@@ -266,36 +271,36 @@ GET           /user/email/:token                                             con
 POST          /webhooks/stripe                                               controllers.webhooks.Stripe.event
 
 # API (v2)
-GET           /api/v2/brands                                                 controllers.apiv2.BrandsApi.brands
-GET           /api/v2/brand/:code                                            controllers.apiv2.BrandsApi.brand(code: String)
-GET           /api/v2/brand/:code/events                                     controllers.apiv2.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
-GET           /api/v2/brand/:code/facilitators                               controllers.apiv2.FacilitatorsApi.facilitators(code: String)
-GET           /api/v2/facilitator/:identifier                                controllers.apiv2.FacilitatorsApi.facilitator(identifier: String, code: Option[String] ?= None)
+GET           /api/v2/brands                                                 controllers.api.BrandsApi.brands
+GET           /api/v2/brand/:code                                            controllers.api.BrandsApi.brand(code: String)
+GET           /api/v2/brand/:code/events                                     controllers.api.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
+GET           /api/v2/brand/:code/facilitators                               controllers.api.FacilitatorsApi.facilitators(code: String)
+GET           /api/v2/facilitator/:identifier                                controllers.api.FacilitatorsApi.facilitator(identifier: String, code: Option[String] ?= None)
 
-GET           /api/v2/brand/:code/types                                      controllers.apiv2.EventTypesApi.types(code: String)
+GET           /api/v2/brand/:code/types                                      controllers.api.EventTypesApi.types(code: String)
 
-POST          /api/v2/evaluation                                             controllers.apiv2.EvaluationsApi.create
-POST          /api/v2/evaluation/:id/confirm                                 controllers.apiv2.EvaluationsApi.confirm(id: String)
+POST          /api/v2/evaluation                                             controllers.api.EvaluationsApi.create
+POST          /api/v2/evaluation/:id/confirm                                 controllers.api.EvaluationsApi.confirm(id: String)
 
-GET           /api/v2/event/:id                                              controllers.apiv2.EventsApi.event(id: Long)
-GET           /api/v2/event/:id/participants                                 controllers.apiv2.ParticipantsApi.attendees(id: Long)
+GET           /api/v2/event/:id                                              controllers.api.EventsApi.event(id: Long)
+GET           /api/v2/event/:id/participants                                 controllers.api.ParticipantsApi.attendees(id: Long)
 
-POST          /api/v2/eventrequest/brand/:code                               controllers.apiv2.EventRequestsApi.create(code: String)
+POST          /api/v2/eventrequest/brand/:code                               controllers.api.EventRequestsApi.create(code: String)
 
-GET           /api/v2/experiments                                            controllers.apiv2.ExperimentsApi.experiments()
-GET           /api/v2/fees/:brand                                            controllers.apiv2.BrandFeesApi.fees(brand: String)
+GET           /api/v2/experiments                                            controllers.api.ExperimentsApi.experiments()
+GET           /api/v2/fees/:brand                                            controllers.api.BrandFeesApi.fees(brand: String)
 
-GET           /api/v2/members/bynames                                        controllers.apiv2.MembersApi.membersByNames(query: String)
-GET           /api/v2/members                                                controllers.apiv2.MembersApi.members(funder: Option[Boolean] ?= None)
-GET           /api/v2/member/:identifier                                     controllers.apiv2.MembersApi.member(identifier: String, person: Boolean ?= true)
+GET           /api/v2/members/bynames                                        controllers.api.MembersApi.membersByNames(query: String)
+GET           /api/v2/members                                                controllers.api.MembersApi.members(funder: Option[Boolean] ?= None)
+GET           /api/v2/member/:identifier                                     controllers.api.MembersApi.member(identifier: String, person: Boolean ?= true)
 
-POST          /api/v2/participant                                            controllers.apiv2.ParticipantsApi.create
+POST          /api/v2/participant                                            controllers.api.ParticipantsApi.create
 
-GET           /api/v2/people                                                 controllers.apiv2.PeopleApi.people(active: Option[Boolean], q: Option[String])
-GET           /api/v2/person/:identifier                                     controllers.apiv2.PeopleApi.person(identifier: String)
+GET           /api/v2/people                                                 controllers.api.PeopleApi.people(active: Option[Boolean], q: Option[String])
+GET           /api/v2/person/:identifier                                     controllers.api.PeopleApi.person(identifier: String)
 
-GET           /api/v2/products                                               controllers.apiv2.ProductsApi.products
-GET           /api/v2/product/:id                                            controllers.apiv2.ProductsApi.product(id: Long)
+GET           /api/v2/products                                               controllers.api.ProductsApi.products
+GET           /api/v2/product/:id                                            controllers.api.ProductsApi.product(id: Long)
 
 # Public assets
 GET           /assets/*file                                                  controllers.Assets.at(path="/public", file)

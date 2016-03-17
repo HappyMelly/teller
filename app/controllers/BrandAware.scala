@@ -42,7 +42,7 @@ trait BrandAware extends AsyncController {
                                   (facilitator: (Option[BrandWithSettings], List[Brand]) => Future[Result])
                                   (ordinaryUser: Future[Result]): Future[Result] = {
     if (account.isCoordinatorNow) {
-      repos.brand.findByCoordinator(account.personId) flatMap { brands =>
+      repos.cm.brand.findByCoordinator(account.personId) flatMap { brands =>
         val sorted = brands.sortBy(_.brand.name)
         brandId map { identifier =>
           sorted.find(_.brand.identifier == identifier) map { view =>
@@ -55,7 +55,7 @@ trait BrandAware extends AsyncController {
         }
       }
     } else if (account.isFacilitatorNow) {
-      repos.brand.findByLicense(account.personId) flatMap { brands =>
+      repos.cm.brand.findByLicense(account.personId) flatMap { brands =>
         brandId map { identifier =>
           brands.find(_.brand.identifier == identifier) map { view =>
             facilitator(Some(view), brands.map(_.brand))

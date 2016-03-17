@@ -1,6 +1,8 @@
 @()(implicit request: RequestHeader)
 
 @helper.javascriptRouter("jsRoutes")(
+    controllers.hm.routes.javascript.Members.updateReason,
+    controllers.hm.routes.javascript.Products.activation,
     controllers.core.routes.javascript.Notifications.list,
     controllers.core.routes.javascript.Notifications.read,
     controllers.core.routes.javascript.Notifications.unread,
@@ -23,6 +25,7 @@
     controllers.event.routes.javascript.Attendees.delete,
     controllers.event.routes.javascript.Attendees.list,
     controllers.event.routes.javascript.Attendees.listByEvent,
+
     routes.javascript.Assets.at,
     routes.javascript.Brands.activation,
     routes.javascript.Brands.removeCoordinator,
@@ -56,8 +59,6 @@
     routes.javascript.Facilitators.list,
     routes.javascript.Materials.remove,
     routes.javascript.Materials.create,
-    routes.javascript.Members.updateReason,
-    routes.javascript.Products.activation,
     routes.javascript.Registration.step1,
     routes.javascript.Statistics.byFacilitators,
     routes.javascript.Statistics.byEvents,

@@ -14,7 +14,7 @@
     <tbody>
     @for(product <- products) {
     <tr @if(!product.active) { class="inactive" title="Deactivated" }>
-      <td><a href="@routes.Products.details(product.id.getOrElse(0))">@product.title</a></td>
+      <td><a href="@controllers.hm.routes.Products.details(product.id.getOrElse(0))">@product.title</a></td>
       <td>
         @product.category.map { name =>
           <span class="label @Messages(s"models.ProductCategory.$name.label")">@Messages(s"models.ProductCategory.$name")</span>

@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.Material
+import models.cm.facilitator.Material
 import slick.driver.JdbcProfile
 
 private[models] trait MaterialTable {

@@ -19,12 +19,12 @@
                     <h3>Step 1: Fee</h3>
                 }
             }
-            @v2.html.form(action = CSRF(if(edit) { routes.Members.update(member.get.id.get) } else { routes.Members.create() } )) {
+            @v2.html.form(action = CSRF(if(edit) { controllers.hm.routes.Members.update(member.get.id.get)
+            } else { controllers.hm.routes.Members.create() } )) {
                 <input type="hidden" value="@form("objectId").value.getOrElse(0)" id="objectId" name="objectId"/>
                 <input type="hidden" value="@form("person").value.getOrElse(1)" id="person" name="person"/>
                 @v2.html.block("") {
-                    @v2.html.money("fee", form("fee.currency"), form("fee.amount"),
-                        '_label -> "Fee", '_currency -> "EUR")
+                    @v2.html.number(form("fee"), '_step -> "any", '_label -> "Fee")
                     @v2.html.date(form("since"), '_label -> "Member since")
                     @if(edit) {
                         <input type="hidden" name="object" value="0"/>

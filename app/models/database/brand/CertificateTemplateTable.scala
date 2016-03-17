@@ -24,7 +24,7 @@
 
 package models.database.brand
 
-import models.brand.CertificateTemplate
+import models.cm.brand.CertificateTemplate
 import slick.driver.JdbcProfile
 
 private[models] trait CertificateTemplateTable {

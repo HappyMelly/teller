@@ -24,7 +24,7 @@
 
 
 function updateReason() {
-    var url = jsRoutes.controllers.Members.updateReason(getPersonId()).url;
+    var url = jsRoutes.controllers.hm.Members.updateReason(getPersonId()).url;
     $.post(url, {reason: $('#reason').val()}, null, "json").done(function(data) {
         $('#reasonDialog').modal('hide');
         $('#reasonToJoin').html(data.message);

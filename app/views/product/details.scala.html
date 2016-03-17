@@ -21,14 +21,14 @@
     <div class="page-header">
         <h1>
             @view.product.picture.map { picture =>
-                <a href="@Products.pictureUrl(view.product)">
-                    <img width="64" class="img-rounded" src="@Products.pictureUrl(view.product)"/></a>
+                <a href="@controllers.hm.Products.pictureUrl(view.product)">
+                    <img width="64" class="img-rounded" src="@controllers.hm.Products.pictureUrl(view.product)"/></a>
             }
             @view.product.title
             <div class="actions pull-right">
             @dynamic(handler, Role.Funder.toString, "0") {
                 <div class="button">
-                    <a class="btn btn-default" href="@routes.Products.edit(view.product.id.get)">
+                    <a class="btn btn-default" href="@controllers.hm.routes.Products.edit(view.product.id.get)">
                         <i class="glyphicon glyphicon-pencil"></i> Edit
                     </a>
                 </div>
@@ -52,7 +52,7 @@
                 </div>
                 <div class="button">
                     <form class="delete form-inline" method="post" text="product"
-                    action="@CSRF(routes.Products.delete(view.product.id.getOrElse(0)))">
+                    action="@CSRF(controllers.hm.routes.Products.delete(view.product.id.getOrElse(0)))">
                         <div data-toggle="tooltip" data-placement="bottom"
                             @if(derivatives.nonEmpty || view.contributors.nonEmpty) { title="@Messages("error.view.nonDeletable")" }>
                             <button class="btn btn-danger" type="submit"
@@ -98,9 +98,10 @@
         }
         @if(parent) {
             <p><strong>Parent Product</strong>
-                <br><a href="@routes.Products.details(parent.get.id.getOrElse(0))">@parent.get.title</a>
+            <br><a href="@controllers.hm.routes.Products.details(parent.get.id.getOrElse(0))">
+                @parent.get.title</a>
 
-                }
+        }
         <br/> <br/>
     </div>
     <div class="col-md-8">
@@ -170,7 +171,7 @@
             <div class="tab-pane" id="products">
             @views.html.product.table(derivatives) { product =>
                 @dynamic(handler, Role.Funder.toString, "0") {
-                    <a href="@routes.Products.edit(view.product.id.get)">
+                    <a href="@controllers.hm.routes.Products.edit(view.product.id.get)">
                         <i class="glyphicon glyphicon-pencil"></i> Edit</a>
                 }
             }
@@ -189,7 +190,7 @@
                             <td><a href="@routes.Brands.details(brand.id.get)">@brand.name</a></td>
                             <td>
                             @dynamic(handler, Role.Funder.toString, "0") {
-                                <a href="@routes.Products.deleteBrand("product", view.product.id.get, brand.id.get)">
+                                <a href="@controllers.hm.routes.Products.deleteBrand("product", view.product.id.get, brand.id.get)">
                                     <i class="glyphicon glyphicon-pencil"></i> Unassign brand</a>
                             }
                             </td>
@@ -198,7 +199,8 @@
                     </tbody>
                 </table>
                 @dynamic(handler, Role.Funder.toString, "0") {
-                    <form class="form-inline pull-right" method="POST" action="@CSRF(routes.Products.addBrand)">
+                    <form class="form-inline pull-right" method="POST"
+                    action="@CSRF(controllers.hm.routes.Products.addBrand)">
                         <p>
                             <input type="hidden" name="page" value="product">
                             <input type="hidden" name="productId" value="@view.product.id.get">

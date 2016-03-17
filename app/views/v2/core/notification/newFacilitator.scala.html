@@ -1,6 +1,6 @@
 @(img: String, name: String, brand: String, personUrl: String)
 <div class="b-notiflist-i">
-    <div class="b-notiflist-i__img" style="background-image: url(@img) ;"></div>
+    <a href="@personUrl" class="b-notiflist-i__img" style="background-image: url(@img) ;"></a>
     <div class="b-notiflist-i__con">
         <div class="b-notiflist-i__con-inner">
             <a href="@personUrl" class="link-mblue">@name</a> <br>

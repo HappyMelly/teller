@@ -1,4 +1,5 @@
-@(brand: Brand, attendee: models.event.Attendee, facilitator: Person)
+@import models.cm.event.Attendee
+@(brand: Brand, attendee: Attendee, facilitator: Person)
 
 @mail.templates.html.tmpl(s"Your ${brand.name} evaluation was rejected", controllers.Brands.pictureUrl(brand)) {
     @mail.templates.html.title(s"Hi ${attendee.fullName},")

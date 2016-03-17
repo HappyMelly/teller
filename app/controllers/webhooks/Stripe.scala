@@ -25,10 +25,11 @@ package controllers.webhooks
 
 import javax.inject.Inject
 
-import controllers.AsyncController
+import controllers.{Utilities, AsyncController}
+import controllers.hm.Members
 import models.core.payment.{Charge, Customer, CustomerType, Payment}
 import models.repository.Repositories
-import models.{Member, Recipient}
+import models.{Organisation, Person, Member, Recipient}
 import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -53,16 +54,8 @@ class Stripe @Inject() (val repos: Repositories,
       parseEvent(json) match  {
         case Left(data) =>
           data.typ match {
-            case "charge.succeeded" =>
-              repos.core.customer.find(data.customer) flatMap {
-                case None => ok("Unknown customer")
-                case Some(customer) =>
-                  if (customer.objectType == CustomerType.Organisation) {
-                    handleChargeByOrganisation(customer, data)
-                  } else {
-                    handleChargeByPerson(customer, data)
-                  }
-              }
+            case "charge.succeeded" => handleSuccessfulCharge(data)
+            case "charge.failed" => handleFailedCharge(data)
             case _ => ok("Unsupported event type")
           }
         case Right(error) => ok(error)
@@ -72,7 +65,59 @@ class Stripe @Inject() (val repos: Repositories,
     }
   }
 
-  protected def handleChargeByOrganisation(customer: Customer, data: EventData): Future[Result] = {
+  /**
+    * Sends notification to a customer that a payment has failed
+ *
+    * @param data Event data
+    */
+  protected def handleFailedCharge(data: EventData): Future[Result] =
+    repos.core.customer.find(data.customer) flatMap {
+      case None => ok("Unknown customer")
+      case Some(customer) =>
+        if (customer.objectType == CustomerType.Organisation) {
+          retrieveOrganisationCustomer(customer, data) { (organisation, member, people) =>
+            val msg = "Membership prolongation for organisation %s (id = %s) failed".format(
+              organisation.name, organisation.identifier)
+            Logger.info(msg)
+            sendFailedProlongationEmail(people.head, organisation.name, member)
+            ok("")
+          }
+        } else {
+          retrievePersonCustomer(customer, data) { (person, member) =>
+            val msg = "Membership prolongation for person %s (id = %s) failed".format(
+              person.fullName, person.identifier)
+            Logger.info(msg)
+            sendFailedProlongationEmail(person, person.fullName, member)
+            ok("")
+          }
+        }
+    }
+
+  /**
+    * Prolongs membership and sends notification to a customer that a payment has succeed
+ *
+    * @param data Event data
+    */
+  protected def handleSuccessfulCharge(data: EventData): Future[Result] =
+    repos.core.customer.find(data.customer) flatMap {
+      case None => ok("Unknown customer")
+      case Some(customer) =>
+        if (customer.objectType == CustomerType.Organisation) {
+          prolongOrganisationalMembership(customer, data)
+        } else {
+          prolongPersonalMembership(customer, data)
+        }
+    }
+
+  /**
+    * Retrieve customer-related information if a customer is an organisation
+ *
+    * @param customer Customer
+    * @param data Event data
+    * @param f Function to handle customer-related information
+    */
+  protected def retrieveOrganisationCustomer(customer: Customer, data: EventData)
+                                            (f: (Organisation, Member, List[Person]) => Future[Result]): Future[Result] = {
     val request = for {
       o <- repos.org.get(customer.objectId)
       m <- repos.org.member(customer.objectId)
@@ -84,18 +129,19 @@ class Stripe @Inject() (val repos: Repositories,
         Logger.error(msg)
         ok("Unknown customer")
       case (organisation, Some(member), people) =>
-        prolongMembership(customer.id.get, data.chargeId, member) flatMap { prolonged =>
-          val msg = "Organisation %s (id = %s) paid membership fee EUR %s".format(
-            organisation.name, organisation.identifier, member.fee.getAmount)
-          Logger.info(msg)
-          if (prolonged)
-            sendSuccessfulProlongationEmail(people.head, organisation.name)
-          ok("Membership was prolonged")
-        }
+        f(organisation, member, people)
     }
   }
 
-  protected def handleChargeByPerson(customer: Customer, data: EventData): Future[Result] = {
+  /**
+    * Retrieve customer-related information if a customer is a person
+ *
+    * @param customer Customer
+    * @param data Event data
+    * @param f Function to handle customer-related information
+    */
+  protected def retrievePersonCustomer(customer: Customer, data: EventData)
+                                      (f: (Person, Member) => Future[Result]): Future[Result] = {
     val request = for {
       p <- repos.person.get(customer.objectId)
       m <- repos.person.member(customer.objectId)
@@ -106,14 +152,7 @@ class Stripe @Inject() (val repos: Repositories,
         Logger.error(msg)
         ok("Unknown customer")
       case (person, Some(member)) =>
-        prolongMembership(customer.id.get, data.chargeId, member) flatMap { prolonged =>
-          val msg = "Person %s (id = %s) paid membership fee EUR %s".format(
-            person.fullName, person.identifier, member.fee.getAmount)
-          Logger.info(msg)
-          if (prolonged)
-            sendSuccessfulProlongationEmail(person, person.fullName)
-          ok("Membership was prolonged")
-        }
+        f(person, member)
     }
   }
 
@@ -133,7 +172,7 @@ class Stripe @Inject() (val repos: Repositories,
   }
 
   protected def prolongMembership(customerId: Long, chargeId: String, member: Member): Future[Boolean] = {
-    val amount = member.fee.getAmount.floatValue()
+    val amount = member.fee.floatValue()
     repos.core.charge.findByCustomer(customerId) flatMap { charges =>
       if (!charges.exists(_.remoteId == chargeId)) {
         val charge = Charge(None, chargeId, customerId, Payment.DESC, amount, Payment.TAX_PERCENT_AMOUNT)
@@ -144,6 +183,38 @@ class Stripe @Inject() (val repos: Repositories,
       else
         Future.successful(false)
     }
+  }
+
+  protected def prolongOrganisationalMembership(customer: Customer, data: EventData): Future[Result] =
+    retrieveOrganisationCustomer(customer, data) { (organisation, member, people) =>
+      prolongMembership(customer.id.get, data.chargeId, member) flatMap { prolonged =>
+        val msg = "Organisation %s (id = %s) paid membership fee EUR %s".format(
+          organisation.name, organisation.identifier, member.fee)
+        Logger.info(msg)
+        if (prolonged)
+          sendSuccessfulProlongationEmail(people.head, organisation.name)
+        ok("Membership was prolonged")
+      }
+    }
+
+  protected def prolongPersonalMembership(customer: Customer, data: EventData): Future[Result] =
+    retrievePersonCustomer(customer, data) { (person, member) =>
+      prolongMembership(customer.id.get, data.chargeId, member) flatMap { prolonged =>
+        val msg = "Person %s (id = %s) paid membership fee EUR %s".format(
+          person.fullName, person.identifier, member.fee)
+        Logger.info(msg)
+        if (prolonged)
+          sendSuccessfulProlongationEmail(person, person.fullName)
+        ok("Membership was prolonged")
+      }
+    }
+
+  protected def sendFailedProlongationEmail(recipient: Recipient, name: String, member: Member) = {
+    val subject = "Your Happy Melly Membership"
+    val profileUrl = Utilities.fullUrl(Members.profileUrl(member))
+    val expireDate = member.until.plusWeeks(2)
+    val body = mail.templates.members.html.failedProlongation(name, profileUrl, expireDate).toString
+    email.send(Set(recipient), subject = subject, body = body, richMessage = true)
   }
 
   protected def sendSuccessfulProlongationEmail(recipient: Recipient, name: String) = {

@@ -169,7 +169,7 @@ case class Person(
    * @param fee Amount of membership fee this person paid
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: Money, services: Repositories): Future[Member] = {
+  def becomeMember(funder: Boolean, fee: BigDecimal, services: Repositories): Future[Member] = {
     val m = services.member.insert(membership(funder, fee))
     services.profileStrength.find(id.get, false).filter(_.isDefined) foreach { x ⇒
       services.profileStrength.update(ProfileStrength.forMember(x.get))
@@ -183,9 +183,9 @@ case class Person(
    * @param funder If true member is a funder
    * @param fee An amount of membership fee
    */
-  protected def membership(funder: Boolean, fee: Money): Member =
+  protected def membership(funder: Boolean, fee: BigDecimal): Member =
     new Member(None, id.get, person = true,
-      funder = funder, fee = fee,
+      funder = funder, fee = fee, newFee = None,
       renewal = true,
       since = LocalDate.now(),
       until = LocalDate.now().plusYears(1),
@@ -210,7 +210,7 @@ object Person {
 
   def deletable(id: Long, services: Repositories): Future[Boolean] = for {
     c <- services.contribution.contributions(id, isPerson = true)
-    l <- services.license.licensesWithBrands(id)
+    l <- services.cm.license.licensesWithBrands(id)
     o <- services.person.memberships(id)
   } yield c.isEmpty && l.isEmpty && o.isEmpty
 

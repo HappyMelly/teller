@@ -26,7 +26,7 @@ package models.database
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models.JodaMoney._
-import models.License
+import models.cm.License
 import org.joda.time.LocalDate
 import slick.driver.JdbcProfile
 

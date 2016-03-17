@@ -28,7 +28,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import be.objectify.deadbolt.scala.cache.HandlerCache
-import models.Certificate
+import models.cm.Certificate
 import models.UserRole.Role
 import models.repository.Repositories
 import org.joda.time.LocalDate
@@ -60,8 +60,8 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
         Future.successful(NotFound)
       } else {
         (for {
-          attendee <- services.attendee.find(attendeeId, eventId)
-          brand <- services.brand.findWithCoordinators(event.brandId)
+          attendee <- services.cm.rep.event.attendee.find(attendeeId, eventId)
+          brand <- services.cm.brand.findWithCoordinators(event.brandId)
         } yield (attendee, brand)) flatMap {
           case (None, _) => Future.successful(NotFound)
           case (_, None) => notFound("Brand not found")
@@ -70,7 +70,7 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
             val certificate = new Certificate(Some(issued), event, attendee, renew = true)
             certificate.generateAndSend(brand, user.person, email, services)
             val withCertificate = attendee.copy(certificate = Some(certificate.id), issued = Some(issued))
-            services.attendee.updateCertificate(withCertificate) flatMap { _ =>
+            services.cm.rep.event.attendee.updateCertificate(withCertificate) flatMap { _ =>
               jsonOk(Json.obj("certificate" -> certificate.id))
             }
         }

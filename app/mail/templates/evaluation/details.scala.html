@@ -1,4 +1,9 @@
-@(evaluation: Evaluation, event: Event, attendee: models.event.Attendee, brand: Brand, confirmUrl: String)(implicit messages: Messages)
+@import models.cm.event.Attendee
+@(evaluation: models.cm.Evaluation,
+    event: models.cm.Event,
+    attendee: Attendee,
+    brand: Brand,
+    confirmUrl: String)(implicit messages: Messages)
 
 @import views.Evaluations
 

@@ -24,14 +24,14 @@
  */
 package models.repository.core
 
-import models.repository.core.payment.{ChargeRepository, CustomerRepository}
+import models.repository.core.payment.{CreditCardRepository, ChargeRepository, CustomerRepository}
 import play.api.Application
 
 /**
   * Contains repositories of 'core' package
   */
 class Repositories(app: Application) {
-
+  lazy val card: CreditCardRepository = new CreditCardRepository(app)
   lazy val charge: ChargeRepository = new ChargeRepository(app)
   lazy val customer: CustomerRepository = new CustomerRepository(app)
 }

@@ -1,5 +1,6 @@
+@import models.cm.brand.Badge
 @(brandId: Long,
-    badges: List[models.brand.Badge])(implicit request: Request[Any],
+    badges: List[Badge])(implicit request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 <div class="block">

@@ -26,8 +26,9 @@ package models.actors
 import javax.inject.Inject
 
 import akka.actor.Actor
-import models.{NewPersonalBadge, NewBadge, NewFacilitator}
+import models.core.notification.{NewBadge, NewFacilitator, NewPersonalBadge}
 import models.repository.Repositories
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -44,22 +45,22 @@ class NotificationDispatcher @Inject() (val repos: Repositories) extends Actor {
 
   protected def addNewBadgeNotification(notification: NewBadge) = {
     (for {
-      c <- repos.brandCoordinator.find(notification.badge.brandId)
-      f <- repos.license.findByBrand(notification.badge.brandId)
+      c <- repos.cm.rep.brand.coordinator.find(notification.badge.brandId)
+      f <- repos.cm.license.findByBrand(notification.badge.brandId)
     } yield (c.map(_.personId), f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
       val ids = (coordinators.toList ::: facilitators).distinct.filterNot(_ == notification.person.identifier)
-      val records = ids.map(personId => notification.notification(personId))
+      val records = ids.map(personId => notification.toNotification(personId))
       repos.notification.insert(records)
     }
   }
 
   protected def addNewFacilitatorNotifications(notification: NewFacilitator) = {
     (for {
-      c <- repos.brandCoordinator.find(notification.brand.identifier)
-      f <- repos.license.findByBrand(notification.brand.identifier)
+      c <- repos.cm.rep.brand.coordinator.find(notification.brand.identifier)
+      f <- repos.cm.license.findByBrand(notification.brand.identifier)
     } yield (c.map(_.personId), f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
       val ids = (coordinators.toList ::: facilitators).distinct.filterNot(_ == notification.person.identifier)
-      val records = ids.map(personId => notification.notification(personId))
+      val records = ids.map(personId => notification.toNotification(personId))
       repos.notification.insert(records)
     }
   }

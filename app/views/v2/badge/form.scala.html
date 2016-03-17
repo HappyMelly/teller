@@ -1,6 +1,7 @@
+@import models.cm.brand.Badge
 @(user: ActiveUser,
   brandId: Long,
-  form: Form[models.brand.Badge],
+  form: Form[Badge],
   badgeId: Option[Long] = None)(implicit flash: Flash,
         request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,

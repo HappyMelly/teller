@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.Facilitator
+import models.cm.Facilitator
 import slick.driver.JdbcProfile
 
 private[models] trait FacilitatorTable extends BrandTable {

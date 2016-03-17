@@ -27,9 +27,10 @@ package controllers.acceptance
 import controllers.Brands
 import helpers.{PersonHelper, ProductHelper}
 import integration.PlayAppSpec
-import models.brand.{BrandCoordinator, CertificateTemplate, EventType}
-import models.repository.brand.{CertificateTemplateRepository, EventTypeRepository}
-import models.repository.{BrandRepository, ProductRepository}
+import models.cm.brand.{BrandCoordinator, CertificateTemplate, EventType}
+import models.repository.ProductRepository
+import models.repository.cm.BrandRepository
+import models.repository.cm.brand.{EventTypeRepository, CertificateTemplateRepository}
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs.{FakeRuntimeEnvironment, FakeSecurity, FakeRepositories, FakeSocialIdentity}
 
@@ -78,7 +79,7 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
       EventType(Some(1L), 1L, "Meetup", Some("Yay, meetup!"), 8, false),
       EventType(Some(2L), 1L, "Meeting", None, 1, false),
       EventType(Some(3L), 1L, "CodeFest", Some("Coding sessions"), 16, false))
-    (services.eventTypeService.findByBrand _).expects(1L).returning(eventTypes)
+    (services.cm.rep.brand.eventTypeService.findByBrand _).expects(1L).returning(eventTypes)
     val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must contain("Meetup")
@@ -89,21 +90,21 @@ class BrandsDetailsSpec extends PlayAppSpec with IsolatedMockFactory {
   }
 
   def e2 = {
-    (services.eventTypeService.findByBrand _).expects(1L).returning(List())
+    (services.cm.rep.brand.eventTypeService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "<table"
   }
 
   def e3 = {
-    (services.eventTypeService.findByBrand _).expects(1L).returning(List())
+    (services.cm.rep.brand.eventTypeService.findByBrand _).expects(1L).returning(List())
     val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
     status(res) must equalTo(OK)
     contentAsString(res) must not contain "Add Event Type"
   }
 
 //  def e4 = {
-//    (services.eventTypeService.findByBrand _).expects(1L).returning(List())
+//    (services.cm.rep.brand.eventTypeService.findByBrand _).expects(1L).returning(List())
 //    controller.identity_=(FakeUserIdentity.editor)
 //    val res = controller.renderTabs(1L, "types").apply(fakeGetRequest())
 //    status(res) must equalTo(OK)

@@ -24,8 +24,8 @@
 
 package controllers.acceptance
 
-import controllers.apiv2.EvaluationsApi
-import models.repository.EvaluationRepository
+import controllers.api.EvaluationsApi
+import models.repository.cm.EvaluationRepository
 import org.scalamock.specs2.MockContext
 import org.specs2.Specification
 import play.api.test.FakeRequest

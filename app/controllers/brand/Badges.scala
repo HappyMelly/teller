@@ -27,7 +27,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
 import models.DateStamp
-import models.brand.Badge
+import models.cm.brand.Badge
 import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.data.Form
@@ -77,7 +77,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       badge ⇒ {
         val hash = generatedName
         uploadImage(Badge.picture(hash), "file") flatMap { _ ⇒
-          services.brandBadge.insert(badge.copy(brandId = brandId, file = hash)) map { badge =>
+          services.cm.rep.brand.badge.insert(badge.copy(brandId = brandId, file = hash)) map { badge =>
             Redirect(controllers.routes.Brands.details(brandId).url + "#badges")
           }
         } recover {
@@ -96,7 +96,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def delete(brandId: Long, id: Long) = BrandAction(brandId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      services.brandBadge.delete(brandId, id) flatMap { _ =>
+      services.cm.rep.brand.badge.delete(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }
@@ -110,7 +110,7 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    */
   def edit(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.brandBadge.find(id) flatMap {
+      services.cm.rep.brand.badge.find(id) flatMap {
         case None => notFound(Html("Badge not found"))
         case Some(badge) => ok(views.html.v2.badge.form(user, brandId, form(user.name).fill(badge), Some(id)))
       }
@@ -135,19 +135,19 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       formWithData.fold(
         error ⇒ badRequest(views.html.v2.badge.form(user, brandId, error)),
         badge ⇒
-          services.brandBadge.find(id) flatMap {
+          services.cm.rep.brand.badge.find(id) flatMap {
             case None => notFound(Html("Badge not found"))
             case Some(existing) ⇒
               if (existing.brandId == brandId) {
                 val hash = generatedName
                 uploadImage(Badge.picture(hash), "file") flatMap { _ ⇒
-                  services.brandBadge.update(badge.copy(id = Some(id), file = hash)) map { _ =>
+                  services.cm.rep.brand.badge.update(badge.copy(id = Some(id), file = hash)) map { _ =>
                     Badge.picture(existing.file).remove()
                     Redirect(controllers.routes.Brands.details(brandId) + "#badges")
                   }
                 } recover {
                   case e: RuntimeException ⇒
-                    services.brandBadge.update(badge.copy(id = Some(id), file = existing.file))
+                    services.cm.rep.brand.badge.update(badge.copy(id = Some(id), file = existing.file))
                     Redirect(controllers.routes.Brands.details(brandId) + "#badges")
                 }
               } else {

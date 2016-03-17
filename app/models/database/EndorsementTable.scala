@@ -24,7 +24,7 @@
 
 package models.database
 
-import models.Endorsement
+import models.cm.facilitator.Endorsement
 import slick.driver.JdbcProfile
 
 private[models] trait EndorsementTable {

@@ -1,6 +1,6 @@
 @(user: ActiveUser,
   personId: Long,
-  records: List[(Evaluation, String, String)])(implicit flash: Flash,
+  records: List[(models.cm.Evaluation, String, String)])(implicit flash: Flash,
     request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     token: play.filters.csrf.CSRF.Token)

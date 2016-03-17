@@ -24,6 +24,7 @@
 package models.unit
 
 import models.brand._
+import models.cm.brand.BrandLink
 import org.specs2.mutable._
 
 class BrandLinkSpec extends Specification {

@@ -28,9 +28,11 @@ import controllers.Brands
 import helpers.{ BrandHelper, PersonHelper }
 import integration.PlayAppSpec
 import models.BrandWithSettings
-import models.brand.{Settings, BrandCoordinator, BrandNotifications}
-import models.repository.{ BrandRepository, PersonRepository }
-import models.repository.brand.BrandCoordinatorRepository
+import models.brand.BrandNotifications
+import models.cm.brand.{BrandNotifications, BrandCoordinator, Settings}
+import models.repository.PersonRepository
+import models.repository.cm.BrandRepository
+import models.repository.cm.brand.BrandCoordinatorRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSocialIdentity, FakeSecurity }
 

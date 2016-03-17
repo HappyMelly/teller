@@ -1,4 +1,4 @@
-@(member: Member, length: Long, paymentUrl: String, profileUrl: String)
+@(member: Member, length: Long, profileUrl: String)
 
 @import views.ViewHelpersV2._
 
@@ -14,7 +14,7 @@
     }
     @mail.templates.hm.html.paragraph {
         If you need to update your payment details before renewal takes place, you can
-        <a href="@paymentUrl">update</a> them via your Teller Account.
+        <a href="@profileUrl#membership">update</a> them via your Teller Account.
     }
     @mail.templates.hm.html.paragraph {
         You might check your Teller <a href="@profileUrl">profile</a>
