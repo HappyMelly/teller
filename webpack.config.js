@@ -9,7 +9,7 @@ module.exports = {
     output: {
         filename: '[name].js'
     },
-    devtool: 'inline-source-map',
+    devtool: config.isBuild? false :'inline-source-map',
     cache: true,
     module: {
         loaders: [

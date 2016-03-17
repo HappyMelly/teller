@@ -5,7 +5,7 @@ import FormHelper from "./../../common/_form-helper";
 /**
  * Form for sending credit
  */
-export default class FormCredit {
+export default class Widget{
 
     constructor(selector) {
         this.$root = $(selector);
@@ -90,4 +90,22 @@ export default class FormCredit {
             }
         );
     }
+
+
+    // static
+    static interface(selector) {
+        const $elems = $(selector);
+        if (!$elems.length) return;
+
+        return $elems.each(function (index, el) {
+            let $element = $(el);
+            let data     = $element.data('widget');
+
+            if (!data) {
+                data = new Widget(el);
+                $element.data('widget', data);
+            }
+        })
+    }
 }
+
