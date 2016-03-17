@@ -61,7 +61,6 @@ export default class Widget {
         if ($.inArray(targetSelector, self.loadedTabs) < 0 && url) {
             $.get(url, (data) => {
                 $(targetSelector).html(data);
-                debugger;
                 self.loadedTabs.push(targetSelector);
 
                 cb && cb();
