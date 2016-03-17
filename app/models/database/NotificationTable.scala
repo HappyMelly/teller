@@ -43,14 +43,15 @@ private[models] trait NotificationTable {
     def personId = column[Long]("PERSON_ID")
     def body = column[String]("BODY")
     def typ = column[String]("TYPE")
+    def version = column[Int]("VERSION")
     def unread = column[Boolean]("UNREAD")
     def created = column[DateTime]("CREATED")
 
-    type NotificationFields = (Option[Long], Long, String, String, Boolean, DateTime)
+    type NotificationFields = (Option[Long], Long, String, String, Int, Boolean, DateTime)
 
-    def * = (id, personId, body, typ, unread, created) <> (
-      (n: NotificationFields) => Notification(n._1, n._2, Json.parse(n._3), n._4, n._5, n._6),
-      (n: Notification) => Some((n.id, n.personId, n.body.toString(), n.typ, n.unread, n.created)))
+    def * = (id, personId, body, typ, version, unread, created) <> (
+      (n: NotificationFields) => Notification(n._1, n._2, Json.parse(n._3), n._4, n._5, n._6, n._7),
+      (n: Notification) => Some((n.id, n.personId, n.body.toString(), n.typ, n.version, n.unread, n.created)))
   }
 
 }

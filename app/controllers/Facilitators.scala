@@ -25,7 +25,7 @@ package controllers
 
 import java.text.Collator
 import java.util.Locale
-import javax.inject.{Named, Inject}
+import javax.inject.{Inject, Named}
 
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
@@ -33,8 +33,8 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
 import models._
 import models.cm.Facilitator
-import models.cm.brand.Badge
-import models.cm.facilitator.{FacilitatorLanguage, FacilitatorCountry}
+import models.cm.facilitator.{FacilitatorCountry, FacilitatorLanguage}
+import models.core.notification.{NewBadge, NewPersonalBadge}
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.data.Form

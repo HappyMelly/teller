@@ -34,6 +34,7 @@ import models.UserRole.Role._
 import models._
 import models.cm.License
 import models.cm.event.Attendee
+import models.core.notification.NewFacilitator
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
