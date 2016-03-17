@@ -1,0 +1,95 @@
+
+// login form
+.b-authreg{
+
+}
+
+.b-authreg__content{
+  .clearfix();
+}
+
+.b-authreg__col{
+  width: 45%;
+  float: left;
+}
+
+.b-authreg__middle{
+  width: 10%;
+  float: left;
+}
+
+.b-authreg__errors{
+  color: @pig-pink;
+  padding-bottom: 10px;
+  text-align: left;
+}
+
+.b-authreg__submit{
+  display: block;
+  width: 100%;
+  height: 45px;
+}
+
+.b-authreg__join-now{
+  font-family: "kg_skinny_latteregular";
+  text-transform: uppercase;
+  font-size: 24px;
+  padding-top: 10px;
+}
+
+// reminder block
+
+.b-login__remind{
+  position: relative;
+}
+
+.b-login__remfade,
+.b-login__remtext{
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.b-login__remfade{
+  visibility: hidden;
+  opacity: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background-color: #eeeeee;
+  font-size: 14px;
+  line-height: 45px;
+  padding-left: 10px;
+  .transition(all .15s ease);
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.b-login__remtext{
+  text-align: right;
+  bottom: 0;
+  padding: 0 15px;
+  line-height: 45px;
+  .transition(all .15s ease);
+}
+
+.b-login__enter{
+  display: none;
+}
+
+
+/*== States ==*/
+.b-login_remind_disabled{
+  .b-login__remfade{
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .b-login__remlink{
+    display: none;
+  }
+
+  .b-login__enter{
+    display: inline;
+  }
+}

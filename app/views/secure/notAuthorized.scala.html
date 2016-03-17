@@ -1,7 +1,7 @@
 @()(implicit request: RequestHeader, messages: Messages)
 
-@layout.unauthorized(Messages("securesocial.notAuthorized.title")) {
-    <div class="page-header">
+@v2.layout.unauthorized(Messages("securesocial.notAuthorized.title")) {
+    <div class="b-unauth__content type_mt">
         <h1>@Messages("securesocial.notAuthorized.title")</h1>
     </div>
 }

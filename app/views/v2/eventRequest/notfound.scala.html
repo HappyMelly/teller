@@ -1,14 +1,17 @@
 @()(implicit request: Request[Any], flash: Flash)
 
 @v2.layout.unauthorized("Error") {
-  <div class="container">
+  <div class="b-unauth__content type_mt">
+
     <h1>Sorry 8-( </h1>
 
-    <p>the subscription you try to unsubscribe is not found.</p>
-    <p>Please contact our <a href="mailto:sergey.kotlov@@happymelly.com?subject=Unknown subscriber">support team</a>.</p>
+    <p>the subscription you try to unsubscribe is not found. <br>
+      Please contact our <a class="link-blue" href="mailto:sergey.kotlov@@happymelly.com?subject=Unknown subscriber">support team</a>.</p>
 
-    <br/><br/>
-    <h3><a href="@controllers.core.routes.LoginPage.login()">Back to login page</a></h3>
+    <br/>
+    <h4>
+      <a class="link-blue" href="@controllers.core.routes.LoginPage.login()">Back to login page</a>
+    </h4>
 
   </div>
 }
