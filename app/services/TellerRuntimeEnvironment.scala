@@ -33,9 +33,10 @@ import play.api.i18n.MessagesApi
 import play.twirl.api.{Html, Txt}
 import securesocial.controllers.ViewTemplates
 import securesocial.core.RuntimeEnvironment
-import securesocial.core.providers._
+import securesocial.core.providers.{FacebookProvider, GoogleProvider, LinkedInProvider, UsernamePasswordProvider}
 import securesocial.core.providers.utils.Mailer
 import securesocial.core.services.RoutesService
+import security.TwitterProvider
 import services.integrations.EmailComponent
 import templates.{MailTemplates, SecureSocialTemplates}
 
@@ -56,7 +57,7 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
   override lazy val mailer: Mailer = new MailerTest(mailTemplates, email)
   override lazy val userService: LoginIdentityService = new LoginIdentityService(services)
   override lazy val providers = ListMap(
-    include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter))),
+    include(new TwitterProvider(routes, cacheService, TwitterProvider.authClient(httpService))),
     include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),
     include(new GoogleProvider(routes, cacheService, oauth2ClientFor(GoogleProvider.Google))),
     include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
