@@ -45,7 +45,7 @@ export default class Widget {
                 $link.addClass('state_active').siblings().removeClass('state_active');
                 $link.tab('show');
 
-                this.$root.trigger('hmt.tab.shown');
+                this.$root.trigger('hmt.asynctab.shown');
             })
     }
 

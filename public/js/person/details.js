@@ -338,7 +338,7 @@ $(document).ready( function() {
         hashDefault: 'personal-details'
     });
 
-    $('.js-person-menu').on('hmt.menuLoadTab', function(){
+    $('.js-person-menu').on('hmt.tab.shown', function(){
         initializeActions();
     });    
     

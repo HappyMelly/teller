@@ -333,7 +333,7 @@
             self.$root.find('[data-menuside]').removeClass('active');
             $link.addClass('active').tab('show');
 
-            self.$root.trigger('hmt.menuLoadTab');
+            self.$root.trigger('hmt.tab.shown');
         })
     };
 
