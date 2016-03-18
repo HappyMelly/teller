@@ -1,6 +1,6 @@
 @(active: Boolean, monthLimit: Int)
 
-<div class="b-setcredit b-setcredit_state_active">
+<div class="b-setcredit js-set-credits" data-brand-id="10">
     <h4 class="b-setcredit__title">Set credits</h4>
     <p>
         You can activate and set a number of credits, so facilitators can show their
@@ -9,18 +9,27 @@
     </p>
 
     <div class="b-setcredit__deactive">
-        <a href="#" class="btn btn-primary b-setcredit__btn">Activate</a>
+        <a href="#" class="btn btn-primary b-setcredit__btn"
+            data-setcredit-activate>
+            Activate
+        </a>
     </div>
 
     <div class="b-setcredit__active">
-        <a href="#" class="btn btn-default">Deactivate</a>
+        <a href="#" class="btn btn-default"
+            data-setcredit-deactivate>
+            Deactivate
+        </a>
 
-        <form action="#" class="b-setcredit__form">
+        <form action="#" class="b-setcredit__form" data-setcredit-form>
             <div class="b-setcredit__inner">
-                Spending limit for person is <input type="text" name="credits" class="b-setcredit__input form-control" value="0" /> credits per month.
+                Spending limit for person is
+                <input type="text" name="credits" class="b-setcredit__input form-control" value="0" data-setcredit-input />
+                 credits per month.
                 <button type="submit" class="b-setcredit__submit btn btn-primary">Save</button>
             </div>
 
+            <div class="b-setcredit__error" data-setcredit-errors></div>
         </form>
     </div>
 
@@ -30,7 +39,6 @@
         will get a reminder that their license is expiring
         at the end of the month. You need to define the content of the email
 
-        <form action="#">
             <div>
                 <label class="b-radio type_inline">
                     <input type="radio" class="b-radio__input" name="reminder" >
@@ -48,8 +56,6 @@
                     </div>
                 </label>
             </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
 
     }
 </div>

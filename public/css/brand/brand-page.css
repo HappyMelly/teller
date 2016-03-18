@@ -39,6 +39,10 @@
 }
 .b-setcredit__inner {
   line-height: 62px;
+  white-space: nowrap;
+}
+.b-setcredit__inner .b-error {
+  display: none;
 }
 .b-setcredit__input {
   text-align: right;
@@ -54,6 +58,21 @@
 }
 .b-setcredit__active {
   display: none;
+}
+.b-setcredit__error {
+  margin-top: 3px;
+  padding-bottom: 18px;
+  color: #d64456;
+  font-size: 14px;
+}
+@media screen and (max-width: 1200px) {
+  .b-setcredit__submit {
+    min-width: 0;
+  }
+  .b-setcredit__input {
+    width: 50px;
+    margin: 0;
+  }
 }
 /*== states ==*/
 .b-setcredit_state_active .b-setcredit__deactive {
