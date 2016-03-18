@@ -10,8 +10,13 @@ export default class Widget{
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
-        this.validation = new FormHelper(this.$root.find('input'));
+        this.validation = new FormHelper(this.$root.find('input[type="text"]'));
 
+        if (!Boolean($.fn.autocomplete)){
+            console.log('jQuery autocomplete plugin is not include into page');
+            return;
+        }
+        this._initAutoComplete();
         this._assignEvents();
     }
 
@@ -22,9 +27,27 @@ export default class Widget{
             $count: $root.find('[data-credict-count]'),
             $value: $root.find('[data-credit-value]'),
             $to: $root.find('[data-credit-to]'),
+            $toData: $root.find('[data-credit-to-data]'),
             $message: $root.find('[data-credit-message]'),
             $error: $root.find('[data-credit-error]')
         };
+    }
+
+    _initAutoComplete() {
+        const locals = this.locals;
+        const url = jsRoutes.controllers.core.Organisations.search().url;
+        
+        locals.$to.autocomplete({
+            serviceUrl: url,
+            paramName: 'query',
+            minChars: 3,
+            preserveInput: true,            
+            onSelect: function (suggestion) {
+                locals.$to.val(suggestion.name);
+                locals.$toData.val(suggestion.data);
+                return true;
+            }
+        });
     }
 
     _assignEvents() {
@@ -86,6 +109,7 @@ export default class Widget{
             {
                 give: this.locals.$value.val(),
                 to: this.locals.$to.val(),
+                todata: this.locals.$toData.val(),
                 message: this.locals.$message.val()
             }
         );
