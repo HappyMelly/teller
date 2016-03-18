@@ -26,8 +26,9 @@ package models.actors
 import javax.inject.Inject
 
 import akka.actor.Actor
-import models.{NewPersonalBadge, NewBadge, NewFacilitator}
+import models.{CreditReceived, NewBadge, NewFacilitator, NewPersonalBadge}
 import models.repository.Repositories
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -36,10 +37,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class NotificationDispatcher @Inject() (val repos: Repositories) extends Actor {
 
   def receive = {
+    case notification: CreditReceived => addCreditReceivedNotification(notification)
     case notification: NewFacilitator => addNewFacilitatorNotifications(notification)
     case notification: NewBadge => addNewBadgeNotification(notification)
     case notification: NewPersonalBadge =>
       repos.notification.insert(Seq(notification.notification))
+  }
+
+  protected def addCreditReceivedNotification(notification: CreditReceived) = {
+    (for {
+      c <- repos.brandCoordinator.find(notification.credit.brandId)
+      f <- repos.license.findByBrand(notification.credit.brandId)
+    } yield (c.map(_.personId), f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
+      val ids = (coordinators.toList ::: facilitators).distinct.filterNot(_ == notification.receiver.identifier)
+      val records = ids.map(personId => notification.notification(personId))
+      repos.notification.insert(records)
+    }
   }
 
   protected def addNewBadgeNotification(notification: NewBadge) = {

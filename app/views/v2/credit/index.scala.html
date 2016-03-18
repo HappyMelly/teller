@@ -4,25 +4,20 @@
     <div class="container page-peer ">
 
         <div class="b-creditnav js-sidemenu-tabs">
-            <a href="#managment"  role="tab"
-                class="b-creditnav__i active"
+            @for((brand, index) <- brands.zipWithIndex) {
+                <a href="#@brand.uniqueName" role="tab"
+                class="b-creditnav__i "
+                data-href="@controllers.brand.routes.Credits.credits(brand.identifier)"
                 data-menuside>
-                Managment 3.0
-            </a>
-            <a href="#learning"
-                role="tab"
-                data-href="#"
-                class="b-creditnav__i"
-                data-menuside>
-                Learning 3.0
-            </a>
+                @brand.name
+                </a>
+            }
         </div>
 
         <div class="tab-content">
-            <div class="tab-pane active" id="managment">
-                @views.html.v2.person.blocks.creditTab();
-            </div>
-            <div class="tab-pane" id="learning"></div>
+        @for((brand, index) <- brands.zipWithIndex) {
+            <div class="tab-pane @if(index == 0){active}" id="@brand.uniqueName"></div>
+        }
         </div>
     </div>
     <link rel="stylesheet" href="@routes.Assets.at("css/person/credit-page.css")">

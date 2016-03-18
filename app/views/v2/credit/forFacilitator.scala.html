@@ -1,4 +1,4 @@
-@(user: ActiveUser, facilitator: Facilitator, feed: Seq[(models.brand.PeerCredit, Person, Person)])
+@(user: ActiveUser, facilitator: Facilitator, creditsLeft: Int, feed: Seq[(models.brand.PeerCredit, Person, Person)])
 
 <div class="page-peer__side">
     <div class="credit-value">
@@ -11,9 +11,9 @@
     </div>
 </div>
 <div class="page-peer__left">
-    <form class="b-credits js-form-credit" action="#">
+    <form class="b-credits js-form-credit" action="@controllers.brand.routes.Credits.give(facilitator.brandId)">
         <div class="b-credits__title">
-            You can spend <span data-credict-count>@facilitator.creditsGiven</span> more bonuses this month
+            You can spend <span data-credict-count>@creditsLeft</span> more bonuses this month
         </div>
         <div class="b-credits__i">
             <div class="b-credits__value type-credit" data-credit-item>
@@ -44,5 +44,5 @@
             You have send bonuses successfully!
         </div>
     </form>
-    @views.html.v2.peerCredit.feed(user, feed)
+    @views.html.v2.credit.feed(user, feed)
 </div>

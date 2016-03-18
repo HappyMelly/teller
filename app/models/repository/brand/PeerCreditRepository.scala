@@ -50,4 +50,13 @@ class PeerCreditRepository(app: Application) extends HasDatabaseConfig[JdbcProfi
   def find(brandId: Long): Future[Seq[PeerCredit]] =
     db.run(credits.filter(_.brandId === brandId).sortBy(_.created.desc).result)
 
+  /**
+    * Inserts the given credit into database
+    * @param credit Credit object
+    */
+  def insert(credit: PeerCredit): Future[PeerCredit] = {
+    val query = credits returning credits.map(_.id) into ((value, id) => value.copy(id = id))
+    db.run(query += credit)
+  }
+
 }

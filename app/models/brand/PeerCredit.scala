@@ -34,4 +34,4 @@ case class PeerCredit(id: Option[Long],
                       giverId: Long,
                       amount: Int,
                       reason: String,
-                      created: DateTime)
+                      created: DateTime = DateTime.now)

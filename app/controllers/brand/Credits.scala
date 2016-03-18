@@ -23,19 +23,19 @@
  */
 package controllers.brand
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
-import controllers.{Utilities, Security}
-import models.Person
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Security, Utilities}
+import models.UserRole.Role._
 import models.brand.PeerCredit
 import models.repository.Repositories
-import models.UserRole.Role._
-import play.api.i18n.MessagesApi
+import models.{ActiveUser, CreditReceived, Facilitator, Person}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.Json
+import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
@@ -46,8 +46,11 @@ import scala.concurrent.Future
 class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
                           val repos: Repositories,
+                         @Named("notification") notificationDispatcher: ActorRef,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
+
+  case class FormData(receiverId: Long, amount: Int, reason: String)
 
   /**
     * Activates credits for the given brand
@@ -104,33 +107,45 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
       result flatMap {
         case (false, false, _) => ok(msg)
         case (true, false, credits) => creditFeed(credits) flatMap { feed =>
-          ok(views.html.v2.peerCredit.forCoordinator(user, feed))
+          ok(views.html.v2.credit.forCoordinator(user, feed))
         }
-        case (_, true, credits) =>
-          (for {
-            feed <- creditFeed(credits)
-            facilitator <- repos.facilitator.find(brandId, user.person.identifier)
-          } yield (feed, facilitator)) flatMap {
-            case (_ , None) => ok("Internal error. Please contact the system support")
-            case (feed, Some(facilitator)) =>
-              ok(views.html.v2.peerCredit.forFacilitator(user, facilitator, feed))
-          }
+        case (_, true, credits) => renderFacilitatorFeed(user, brandId, credits)
       }
     }
   }
 
   /**
     * Handles peer credit distribution for the given brand
+    *
     * @param brandId Brand identifier
     */
   def give(brandId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
-    case class FormData(amount: Int, reason: String)
     val form = Form(mapping(
+      "receiverId" -> longNumber(min = 1).
+        verifying("You cannot give credits to yourself", value => value == user.person.identifier),
       "amount" -> number(min = 1),
       "reason" -> nonEmptyText)(FormData.apply)(FormData.unapply))
+
     form.bindFromRequest.fold(
-      errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
-      data => jsonSuccess("")
+      errors => jsonFormError(Utilities.errorsToJson(errors)),
+      data => {
+        val result = for {
+          v <- repos.brand.findWithSettings(brandId) if v.nonEmpty
+          g <- repos.facilitator.find(brandId, user.person.identifier) if g.nonEmpty
+          r <- repos.facilitator.find(brandId, data.receiverId) if r.nonEmpty
+        } yield (v.get.settings, g.get, r.get)
+        result flatMap { case (settings, giver, receiver) =>
+          val creditsLeft = settings.creditLimit - giver.creditsGiven
+          if (data.amount > creditsLeft) {
+            val msg = "You try to give more credits when you have"
+            jsonFormError(Utilities.errorsToJson(form.withError("amount", msg)))
+          } else {
+            giveCredit(brandId, giver, receiver, data, user.person.fullName)
+          }
+        } fallbackTo {
+          jsonNotFound("Either brand or giver or receiver is not found")
+        }
+      }
     )
   }
 
@@ -148,7 +163,12 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
       } yield (c ++ f).distinct
       result flatMap { brands =>
         val filteredBrands = brands.filter(_.settings.credits).map(_.brand)
-        ok(views.html.v2.peerCredit.index(user, filteredBrands))
+        if (filteredBrands.isEmpty) {
+          val msg = "None of your brands has peer credit support activated"
+          redirect(controllers.core.routes.Dashboard.index(), "error" -> msg)
+        } else {
+          ok(views.html.v2.credit.index(user, filteredBrands))
+        }
       }
     }
   }
@@ -177,7 +197,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case Some(view) =>
         val form = Form(single("limit" -> number(min = 1)))
         form.bindFromRequest().fold(
-          errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
+          errors => jsonFormError(Utilities.errorsToJson(errors)),
           limit => repos.brand.updateSettings(view.settings.copy(creditLimit = limit)) flatMap { _ =>
             jsonSuccess("Monthly limits were updated")
           }
@@ -187,6 +207,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /**
     * Returns data required for rendering credit feed
+    *
     * @param credits List of peer credits
     */
   protected def creditFeed(credits: Seq[PeerCredit]): Future[Seq[(PeerCredit, Person, Person)]] = {
@@ -199,6 +220,32 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
       }
       val filteredFeed = feed.filter(credit => credit._2.nonEmpty && credit._3.nonEmpty)
       filteredFeed.map(credit => (credit._1, credit._2.get, credit._3.get))
+    }
+  }
+
+  protected def giveCredit(brandId: Long, giver: Facilitator, receiver: Facilitator, data: FormData, giverName: String) = {
+    val credit = PeerCredit(None, brandId, receiver.personId, giver.personId, data.amount, data.reason)
+    (for {
+      _ <- repos.facilitator.update(giver.copy(creditsGiven = giver.creditsGiven + data.amount))
+      _ <- repos.facilitator.update(receiver.copy(creditsReceived = receiver.creditsReceived + data.amount))
+      _ <- repos.peerCredit.insert(credit)
+      r <- repos.person.get(receiver.personId)
+    } yield r) flatMap { person =>
+      notificationDispatcher ! CreditReceived(credit, giverName, person)
+      ok("Credit was saved")
+    }
+  }
+
+  protected def renderFacilitatorFeed(user: ActiveUser, brandId: Long, credits: Seq[PeerCredit]) = {
+    (for {
+      brand <- repos.brand.findWithSettings(brandId) if brand.nonEmpty
+      feed <- creditFeed(credits)
+      facilitator <- repos.facilitator.find(brandId, user.person.identifier)
+    } yield (brand.get, feed, facilitator)) flatMap {
+      case (_, _ , None) => ok("Internal error. Please contact the system support")
+      case (view, feed, Some(facilitator)) =>
+        val creditsLeft = view.settings.creditLimit - facilitator.creditsGiven
+        ok(views.html.v2.credit.forFacilitator(user, facilitator, creditsLeft, feed))
     }
   }
 }

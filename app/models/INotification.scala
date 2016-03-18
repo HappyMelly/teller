@@ -25,9 +25,9 @@ package models
 
 import controllers.brand.Badges
 import controllers.core.People
-import models.brand.Badge
+import models.brand.{Badge, PeerCredit}
 import org.joda.time.DateTime
-import play.api.libs.json.{JsValue, Json, JsObject}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 case class Notification(id: Option[Long],
                         personId: Long,
@@ -37,6 +37,14 @@ case class Notification(id: Option[Long],
                         created: DateTime = DateTime.now()) {
 
   def render: String = typ match {
+    case NotificationType.CreditReceived =>
+      val img = (body \ "img").get.as[String]
+      val name = (body \ "name").get.as[String]
+      val giver = (body \ "giver").get.as[String]
+      val amount = (body \ "amount").get.as[Int]
+      val url = (body \ "url").get.as[String]
+      views.html.v2.core.notification.creditReceived(img, name, url, amount, giver).toString()
+
     case NotificationType.NewBadge =>
       val img = (body \ "img").get.as[String]
       val name = (body \ "name").get.as[String]
@@ -64,11 +72,23 @@ trait INotification {
 }
 
 object NotificationType {
+  val CreditReceived = "credit-received"
   val NewBadge = "new-badge"
   val NewFacilitator = "new-facilitator"
   val NewPersonalBadge = "new-personal-badge"
 }
 
+case class CreditReceived(credit: PeerCredit, giver: String, receiver: Person) extends INotification {
+  override val typ: String = NotificationType.CreditReceived
+
+  def body: JsObject = Json.obj("img" -> People.pictureUrl(receiver),
+    "name" -> receiver.name,
+    "amount" -> credit.amount,
+    "giver" -> giver,
+    "url" -> controllers.core.routes.People.details(receiver.identifier).url)
+
+  def notification(personId: Long): Notification = Notification(None, personId, body, typ)
+}
 case class NewBadge(person: Person, badge: Badge) extends INotification {
   override val typ: String = NotificationType.NewBadge
 
