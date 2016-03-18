@@ -22,10 +22,6 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-function afterEventCancellation(object) {
-   $('#events').find('.active').remove();
-}
-
 
 /**
  * This function collects data from all filters and provides a requests based on their values
@@ -73,10 +69,15 @@ function format(row) {
     var url = jsRoutes.controllers.Events.detailsButtons(row.data().event.id).url;
     $.get(url).done(function (content) {
         row.child(content, 'active').show();
+        $('.js-event-list').trigger('hmt.eventList.show')
     });
 }
 
 $(document).ready( function() {
+
+    $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper",
+    });
 
     var events = $('#events')
       .dataTable({

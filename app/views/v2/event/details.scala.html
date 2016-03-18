@@ -25,7 +25,7 @@
   <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <input type="hidden" disabled id="eventId" value="@event.id"/>
 
-  <div class="row page-content">
+  <div class="row page-content js-event-details">
     <div class="container">
       <div class="row event-details  content-block">
         <div class="col-md-9">
@@ -49,10 +49,13 @@
           <div class="header-block">
             <div class="row">
               <div class="col-md-12">
-                <div class="buttons">
+                <div class="buttons js-event-controls">
                   <div class="buttons-block">
                     @if(!event.confirmed) {
-                      <a href="#" data-id="@event.identifier" class="btn btn-primary event-confirm">
+                      <a href="#"
+                        data-id="@event.identifier"
+                        class="btn btn-primary"
+                        data-event-confirm>
                         Confirm
                       </a>
                     } else {
@@ -66,8 +69,12 @@
                     <a class="btn btn-default" href="@routes.Events.duplicate(event.id.get)">
                       Duplicate
                     </a>
-                    <a data-id="@event.identifier" class="btn btn-default event-cancel"
-                      id="cancelButton" @if(!deletable) {disabled="disabled"} >Cancel</a>
+                    <a data-id="@event.identifier"
+                      class="btn btn-default"
+                      data-event-cancel
+                      id="cancelButton" @if(!deletable) {disabled="disabled"} >
+                      Cancel
+                    </a>
                   </div>
                 </div>
               </div>
@@ -176,9 +183,9 @@
   <script src="@routes.Assets.at("js/participant.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("js/element/events.js")" type="text/javascript"></script>
 
-
   <script src="@routes.Assets.at("js/event/widgets-details/evaluation-dlg.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("js/event/details-page.js")" type="text/javascript"></script>
 
-  <link rel="stylesheet" href="@routes.Assets.at("css/events/events-detail.css")">
+  <script src="@routes.Assets.at("js/package/event-details-page.js")" type="text/javascript"></script>
+  <link rel="stylesheet" href="@routes.Assets.at("css/events/details-page.css")">
 }

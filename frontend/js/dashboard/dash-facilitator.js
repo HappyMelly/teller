@@ -2,5 +2,7 @@
 
 import EventFuture from './../common/_event-block';
 
-EventFuture.plugin('.js-event-future');
+$(function () {
+    EventFuture.plugin('.js-event-future');
+});
 
