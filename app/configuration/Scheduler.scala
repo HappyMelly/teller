@@ -91,7 +91,6 @@ class Scheduler @Inject() (val env: Environment,
       println("INFO: Start of monthly routines")
 
       (new ProfileStrengthReminder(email, repos)).sendToFacilitators()
-      (new ExperimentReminder(email, repos)).sendStatus()
       (new BrandReminder(email, repos)).sendLicenseExpirationReminder()
 
       println("INFO: End of monthly routines")
