@@ -33,7 +33,7 @@ export default class Widget {
         this.$root
             .on('click', '[data-setcredit-activate]', this._onClickActivate.bind(this))
             .on('click', '[data-setcredit-deactivate]', this._onClickDeActivate.bind(this))
-            .on('click', '[data-setcredit-form]', this._onClickSaveCredit.bind(this))
+            .on('submit', '[data-setcredit-form]', this._onClickSaveCredit.bind(this))
     }
 
     _onClickActivate(e) {
