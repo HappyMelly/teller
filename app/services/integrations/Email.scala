@@ -33,14 +33,19 @@ import play.api.{Logger, Play}
 
 trait EmailComponent  {
 
-  def send(to: Set[_ <: Recipient],
-           cc: Option[Set[_ <: Recipient]] = None,
-           bcc: Option[Set[_ <: Recipient]] = None,
+  def send(to: Seq[_ <: Recipient], subject: String, body: String, from: String): Unit
+
+  def send(to: Seq[_ <: Recipient],
+           cc: Seq[_ <: Recipient] = Seq(),
+           bcc: Seq[_ <: Recipient] = Seq(),
            subject: String,
            body: String,
-           from: String = "Happy Melly",
-           richMessage: Boolean = false,
+           from: String,
+           richMessage: Boolean = true,
            attachment: Option[(String, String)] = None): Unit
+
+  def sendSystem(to: Seq[_ <: Recipient], subject: String, body: String, from: String = "Happy Melly"): Unit
+
 }
 
 /**
@@ -50,25 +55,33 @@ trait EmailComponent  {
 class Email @Inject() (@Named("email") emailActor: ActorRef) extends EmailComponent {
 
   /**
+    * Sends system email
+    */
+  def sendSystem(to: Seq[_ <: Recipient], subject: String, body: String, from: String = "Happy Melly"): Unit = {
+    val mailFrom = from + " " + EmailActor.from
+    send(to, subject = subject, body = body, from = mailFrom, richMessage = true)
+  }
+
+  def send(to: Seq[_ <: Recipient], subject: String, body: String, from: String): Unit =
+    send(to, subject = subject, body = body, from = from, richMessage = true)
+
+  /**
    * Sends an e-mail message asynchronously using an actor.
    */
-  def send(to: Set[_ <: Recipient],
-           cc: Option[Set[_ <: Recipient]] = None,
-           bcc: Option[Set[_ <: Recipient]] = None,
+  def send(to: Seq[_ <: Recipient],
+           cc: Seq[_ <: Recipient] = Seq(),
+           bcc: Seq[_ <: Recipient] = Seq(),
            subject: String,
            body: String,
-           from: String = "Happy Melly",
-           richMessage: Boolean = false,
+           from: String,
+           richMessage: Boolean = true,
            attachment: Option[(String, String)] = None): Unit = {
     val toAddresses = to.map(p ⇒ s"${p.fullName} <${p.email}>")
-    val ccAddresses = cc.map(_.map(p ⇒ s"${p.fullName} <${p.email}>"))
-    val bccAddresses = bcc.map(_.map(p ⇒ s"${p.fullName} <${p.email}>"))
-    val mailFrom = from + " " + EmailActor.from
+    val ccAddresses = cc.map(p ⇒ s"${p.fullName} <${p.email}>")
+    val bccAddresses = bcc.map(p ⇒ s"${p.fullName} <${p.email}>")
 
-    val message = EmailActor.EmailMessage(toAddresses.toList,
-      ccAddresses.map(_.toList).getOrElse(List[String]()),
-      bccAddresses.map(_.toList).getOrElse(List[String]()),
-      mailFrom, subject, body, richMessage, attachment)
+    val message = EmailActor.EmailMessage(toAddresses, ccAddresses, bccAddresses,
+      from, subject, body, richMessage, attachment)
     emailActor ! message
   }
 
@@ -79,9 +92,9 @@ object EmailActor {
   def props = Props[EmailActor]
   val from = Play.configuration.getString("mail.from").getOrElse(sys.error("mail.from not configured"))
 
-  case class EmailMessage(to: List[String],
-    cc: List[String],
-    bcc: List[String],
+  case class EmailMessage(to: Seq[String],
+    cc: Seq[String],
+    bcc: Seq[String],
     from: String,
     subject: String,
     body: String,

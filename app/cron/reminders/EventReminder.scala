@@ -32,14 +32,14 @@ import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
 import play.api.Play
 import play.api.Play.current
-import services.integrations.{Email, Integrations}
+import services.integrations.{Email, EmailComponent, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Contains methods for notifying Teller users about the status of their events
  */
-class EventReminder @Inject() (val email: Email, val repos: Repositories) extends Integrations {
+class EventReminder @Inject() (val email: EmailComponent, val repos: Repositories) extends Integrations {
 
   /**
    * Sends email notifications to facilitators asking to confirm or delete
@@ -52,17 +52,8 @@ class EventReminder @Inject() (val email: Email, val repos: Repositories) extend
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
           val body = mail.templates.event.html.confirm(event, brand, url).toString()
-          email.send(
-            event.facilitators(repos).toSet,
-            None,
-            None,
-            subject,
-            body,
-            from = brand.name,
-            richMessage = true)
-          val msg = "confirmation email for event %s (id = %s)".format(
-            event.title,
-            event.id.get.toString)
+          email.send(event.facilitators(repos), subject, body, brand.sender)
+          val msg = "confirmation email for event %s (id = %s)".format(event.title, event.id.get.toString)
           Activity.insert("Teller", Activity.Predicate.Sent, msg)(repos)
         }
       }
@@ -86,7 +77,7 @@ class EventReminder @Inject() (val email: Email, val repos: Repositories) extend
               val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
               val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)(repos)
               val subject = s"Upcoming ${brand.name} events"
-              email.send(Set(request), None, None, subject, body.toString(), from = brand.name, richMessage = true)
+              email.send(Seq(request), subject, body.toString(), brand.sender)
             }
           }
         }
@@ -109,13 +100,7 @@ class EventReminder @Inject() (val email: Email, val repos: Repositories) extend
           val subject = "Confirm your event " + event.title
           val url = Play.configuration.getString("application.baseUrl").getOrElse("")
           val body = mail.templates.event.html.confirmUpcoming(event, brand, url).toString()
-          email.send(
-            event.facilitators(repos).toSet,
-            None,
-            None,
-            subject,
-            body,
-            richMessage = true)
+          email.send(event.facilitators(repos), subject, body, brand.sender)
           val msg = "upcoming confirmation email for event %s (id = %s)".format(
             event.title,
             event.id.get.toString)

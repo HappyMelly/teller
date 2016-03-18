@@ -38,7 +38,8 @@
                     @v2.html.text(form("webSite"), '_label -> "Web site")
                     @v2.html.text(form("blog"), '_label -> "Blog")
                     <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value.exists(_.toBoolean)">
-                    @v2.html.email(form("email"), '_label -> "E-mail address", '_required -> true, '_help -> "")
+                    @v2.html.email(form("email"), '_label -> "E-mail address", '_required -> true,
+                        '_help -> "Used in 'from' field in emails to you, facilitators and attendees")
                 }
                 @v2.html.block("Social Profile") {
                     @defining(form("profile.twitterHandle")) { field =>

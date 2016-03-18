@@ -53,7 +53,7 @@ class MembershipReminder @Inject()(val email: Email, val repos: Repositories) ex
       else
         repos.org.people(member.objectId).map(_.head)
       recipient map { value =>
-        email.send(Set(value), None, None, subject, body, richMessage = true)
+        email.sendSystem(Seq(value), subject, body)
       }
     }
     println(s"INFO: Stop sending one month expiration reminders to ${validMembers.length} members")
@@ -74,7 +74,7 @@ class MembershipReminder @Inject()(val email: Email, val repos: Repositories) ex
       else
         repos.org.people(member.objectId).map(_.head)
       recipient map { value =>
-        email.send(Set(value), None, None, subject, body, richMessage = true)
+        email.sendSystem(Seq(value), subject, body)
       }
     }
   }

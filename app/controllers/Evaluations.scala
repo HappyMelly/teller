@@ -302,10 +302,8 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
       } else if (attendee.certificate.isEmpty) {
         val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
         val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
-        email.send(Set(attendee),
-          Some(event.facilitators(repos).toSet),
-          Some(bcc.toSet),
-          subject, body, from = withSettings.brand.name, richMessage = true, None)
+        email.send(Seq(attendee), event.facilitators(repos), bcc,
+          subject, body, from = withSettings.brand.sender, richMessage = true)
       } else {
         val cert = new Certificate(evaluation.handled, event, attendee, renew = true)
         cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
@@ -324,11 +322,8 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     repos.cm.brand.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
       val bcc = view.coordinators.filter(_._2.notification.evaluation).map(_._1)
       val subject = s"Your ${view.brand.name} certificate"
-      email.send(Set(attendee),
-        Some(event.facilitators(repos).toSet),
-        Some(bcc.toSet), subject,
-        mail.templates.evaluation.html.rejected(view.brand, attendee, rejector).toString(),
-        richMessage = true)
+      val body = mail.templates.evaluation.html.rejected(view.brand, attendee, rejector).toString()
+      email.send(Seq(attendee), event.facilitators(repos), bcc, subject, body, view.brand.sender)
     }
   }
 }

@@ -68,6 +68,8 @@ case class Brand(id: Option[Long],
    * Returns type of this object
    */
   def objectType: String = Activity.Type.Brand
+
+  val sender: String = s"$name <$contactEmail>"
 }
 
 case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])

@@ -26,6 +26,7 @@ package cron.reminders
 
 import javax.inject.Inject
 
+import controllers.Utilities
 import models.repository.Repositories
 import models.{Activity, ProfileStrength}
 import play.api.Play
@@ -62,9 +63,9 @@ class ProfileStrengthReminder @Inject() (val email: Email, val repos: Repositori
     peopleWithRanks map { people =>
       for ((person, (strength, rank)) <- people) {
         val subject = "Make your profile shine"
-        val url = Play.configuration.getString("application.baseUrl").getOrElse("") + "/profile"
+        val url = Utilities.fullUrl("/profile")
         val body = mail.templates.html.profileStrength(person.firstName, rank, strength, url).toString()
-        email.send(Set(person), None, None, subject, body, richMessage = true)
+        email.sendSystem(Seq(person), subject, body)
         val msg = "profile strength reminder email for facilitator %s (id = %s)".format(
           person.fullName,
           person.id.get.toString)

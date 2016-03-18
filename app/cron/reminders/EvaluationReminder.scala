@@ -83,9 +83,8 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
    */
   def sendEvaluationRequest(attendee: Attendee, brand: Brand, body: String): Unit = {
     val subject = "Your Opinion Counts!"
-    email.send(Set(attendee), None, None, subject,
-      mail.templates.evaluation.html.request(brand, attendee, body).toString(),
-      from = brand.name, richMessage = true)
+    val content = mail.templates.evaluation.html.request(brand, attendee, body).toString()
+    email.send(Seq(attendee), subject, content, brand.sender)
   }
 
   /**
@@ -102,8 +101,7 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
       map(x ⇒ if (x.endsWith("/")) x else x + "/").
       getOrElse("https://" + hook).
       concat(token)
-    email.send(Set(attendee), None, None, subject,
-      mail.templates.evaluation.html.confirm(brand, attendee.fullName, url).toString(),
-      from = brand.name, richMessage = true)
+    val content = mail.templates.evaluation.html.confirm(brand, attendee.fullName, url).toString()
+    email.send(Seq(attendee), subject, content, brand.sender)
   }
 }

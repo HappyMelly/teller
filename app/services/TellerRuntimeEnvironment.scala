@@ -79,6 +79,6 @@ class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: E
     }
 
     val recipient = NoNameRecipient(emailAddress)
-    email.send(Set(recipient), None, None, subject, body._2.map(html => html.body).getOrElse(""), fromAddress, true)
+    email.sendSystem(Seq(recipient), subject, body._2.map(html => html.body).getOrElse(""), fromAddress)
   }
 }

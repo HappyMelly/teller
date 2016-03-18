@@ -223,8 +223,7 @@ case class  Evaluation(id: Option[Long],
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
         val url = Utilities.fullUrl(controllers.routes.Evaluations.details(this.identifier).url)
         val body = mail.templates.evaluation.html.details(this, event, attendee, brand, url)(messages)
-        email.send(event.facilitators(services).toSet, Some(cc.toSet), None, subject,
-          body.toString(), richMessage = true)
+        email.send(event.facilitators(services), cc, Seq(), subject, body.toString(), brand.sender)
 
         this
     }

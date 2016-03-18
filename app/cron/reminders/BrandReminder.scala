@@ -26,14 +26,14 @@ package cron.reminders
 import javax.inject.Inject
 
 import models.repository.Repositories
-import services.integrations.{Email, Integrations}
+import services.integrations.{Email, EmailComponent, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Contains methods for notifying Teller users about brand-related events
   */
-class BrandReminder @Inject() (val email: Email, val repos: Repositories) extends Integrations {
+class BrandReminder @Inject() (val email: EmailComponent, val repos: Repositories) extends Integrations {
 
   def sendLicenseExpirationReminder(): Unit = {
     (for {
@@ -42,12 +42,11 @@ class BrandReminder @Inject() (val email: Email, val repos: Repositories) extend
     } yield (brands, licenses)) map { case (brands, licenses) =>
       brands.filter(_.settings.licenseExpirationEmail).foreach { view =>
         val facilitatorIds = licenses.filter(_.expiring).map(_.licenseeId).distinct
+        val body = mail.templates.brand.html.licenseExpiring(view.brand, view.settings.licenseExpirationEmailBody.get).toString()
         repos.person.find(facilitatorIds) map { people =>
           people.foreach { person =>
             val subject = s"Your ${view.brand.name} License Expires This Month"
-            email.send(Set(person), None, None, subject,
-              mail.templates.brand.html.licenseExpiring(view.brand, view.settings.licenseExpirationEmailBody.get).toString(),
-              from = view.brand.name, richMessage = true)
+            email.send(Seq(person), subject, body, view.brand.sender)
           }
         }
       }

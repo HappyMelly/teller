@@ -92,14 +92,8 @@ case class Certificate(issued: Option[LocalDate], event: Event, attendee: Attend
     val body = mail.templates.evaluation.html.approved(brand.brand, attendee, approver).toString()
     val subject = s"Your ${brand.brand.name} certificate"
     val bcc = brand.coordinators.filter(_._2.notification.certificate).map(_._1)
-    email.send(Set(attendee),
-      Some(event.facilitators(services).toSet),
-      Some(bcc.toSet),
-      subject,
-      body,
-      from = brand.brand.name,
-      richMessage = true,
-      Some((file.getPath, name)))
+    email.send(Seq(attendee), event.facilitators(services), bcc,
+      subject, body, brand.brand.sender, attachment = Some((file.getPath, name)))
   }
 
   /**
