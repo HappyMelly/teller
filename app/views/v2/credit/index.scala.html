@@ -1,15 +1,15 @@
 @(user: ActiveUser, brands: List[Brand])(implicit request: Request[Any], flash: Flash, handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @v2.main("Credit", "Credit", user) {
-    <div class="container page-peer ">
+    <div class="container page-peer js-credit-page">
 
-        <div class="b-creditnav js-sidemenu-tabs">
+        <div class="b-creditnav js-credits-tabs">
             @for((brand, index) <- brands.zipWithIndex) {
-                <a href="#@brand.uniqueName" role="tab"
-                class="b-creditnav__i "
-                data-href="@controllers.brand.routes.Credits.credits(brand.identifier)"
-                data-menuside>
-                @brand.name
+                <a href="#@brand.uniqueName"
+                    class="b-creditnav__i "
+                    data-href="@controllers.brand.routes.Credits.credits(brand.identifier)"
+                    data-tab-link>
+                    @brand.name
                 </a>
             }
         </div>
@@ -20,6 +20,6 @@
         }
         </div>
     </div>
-    <link rel="stylesheet" href="@routes.Assets.at("css/person/credit-page.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("css/credits/credit-page.css")">
     <script src="@routes.Assets.at("js/package/credit-page.js")"></script>
 }
