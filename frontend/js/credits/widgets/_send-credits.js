@@ -43,7 +43,7 @@ export default class Widget{
             minChars: 3,
             preserveInput: true,            
             onSelect: function (suggestion) {
-                locals.$to.val(suggestion.name);
+                locals.$to.val(suggestion.value);
                 locals.$toData.val(suggestion.data);
                 return true;
             }
