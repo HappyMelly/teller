@@ -101,7 +101,7 @@ $(document).ready( function() {
         hashDefault: 'details'
     });
 
-    $('.js-organization-menu').on('hmt.tab.shown', function(){
+    App.events.sub('hmt.tab.shown', function(){
         initializeActions();
     });
 });

@@ -37,41 +37,44 @@ export default class Widget {
     }
 
     _onClickActivate(e) {
+        const self = this;
         e.preventDefault();
 
-        this._sendActivate(this.brandId)
+        self._sendActivate(self.brandId)
             .done(()=> {
-                this.$root.addClass('b-setcredit_state_active');
+                self.$root.addClass('b-setcredit_state_active');
             })
     }
 
     _onClickDeActivate(e) {
+        const self = this;
         e.preventDefault();
 
-        this._sendDeActivate(this.brandId)
+        self._sendDeActivate(self.brandId)
             .done(()=> {
-                this.$root.removeClass('b-setcredit_state_active');
+                self.$root.removeClass('b-setcredit_state_active');
             })
     }
 
     _onClickSaveCredit(e) {
+        const self = this;
         e.preventDefault();
 
-        if (!this.isFormValid()) return;
+        if (!self.isFormValid()) return;
 
-        this._sendFormData()
+        self._sendFormData()
             .done(()=> {
-                this.validation.clearForm();
+                self.validation.clearForm();
                 success('Set credits was successfull');
             })
             .fail((response)=> {
                 const data = $.parseJSON(response.responseText).data;
-                const errorText = this.validation.getErrorsText(data.errors);
+                const errorText = self.validation.getErrorsText(data.errors);
 
                 if (!data.errors) return;
 
-                this.locals.$error.text(errorText);
-                this.validation.setErrors(data.errors);
+                self.locals.$error.text(errorText);
+                self.validation.setErrors(data.errors);
             })
     }
 

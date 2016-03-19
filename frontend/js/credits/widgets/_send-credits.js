@@ -10,7 +10,7 @@ export default class Widget{
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
-        this.validation = new FormHelper(this.$root.find('input[type="text"]'));
+        this.validation = new FormHelper(this.$root.find('.b-credits__input'));
 
         if (!Boolean($.fn.autocomplete)){
             console.log('jQuery autocomplete plugin is not include into page');
@@ -58,26 +58,27 @@ export default class Widget{
 
     _onSubmitForm(e) {
         e.preventDefault();
+        const self = this;
 
-        if (!this._isFormValid()) return false;
+        if (!self._isFormValid()) return false;
 
-        this._sendRequest()
+        self._sendRequest()
             .done(() => {
-                this.validation.clearForm();
+                self.validation.clearForm();
 
-                this.$root.addClass('b-credits_state_send');
+                self.$root.addClass('b-credits_state_send');
                 setTimeout(()=> {
-                    this.$root.removeClass('b-credits_state_send');
+                    self.$root.removeClass('b-credits_state_send');
                 }, 3000)
             })
             .fail((response) => {
                 const data = $.parseJSON(response.responseText).data;
-                const errorText = this.validation.getErrorsText(data.errors);
+                const errorText = self.validation.getErrorsText(data.errors);
 
                 if (!data.errors) return;
-                
-                this.locals.$error.text(errorText);
-                this.validation.setErrors(data.errors);
+
+                self.locals.$error.text(errorText);
+                self.validation.setErrors(data.errors);
             })
     }
 

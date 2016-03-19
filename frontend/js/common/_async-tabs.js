@@ -39,13 +39,14 @@ export default class Widget {
     showTabByLink($link){
         const url = $link.attr('data-href');
         const target = $link.attr('href');
+        const self = this;
 
-        this._loadContent(url, target)
+        self._loadContent(url, target)
             .done(  ()=>{
                 $link.addClass('state_active').siblings().removeClass('state_active');
                 $link.tab('show');
 
-                this.$root.trigger('hmt.asynctab.shown');
+                App.events.pub('hmt.asynctab.shown');
             })
     }
 

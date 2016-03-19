@@ -3,8 +3,8 @@
 import SetCredits from "./widgets/_set-credist";
 
 $(function(){
-    $('.js-brand-detail')
-        .on('hmt.tab.shown', function(){
+    App.events
+        .sub('hmt.tab.shown', function(){
             SetCredits.plugin('.js-set-credits');
         })
 });

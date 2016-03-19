@@ -164,7 +164,7 @@ $(document).ready( function() {
         hashDefault: 'general'
     });
     
-    $('.js-brand-menu').on('hmt.tab.shown', function(){
+    App.events.sub('hmt.tab.shown', function(){
         initializeActions();
     });
 
