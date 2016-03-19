@@ -69,7 +69,7 @@ function format(row) {
     var url = jsRoutes.controllers.Events.detailsButtons(row.data().event.id).url;
     $.get(url).done(function (content) {
         row.child(content, 'active').show();
-        $('.js-event-list').trigger('hmt.eventList.show')
+        App.events.pub('hmt.eventList.show')
     });
 }
 

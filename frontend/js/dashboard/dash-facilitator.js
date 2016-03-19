@@ -1,8 +1,10 @@
 'use strict';
 
-import EventFuture from './../common/_event-block';
+import EventBlock from './../common/_event-block';
+import UpcominEvents from './widgets/_upcoming-events';
 
 $(function () {
-    EventFuture.plugin('.js-event-future');
+    EventBlock.plugin('.js-event-future');
+    UpcominEvents.plugin('.js-upcoming-events')
 });
 

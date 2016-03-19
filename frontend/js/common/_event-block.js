@@ -5,6 +5,7 @@ export default class Widget {
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
+        this.$confirmDialog = null;
 
         this._assignEvents();
     }
@@ -37,24 +38,29 @@ export default class Widget {
     _onClickCancel(e) {
         e.preventDefault();
         const eventId = this.locals.$cancel.data('id');
+        const self = this;
 
         this._sendCancel(eventId)
             .done((response)=>{
-                this.$confirmDialog = this._createDialog(response);
-
-                this.$confirmDialog.modal('show');
+                self.$confirmDialog = self._createDialog(response);
+                self.$confirmDialog.modal('show');
             })
     }
 
     _onClickAcceptCancel(e){
         e.preventDefault();
 
+        const self = this;
         const formData = $("#cancelForm").serialize();
         const eventId = this.locals.$cancel.data('id');
+
         this._sendAcceptCancel(formData, eventId)
             .done(()=>{
-                this.$confirmDialog.modal('hide');
-                this.$root.trigger('hmt.event.cancel');
+                self.$confirmDialog
+                    .on('hidden.bs.modal', ()=>{
+                        App.events.pub('hmt.event.cancel');
+                    })
+                    .modal('hide');
 
                 success("Event was successfully canceled");
             })
@@ -71,7 +77,7 @@ export default class Widget {
             .append(content);
 
         $dialog.appendTo(this.$root);
-        return $dialog
+        return $dialog;
     }
 
     //transport

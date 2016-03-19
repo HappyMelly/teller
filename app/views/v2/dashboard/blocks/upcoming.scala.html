@@ -2,11 +2,11 @@
 
 @import views.ViewHelpers.dateInterval
 
-<div class="row block">
+<div class="row block js-upcoming-events">
   <div class="col-md-12">
     <h4>Upcoming events (<span class="upcoming-number">@events.length</span>)</h4>
 
-    <div class="b-eventlist">
+    <div class="b-eventlist ">
     @for(((event, brand), index) <- events.zipWithIndex) {
       <div class="b-eventfut js-event-future">
         @if(withBrand) {

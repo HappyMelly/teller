@@ -4,12 +4,13 @@ import EventBlock from "./../common/_event-block";
 
 $(function(){
 
-    $('.js-event-list')       
-        .on('hmt.eventList.show', ()=>{
-            EventBlock.plugin('.js-events-control');
-        })
-        .on('hmt.event.cancel', ()=>{
+    App.events
+        .sub('hmt.event.cancel', ()=>{
             $('#events').find('.active').remove();
         })
+        .sub('hmt.eventList.show', ()=>{
+            EventBlock.plugin('.js-events-control');
+        })
+
 });
 
