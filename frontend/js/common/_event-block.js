@@ -26,21 +26,22 @@ export default class Widget {
 
     _onClickConfirm(e) {
         e.preventDefault();
-        const eventId = this.locals.$confirm.data('id');
+        const self = this;
+        const eventId = self.locals.$confirm.data('id');
 
-        this._sendConfirm(eventId)
+        self._sendConfirm(eventId)
             .done(()=>{
-                this.locals.$confirm.addClass('disabled').text('Confirmed').off('click');
+                self.locals.$confirm.addClass('disabled').text('Confirmed').off('click');
                 success("Event was successfully confirmed");
             })
     }
 
     _onClickCancel(e) {
         e.preventDefault();
-        const eventId = this.locals.$cancel.data('id');
         const self = this;
+        const eventId = self.locals.$cancel.data('id');
 
-        this._sendCancel(eventId)
+        self._sendCancel(eventId)
             .done((response)=>{
                 self.$confirmDialog = self._createDialog(response);
                 self.$confirmDialog.modal('show');
@@ -52,9 +53,9 @@ export default class Widget {
 
         const self = this;
         const formData = $("#cancelForm").serialize();
-        const eventId = this.locals.$cancel.data('id');
+        const eventId = self.locals.$cancel.data('id');
 
-        this._sendAcceptCancel(formData, eventId)
+        self._sendAcceptCancel(formData, eventId)
             .done(()=>{
                 self.$confirmDialog
                     .on('hidden.bs.modal', ()=>{
