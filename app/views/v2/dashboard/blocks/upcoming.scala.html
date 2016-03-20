@@ -8,7 +8,7 @@
 
     <div class="b-eventlist ">
     @for(((event, brand), index) <- events.zipWithIndex) {
-      <div class="b-eventfut js-event-future">
+      <div class="b-eventfut">
         @if(withBrand) {
           @brand.map { value =>
             <div class="b-eventfut__brand">@value.name</div>
@@ -30,7 +30,7 @@
             @v2.element.location(event.location)
           </div>
         </div>
-        <div class="b-eventfut__buttons">
+        <div class="b-eventfut__buttons  js-event-future">
           @if(event.confirmed) {
             <span class="link-confirmed">Confirmed</span>
           } else {

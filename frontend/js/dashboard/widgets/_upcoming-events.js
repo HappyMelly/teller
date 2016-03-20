@@ -29,7 +29,7 @@ export default class Widget {
 
         return $elems.each(function (index, el) {
             let $element = $(el);
-            let data     = $element.data('widget');
+            let data     = $element.data('hmt.events.upcoming');
 
             if (!data) {
                 data = new Widget(el);
