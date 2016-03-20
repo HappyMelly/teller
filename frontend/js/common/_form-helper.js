@@ -117,7 +117,7 @@ export default class FormHelper {
         arrErrors.forEach((item) => {
             const name = item.name[0].toUpperCase() + item.name.substr(1);
 
-            errorTxt += `${name} value is ${item.error.toLowerCase()}. `;
+            errorTxt += `${name}: ${item.error}. `;
         });
 
         return errorTxt;

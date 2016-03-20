@@ -1,6 +1,6 @@
 'use strict';
 
-import SetCredits from "./widgets/_set-credist";
+import SetCredits from "./widgets/_set-credits";
 
 $(function(){
     App.events

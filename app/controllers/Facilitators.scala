@@ -25,14 +25,13 @@ package controllers
 
 import java.text.Collator
 import java.util.Locale
-import javax.inject.{Named, Inject}
+import javax.inject.{Inject, Named}
 
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import models.UserRole.Role
 import models._
-import models.brand.Badge
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.data.Form
@@ -255,6 +254,21 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
           repos.person.collection.organisations(facilitators)
         }
         ok(Json.toJson(facilitators.sortBy(_.fullName.toLowerCase)(ord)))
+      }
+  }
+
+  def search(brandId: Long, query: Option[String]) = RestrictedAction(Role.Viewer) { implicit request => implicit handler =>
+    implicit user =>
+      implicit val personWrites = new Writes[Person] {
+        def writes(person: Person): JsValue = Json.obj(
+          "value" -> person.fullName,
+          "data" -> person.identifier)
+      }
+
+      repos.license.allLicensees(brandId) flatMap { facilitators =>
+        val queried = facilitators.filter(_.fullName.toLowerCase.contains(query.getOrElse("").toLowerCase))
+        val response = Json.obj("suggestions" -> queried.sortBy(_.fullName))
+        jsonOk(response)
       }
   }
 

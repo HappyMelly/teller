@@ -12,7 +12,7 @@ export default class Widget {
         this.$root = $(selector);
         this.locals = this._getDom();
         this.brandId = this.$root.data('brand-id');
-        this.validation = new FormHelper(this.locals.$input)
+        this.validation = new FormHelper(this.locals.$input);
 
         this._assignEvents();
     }
@@ -65,7 +65,7 @@ export default class Widget {
         self._sendFormData()
             .done(()=> {
                 self.validation.clearForm();
-                success('Set credits was successfull');
+                success('Credit limit was updated');
             })
             .fail((response)=> {
                 const data = $.parseJSON(response.responseText).data;
@@ -80,13 +80,13 @@ export default class Widget {
 
     isFormValid() {
         const locals = this.locals;
-        const isValidCredit =  (locals.$input.val().length > 0);
+        const isValidCredit = (locals.$input.val() > 0);
         let valid = true;
         let errorText = '';
 
-        if (isValidCredit){
+        if (!isValidCredit){
             valid = false;
-            errorText += 'Spending limit has to be above 0. We recomend set in 100.';
+            errorText += 'Spending limit has to be above 0. We recommend set in 100.';
             this.validation._setError(locals.$input);
         }
         
@@ -99,12 +99,12 @@ export default class Widget {
 
     // transport
     _sendActivate(brandId) {
-        var url = '/activate/' + brandId;
+        var url = jsRoutes.controllers.brand.Credits.activate(brandId).url;
         return $.post(url, {brandid: brandId});
     }
 
     _sendDeActivate(brandId) {
-        var url = '/deactivate/' + brandId;
+        var url = jsRoutes.controllers.brand.Credits.deactivate(brandId).url;
         return $.post(url, {brandid: brandId});
     }
 
@@ -112,7 +112,7 @@ export default class Widget {
         const locals = this.locals;
 
         return $.post(locals.$form.attr('action'), {
-            credits: locals.$input.val()
+            limit: locals.$input.val()
         })
     }
 

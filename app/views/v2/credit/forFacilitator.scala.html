@@ -11,9 +11,10 @@
     </div>
 </div>
 <div class="page-peer__left">
-    <form class="b-credits js-form-credit" action="@controllers.brand.routes.Credits.give(facilitator.brandId)">
+    <form class="b-credits js-form-credit" data-brand-id="@facilitator.brandId"
+        action="@controllers.brand.routes.Credits.give(facilitator.brandId)">
         <div class="b-credits__title">
-            You can spend <span data-credict-count>@creditsLeft</span> more bonuses this month
+            You can spend <span data-credict-count>@creditsLeft</span> more credits this month
         </div>
         <div class="b-credits__i">
             <div class="b-credits__value type-credit" data-credit-item>
@@ -26,7 +27,7 @@
                 <span class="b-credits__value-hint">
                     To
                 </span>
-                <input type="text" name="to" class="b-credits__input" placeholder="Name or email" data-credit-to>
+                <input type="text" name="to" class="b-credits__input" placeholder="Name" data-credit-to>
                 <input type="hidden" name="to-data" data-credit-to-data>
             </div>
         </div>
@@ -42,7 +43,7 @@
         <div class="b-credits__error" data-credit-error></div>
 
         <div class="b-credits__send" >
-            You have send bonuses successfully!
+            You have sent credits successfully!
         </div>
     </form>
     @views.html.v2.credit.feed(user, feed)

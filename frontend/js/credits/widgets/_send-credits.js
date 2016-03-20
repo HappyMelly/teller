@@ -35,8 +35,8 @@ export default class Widget{
 
     _initAutoComplete() {
         const locals = this.locals;
-        const url = jsRoutes.controllers.core.Organisations.search().url;
-        
+        const url = jsRoutes.controllers.Facilitators.search(this.$root.attr('data-brand-id')).url;
+
         locals.$to.autocomplete({
             serviceUrl: url,
             paramName: 'query',
@@ -95,7 +95,7 @@ export default class Widget{
 
         if (!isEnoughCredits) {
             valid = false;
-            errorText += 'You cann’t give more than ' + locals.$count.text() + ' credits. ';
+            errorText += 'You cannot give more than ' + locals.$count.text() + ' credits. ';
         }
 
         if (!valid) {
@@ -108,10 +108,9 @@ export default class Widget{
     _sendRequest() {
         return $.post(this.$root.attr('action'),
             {
-                give: this.locals.$value.val(),
-                to: this.locals.$to.val(),
-                todata: this.locals.$toData.val(),
-                message: this.locals.$message.val()
+                amount: this.locals.$value.val(),
+                to: this.locals.$toData.val(),
+                reason: this.locals.$message.val()
             }
         );
     }

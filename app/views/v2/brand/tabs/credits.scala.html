@@ -1,6 +1,6 @@
-@(active: Boolean, monthLimit: Int)
+@(brandId: Long, active: Boolean, monthLimit: Int)
 
-<div class="b-setcredit js-set-credits" data-brand-id="10">
+<div class="b-setcredit js-set-credits @if(active) {b-setcredit_state_active}" data-brand-id="@brandId">
     <h4 class="b-setcredit__title">Set credits</h4>
     <p>
         You can activate and set a number of credits, so facilitators can show their
@@ -21,10 +21,10 @@
             Deactivate
         </a>
 
-        <form action="#" class="b-setcredit__form" data-setcredit-form>
+        <form action="@controllers.brand.routes.Credits.update(brandId)" class="b-setcredit__form" data-setcredit-form>
             <div class="b-setcredit__inner">
                 Spending limit for person is
-                <input type="text" name="credits" class="b-setcredit__input form-control" value="0" data-setcredit-input />
+                <input type="number" name="limit" class="b-setcredit__input form-control" value="100" data-setcredit-input />
                  credits per month.
                 <button type="submit" class="b-setcredit__submit btn btn-primary">Save</button>
             </div>

@@ -121,8 +121,8 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def give(brandId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
     val form = Form(mapping(
-      "receiverId" -> longNumber(min = 1).
-        verifying("You cannot give credits to yourself", value => value == user.person.identifier),
+      "to" -> longNumber(min = 1).
+        verifying("You cannot give credits to yourself", value => value != user.person.identifier),
       "amount" -> number(min = 1),
       "reason" -> nonEmptyText)(FormData.apply)(FormData.unapply))
 
@@ -182,7 +182,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
     repos.brand.findWithSettings(brandId) flatMap {
       case None => notFound("Brand not found")
       case Some(view) =>
-        ok(views.html.v2.brand.tabs.credits(view.settings.credits, view.settings.creditLimit))
+        ok(views.html.v2.brand.tabs.credits(brandId, view.settings.credits, view.settings.creditLimit))
     }
   }
 
