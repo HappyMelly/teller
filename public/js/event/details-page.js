@@ -40,12 +40,7 @@ function updateOrganizer(id) {
     }
 }
 
-/**
- * Functions is called from 'cancelEvent' function
- */
-function afterEventCancellation() {
-    window.location.replace(jsRoutes.controllers.Events.index($('#brandId').val()).url);
-}
+
 
 $(document).ready( function() {
 

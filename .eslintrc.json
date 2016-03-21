@@ -2,5 +2,12 @@
   "env": {
     "browser": true
   },
-  "extends": "eslint:recommended"
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "extends": "eslint:recommended",
+  "globals": {
+    "$": true
+  }
 }

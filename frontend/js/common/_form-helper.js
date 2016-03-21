@@ -12,7 +12,18 @@ export default class FormHelper {
     }
 
     _assignEvents() {
-        this.$inputs.on('input', (e) => this._removeError($(e.target)));
+        this.$inputs.on('input', (e) => {
+            const $input = $(e.currentTarget);
+
+            this._validateImmediate($input);
+            this._removeError($input);
+        });
+    }
+
+    _validateImmediate($input){
+        if ($input.hasClass('type-numeric')) {
+            $input.val($input.val().replace(/[^\d]+/g, ''));
+        }
     }
 
     isValidInputs() {
@@ -44,6 +55,7 @@ export default class FormHelper {
             this._setError($input, 'Email is not valid');
             return false;
         }
+
         return true;
     }
 
@@ -117,7 +129,7 @@ export default class FormHelper {
         arrErrors.forEach((item) => {
             const name = item.name[0].toUpperCase() + item.name.substr(1);
 
-            errorTxt += `${name} value is ${item.error.toLowerCase()}. `;
+            errorTxt += `${name}: ${item.error}. `;
         });
 
         return errorTxt;

@@ -32,19 +32,21 @@ import scala.concurrent.Future
  * Represents facilitator entity
  */
 case class Facilitator(id: Option[Long] = None,
-  personId: Long,
-  brandId: Long,
-  yearsOfExperience: Int = 0,
-  numberOfEvents: Int = 0,
-  publicRating: Float = 0.0f,
-  privateRating: Float = 0.0f,
-  publicMedian: Float = 0.0f,
-  privateMedian: Float = 0.0f,
-  publicNps: Float = 0.0f,
-  privateNps: Float = 0.0f,
-  numberOfPublicEvaluations: Int = 0,
-  numberOfPrivateEvaluations: Int = 0,
-  badges: List[Long] = List())
+                      personId: Long,
+                      brandId: Long,
+                      yearsOfExperience: Int = 0,
+                      numberOfEvents: Int = 0,
+                      publicRating: Float = 0.0f,
+                      privateRating: Float = 0.0f,
+                      publicMedian: Float = 0.0f,
+                      privateMedian: Float = 0.0f,
+                      publicNps: Float = 0.0f,
+                      privateNps: Float = 0.0f,
+                      numberOfPublicEvaluations: Int = 0,
+                      numberOfPrivateEvaluations: Int = 0,
+                      badges: List[Long] = List(),
+                       creditsGiven: Int = 0,
+                       creditsReceived: Int = 0)
 
 object Facilitator {
 

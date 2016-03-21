@@ -1,12 +1,9 @@
 @(id: Long)
-<div class="modal-dialog">
-  <div class="modal-content">
-    <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-      <h4>Cancel event</h4>
-    </div>
-    <div class="modal-body">
-      <form class="" id="cancelForm" action="" method="post">
+<div class="b-modal__dlg modal-dialog">
+  <a href="#" class="b-modal__close" data-dismiss="modal" aria-hidden="true">×</a>
+  <div class="b-modal__content">
+      <div class="b-modal__title">Cancel event</div>
+      <form id="cancelForm" action="" method="post">
         <p>We want to help you to promote your events and make your potential
         participants happier. To find out how to do it better we need your support.
         We appreciate if you share with us as much information as possible about the event
@@ -29,10 +26,10 @@
           <textarea name="details" id="reason" class="form-control" rows="5"></textarea>
         </div>
       </form>
+
+      <div class="text-right">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+        <a data-id="@id" class="btn btn-danger" id="eventCancelButton" href="#">Cancel Event</a>
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-      <a data-id="@id" class="btn btn-danger" id="eventCancelButton" href="#">Cancel Event</a>
-    </div>
-  </div>
 </div>

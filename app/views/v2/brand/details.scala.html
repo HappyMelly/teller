@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row js-brand-detail">
         <div class="container">
             <div class="left">
                 <div id="brandState" data-value="@brand.active"></div>
@@ -78,21 +78,19 @@
                         </div>
                         <a href="#general"
                             class="b-sidemenu__link"
-                            role="tab">
+                            data-menuside>
                             General
                         </a>
                         <a data-href="@routes.Brands.renderTabs(brand.id.get, "testimonials")"
                             href="#testimonials"
                             class="b-sidemenu__link"
-                            role="tab"
-                            data-toggle="tab">
+                            data-menuside>
                             Testimonials
                         </a>
                         <a data-href="@routes.Brands.renderTabs(brand.id.get, "products")"
                             href="#products"
                             class="b-sidemenu__link"
-                            role="tab"
-                            data-toggle="tab">
+                            data-menuside>
                             Products
                         </a>
                     </div>
@@ -104,42 +102,43 @@
                             </div>
                             <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "team")"
                                 href="#team"
-                                role="tab"
                                 class="b-sidemenu__link"
-                                data-toggle="tab">
+                                data-menuside>
                                 Team
                             </a>
                             <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "types")"
-                                href="#types" role="tab"
+                                href="#types"
                                 class="b-sidemenu__link"
-                                data-toggle="tab">
+                                data-menuside>
                                 Event Types
                             </a>
                             <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "templates")"
                                 href="#templates"
                                 class="b-sidemenu__link"
-                                role="tab"
-                                data-toggle="tab">
+                                data-menuside>
                                 Certificate Templates
                             </a>
                             <a href="#integration" role="tab"
-                                class="b-sidemenu__link"
-                                data-toggle="tab">
+                                class="b-sidemenu__link">
                                 Integration
                             </a>
                             <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "licenseExpiration")"
                                 href="#licenseExpiration"
                                 class="b-sidemenu__link"
-                                role="tab"
-                                data-toggle="tab">
+                                data-menuside>
                                 License Expiration Reminder
                             </a>
                             <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "badges")"
                                 href="#badges"
                                 class="b-sidemenu__link"
-                                role="tab"
-                                data-toggle="tab">
+                                data-menuside>
                                 Badges
+                            </a>
+                            <a data-href="@controllers.brand.routes.Credits.settings(brand.identifier)"
+                                href="#credits"
+                                class="b-sidemenu__link"
+                                data-menuside >
+                                Credits
                             </a>
                         </div>
                     }
@@ -165,12 +164,16 @@
                 </div>
                 <div class="tab-pane" id="licenseExpiration"></div>
                 <div class="tab-pane" id="badges"></div>
+                <div class="tab-pane" id="credits"></div>
             </div>
             <div class="right pull-right">
                 <div class="js-completion-widget" ></div>
             </div>
         </div>
     </div>
-    <link rel="stylesheet" href="@routes.Assets.at("css/brand.css")">
+    <link rel="stylesheet" href="@routes.Assets.at("css/brand/brand-page.css")">
+    <script src="@routes.Assets.at("js/package/brand-details-page.js")" type="text/javascript"></script>
+
+
     <script src="@routes.Assets.at("js/brand/details.js")" type="text/javascript"></script>
 }

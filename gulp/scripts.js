@@ -27,7 +27,6 @@ module.exports = function (options, cb) {
         .pipe(gulp.dest(options.dst))
         .on('data', function(){
             if (firstBuild && !config.isBuild){
-                firstBuild = false;
                 cb();
             }
         })

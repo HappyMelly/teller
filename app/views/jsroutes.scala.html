@@ -1,6 +1,8 @@
 @()(implicit request: RequestHeader)
 
 @helper.javascriptRouter("jsRoutes")(
+    controllers.brand.routes.javascript.Credits.activate,
+    controllers.brand.routes.javascript.Credits.deactivate,
     controllers.hm.routes.javascript.Members.updateReason,
     controllers.hm.routes.javascript.Products.activation,
     controllers.core.routes.javascript.Notifications.list,
@@ -57,6 +59,7 @@
     routes.javascript.Facilitators.updateBadges,
     routes.javascript.Facilitators.details,
     routes.javascript.Facilitators.list,
+    routes.javascript.Facilitators.search,
     routes.javascript.Materials.remove,
     routes.javascript.Materials.create,
     routes.javascript.Registration.step1,

@@ -161,8 +161,11 @@ $(document).ready( function() {
     });
 
     new App.widgets.Sidemenu('.js-brand-menu', {
-        hashDefault: 'general',
-        afterShowTab: initializeActions
+        hashDefault: 'general'
+    });
+    
+    App.events.sub('hmt.tab.shown', function(){
+        initializeActions();
     });
 
     initializeActions();

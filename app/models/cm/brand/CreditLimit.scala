@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -17,17 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-@import "settings";
+package models.cm.brand
 
-.notice {
-  color: @pig-pink;
-  padding-bottom: 10px;
-}
+import org.joda.time.LocalDate
 
-table.dataTable>thead>tr>th {
-  padding-left: 0;
-}
+/**
+  * Monthly credit amount for each brand
+  */
+case class CreditLimit(id: Option[Long],
+                       brandId: Long,
+                       amount: Int,
+                       month: LocalDate)

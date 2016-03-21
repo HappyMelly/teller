@@ -11,12 +11,21 @@
             <div class="b-headava__name">@user.name</div>
         </div>
     </a>
+    <div class="b-headmenu__divider"></div>
+
     <a href="@controllers.core.routes.UserAccounts.account()" class="b-headmenu__link">
         Account settings
     </a>
+    <div class="b-headmenu__divider"></div>
     <div class="b-headmenu__link">
         @views.html.v2.element.notificationList()
     </div>
+    @user.account.credits.map { value =>
+        <a href="@controllers.brand.routes.Credits.index()" class="b-headmenu__heart @if(value > 0){state_active}">
+            <i class="fa fa-heart"></i>
+        </a>
+    }
+    <div class="b-headmenu__divider"></div>
     <a href="@controllers.core.routes.LoginPage.logout()" class="b-headmenu__link">
         Log out
     </a>
