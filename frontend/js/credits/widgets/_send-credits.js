@@ -84,7 +84,8 @@ export default class Widget{
 
     _isFormValid() {
         const locals = this.locals;
-        const isEnoughCredits = Number(locals.$value.val()) <= Number(locals.$count.text());
+        const creditsLeft = Number(locals.$count.text());
+        const isEnoughCredits = Number(locals.$value.val()) <= creditsLeft;
         let valid = true;
         let errorText = '';
 
@@ -93,7 +94,10 @@ export default class Widget{
             errorText += this.validation.getErrorsText();
         }
 
-        if (!isEnoughCredits) {
+        if (creditsLeft == 0) {
+            valid = false;
+            errorText += 'You have no more credits to share. ';
+        } else if (!isEnoughCredits) {
             valid = false;
             errorText += 'You cannot give more than ' + locals.$count.text() + ' credits. ';
         }

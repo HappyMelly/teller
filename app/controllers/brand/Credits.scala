@@ -67,6 +67,9 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
         else
           repos.brand.updateSettings(view.settings.copy(credits = true)) flatMap { _ =>
             creditsConfigurator ! (brandId, true)
+            env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
+              _.updateUser(user.copy(account = user.account.copy(credits = Some(0))))
+            })
             jsonSuccess("Credits were activated")
           }
     }
@@ -166,15 +169,17 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
         a <- repos.userAccount.update(user.account.copy(credits = user.account.credits.map(_ => 0)))
       } yield ((c ++ f).distinct, a)
       result flatMap { case (brands, account) =>
-        val filteredBrands = brands.filter(_.settings.credits).map(_.brand)
+        val updatedUser = user.copy(account = account)
         env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
-          _.updateUser(user.copy(account = account))
-        })
-        if (filteredBrands.isEmpty) {
-          val msg = "None of your brands has peer credit support activated"
-          redirect(controllers.core.routes.Dashboard.index(), "error" -> msg)
-        } else {
-          ok(views.html.v2.credit.index(user, filteredBrands))
+          _.updateUser(updatedUser)
+        }) flatMap { _ =>
+          val filteredBrands = brands.filter(_.settings.credits).map(_.brand)
+          if (filteredBrands.isEmpty) {
+            val msg = "None of your brands has peer credit support activated"
+            redirect(controllers.core.routes.Dashboard.index(), "error" -> msg)
+          } else {
+            ok(views.html.v2.credit.index(updatedUser, filteredBrands))
+          }
         }
       }
     }
