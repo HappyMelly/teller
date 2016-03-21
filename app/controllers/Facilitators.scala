@@ -244,8 +244,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
   }
 
   /**
-    * Returns a list of facilitators for the given brand on today,
-    * including the coordinator of the brand
+    * Returns a list of facilitators for the given brand on today
     */
   def list(brandId: Long) = RestrictedAction(Role.Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
@@ -258,6 +257,26 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
           repos.person.collection.organisations(facilitators)
         }
         ok(Json.toJson(facilitators.sortBy(_.fullName.toLowerCase)(ord)))
+      }
+  }
+
+  /**
+    * Returns list of facilitators for the given brand satisfying the given query
+    * @param brandId Brand identifier
+    * @param query Query
+    */
+  def search(brandId: Long, query: Option[String]) = RestrictedAction(Role.Viewer) { implicit request => implicit handler =>
+    implicit user =>
+      implicit val personWrites = new Writes[Person] {
+        def writes(person: Person): JsValue = Json.obj(
+          "value" -> person.fullName,
+          "data" -> person.identifier)
+      }
+
+      repos.cm.license.allLicensees(brandId) flatMap { facilitators =>
+        val queried = facilitators.filter(_.fullName.toLowerCase.contains(query.getOrElse("").toLowerCase))
+        val response = Json.obj("suggestions" -> queried.sortBy(_.fullName))
+        jsonOk(response)
       }
   }
 

@@ -334,10 +334,14 @@ $(document).ready( function() {
         urlContent: jsRoutes.controllers.core.ProfilePhotos.choose(getPersonId()).url
     });
 
-    var Menu = new App.widgets.Sidemenu('.js-person-menu', {
-        hashDefault: 'personal-details',
-        afterShowTab: initializeActions
+    new App.widgets.Sidemenu('.js-person-menu', {
+        hashDefault: 'personal-details'
     });
+
+    App.events.sub('hmt.tab.shown', function(){
+        initializeActions();
+    });    
+    
     initializeActions();
 
     App.events.sub('hmtShowTabAndDialog', function(arr){

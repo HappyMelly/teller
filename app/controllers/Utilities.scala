@@ -29,7 +29,8 @@ import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.MessagesApi
+import play.api.i18n.Messages.Message
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WS
 import play.api.mvc.Action
@@ -84,9 +85,9 @@ object Utilities {
     * Converts form errors to a format readable by frontend
     * @param form Form
     */
-  def errorsToJson[U](form: Form[U]): JsValue = {
+  def errorsToJson[U](form: Form[U])(implicit messages: Messages): JsValue = {
     val errors = form.errors.map { error =>
-      Json.obj("name" -> error.key, "error" -> error.messages.mkString(","))
+      Json.obj("name" -> error.key, "error" -> error.messages.map(x => Messages(x)).mkString(","))
     }
     Json.obj("errors" -> errors)
   }

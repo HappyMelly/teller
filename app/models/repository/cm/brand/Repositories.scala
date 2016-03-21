@@ -34,5 +34,6 @@ class Repositories(app: Application) {
   lazy val badge: BadgeRepository = new BadgeRepository(app)
   lazy val coordinator: BrandCoordinatorRepository = new BrandCoordinatorRepository(app)
   lazy val eventType: EventTypeRepository = new EventTypeRepository(app)
+  lazy val peerCredit: PeerCreditRepository = new PeerCreditRepository(app)
 
 }

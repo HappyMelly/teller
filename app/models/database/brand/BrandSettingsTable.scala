@@ -41,8 +41,10 @@ private[models] trait BrandSettingsTable {
     def certificates = column[Boolean]("CERTIFICATES")
     def licenseExpirationEmail = column[Boolean]("LICENSE_EXPIRATION_EMAIL")
     def licenseExpirationEmailBody = column[Option[String]]("LICENSE_EXPIRATION_EMAIL_BODY")
+    def credits = column[Boolean]("CREDITS")
+    def creditLimit = column[Int]("CREDIT_LIMIT")
 
-    def * = (brandId, certificates, licenseExpirationEmail, licenseExpirationEmailBody) <>(
+    def * = (brandId, certificates, licenseExpirationEmail, licenseExpirationEmailBody, credits, creditLimit) <>(
       (Settings.apply _).tupled, Settings.unapply)
   }
 

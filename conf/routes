@@ -33,12 +33,20 @@ POST          /brand/:brandId/eventtype                                      con
 POST          /brand/:brandId/eventtype/:id                                  controllers.EventTypes.update(brandId: Long, id: Long)
 GET           /brand/:brandId/eventtype/:id/delete                           controllers.EventTypes.delete(brandId: Long, id: Long)
 GET           /brand/:id/eventtypes                                          controllers.EventTypes.index(id: Long)
+
 GET           /brand/:id/facilitators/list                                   controllers.Facilitators.list(id: Long)
 GET           /brand/:id/facilitators                                        controllers.Facilitators.index(id: Long)
+GET           /brand/:id/facilitators/find                                   controllers.Facilitators.search(id: Long, query: Option[String])
+
 POST          /brand/:id/coordinator/:personId/type/:notification/off        controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
 POST          /brand/:id/coordinator/:personId/type/:notification/on         controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
 GET           /brand/:id/eventrequests                                       controllers.EventRequests.index(id: Long)
 GET           /brand/:id/eventrequest/:requestId                             controllers.EventRequests.details(id: Long, requestId: Long)
+
+POST          /brand/:id/credits/activate                                    controllers.brand.Credits.activate(id: Long)
+POST          /brand/:id/credits/deactivate                                  controllers.brand.Credits.deactivate(id: Long)
+GET           /brand/:id/credits/settings                                    controllers.brand.Credits.settings(id: Long)
+POST          /brand/:id/credits/settings                                    controllers.brand.Credits.update(id: Long)
 
 GET           /brand/:id/badge                                               controllers.brand.Badges.add(id: Long)
 POST          /brand/:id/badge                                               controllers.brand.Badges.create(id: Long)
@@ -69,6 +77,10 @@ GET           /certificate/new/:eventId/:personId                            con
 
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
+
+GET           /credits/brand/:id                                             controllers.brand.Credits.credits(id: Long)
+POST          /credits/brand/:id                                             controllers.brand.Credits.give(id: Long)
+GET           /credits                                                       controllers.brand.Credits.index()
 
 POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword
 

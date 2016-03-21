@@ -23,7 +23,7 @@
  */
 package models
 
-import models.core.notification.{NewBadge, NewFacilitator, NewPersonalBadge}
+import models.core.notification.{CreditReceived, NewBadge, NewFacilitator, NewPersonalBadge}
 import org.joda.time.DateTime
 import play.api.libs.json.{JsObject, JsValue}
 
@@ -39,6 +39,7 @@ case class Notification(id: Option[Long],
     case NotificationType.Badge => NewBadge.render(this)
     case NotificationType.Facilitator => NewFacilitator.render(this)
     case NotificationType.PersonalBadge => NewPersonalBadge.render(this)
+    case NotificationType.CreditReceived => CreditReceived.render(this)
   }
 }
 
@@ -50,9 +51,8 @@ trait INotification {
 }
 
 object NotificationType {
+  val CreditReceived = "credit-received"
   val Badge = "new-badge"
   val Facilitator = "new-facilitator"
   val PersonalBadge = "new-personal-badge"
 }
-
-

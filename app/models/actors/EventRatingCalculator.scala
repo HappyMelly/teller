@@ -32,14 +32,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * This actor recalculates the rating for the given event
   */
-class EventRatingCalculator @Inject() (val services: Repositories) extends Actor {
+class EventRatingCalculator @Inject() (val repos: Repositories) extends Actor {
 
   def receive = {
     case eventId: Long ⇒
-      services.cm.evaluation.findByEvent(eventId) map { unfilteredEvaluations =>
+      repos.cm.evaluation.findByEvent(eventId) map { unfilteredEvaluations =>
         val evaluations = unfilteredEvaluations.filter(_.approved)
         val rating = evaluations.foldLeft(0.0f)(_ + _.facilitatorImpression.toFloat / evaluations.length)
-        services.cm.event.updateRating(eventId, rating)
+        repos.cm.event.updateRating(eventId, rating)
       }
   }
 
