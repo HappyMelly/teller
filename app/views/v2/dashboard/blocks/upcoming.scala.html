@@ -8,7 +8,7 @@
 
     <div class="b-eventlist ">
     @for(((event, brand), index) <- events.zipWithIndex) {
-      <div class="b-eventfut">
+      <div class="b-eventfut @if(event.current){current}">
         @if(withBrand) {
           @brand.map { value =>
             <div class="b-eventfut__brand">@value.name</div>
