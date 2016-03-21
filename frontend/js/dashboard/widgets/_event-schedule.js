@@ -17,7 +17,8 @@ export default class Widget {
             $total: this.$root.find('[data-upevent-total]'),
             $now: this.$root.find('[data-upevent-now]'),
             $items: this.$root.find('.b-eventfut'),
-            $text: this.$root.find('[data-upevent-text]')
+            $text: this.$root.find('[data-upevent-text]'),
+            $switcher: this.$root.find('[data-schedule-switcher]')
         };
     }
 
@@ -28,10 +29,16 @@ export default class Widget {
         locals.$total.text(locals.$items.length);
         locals.$now.text(locals.$items.filter('.current').length);
 
-        if (currentCount > 1){
-            locals.$text.text('are running now');
-        } else {
-            locals.$text.text('is running now');
+        switch (currentCount) {
+            case 0:
+                locals.$switcher.hide();
+                break;
+            case 1:
+                locals.$text.text('is running now');
+                break;
+            default:
+                locals.$text.text('are running now');
+                break;
         }
     }
 
@@ -53,7 +60,10 @@ export default class Widget {
         const $filtered = filterClass? locals.$items.filter('.' + filterClass): null ;
 
         locals.$items.removeClass('b-eventfut_state_disabled');
-        $filtered && $filtered.addClass('b-eventfut_state_disabled');
+        if ($filtered) {
+            locals.$items.addClass('b-eventfut_state_disabled');
+            $filtered.removeClass('b-eventfut_state_disabled');
+        }
 
         locals.$links.removeClass('state_active');
         $el.addClass('state_active');
