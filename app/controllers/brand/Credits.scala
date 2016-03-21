@@ -160,9 +160,13 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
       val result = for {
         c <- repos.brand.findByCoordinator(user.person.identifier)
         f <- repos.brand.findByLicense(user.person.identifier, onlyActive = true)
-      } yield (c ++ f).distinct
-      result flatMap { brands =>
+        a <- repos.userAccount.update(user.account.copy(credits = user.account.credits.map(_ => 0)))
+      } yield ((c ++ f).distinct, a)
+      result flatMap { case (brands, account) =>
         val filteredBrands = brands.filter(_.settings.credits).map(_.brand)
+        env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
+          _.updateUser(user.copy(account = account))
+        })
         if (filteredBrands.isEmpty) {
           val msg = "None of your brands has peer credit support activated"
           redirect(controllers.core.routes.Dashboard.index(), "error" -> msg)

@@ -257,6 +257,11 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       }
   }
 
+  /**
+    * Returns list of facilitators for the given brand satisfying the given query
+    * @param brandId Brand identifier
+    * @param query Query
+    */
   def search(brandId: Long, query: Option[String]) = RestrictedAction(Role.Viewer) { implicit request => implicit handler =>
     implicit user =>
       implicit val personWrites = new Writes[Person] {
