@@ -36,7 +36,7 @@ import scala.concurrent.Future
 /**
   * This actor recalculates the rating for all facilitators of the given event
   */
-class FacilitatorRatingCalculator @Inject() (val services: Repositories) extends Actor {
+class FacilitatorRatingCalculator @Inject() (val repos: Repositories) extends Actor {
 
   private val MGT30_IDENTIFIER = 1
 
@@ -45,39 +45,39 @@ class FacilitatorRatingCalculator @Inject() (val services: Repositories) extends
       initialCalculation()
     case eventId: Long ⇒
       (for {
-        e <- services.event.get(eventId)
-        f <- services.event.facilitatorIds(eventId)
+        e <- repos.event.get(eventId)
+        f <- repos.event.facilitatorIds(eventId)
       } yield (e, f)) map { case (event, facilitators) =>
         facilitators.foreach { id =>
           val evaluationQuery = for {
-            events <- services.event.findByFacilitator(id, Some(event.brandId))
-            evaluations <- services.evaluation.findByEventsWithAttendees(events.map(_.id.get))
+            events <- repos.event.findByFacilitator(id, Some(event.brandId))
+            evaluations <- repos.evaluation.findByEventsWithAttendees(events.map(_.id.get))
             oldEvaluations <- if (event.brandId == MGT30_IDENTIFIER)
-              services.evaluation.findOldEvaluations(id)
+              repos.evaluation.findOldEvaluations(id)
             else
               Future.successful(List())
           } yield (evaluations.filter(_._3.approved), oldEvaluations)
           evaluationQuery map { case (evaluations, oldEvaluations) =>
             val facilitator = calculateRatings(evaluations, oldEvaluations)
-            services.facilitator.update(facilitator.copy(personId = id, brandId = event.brandId))
+            repos.facilitator.update(facilitator.copy(personId = id, brandId = event.brandId))
           }
         }
       }
   }
 
-  def initialCalculation() = services.facilitator.findAll map { data =>
+  def initialCalculation() = repos.facilitator.findAll map { data =>
     data.foreach { x =>
       val evaluationQuery = for {
-        events <- services.event.findByFacilitator(x.personId, Some(x.brandId))
-        evaluations <- services.evaluation.findByEventsWithAttendees(events.map(_.id.get))
+        events <- repos.event.findByFacilitator(x.personId, Some(x.brandId))
+        evaluations <- repos.evaluation.findByEventsWithAttendees(events.map(_.id.get))
         oldEvaluations <- if (x.brandId == MGT30_IDENTIFIER)
-          services.evaluation.findOldEvaluations(x.personId)
+          repos.evaluation.findOldEvaluations(x.personId)
         else
           Future.successful(List())
       } yield (evaluations.filter(_._3.approved), oldEvaluations)
       evaluationQuery map { case (evaluations, oldEvaluations) =>
         val facilitator = calculateRatings(evaluations, oldEvaluations)
-        services.facilitator.update(facilitator.copy(personId = x.personId, brandId = x.brandId))
+        repos.facilitator.update(facilitator.copy(personId = x.personId, brandId = x.brandId))
       }
     }
   }

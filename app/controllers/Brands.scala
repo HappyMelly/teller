@@ -24,8 +24,9 @@
 
 package controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
@@ -52,10 +53,10 @@ import scala.io.Source
 
 case class BrandProfileView(brand: Brand, profile: SocialProfile)
 
-class
-Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
+class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                         override val messagesApi: MessagesApi,
                         val repos: Repositories,
+                        @Named("peer-credits") creditsConfigurator: ActorRef,
                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
@@ -298,6 +299,7 @@ Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
               val coordinator = BrandCoordinator(None, id, personId)
               repos.brandCoordinator.save(coordinator).flatMap { coordinator =>
                 giveCoordinatorAccess(person, brand)
+                creditsConfigurator ! (personId, id, true)
                 val data = Json.obj("personId" -> personId, "brandId" -> id, "name" -> person.fullName)
                 jsonSuccess(Messages("success.brand.newMember"), Some(data))
               }
@@ -330,6 +332,7 @@ Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                     repos.userAccount.update(account.copy(coordinator = false, activeRole = false))
                 }
               }
+              creditsConfigurator ! (personId, id, false)
               jsonSuccess(Messages("success.brand.deleteMember"))
             }
           }
