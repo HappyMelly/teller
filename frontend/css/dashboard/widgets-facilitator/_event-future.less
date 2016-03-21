@@ -1,5 +1,25 @@
 
 
+.b-eventlink{
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1.1;
+  color: #4a90e2;
+  border-bottom: 1px dashed #4A90E2;
+  cursor: pointer;
+  .transition(all .15s ease);
+
+  &:hover{
+    opacity: .9;
+  }
+
+  &.state_active{
+    color: #333333;
+    border-bottom-color: transparent;
+    cursor: default;
+  }
+}
+
 .b-eventlist{
   .clearfix();
 }
@@ -11,7 +31,7 @@
   width: 48%;
   margin-bottom: 25px;
   .box-sizing(border-box);
-  padding: 14px 12px 15px;
+  padding: 34px 12px 15px;
   min-height: 170px;
   text-align: left;
 
@@ -22,9 +42,9 @@
 
 .b-eventfut__brand{
   position: absolute;
-  font-size: 11px;
+  font-size: 12px;
   left: 12px;
-  top: 2px;
+  top: 19px;
   text-align: left;
   line-height: 1;
   color: #999;

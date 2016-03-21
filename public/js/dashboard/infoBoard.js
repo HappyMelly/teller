@@ -32,7 +32,7 @@ function updateEvaluationNumber() {
 }
 
 function updateUpcomingEventsNumber() {
-    var number = $.find('.upcoming-event').length;
-    $('.upcoming-number').text(number);
+    // var number = $.find('.upcoming-event').length;
+    // $('.upcoming-number').text(number);
 }
 

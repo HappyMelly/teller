@@ -4,8 +4,15 @@
 
 <div class="row block js-upcoming-events">
   <div class="col-md-12">
-    <h4>Upcoming events (<span class="upcoming-number">@events.length</span>)</h4>
-
+    <h4>Upcoming events (
+      <span class="b-eventlink" data-upevent-link><span data-upevent-total></span>
+        total
+      </span>,
+      <span class="b-eventlink" data-upevent-link="current"><span data-upevent-now></span>
+        <span data-upevent-text>is running now</span>
+      </span>
+      )
+    </h4>
     <div class="b-eventlist ">
     @for(((event, brand), index) <- events.zipWithIndex) {
       <div class="b-eventfut @if(event.current){current}">
