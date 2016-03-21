@@ -23,39 +23,10 @@
  */
 
 App.pages.Common = {
-    initPlugins: function(){
-        var $scroll = $('.js-link-target');
-        if ($scroll.length){
-            $scroll.scrollToEl();
-        }
-
-        var $markdown = $('[markdownpreview]');
-        if ($markdown.length) {
-            $markdown.previewMarkdown();
-        }
-
-        var $dataField = $('[data-type="date"]');
-        if ($dataField.length){
-            $dataField.datetimepicker({
-                useCurrent: false,
-                pickTime: false
-            });
-        }
-    },
     initWidgets: function(){
         var $completionWidget = $('.js-completion-widget');
         if ($completionWidget.length){
             new App.widgets.CompletionWidget('.js-completion-widget');
-        }
-
-        var $notificationWidget = $('.js-notification-widget');
-        if ($notificationWidget.length){
-            new App.widgets.TopNotification('.js-notification-widget');
-        }
-
-        var $notificationListWidget = $('.js-notification-list');
-        if ($notificationListWidget.length){
-            new App.widgets.NotificationList('.js-notification-list');
         }
     }
 };
@@ -106,7 +77,6 @@ function initializeFileUploadField() {
 $(document).ready(function() {
     var common = App.pages.Common;
 
-    common.initPlugins();
     common.initWidgets();
 
     initializeFileUploadField();
