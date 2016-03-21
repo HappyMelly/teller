@@ -30,10 +30,13 @@ export default class Widget {
     }
 
     _assignEvents() {
+        const self = this;
+
         this.$root
             .on('click', '[data-setcredit-activate]', this._onClickActivate.bind(this))
             .on('click', '[data-setcredit-deactivate]', this._onClickDeActivate.bind(this))
             .on('submit', '[data-setcredit-form]', this._onClickSaveCredit.bind(this))
+            .on('input', '[data-setcredit-input]', (e) => self.locals.$errors.text(''))
     }
 
     _onClickActivate(e) {

@@ -27,7 +27,7 @@ export default class Widget {
     }
 
     _onClickFilter(e) {
-        const $link = $(e.target);
+        const $link = $(e.currentTarget);
         const filterText = $link.data('filter-link');
 
         e.preventDefault();

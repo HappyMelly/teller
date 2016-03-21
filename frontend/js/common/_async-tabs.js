@@ -25,7 +25,7 @@ export default class Widget {
 
     _onClickLink(e) {
         e.preventDefault();
-        let $link = $(e.target);
+        let $link = $(e.currentTarget);
 
         if ($link.hasClass('state_active')) return;
         this.showTabByLink($link);

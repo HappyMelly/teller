@@ -21,22 +21,22 @@
                 <span class="b-credits__value-hint">
                     Give <i class="fa fa-heart-o"></i>
                 </span>
-                <input type="tel" name="give" class="b-credits__input" placeholder="" data-credit-value>
+                <input tabindex="1" type="text" name="give" class="b-credits__input type-numeric" placeholder="" data-credit-value>
             </div>
             <div class="b-credits__value type-name" data-credit-item>
                 <span class="b-credits__value-hint">
                     To
                 </span>
-                <input type="text" name="to" class="b-credits__input" placeholder="Name" data-credit-to>
-                <input type="hidden" name="to-data" data-credit-to-data>
+                <input tabindex="2" type="text" name="to" class="b-credits__input" placeholder="Name" data-credit-to>
+                <input tabindex="-1" type="hidden" name="to-data" data-credit-to-data>
             </div>
         </div>
         <div class="b-credits__i">
-            <button type="submit" class="btn btn-primary b-credits__submit">
+            <button tabindex="4" type="submit" class="btn btn-primary b-credits__submit">
                 Give
             </button>
             <div class="h-ovh">
-                <input type="text" name="message" class="b-credits__input" placeholder="Message" data-credit-message>
+                <input tabindex="3" type="text" name="message" class="b-credits__input" placeholder="Message" data-credit-message>
             </div>
         </div>
 

@@ -69,7 +69,7 @@ export default class Widget{
                 self.$root.addClass('b-credits_state_send');
                 setTimeout(()=> {
                     self.$root.removeClass('b-credits_state_send');
-                }, 3000)
+                }, 4000)
             })
             .fail((response) => {
                 const data = $.parseJSON(response.responseText).data;
