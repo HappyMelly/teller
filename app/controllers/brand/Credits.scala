@@ -47,6 +47,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
                           val repos: Repositories,
                          @Named("notification") notificationDispatcher: ActorRef,
+                         @Named("peer-credits") creditsConfigurator: ActorRef,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
@@ -65,6 +66,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
           jsonSuccess("Credits were activated")
         else
           repos.brand.updateSettings(view.settings.copy(credits = true)) flatMap { _ =>
+            creditsConfigurator ! (brandId, true)
             jsonSuccess("Credits were activated")
           }
     }
@@ -83,6 +85,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
           jsonSuccess("Credits were deactivated")
         else
           repos.brand.updateSettings(view.settings.copy(credits = false)) flatMap { _ =>
+            creditsConfigurator ! (brandId, false)
             jsonSuccess("Credits were deactivated")
           }
     }
