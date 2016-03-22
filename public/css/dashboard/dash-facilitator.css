@@ -1,1 +1,109 @@
-.b-eventlink{display:inline-block;font-size:18px;line-height:1.1;color:#4a90e2;border-bottom:1px dashed #4a90e2;cursor:pointer;-webkit-transition:all .15s ease;transition:all .15s ease}.b-eventlink:hover{opacity:.9}.b-eventlink.state_active{color:#333;border-bottom-color:transparent;cursor:default}.b-eventlist{display:block;zoom:1}.b-eventlist:after{content:" ";display:block;font-size:0;height:0;clear:both;visibility:hidden}.b-eventfut{position:relative;border:1px solid #e7e7e7;float:left;width:48%;margin-bottom:25px;box-sizing:border-box;padding:34px 12px 15px;min-height:170px;text-align:left}.b-eventfut:nth-child(2n+1){margin-right:4%}.b-eventfut__brand{position:absolute;font-size:12px;left:12px;top:19px;text-align:left;line-height:1;color:#999}.b-eventfut__title{font-size:14px;font-weight:700;height:40px;overflow:hidden;margin-bottom:9px}.b-eventfut__info{margin-bottom:30px}.b-eventfut__buttons{text-align:justify;height:15px;max-width:260px}.b-eventfut__buttons:after{content:'';display:inline-block;vertical-align:top;width:100%;overflow:hidden}.b-eventfut_state_disabled{opacity:.2}
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+/* colors */
+/* z-indexes */
+/* mixins */
+.b-eventlink {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1.1;
+  color: #4a90e2;
+  border-bottom: 1px dashed #4A90E2;
+  cursor: pointer;
+  -webkit-transition: all 0.15s ease;
+  -moz-transition: all 0.15s ease;
+  -o-transition: all 0.15s ease;
+  transition: all 0.15s ease;
+}
+.b-eventlink:hover {
+  opacity: .9;
+}
+.b-eventlink.state_active {
+  color: #333333;
+  border-bottom-color: transparent;
+  cursor: default;
+}
+.b-eventlist {
+  display: block;
+  zoom: 1;
+}
+.b-eventlist:after {
+  content: " ";
+  display: block;
+  font-size: 0;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.b-eventfut {
+  position: relative;
+  border: 1px solid #E7E7E7;
+  float: left;
+  width: 48%;
+  margin-bottom: 25px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 34px 12px 15px;
+  min-height: 170px;
+  text-align: left;
+}
+.b-eventfut:nth-child(2n + 1) {
+  margin-right: 4%;
+}
+.b-eventfut__brand {
+  position: absolute;
+  font-size: 12px;
+  left: 12px;
+  top: 19px;
+  text-align: left;
+  line-height: 1;
+  color: #999;
+}
+.b-eventfut__title {
+  font-size: 14px;
+  font-weight: bold;
+  height: 40px;
+  overflow: hidden;
+  margin-bottom: 9px;
+}
+.b-eventfut__info {
+  margin-bottom: 30px;
+}
+.b-eventfut__buttons {
+  text-align: justify;
+  height: 15px;
+  max-width: 260px;
+}
+.b-eventfut__buttons:after {
+  content: '';
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+  overflow: hidden;
+}
+/*== States ==*/
+.b-eventfut_state_disabled {
+  opacity: .2;
+}

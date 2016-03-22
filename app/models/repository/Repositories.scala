@@ -26,7 +26,7 @@ package models.repository
 
 import javax.inject.{Inject, Singleton}
 
-import models.repository.admin.{ApiTokenRepository, TransactionTypeRepository}
+import models.repository.admin.{ApiTokenRepository, CommercialCustomerRepository, TransactionTypeRepository}
 import models.repository.cm.brand._
 import play.api.Application
 
@@ -37,6 +37,7 @@ trait IRepositories {
   val address: AddressRepository
   val activity: ActivityRepository
   val apiToken: ApiTokenRepository
+  val commercialCustomers: CommercialCustomerRepository
   val contribution: ContributionRepository
   val emailToken: EmailTokenRepository
   val exchange: ExchangeRateRepository
@@ -69,6 +70,8 @@ class Repositories @Inject()(val app: Application) extends IRepositories {
   lazy val activity: ActivityRepository = new ActivityRepository(app)
 
   lazy val apiToken: ApiTokenRepository = new ApiTokenRepository(app)
+
+  lazy val commercialCustomers: CommercialCustomerRepository = new CommercialCustomerRepository(app)
 
   lazy val contribution: ContributionRepository = new ContributionRepository(app)
 

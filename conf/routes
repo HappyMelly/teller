@@ -69,11 +69,10 @@ DELETE        /brand/:brandId/testimonial/:id                                con
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
 
-POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
-POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
-
 GET           /certificate/:id                                               controllers.Certificates.certificate(id: String)
 GET           /certificate/new/:eventId/:personId                            controllers.Certificates.create(eventId: Long, personId: Long)
+
+POST          /commercial-customer/:interested                               controllers.admin.CommercialCustomers.reply(interested: Boolean)
 
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
@@ -81,6 +80,9 @@ GET           /contribution/:id/delete                                       con
 GET           /credits/brand/:id                                             controllers.brand.Credits.credits(id: Long)
 POST          /credits/brand/:id                                             controllers.brand.Credits.give(id: Long)
 GET           /credits                                                       controllers.brand.Credits.index()
+
+POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
+POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
 
 POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword
 

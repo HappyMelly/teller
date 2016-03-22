@@ -6,10 +6,11 @@
         <div class="b-notification__buttons">
             <a class="btn btn-default b-notification__btn"
                 data-notif-close
-                href="#">
+                href="@controllers.admin.routes.CommercialCustomers.reply(false)">
                 May be later
             </a>
-            <a class="btn btn-primary b-notification__btn" href="#" data-notif-accept>
+            <a class="btn btn-primary b-notification__btn"
+                href="@controllers.admin.routes.CommercialCustomers.reply(true)" data-notif-accept>
                 Yes, I am
             </a>
         </div>
