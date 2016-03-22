@@ -32,8 +32,8 @@ import cron.cleaners.{ExpiredEventRequestCleaner, TokenCleaner}
 import cron.reminders._
 import models.cm.Facilitator
 import models.repository.Repositories
-import org.joda.time.{LocalDate, LocalDateTime, LocalTime, Seconds}
-import play.api.Environment
+import org.joda.time._
+import play.api.{Environment, Logger}
 import services.integrations.Email
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -67,7 +67,7 @@ class Scheduler @Inject() (val env: Environment,
     * Sends event confirmation alert in the beginning of each day
     */
   private def scheduleDailyActions = scheduler {
-    println("INFO: Start of daily routines")
+    Logger.info("Start of daily routines")
 
     val membership = new MembershipReminder(email, repos)
     membership.sendOneMonthExpirationReminder()
@@ -80,20 +80,26 @@ class Scheduler @Inject() (val env: Environment,
     subscription.update()
     runCleaners()
 
-    println("INFO: End of daily routines")
+    Logger.info("End of daily routines")
   }
 
   /**
     * Sends event confirmation alert on the first day of each month
     */
   private def scheduleMonthlyActions = scheduler {
-    if (LocalDateTime.now().getDayOfMonth == 1) {
-      println("INFO: Start of monthly routines")
+    if (DateTime.now().getDayOfMonth == 1) {
+      Logger.info("Start of monthly routines")
 
       (new ProfileStrengthReminder(email, repos)).sendToFacilitators()
       (new BrandReminder(email, repos)).sendLicenseExpirationReminder()
 
-      println("INFO: End of monthly routines")
+      Logger.info("End of monthly routines")
+    }
+
+    if (DateTime.now().getDayOfMonth == 14) {
+      Logger.info("Start of mid-monthly routines")
+      (new CardReminder(email, repos)).sendExpirationReminder()
+      Logger.info("End of mid-monthly routines")
     }
   }
 

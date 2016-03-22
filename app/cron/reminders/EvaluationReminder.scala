@@ -32,6 +32,7 @@ import models.cm.EvaluationStatus
 import models.cm.event.Attendee
 import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
+import play.api.Logger
 import services.integrations._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,6 +47,7 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
    * on the first, the thirds and the sevenths days after the event
    */
   def sendToAttendees() = repos.cm.brand.findAll map { brands =>
+    Logger.info("Sending evaluation and confirmation reminders to attendees")
     brands.foreach { brand ⇒
       if (brand.evaluationUrl.isDefined) {
         val today = LocalDate.now().toDate.getTime

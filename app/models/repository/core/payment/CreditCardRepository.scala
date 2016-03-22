@@ -25,6 +25,7 @@ package models.repository.core.payment
 
 import models.core.payment.{CreditCard, Charge}
 import models.database.core.payment.{CreditCardTable, ChargeTable}
+import org.joda.time.LocalDate
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
@@ -44,6 +45,17 @@ class CreditCardRepository(app: Application) extends HasDatabaseConfig[JdbcProfi
 
   def findByCustomer(customerId: Long): Future[Seq[CreditCard]] =
     db.run(cards.filter(_.customerId === customerId).result)
+
+  /**
+    * Returns cards expiring next month
+    */
+  def findExpiring: Future[Seq[CreditCard]] = {
+    val nextMonth = LocalDate.now().plusMonths(1)
+    val expMonth = nextMonth.getMonthOfYear
+    val expYear = nextMonth.getYear
+    val query = cards.filter(_.expYear === expYear).filter(_.expMonth === expMonth)
+    db.run(query.result)
+  }
 
   /**
    * Inserts the given record to database

@@ -58,8 +58,13 @@ class CustomerRepository (app: Application) extends HasDatabaseConfig[JdbcProfil
     *
     * @param id Customer identifier
     */
-  def find(id: Long): Future[Option[Customer]] =
-    db.run(customers.filter(_.id === id).result).map(_.headOption)
+  def find(id: Long): Future[Option[Customer]] = db.run(customers.filter(_.id === id).result).map(_.headOption)
+
+  /**
+    * Returns customers for the given ids
+    * @param ids Customer identifiers
+    */
+  def find(ids: Seq[Long]): Future[Seq[Customer]] = db.run(customers.filter(_.id inSet ids).result)
 
   /**
     * Returns customer for the given id

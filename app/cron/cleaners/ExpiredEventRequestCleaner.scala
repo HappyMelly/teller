@@ -25,6 +25,7 @@ package cron.cleaners
 
 import models.repository.Repositories
 import org.joda.time.LocalDate
+import play.api.Logger
 
 /**
   * Removes expired event requests from database
@@ -32,8 +33,10 @@ import org.joda.time.LocalDate
 class ExpiredEventRequestCleaner(repos: Repositories) {
 
   def clean() = {
-    println("ExpiredEventRequestClearer: start")
+    Logger.info(msg("start"))
     repos.cm.rep.event.request.deleteExpired(LocalDate.now())
-    println("ExpiredEventRequestClearer: end")
+    Logger.info(msg("end"))
   }
+
+  protected def msg(str: String): String = s"ExpiredEventRequestClearer: $str"
 }
