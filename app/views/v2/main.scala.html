@@ -18,9 +18,11 @@
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>
     <div class="l-wrapper" >
 
-      @views.html.v2.element.notification(controllers.core.routes.People.edit(user.person.identifier).url + "#profiles",
-        "Reconnect my profiles"){
-        Hi there! We’ve made some changes to stabilize login through social networks. You need to reconnect some networks you were using to login, otherwise they will not work.
+      @if(user.account.facilitator) {
+          @views.html.v2.element.notifCommercial(){
+            <b>We are working on a commercial version of Teller.</b> <br>
+            Are you interested in using Teller for your other trainings (Scrum, Kanban, etc.)?
+          }
       }
 
       <div class="b-header">
