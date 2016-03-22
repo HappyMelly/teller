@@ -41,4 +41,8 @@ case class Customer(id: Option[Long],
                     remoteId: String,
                     objectId: Long,
                     objectType: CustomerType.Value = CustomerType.Person,
-                    recordInfo: DateStamp)
+                    recordInfo: DateStamp) {
+
+  def isOrg: Boolean = objectType == CustomerType.Organisation
+  def isPerson: Boolean = objectType == CustomerType.Person
+}

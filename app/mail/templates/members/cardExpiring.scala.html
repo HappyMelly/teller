@@ -1,0 +1,21 @@
+@(name: String, member: Member, profileUrl: String)
+
+@import views.ViewHelpersV2._
+
+@mail.templates.hm.html.tmpl("Your Payment Method Expires Next Month") {
+    @mail.templates.hm.html.title(s"Hi $name,")
+    @mail.templates.hm.html.paragraph {
+        It seems likes the payment method we have on file for <a href="@profileUrl#membership">your membership</a>
+        is expiring next month.
+    }
+    @mail.templates.hm.html.paragraph {
+        To ensure your Happy Melly membership automatically renews,
+        <a href="@profileUrl#membership">please update your credit card information</a> before @date(member.until).
+    }
+    @mail.templates.hm.html.paragraph {
+        Thanks!
+    }
+    @mail.templates.hm.html.paragraph {
+        Happy Melly
+    }
+} { }

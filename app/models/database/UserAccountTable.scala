@@ -61,11 +61,12 @@ private[models] trait UserAccountTable extends PersonTable {
     def member = column[Boolean]("MEMBER")
     def registered = column[Boolean]("REGISTERED")
     def activeRole = column[Boolean]("ACTIVE_ROLE")
+    def credits = column[Option[Int]]("CREDITS")
     def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
     def * = (id.?, personId, byEmail, twitter, facebook, linkedin,
       google, coordinator, facilitator, admin, member, registered,
-      activeRole) <>((UserAccount.apply _).tupled, UserAccount.unapply)
+      activeRole, credits) <>((UserAccount.apply _).tupled, UserAccount.unapply)
 
     def uniquePerson = index("IDX_PERSON_ID", personId, unique = true)
     def uniqueEmail = index("IDX_EMAIL_HANDLE", byEmail, unique = true)

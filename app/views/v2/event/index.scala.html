@@ -7,11 +7,10 @@
   @v2.element.brandHeader(brand, brands, "events", facilitator = user.account.isFacilitatorNow) {
     <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
   }
-  <div class="row">
+  <div class="row js-event-list">
     <div class="container">
       <div class="row">
         <div class="col-md-12 content-block">
-          @views.html.event.reason()
           <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
           <div id="filter-containter">
             <div class="table-filters pull-left">
@@ -78,4 +77,7 @@
   </div>
   <script src="@routes.Assets.at("js/event.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("js/event/index.js")" type="text/javascript"></script>
+
+  <script src="@routes.Assets.at("js/package/event-list-page.js")" type="text/javascript"></script>
+
 }

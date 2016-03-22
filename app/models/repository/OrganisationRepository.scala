@@ -72,7 +72,7 @@ class OrganisationRepository(app: Application, repos: Repositories) extends HasD
    *
    * @param objectIds List of identifiers
    */
-  def find(objectIds: List[Long]): Future[List[Organisation]] = if (objectIds.isEmpty)
+  def find(objectIds: Seq[Long]): Future[List[Organisation]] = if (objectIds.isEmpty)
     Future.successful(List())
   else
     db.run(orgs.filter(_.id inSet objectIds).result).map(_.toList)

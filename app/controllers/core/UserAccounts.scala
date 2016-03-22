@@ -206,7 +206,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             case false =>
               val msg = "Your email address is used by another account. Please contact a support team if it's a mistake"
               val errors = newPasswordForm.withGlobalError(msg)
-              badRequest(Json.obj("data" -> Utilities.errorsToJson(errors)))
+              jsonFormError(Utilities.errorsToJson(errors))
           }
         }
       )
@@ -219,7 +219,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     implicit handler => implicit user =>
       val form = changeEmailForm.bindFromRequest()
       form.fold(
-        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(errors))),
+        errors => jsonFormError(Utilities.errorsToJson(errors)),
         info => {
           repos.identity.findByEmail(user.person.email) flatMap { maybeIdentity =>
             val response = for (
@@ -254,7 +254,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
   def changePassword = RestrictedAction(Viewer) { implicit request =>
     implicit handler => implicit user =>
       changePasswordForm.bindFromRequest().fold(
-        errors => badRequest(Json.obj("data" -> Utilities.errorsToJson(updateChangePasswordErrors(errors)))),
+        errors => jsonFormError(Utilities.errorsToJson(updateChangePasswordErrors(errors))),
         info => {
           env.userService.updatePasswordInfo(user, env.currentHasher.hash(info.newPassword))
           jsonSuccess(Messages(OkMessage))

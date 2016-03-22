@@ -215,7 +215,7 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
    *
    * @param ids List of people identifiers
    */
-  def find(ids: List[Long]): Future[List[Person]] = db.run(people.filter(_.id inSet ids).result).map(_.toList)
+  def find(ids: Seq[Long]): Future[List[Person]] = db.run(people.filter(_.id inSet ids).result).map(_.toList)
 
   /**
    * Returns a list of active people

@@ -24,6 +24,7 @@
 package cron.cleaners
 
 import models.repository.Repositories
+import play.api.Logger
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -34,18 +35,20 @@ import scala.util.{Failure, Success}
 class TokenCleaner(repos: Repositories) {
 
   def clean() = {
-    println("TokenCleaner: start")
+    Logger.info(msg("start"))
     val request = for {
       p <- repos.mailToken.deleteExpiredTokens()
       e <- repos.emailToken.deleteExpiredTokens()
     } yield (p, e)
     request onComplete {
       case Success((passwordTokens, emailTokens)) =>
-        println(s"TokenCleaner: $passwordTokens password and $emailTokens email tokens were deleted")
-        println("TokenCleaner: end")
+        Logger.info(msg(s"$passwordTokens password and $emailTokens email tokens were deleted"))
+        Logger.info(msg("end"))
       case Failure(t) =>
-        println(s"[ERROR] Token Cleaner: ${t.getMessage}")
-        println("TokenCleaner: end")
+        Logger.error(msg(t.getMessage))
+        Logger.info(msg("end"))
     }
   }
+
+  protected def msg(str: String): String = s"TokenCleaner: $str"
 }

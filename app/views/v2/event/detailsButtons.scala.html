@@ -1,8 +1,11 @@
 @(event: models.cm.Event, deletable: Boolean)
-<div class="buttons">
+<div class="buttons js-events-control">
   <div class="buttons-block">
     @if(!event.confirmed) {
-      <a href="#" data-id="@event.identifier" class="btn btn-primary event-confirm">
+      <a href="#"
+        data-id="@event.identifier"
+        class="btn btn-primary"
+        data-event-confirm>
         Confirm
       </a>
     } else {
@@ -16,8 +19,11 @@
     <a class="btn btn-default" href="@routes.Events.duplicate(event.id.get)">
       Duplicate
     </a>
-    <a data-id="@event.identifier" class="btn btn-default event-cancel"
-      id="cancelButton" @if(!deletable) {disabled="disabled"} >Cancel</a>
+    <a data-id="@event.identifier"
+        class="btn btn-default"
+        data-event-cancel
+        id="cancelButton" @if(!deletable) {disabled="disabled"} >
+      Cancel
+    </a>
   </div>
 </div>
-<script src="@routes.Assets.at("js/element/events.js")" type="text/javascript"></script>

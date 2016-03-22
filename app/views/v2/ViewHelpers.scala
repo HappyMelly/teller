@@ -24,7 +24,7 @@
 
 package views
 
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, LocalDate}
 import views.html.helper.FieldConstructor
 
 object ViewHelpersV2 {
@@ -51,4 +51,23 @@ object ViewHelpersV2 {
   }
 
   def date(value: LocalDate): String = value.toString("d MMM yyyy")
+
+  def timePassed(from: DateTime): String = timePassed(from, DateTime.now())
+
+  def timePassed(start: DateTime, end: DateTime): String = {
+    val diff = (end.getMillis - start.getMillis) / 1000
+    val minute = 60
+    val hour = minute * 60
+    val day = hour * 24
+    if (diff < minute)
+      s"${diff}s"
+    else if (diff < hour)
+      s"${diff/minute}m"
+    else if (diff < day)
+      s"${diff/hour}h"
+    else if (diff > day * 60)
+      "A long time ago in a galaxy far far away"
+    else
+      s"${diff/day}d"
+  }
 }

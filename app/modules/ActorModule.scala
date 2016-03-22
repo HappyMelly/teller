@@ -24,7 +24,7 @@
 package modules
 
 import com.google.inject.AbstractModule
-import models.actors.{NotificationDispatcher, FacilitatorRatingCalculator, EventRatingCalculator}
+import models.actors.{EventRatingCalculator, FacilitatorRatingCalculator, NotificationDispatcher, PeerCreditsConfigurator}
 import play.api.libs.concurrent.AkkaGuiceSupport
 import services.integrations.EmailActor
 
@@ -37,5 +37,6 @@ class ActorModule extends AbstractModule with AkkaGuiceSupport {
     bindActor[EventRatingCalculator]("event-rating")
     bindActor[FacilitatorRatingCalculator]("facilitator-rating")
     bindActor[NotificationDispatcher]("notification")
+    bindActor[PeerCreditsConfigurator]("peer-credits")
   }
 }

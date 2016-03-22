@@ -118,22 +118,35 @@ case class Event(
   private var _facilitators: Option[List[Person]] = None
   private var _facilitatorIds: Option[List[Long]] = None
 
-  /**
-   * Returns identifier of the object
-   */
-  def identifier: Long = id.getOrElse(0)
+  def attendees(services: Repositories): List[Attendee] =
+    Await.result(services.cm.rep.event.attendee.findByEvents(List(identifier)), 3.seconds).map(_._2).toList
 
   /**
-   * Returns string identifier which can be understood by human
-   *
-   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
-   */
-  def humanIdentifier: String = title
+    * Cancels the event
+    *
+    * @param facilitatorId Identifier of the facilitator who requested the action
+    * @param reason Reason why the event is cancelled
+    * @param participants Number of participants already registered to the event
+    * @param details Details (emails, names) of registered participants
+    */
+  def cancel(facilitatorId: Long,
+             reason: Option[String],
+             participants: Option[Int],
+             details: Option[String],
+             repos: Repositories): Unit = {
+    repos.cm.rep.brand.eventType.find(this.eventTypeId) map { types =>
+      val eventType = types.map(_.name).getOrElse("")
+      val cancellation = EventCancellation(None, this.brandId, facilitatorId,
+        this.title, eventType, this.location.city, this.location.countryCode,
+        this.schedule.start, this.schedule.end, this.free, reason, participants, details)
+      repos.cm.rep.event.cancellation.insert(cancellation)
+      repos.cm.event.delete(this.id.get)
+    }
+  }
 
-  /**
-   * Returns type of this object
-   */
-  def objectType: String = Activity.Type.Event
+  def current: Boolean = !future && !past
+
+  def deletable(services: Repositories): Boolean = attendees(services).isEmpty
 
   /** Returns (and retrieves from db if needed) a list of facilitators */
   def facilitators(services: IRepositories): List[Person] = if (_facilitators.isEmpty) {
@@ -160,6 +173,25 @@ case class Event(
     _facilitatorIds = Some(facilitatorIds)
   }
 
+  def future: Boolean = schedule.start.isAfter(LocalDate.now())
+
+  /**
+   * Returns identifier of the object
+   */
+  def identifier: Long = id.getOrElse(0)
+
+  /**
+   * Returns string identifier which can be understood by human
+   *
+   * For example, for object 'Person' human identifier is "[FirstName] [LastName]"
+   */
+  def humanIdentifier: String = title
+
+  /**
+   * Returns type of this object
+   */
+  def objectType: String = Activity.Type.Event
+
   val longTitle: String = {
     val printableTitle = if (title.length <= 70)
       title
@@ -170,47 +202,25 @@ case class Event(
 
   val materialsLanguage = Languages.all.get(language.materials.getOrElse("English"))
 
-  lazy val spokenLanguage: String = if (language.secondSpoken.isEmpty)
-    Languages.all.getOrElse(language.spoken, "")
-  else
-    Languages.all.getOrElse(language.spoken, "") + " / " +
-      Languages.all.getOrElse(language.secondSpoken.get, "")
+  def past: Boolean = schedule.end.isBefore(LocalDate.now())
 
-  lazy val spokenLanguages: List[String] = if (language.secondSpoken.isEmpty)
-    List(Languages.all.getOrElse(language.spoken, ""))
-  else
-    List(Languages.all.getOrElse(language.spoken, ""),
-      Languages.all.getOrElse(language.secondSpoken.get, ""))
+  lazy val spokenLanguage: String = {
+    val langs = Languages.all
+    if (language.secondSpoken.isEmpty)
+      langs.getOrElse(language.spoken, "")
+    else
+      langs.getOrElse(language.spoken, "") + " / " + langs.getOrElse(language.secondSpoken.get, "")
+  }
 
-  def attendees(services: Repositories): List[Attendee] =
-    Await.result(services.cm.rep.event.attendee.findByEvents(List(identifier)), 3.seconds).map(_._2).toList
-
-  def deletable(services: Repositories): Boolean = attendees(services).isEmpty
+  lazy val spokenLanguages: List[String] = {
+    val langs = Languages.all
+    if (language.secondSpoken.isEmpty)
+      List(langs.getOrElse(language.spoken, ""))
+    else
+      List(langs.getOrElse(language.spoken, ""), langs.getOrElse(language.secondSpoken.get, ""))
+  }
 
   def isFacilitator(personId: Long, services: IRepositories): Boolean = facilitatorIds(services).contains(personId)
-
-  /**
-   * Cancels the event
-   *
-   * @param facilitatorId Identifier of the facilitator who requested the action
-   * @param reason Reason why the event is cancelled
-   * @param participants Number of participants already registered to the event
-   * @param details Details (emails, names) of registered participants
-   */
-  def cancel(facilitatorId: Long,
-             reason: Option[String],
-             participants: Option[Int],
-             details: Option[String],
-             services: Repositories): Unit = {
-    services.cm.rep.brand.eventType.find(this.eventTypeId) map { types =>
-      val eventType = types.map(_.name).getOrElse("")
-      val cancellation = EventCancellation(None, this.brandId, facilitatorId,
-        this.title, eventType, this.location.city, this.location.countryCode,
-        this.schedule.start, this.schedule.end, this.free, reason, participants, details)
-      services.cm.rep.event.cancellation.insert(cancellation)
-      services.cm.event.delete(this.id.get)
-    }
-  }
 
   def pageUrl(relativeHashedUrl: String): Option[String] = if (publicPage)
     Some(controllers.Utilities.fullUrl(relativeHashedUrl))

@@ -8,9 +8,11 @@
       <div class="b-headmenu">
         @if(user.account.activeRole) {
           <div class="b-headmenu__link state_selected">Brand manager</div>
+          <div class="b-headmenu__divider"></div>
           <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Facilitator</a>
         } else {
           <a class="b-headmenu__link" href="@controllers.core.routes.UserAccounts.switchRole()">Brand manager</a>
+          <div class="b-headmenu__divider"></div>
           <div class="b-headmenu__link state_selected">Facilitator</div>
         }
       </div>

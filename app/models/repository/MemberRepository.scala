@@ -121,7 +121,7 @@ class MemberRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
    *
    * @param objectIds List of identifiers
    */
-  def findByObjects(objectIds: List[Long]): Future[List[Member]] = if (objectIds.isEmpty)
+  def findByObjects(objectIds: Seq[Long]): Future[List[Member]] = if (objectIds.isEmpty)
       Future.successful(List())
     else
       db.run(members.filter(_.objectId inSet objectIds).result).map(_.toList)

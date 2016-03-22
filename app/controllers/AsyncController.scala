@@ -37,24 +37,24 @@ import scala.concurrent.Future
   */
 trait AsyncController extends Controller with I18nSupport {
 
-  protected def jsonOk(data: JsValue) = Future.successful(Ok(Json.prettyPrint(data)))
-
-  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
-    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x)
-    } getOrElse Json.obj("message" -> msg)
-    jsonOk(reply)
-  }
+  protected def jsonBadRequest(msg: String) = Future.successful(BadRequest(Json.obj("message" -> msg)))
 
   protected def jsonConflict(msg: String) = Future.successful(Conflict(Json.obj("message" -> msg)))
 
+  protected def jsonFormError(errors: JsValue) = Future.successful(BadRequest(Json.obj("data" -> errors)))
+
   protected def jsonNotFound(msg: String) = Future.successful(NotFound(Json.obj("message" -> msg)))
 
-  protected def jsonBadRequest(msg: String) = Future.successful(BadRequest(Json.obj("message" -> msg)))
+  protected def jsonOk(data: JsValue) = Future.successful(Ok(Json.prettyPrint(data)))
 
   protected def jsonRequest(status: Int, msg: String) = status match {
     case NOT_FOUND ⇒ jsonNotFound(msg)
     case CONFLICT ⇒ jsonConflict(msg)
     case _ ⇒ jsonBadRequest(msg)
+  }
+  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
+    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x) } getOrElse Json.obj("message" -> msg)
+    jsonOk(reply)
   }
 
   protected def jsonUnauthorized = Future.successful(Unauthorized("Unauthorized"))

@@ -98,8 +98,11 @@ $(document).ready( function() {
     })
 
     new App.widgets.Sidemenu('.js-organization-menu', {
-        hashDefault: 'details',
-        afterShowTab: initializeActions
+        hashDefault: 'details'
+    });
+
+    App.events.sub('hmt.tab.shown', function(){
+        initializeActions();
     });
 });
 
