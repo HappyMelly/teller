@@ -23,92 +23,10 @@
  */
 @import "settings";
 
-a {
-  color: @dark-sky-blue;
-  &.disabled {
-    color: black;
-    text-decoration: none;
-    &:hover, &:focus {
-      color: black;
-      text-decoration: none;
-      cursor: default;
-    }
-  }
-}
-.navbar {
-  margin-bottom: 0;
-}
 .panel {
   margin-top: 20px;
 }
 
-legend {
-  border: 0;
-}
-
-.btn {
-  padding: 6px 18px;
-  line-height: 1.9;
-  border: 0;
-
-  &.btn-lg {
-    border-radius: 4px;
-  }
-  &.btn-primary {
-    background-color: @dark-sky-blue;
-    &[disabled], &.disabled {
-      border: 1px solid @dark-sky-blue;
-      background-color: transparent;
-      opacity: 1;
-      color: @dark-sky-blue;
-    }
-  }
-  &.btn-default {
-    color: #fff;
-    background-color: @grey;
-    &[disabled], &.disabled {
-      border: 1px solid @grey;
-      background-color: transparent;
-      opacity: 1;
-      color: @grey;
-    }
-  }
-
-}
-
-dl.dl-horizontal {
-  dt {
-    color: @warm-grey;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 400;
-    width: initial;
-    margin-top: 3px;
-  }
-  dd {
-    margin-left: 100px;
-  }
-}
-.has-error .form-control {
-  border-color: @pig-pink;
-}
-.form-control {
-  height: 45px;
-  border: 1px solid @light-grey;
-  background-color: transparent;
-  -webkit-box-shadow: none;
-  -moz-box-shadow: none;
-  box-shadow: none;
-  &.input-sm {
-    height: 38px;
-  }
-}
-.input-group-addon {
-  background-color: @light-grey;
-  border: 0;
-  padding: 8px 16px;
-}
 @media (min-width: 768px) {
   .form-horizontal {
     .control-label {
@@ -118,9 +36,7 @@ dl.dl-horizontal {
       font-weight: inherit;
     }
   }
-  .navbar {
-    border-radius: 0;
-  }
+
 }
 .list-group {
   border-top: 1px solid @light-grey;

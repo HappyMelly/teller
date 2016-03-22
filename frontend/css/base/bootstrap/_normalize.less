@@ -36,7 +36,8 @@ a {
   background-color: transparent
 }
 
-a:active, a:hover {
+a:active,
+a:hover {
   outline: 0
 }
 
@@ -44,7 +45,8 @@ abbr[title] {
   border-bottom: 1px dotted
 }
 
-b, strong {
+b,
+strong {
   font-weight: 700
 }
 
@@ -95,9 +97,7 @@ figure {
 
 hr {
   height: 0;
-  -webkit-box-sizing: content-box;
-  -moz-box-sizing: content-box;
-  box-sizing: content-box
+  .box-sizing(content-box);
 }
 
 pre {
@@ -119,20 +119,26 @@ button {
   overflow: visible
 }
 
-button, select {
+button,
+select {
   text-transform: none
 }
 
-button, html input[type=button], input[type=reset], input[type=submit] {
+button,
+html input[type=button],
+input[type=reset],
+input[type=submit] {
   -webkit-appearance: button;
   cursor: pointer
 }
 
-button[disabled], html input[disabled] {
+button[disabled],
+html input[disabled] {
   cursor: default
 }
 
-button::-moz-focus-inner, input::-moz-focus-inner {
+button::-moz-focus-inner,
+input::-moz-focus-inner {
   padding: 0;
   border: 0
 }
@@ -141,25 +147,24 @@ input {
   line-height: normal
 }
 
-input[type=checkbox], input[type=radio] {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
+input[type=checkbox],
+input[type=radio] {
+  .box-sizing(border-box);
   padding: 0
 }
 
-input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
   height: auto
 }
 
 input[type=search] {
-  -webkit-box-sizing: content-box;
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
+  .box-sizing(content-box);
   -webkit-appearance: textfield
 }
 
-input[type=search]::-webkit-search-cancel-button, input[type=search]::-webkit-search-decoration {
+input[type=search]::-webkit-search-cancel-button,
+input[type=search]::-webkit-search-decoration {
   -webkit-appearance: none
 }
 
