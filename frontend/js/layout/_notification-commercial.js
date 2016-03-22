@@ -8,7 +8,11 @@ export default class Widget {
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
+        this.uniqueKey = 'notifiction';
 
+        if (!this._isShowed()) {
+            this.$root.slideDown();
+        }
         this._assignEvents();
     }
 
@@ -22,10 +26,45 @@ export default class Widget {
     }
 
     _assignEvents() {
-
+        this.$root.on('click', '[data-notif]', this._onClickBtn.bind(this));
     }
 
-    
+    _onClickBtn(e){
+        e.preventDefault();
+        const self = this;
+        const $link = $(e.currentTarget);
+        const url = $link.attr('href');
+
+        self._sendIsShowed(url)
+            .done(function(){
+                self.$root.addClass('b-notification_state_thank');
+                
+                setTimeout(function(){
+                    self.hide();
+                }, 3000);
+            });
+    }
+
+    _isShowed() {
+        const value = localStorage.getItem(this.uniqueKey);
+        return value && value == 'showed';
+    }
+
+    _sendIsShowed(url) {
+        const self = this;
+        let defer = $.Deferred();
+
+        $.post(url, function(){
+            localStorage.setItem(self.uniqueKey, 'showed');
+            defer.resolve();
+        });
+        
+        return defer.promise();
+    }
+
+    hide() {
+        this.$root.slideUp();
+    }
 
     // static
     static plugin(selector) {
@@ -34,7 +73,7 @@ export default class Widget {
 
         return $elems.each(function (index, el) {
             let $element = $(el);
-            let data     = $element.data('widget');
+            let data = $element.data('widget');
 
             if (!data) {
                 data = new Widget(el);
@@ -43,71 +82,3 @@ export default class Widget {
         })
     }
 }
-
-
-
-/**
- *  Header notification
- */
-(function ($, App) {
-    'use strict';
-
-    function TopNotification(selector, options){
-        var self = this;
-
-        self.$root = $(selector);
-        self.options = $.extend({}, options, self.$root.data());
-        self.options.uniqueKey = 'topNotifiction';
-
-        if (!self.isShowed()) {
-            self.show();
-        };
-        self.assignEvents();
-    }
-
-    TopNotification.prototype.assignEvents = function(){
-        var self = this;
-
-        self.$root
-            .on('click', '[data-notification-close]', function (e) {
-                self.setIsShowed({
-                    status: 'close'
-                });
-                self.hide();
-                e.preventDefault();
-            })
-            .on('click', '[data-notification-accept]', function () {
-                self.setIsShowed({
-                    status: 'accept'
-                });
-            })
-    };
-
-    TopNotification.prototype.isShowed = function(){
-        var self = this,
-            value = localStorage.getItem(self.options.uniqueKey);
-
-        return value && value == 'showed';
-    }
-
-    TopNotification.prototype.setIsShowed = function(data){
-        var self = this;
-
-        localStorage.setItem(self.options.uniqueKey, 'showed');
-        $.post('/', {
-            status: data.status
-        })
-    }
-
-    TopNotification.prototype.hide = function(){
-        this.$root.removeClass('state_show');
-    }
-
-    TopNotification.prototype.show = function(){
-        this.$root.addClass('state_show');
-    }
-
-    App.widgets.TopNotification = TopNotification;
-
-})(jQuery, App);
-

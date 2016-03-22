@@ -55,6 +55,7 @@
 .b-notification__buttons{
   float: right;
   margin-left: 30px;
+  .transition(all .15s ease);
 }
 
 .b-notification__btn {
@@ -62,10 +63,20 @@
   margin: 26px 0 0 9px;
   padding-right: 24px;
   padding-left: 24px;
+
+  &.type-close{
+    min-width: 153px;
+  }
+
+  &.type-accept{
+    min-width: 194px;
+  }
 }
 
 .b-notification__text{
   overflow: hidden;
+  position: relative;
+  padding-top: 6px;
 }
 
 .b-notification__text-inner{
@@ -74,6 +85,42 @@
   padding-left: 123px;
   vertical-align: middle;
   font-size: 14px;
-  line-height: 16px;
+  line-height: 20px;
   color: #333333;
+
+  .text,
+  .thanks-text{
+    .transition(all .15s ease);
+  }
+
+  .thanks-text{
+    position: absolute;
+    left: 127px;
+    top: 34px;
+    opacity: 0;
+    visibility: hidden;
+    font-family: "kg_skinny_latteregular", Arial, sans-serif;
+    font-size: 30px;
+    line-height: 1;
+  }
+}
+
+/*== states ==*/
+.b-notification_state_thank{
+  .b-notification__buttons{
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .b-notification__text-inner{
+    .text{
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .thanks-text{
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 }
