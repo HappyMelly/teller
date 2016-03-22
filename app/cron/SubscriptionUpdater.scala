@@ -29,7 +29,7 @@ import javax.inject.Inject
 import models.core.payment.{CustomerType, GatewayWrapper}
 import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
-import play.api.Play
+import play.api.{Play, Logger}
 import play.api.Play.current
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,14 +40,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SubscriptionUpdater @Inject() (val repos: Repositories) {
 
   def update() = {
-    println("INFO: Start updating subscriptions")
+    Logger.info(msg("Start updating subscriptions"))
     repos.member.findAll map { members =>
       val membersOfInterest = members.filter(_.renewal).filterNot(_.funder).
         filter(_.newFee.nonEmpty).filter(x => validSubscriptionPeriod(x.until))
       membersOfInterest.foreach { member =>
         val typ = if (member.person) CustomerType.Person else CustomerType.Organisation
         repos.core.customer.find(member.objectId, typ) map {
-          case None => println(s"ERROR: Member ${member.identifier} doesn't have customer record")
+          case None => Logger.error(msg(s"Member ${member.identifier} doesn't have customer record"))
           case Some(customer) =>
             val apiSecretKey = Play.configuration.getString("stripe.secret_key").get
             val gateway = new GatewayWrapper(apiSecretKey)
@@ -55,14 +55,16 @@ class SubscriptionUpdater @Inject() (val repos: Repositories) {
               gateway.subscribe(customer.remoteId, member.newFee.get.intValue())
               repos.member.update(member.copy(fee = member.newFee.get, newFee = None))
             } catch {
-              case e: RuntimeException => println(s"ERROR: ${e.getMessage}")
+              case e: RuntimeException => Logger.error(e.getMessage)
             }
         }
       }
-      println(s"INFO: ${membersOfInterest.length} were updated")
-      println("INFO: Stop updating subscriptions")
+      Logger.info(msg(s"${membersOfInterest.length} were updated"))
+      Logger.info(msg("Stop updating subscriptions"))
     }
   }
+
+  protected def msg(str: String): String = s"SubscriptionUpdater: $str"
 
   /**
     * Returns true if the period between now and membership end date is 0, 5 or 10 days
@@ -74,4 +76,5 @@ class SubscriptionUpdater @Inject() (val repos: Repositories) {
     val diff = new Duration(end.toDate.getTime, now.toDate.getTime)
     diff.getStandardDays == 0 || diff.getStandardDays == 5 || diff.getStandardDays == 10
   }
+
 }

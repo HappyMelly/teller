@@ -23,6 +23,7 @@
  */
 package models
 
+import models.core.payment.Customer
 import org.joda.time.{DateTime, LocalDate}
 
 case class Member(
@@ -105,4 +106,6 @@ case class Member(
     _memberObj._1.get.photo.url
   else
     None
+
+  def relatedCustomer(customer: Customer): Boolean = customer.objectId == objectId && person == customer.isPerson
 }

@@ -26,6 +26,7 @@ package cron.reminders
 import javax.inject.Inject
 
 import models.repository.Repositories
+import play.api.Logger
 import services.integrations.{Email, EmailComponent, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -36,12 +37,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class BrandReminder @Inject() (val email: EmailComponent, val repos: Repositories) extends Integrations {
 
   def sendLicenseExpirationReminder(): Unit = {
+    Logger.info(msg("Sending license expiration reminders"))
     (for {
       brands <- repos.cm.brand.findAllWithSettings
       licenses <- repos.cm.license.findAll
     } yield (brands, licenses)) map { case (brands, licenses) =>
       brands.filter(_.settings.licenseExpirationEmail).foreach { view =>
         val facilitatorIds = licenses.filter(_.expiring).map(_.licenseeId).distinct
+        val record = s"Sending ${facilitatorIds.length} license expiration reminders to ${view.brand.name} facilitators"
+        Logger.info(msg(record))
         val body = mail.templates.brand.html.licenseExpiring(view.brand, view.settings.licenseExpirationEmailBody.get).toString()
         repos.person.find(facilitatorIds) map { people =>
           people.foreach { person =>
@@ -52,4 +56,6 @@ class BrandReminder @Inject() (val email: EmailComponent, val repos: Repositorie
       }
     }
   }
+
+  protected def msg(str: String): String = s"BrandReminder: $str"
 }

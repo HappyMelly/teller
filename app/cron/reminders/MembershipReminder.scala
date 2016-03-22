@@ -30,7 +30,8 @@ import controllers.hm.Members
 import models.Member
 import models.repository.Repositories
 import org.joda.time.{DateTime, Duration, LocalDate}
-import services.integrations.{Email, Integrations}
+import play.api.Logger
+import services.integrations.{EmailComponent, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,12 +39,12 @@ import scala.concurrent.Future
 /**
   * Contains methods for notifying Happy Melly members about different membership-related events
   */
-class MembershipReminder @Inject()(val email: Email, val repos: Repositories) extends Integrations {
+class MembershipReminder @Inject()(val email: EmailComponent, val repos: Repositories) extends Integrations {
 
   def sendOneMonthExpirationReminder(): Unit = repos.member.findAll map { members =>
     val totalNumber = members.count(_.active)
     val validMembers = renewedSupporters(members).filter(_.until == LocalDate.now().plusMonths(1))
-    println(s"INFO: Start sending one month expiration reminders to ${validMembers.length} members")
+    Logger.info(s"Start sending one month expiration reminders to ${validMembers.length} members")
     validMembers.foreach { member =>
       val subject = "Your Happy Melly Membership"
       val body = mail.templates.members.html.oneMonthReminder(member, totalNumber, Members.profileUrl(member)).toString()
@@ -56,12 +57,13 @@ class MembershipReminder @Inject()(val email: Email, val repos: Repositories) ex
         email.sendSystem(Seq(value), subject, body)
       }
     }
-    println(s"INFO: Stop sending one month expiration reminders to ${validMembers.length} members")
+    Logger.info(s"Stop sending one month expiration reminders to ${validMembers.length} members")
   }
 
   def sendTwoWeeksExpirationReminder(): Unit = repos.member.findAll map { members =>
-    renewedSupporters(members).filter(_.until == LocalDate.now().plusWeeks(2)).foreach { member =>
-
+    val validMembers = renewedSupporters(members).filter(_.until == LocalDate.now().plusWeeks(2))
+    Logger.info(s"Start sending two weeks expiration reminders to ${validMembers.length} members")
+    validMembers.foreach { member =>
       val subject = "Your Happy Melly Membership"
       val membershipDuration = new Duration(member.since.toDateTimeAtCurrentTime, DateTime.now())
       val membershipInDays = membershipDuration.getStandardDays
@@ -77,6 +79,7 @@ class MembershipReminder @Inject()(val email: Email, val repos: Repositories) ex
         email.sendSystem(Seq(value), subject, body)
       }
     }
+    Logger.info(s"Stop sending two weeks expiration reminders to ${validMembers.length} members")
   }
 
   protected def renewedSupporters(members: List[Member]): List[Member] =
