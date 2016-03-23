@@ -107,7 +107,7 @@ GET           /evaluation/confirm/:confirmationId                          contr
 POST          /person/:personId/material                                   controllers.Materials.create(personId: Long)
 DELETE        /person/:personId/material/:id                               controllers.Materials.remove(personId: Long, id: Long)
 
-GET           /report/create/:brandId/event/:eventId/status/:status        controllers.Reports.create(brandId: Long, eventId: Long, status: Int)
+GET           /report/create/:brandId/event/:eventId/status/:status        controllers.cm.Reports.create(brandId: Long, eventId: Long, status: Int)
 
 GET           /reset/:token                                                controllers.PasswordReset.resetPassword(token: String)
 POST          /reset/:token                                                controllers.PasswordReset.handleResetPassword(token: String)

@@ -21,18 +21,18 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
-package controllers
+package controllers.cm
 
 import java.io.{File, FileOutputStream}
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import models.UserRole.Role._
+import models._
 import models.cm.event.Attendee
 import models.cm.{Evaluation, Event}
-import models._
 import models.repository.Repositories
 import org.joda.time._
 import play.api.Play.current
