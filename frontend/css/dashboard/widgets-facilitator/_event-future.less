@@ -22,17 +22,20 @@
 
 .b-eventlist{
   .clearfix();
+  font-size: 0;
 }
 
 .b-eventfut{
+  display: inline-block;
+  vertical-align: top;
   position: relative;
   border: 1px solid #E7E7E7;
-  float: left;
+  font-size: 14px;
   width: 48%;
   margin-bottom: 25px;
   .box-sizing(border-box);
-  padding: 34px 12px 15px;
-  min-height: 170px;
+  padding: 19px 12px 15px;
+  min-height: 205px;
   text-align: left;
 
   &:nth-child(2n + 1){
@@ -41,13 +44,13 @@
 }
 
 .b-eventfut__brand{
-  position: absolute;
+  position: relative;
+  margin-bottom: 3px;
   font-size: 12px;
-  left: 12px;
-  top: 19px;
   text-align: left;
   line-height: 1;
   color: #999;
+  .t-ellps();
 }
 
 .b-eventfut__title{
