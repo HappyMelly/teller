@@ -24,13 +24,13 @@
 
 package controllers.unit
 
-import controllers.Statistics
+import controllers.cm.Statistics
 import helpers.EventHelper
-import models.{ License, Event }
+import models.{Event, License}
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.specs2.mutable.Specification
-import stubs.{ FakeRuntimeEnvironment, FakeRepositories }
+import stubs.{FakeRepositories, FakeRuntimeEnvironment}
 
 class StatisticsSpec extends Specification {
 

@@ -15,12 +15,14 @@
           @if(tab == "attendees") {
             <span class="b-brandhead__i">Attendees</span>
           } else {
-            <a class="link-blue b-brandhead__i" href="@controllers.cm.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a>
+            <a class="link-blue b-brandhead__i"
+                href="@controllers.cm.event.routes.Attendees.index(activeBrand.identifier).url">Attendees</a>
           }
           @if(tab == "statistics") {
             <span class="b-brandhead__i">Statistics</span>
           } else {
-            <a class="link-blue b-brandhead__i" href="@routes.Statistics.index(activeBrand.identifier).url">Statistics</a>
+            <a class="link-blue b-brandhead__i"
+                href="@controllers.cm.routes.Statistics.index(activeBrand.identifier).url">Statistics</a>
           }
           @if(tab == "facilitators") {
             <span class="b-brandhead__i">Facilitators</span>

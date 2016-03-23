@@ -59,7 +59,7 @@ function drawTable(id, data, renderer) {
  */
 function showTab(elem, type) {
     var brandId = $('#activeBrandId').val();
-    var url = jsRoutes.controllers.Statistics.byFacilitators(brandId).url;
+    var url = jsRoutes.controllers.cm.Statistics.byFacilitators(brandId).url;
     $.get(url, function(data) {
         var ctx = $("#facilitatorChart").get(0).getContext("2d");
         new Chart(ctx).Line(data, {});
@@ -69,7 +69,7 @@ function showTab(elem, type) {
         $('#facilitatorJoined').text(data.joined);
         $('#facilitatorLeft').text(data.left);
     });
-    url = jsRoutes.controllers.Statistics.byEvents(brandId).url;
+    url = jsRoutes.controllers.cm.Statistics.byEvents(brandId).url;
     $.get(url, function(data) {
         var ctx = $("#eventChart").get(0).getContext("2d");
         new Chart(ctx).Line(data.events, {});
@@ -92,14 +92,14 @@ function showTab(elem, type) {
                 append(facilitator.label);
         });
     });
-    url = jsRoutes.controllers.Statistics.byCountries(brandId).url;
+    url = jsRoutes.controllers.cm.Statistics.byCountries(brandId).url;
     $.get(url, function(data) {
         drawDoughnutChart("#countryChart", data);
         drawTable("#countryList", data, function(country) {
             return " " + country.label
         });
     });
-    url = jsRoutes.controllers.Statistics.byParticipants(brandId).url;
+    url = jsRoutes.controllers.cm.Statistics.byParticipants(brandId).url;
     $.get(url, function(data) {
         var ctx = $("#participantChart").get(0).getContext("2d");
         new Chart(ctx).Line(data, {});

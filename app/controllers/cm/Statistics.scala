@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -22,16 +22,17 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.cm
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{BrandAware, Security, core}
 import models.UserRole.Role._
 import models.cm.event.Attendee
-import models.repository.Repositories
 import models.cm.{Event, License}
+import models.repository.Repositories
 import org.joda.time.{Interval, LocalDate, Months}
 import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, Json, Writes}

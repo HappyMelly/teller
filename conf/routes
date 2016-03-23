@@ -260,11 +260,11 @@ POST          /person/:personId/signature                                    con
 GET           /person/:personId/signature                                    controllers.Signatures.signature(personId: Long)
 POST          /person/:personId/signature/delete                             controllers.Signatures.delete(personId: Long)
 
-GET           /brand/:brandId/statistics                                     controllers.Statistics.index(brandId: Long)
-GET           /brand/:brandId/statistics/type/facilitators/                  controllers.Statistics.byFacilitators(brandId: Long)
-GET           /brand/:brandId/statistics/type/events/                        controllers.Statistics.byEvents(brandId: Long)
-GET           /brand/:brandId/statistics/type/countries/                     controllers.Statistics.byCountries(brandId: Long)
-GET           /brand/:brandId/statistics/type/participants/                  controllers.Statistics.byParticipants(brandId: Long)
+GET           /brand/:brandId/statistics                                     controllers.cm.Statistics.index(brandId: Long)
+GET           /brand/:brandId/statistics/type/facilitators/                  controllers.cm.Statistics.byFacilitators(brandId: Long)
+GET           /brand/:brandId/statistics/type/events/                        controllers.cm.Statistics.byEvents(brandId: Long)
+GET           /brand/:brandId/statistics/type/countries/                     controllers.cm.Statistics.byCountries(brandId: Long)
+GET           /brand/:brandId/statistics/type/participants/                  controllers.cm.Statistics.byParticipants(brandId: Long)
 
 GET           /template/:id                                                  controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET           /template/:brandId/:id/delete                                  controllers.CertificateTemplates.delete(brandId: Long, id: Long)

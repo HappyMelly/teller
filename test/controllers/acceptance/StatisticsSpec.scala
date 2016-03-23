@@ -24,16 +24,16 @@
 
 package controllers.acceptance
 
-import controllers.Statistics
+import controllers.cm.Statistics
 import helpers.EventHelper
 import integration.PlayAppSpec
 import models.License
-import models.repository.cm.{LicenseRepository, EventRepository}
+import models.repository.cm.{EventRepository, LicenseRepository}
 import org.joda.money.Money
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import play.api.libs.json.JsObject
-import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSocialIdentity, FakeSecurity }
+import stubs.{FakeRepositories, FakeRuntimeEnvironment, FakeSecurity, FakeSocialIdentity}
 
 class StatisticsSpec extends PlayAppSpec with IsolatedMockFactory {
 
