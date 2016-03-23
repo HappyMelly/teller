@@ -9,7 +9,7 @@ GET           /overview/:id                                                  con
 GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
 POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
 
-GET           /badge/:hash/picture                                           controllers.brand.Badges.picture(hash: String, size: String ?= "")
+GET           /badge/:hash/picture                                           controllers.cm.brand.Badges.picture(hash: String, size: String ?= "")
 
 POST          /brand/:id/activation                                          controllers.Brands.activation(id: Long)
 GET           /brands                                                        controllers.Brands.index
@@ -43,19 +43,19 @@ POST          /brand/:id/coordinator/:personId/type/:notification/on         con
 GET           /brand/:id/eventrequests                                       controllers.EventRequests.index(id: Long)
 GET           /brand/:id/eventrequest/:requestId                             controllers.EventRequests.details(id: Long, requestId: Long)
 
-POST          /brand/:id/credits/activate                                    controllers.brand.Credits.activate(id: Long)
-POST          /brand/:id/credits/deactivate                                  controllers.brand.Credits.deactivate(id: Long)
-GET           /brand/:id/credits/settings                                    controllers.brand.Credits.settings(id: Long)
-POST          /brand/:id/credits/settings                                    controllers.brand.Credits.update(id: Long)
+POST          /brand/:id/credits/activate                                    controllers.cm.brand.Credits.activate(id: Long)
+POST          /brand/:id/credits/deactivate                                  controllers.cm.brand.Credits.deactivate(id: Long)
+GET           /brand/:id/credits/settings                                    controllers.cm.brand.Credits.settings(id: Long)
+POST          /brand/:id/credits/settings                                    controllers.cm.brand.Credits.update(id: Long)
 
-GET           /brand/:id/badge                                               controllers.brand.Badges.add(id: Long)
-POST          /brand/:id/badge                                               controllers.brand.Badges.create(id: Long)
-DELETE        /brand/:id/badge/:badgeId                                      controllers.brand.Badges.delete(id: Long, badgeId: Long)
-GET           /brand/:id/badge/:badgeId                                      controllers.brand.Badges.edit(id: Long, badgeId: Long)
-POST          /brand/:id/badge/:badgeId                                      controllers.brand.Badges.update(id: Long, badgeId: Long)
+GET           /brand/:id/badge                                               controllers.cm.brand.Badges.add(id: Long)
+POST          /brand/:id/badge                                               controllers.cm.brand.Badges.create(id: Long)
+DELETE        /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.delete(id: Long, badgeId: Long)
+GET           /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.edit(id: Long, badgeId: Long)
+POST          /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.update(id: Long, badgeId: Long)
 
-POST          /brand/:id/settings/licensereminder/off                        controllers.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
-POST          /brand/:id/settings/licensereminder/on                         controllers.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
+POST          /brand/:id/settings/licensereminder/off                        controllers.cm.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
+POST          /brand/:id/settings/licensereminder/on                         controllers.cm.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
 
 POST          /brand/:brandId/link                                           controllers.BrandLinks.create(brandId: Long)
 DELETE        /brand/:brandId/link/:id                                       controllers.BrandLinks.remove(brandId: Long, id: Long)
@@ -77,9 +77,9 @@ POST          /commercial-customer/:interested                               con
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
 
-GET           /credits/brand/:id                                             controllers.brand.Credits.credits(id: Long)
-POST          /credits/brand/:id                                             controllers.brand.Credits.give(id: Long)
-GET           /credits                                                       controllers.brand.Credits.index()
+GET           /credits/brand/:id                                             controllers.cm.brand.Credits.credits(id: Long)
+POST          /credits/brand/:id                                             controllers.cm.brand.Credits.give(id: Long)
+GET           /credits                                                       controllers.cm.brand.Credits.index()
 
 POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
 POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)

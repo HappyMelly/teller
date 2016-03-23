@@ -29,7 +29,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 import controllers.api.json.PersonConverter
-import controllers.brand.Badges
+import controllers.cm.brand.Badges
 import models._
 import models.cm.brand.Badge
 import models.cm.facilitator.{Endorsement, Material, FacilitatorLanguage, FacilitatorCountry}

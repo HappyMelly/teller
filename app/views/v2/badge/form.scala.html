@@ -17,9 +17,9 @@
       @badgeId.map { _ => <h1>Edit Badge</h1> }.getOrElse { <h1>Add Badge</h1> }
     }
     @v2.html.form(action = badgeId.map { id =>
-      CSRF(controllers.brand.routes.Badges.update(brandId, id))
+      CSRF(controllers.cm.brand.routes.Badges.update(brandId, id))
     }.getOrElse {
-      CSRF(controllers.brand.routes.Badges.create(brandId))
+      CSRF(controllers.cm.brand.routes.Badges.create(brandId))
     }, 'enctype -> "multipart/form-data") {
       @v2.html.block("") {
         @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")

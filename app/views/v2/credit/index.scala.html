@@ -8,7 +8,7 @@
             @for((brand, index) <- brands.zipWithIndex) {
                 <a href="#@brand.uniqueName"
                     class="b-creditnav__i "
-                    data-href="@controllers.brand.routes.Credits.credits(brand.identifier)"
+                    data-href="@controllers.cm.brand.routes.Credits.credits(brand.identifier)"
                     data-tab-link>
                     @brand.name
                 </a>

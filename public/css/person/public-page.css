@@ -1,1 +1,86 @@
-.p-public-con{position:relative}.p-public-con:before{content:'';position:absolute;width:85px;height:157px;top:50px;right:0;background:url(../images/melly_right.png) no-repeat}.p-public{padding-top:20px;text-align:left;margin-bottom:80px}.p-public__hint{font-size:18px;line-height:23px;font-weight:700;color:#ee929f;margin-bottom:30px}.p-public__title{font-size:36px;line-height:39px;font-weight:600;margin-bottom:20px}.p-public__text{margin-bottom:28px;font-size:14px;line-height:18px}.p-public__submit{display:block;zoom:1;margin-top:25px}.p-public__submit:after{content:" ";display:block;font-size:0;height:0;clear:both;visibility:hidden}.p-public__submit-text{float:left;width:35%;font-size:18px;line-height:24px}.p-public__submit-btn{width:100%;font-size:18px;padding-top:7px;padding-bottom:9px}
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+/* colors */
+/* z-indexes */
+/* mixins */
+.p-public-con {
+  position: relative;
+}
+.p-public-con:before {
+  content: '';
+  position: absolute;
+  width: 85px;
+  height: 157px;
+  top: 50px;
+  right: 0;
+  background: url(../images/melly_right.png) no-repeat;
+}
+.p-public {
+  padding-top: 20px;
+  text-align: left;
+  margin-bottom: 80px;
+}
+.p-public__hint {
+  font-size: 18px;
+  line-height: 23px;
+  font-weight: 700;
+  color: #ee929f;
+  margin-bottom: 30px;
+}
+.p-public__title {
+  font-size: 36px;
+  line-height: 39px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.p-public__text {
+  margin-bottom: 28px;
+  font-size: 14px;
+  line-height: 18px;
+}
+.p-public__submit {
+  display: block;
+  zoom: 1;
+  margin-top: 25px;
+}
+.p-public__submit:after {
+  content: " ";
+  display: block;
+  font-size: 0;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.p-public__submit-text {
+  float: left;
+  width: 35%;
+  font-size: 18px;
+  line-height: 24px;
+}
+.p-public__submit-btn {
+  width: 100%;
+  font-size: 18px;
+  padding-top: 7px;
+  padding-bottom: 9px;
+}

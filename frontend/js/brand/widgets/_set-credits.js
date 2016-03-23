@@ -102,12 +102,12 @@ export default class Widget {
 
     // transport
     _sendActivate(brandId) {
-        var url = jsRoutes.controllers.brand.Credits.activate(brandId).url;
+        var url = jsRoutes.controllers.cm.brand.Credits.activate(brandId).url;
         return $.post(url, {brandid: brandId});
     }
 
     _sendDeActivate(brandId) {
-        var url = jsRoutes.controllers.brand.Credits.deactivate(brandId).url;
+        var url = jsRoutes.controllers.cm.brand.Credits.deactivate(brandId).url;
         return $.post(url, {brandid: brandId});
     }
 

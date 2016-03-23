@@ -1,7 +1,7 @@
 @import models.cm.brand.Badge
 @(badges: List[Badge], facilitator: models.cm.Facilitator)
 
-@import controllers.brand.Badges
+@import controllers.cm.brand.Badges
 
     @for(badge <- badges) {
     <label class="b-badge @if(facilitator.badges.contains(badge.id.get)) { is-selected }">

@@ -21,7 +21,7 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers.brand
+package controllers.cm.brand
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
@@ -168,6 +168,6 @@ object Badges {
     */
   def pictureUrl(badge: Badge, size: String = ""): String = {
     val picture = Badge.picture(badge.file).file(size)
-    Utilities.cdnUrl(picture.name).getOrElse(Utilities.fullUrl(routes.Badges.picture(badge.file).url))
+    Utilities.cdnUrl(picture.name).getOrElse(Utilities.fullUrl(controllers.cm.brand.routes.Badges.picture(badge.file).url))
   }
 }

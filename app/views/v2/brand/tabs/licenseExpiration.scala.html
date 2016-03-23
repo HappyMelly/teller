@@ -1,5 +1,5 @@
-@import models.cm.brand.Settings
-@(settings: Settings)(implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler)
+@(settings: models.cm.brand.Settings)(implicit request: Request[Any],
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 <h4>License Expiration Reminder</h4>
 <p>When this feature is <strong>on</strong>, your facilitators will get a reminder that their license is expiring
@@ -9,13 +9,13 @@
 <div class="form-group">
     <label class="radio-inline control-label">
         <input type="radio" name="switcher" id="reminderOff"
-            data-href="@controllers.brand.routes.Settings.turnLicenseExpirationReminderOff(settings.brandId)"
+            data-href="@controllers.cm.brand.routes.Settings.turnLicenseExpirationReminderOff(settings.brandId)"
             value="off" @if(!settings.licenseExpirationEmail) {checked}>
         Turn the reminder off
     </label>
     <label class="radio-inline control-label">
         <input type="radio" name="switcher" id="reminderOn"
-            data-href="@controllers.brand.routes.Settings.turnLicenseExpirationReminderOn(settings.brandId)"
+            data-href="@controllers.cm.brand.routes.Settings.turnLicenseExpirationReminderOn(settings.brandId)"
             value="on" @if(settings.licenseExpirationEmail) {checked}>
         Turn the reminder on
     </label>
@@ -29,7 +29,7 @@
     </div>
     <div class="form-group">
         <button class="btn btn-primary pull-right"
-            data-href="@controllers.brand.routes.Settings.turnLicenseExpirationReminderOn(settings.brandId)"
+            data-href="@controllers.cm.brand.routes.Settings.turnLicenseExpirationReminderOn(settings.brandId)"
             id="reminderButton">Save</button>
     </div>
 </div>

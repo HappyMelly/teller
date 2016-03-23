@@ -21,7 +21,7 @@
         @views.html.v2.element.notificationList()
     </div>
     @user.account.credits.map { value =>
-        <a href="@controllers.brand.routes.Credits.index()" class="b-headmenu__heart @if(value > 0){state_active}">
+        <a href="@controllers.cm.brand.routes.Credits.index()" class="b-headmenu__heart @if(value > 0){state_active}">
             <i class="fa fa-heart"></i>
         </a>
     }

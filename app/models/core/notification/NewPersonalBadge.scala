@@ -24,7 +24,7 @@
 
 package models.core.notification
 
-import controllers.brand.Badges
+import controllers.cm.brand.Badges
 import models.{Notification, NotificationType, INotification, Person}
 import models.cm.brand.Badge
 import play.api.libs.json.{Json, JsObject}

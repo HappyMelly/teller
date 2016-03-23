@@ -24,7 +24,7 @@
 
 package models.core.notification
 
-import controllers.brand.Badges
+import controllers.cm.brand.Badges
 import controllers.core.People
 import models._
 import models.cm.brand.Badge
