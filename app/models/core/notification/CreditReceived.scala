@@ -26,24 +26,32 @@ package models.core.notification
 
 import controllers.core.People
 import models.cm.brand.PeerCredit
-import models.{INotification, Notification, NotificationType, Person}
+import models._
 import play.api.libs.json.{JsObject, Json}
 
 /**
   * Represents peer credit notification
+ *
   * @param credit Peer credit object
-  * @param giver Name of the credit giver
-  * @param receiver Person who receives the credit
+  * @param to Person who receives the credit
+  * @param from Person who gave the credit
   * @param version Badge markup version
   */
-case class CreditReceived(credit: PeerCredit, giver: String, receiver: Person, version: Int = 1) extends INotification {
-  override val typ: String = NotificationType.CreditReceived
+case class CreditReceived(credit: PeerCredit,
+                          to: Person,
+                          from: Person,
+                          version: Int = 1) extends BrandNotification {
 
-  def body: JsObject = Json.obj("img" -> People.pictureUrl(receiver),
-    "name" -> receiver.name,
+  val brandId: Long = credit.brandId
+  val fromId: Long = from.identifier
+  val toId: Long = to.identifier
+  val typ: String = NotificationType.CreditReceived
+
+  def body: JsObject = Json.obj("img" -> People.pictureUrl(to),
+    "name" -> to.name,
     "amount" -> credit.amount,
-    "giver" -> giver,
-    "url" -> controllers.core.routes.People.details(receiver.identifier).url)
+    "giver" -> from.fullName,
+    "url" -> controllers.core.routes.People.details(to.identifier).url)
 }
 
 object CreditReceived {

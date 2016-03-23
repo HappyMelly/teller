@@ -26,6 +26,7 @@ package models.actors
 import javax.inject.Inject
 
 import akka.actor.Actor
+import models.BrandNotification
 import models.core.notification.{CreditReceived, NewBadge, NewFacilitator, NewPersonalBadge}
 import models.repository.Repositories
 
@@ -37,42 +38,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class NotificationDispatcher @Inject() (val repos: Repositories) extends Actor {
 
   def receive = {
-    case notification: CreditReceived => addCreditReceivedNotification(notification)
-    case notification: NewFacilitator => addNewFacilitatorNotifications(notification)
-    case notification: NewBadge => addNewBadgeNotification(notification)
+    case notification: CreditReceived => addBrandNotification(notification)
+    case notification: NewFacilitator => addBrandNotification(notification)
+    case notification: NewBadge => addBrandNotification(notification)
     case notification: NewPersonalBadge =>
       repos.notification.insert(Seq(notification.notification))
   }
 
-  protected def addCreditReceivedNotification(notification: CreditReceived) = {
+  protected def addBrandNotification(notif: BrandNotification) = {
     (for {
-      c <- repos.cm.rep.brand.coordinator.find(notification.credit.brandId)
-      f <- repos.cm.license.findByBrand(notification.credit.brandId)
-    } yield (c.map(_.personId), f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
-      val ids = (coordinators.toList ::: facilitators).distinct.filterNot(_ == notification.receiver.identifier)
-      val records = ids.map(personId => notification.toNotification(personId))
-      repos.notification.insert(records)
-    }
-  }
-
-  protected def addNewBadgeNotification(notification: NewBadge) = {
-    (for {
-      c <- repos.cm.rep.brand.coordinator.find(notification.badge.brandId)
-      f <- repos.cm.license.findByBrand(notification.badge.brandId)
-    } yield (c.map(_.personId), f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
-      val ids = (coordinators.toList ::: facilitators).distinct.filterNot(_ == notification.person.identifier)
-      val records = ids.map(personId => notification.toNotification(personId))
-      repos.notification.insert(records)
-    }
-  }
-
-  protected def addNewFacilitatorNotifications(notification: NewFacilitator) = {
-    (for {
-      c <- repos.cm.rep.brand.coordinator.find(notification.brand.identifier)
-      f <- repos.cm.license.findByBrand(notification.brand.identifier)
-    } yield (c.map(_.personId), f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
-      val ids = (coordinators.toList ::: facilitators).distinct.filterNot(_ == notification.person.identifier)
-      val records = ids.map(personId => notification.toNotification(personId))
+      c <- repos.cm.rep.brand.coordinator.find(notif.brandId)
+      f <- repos.cm.license.findByBrand(notif.brandId)
+    } yield (c.map(_.personId).toList, f.map(_.licenseeId))) map { case (coordinators, facilitators) =>
+      val ids = (coordinators ::: facilitators).distinct.filterNot(_ == notif.toId).filterNot(_ == notif.fromId)
+      val records = ids.map(personId => notif.toNotification(personId))
       repos.notification.insert(records)
     }
   }

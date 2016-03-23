@@ -36,7 +36,10 @@ import play.api.libs.json.{Json, JsObject}
   * @param version Badge markup version
   */
 case class NewPersonalBadge(person: Person, badge: Badge, version: Int = 1) extends INotification {
-  override val typ: String = NotificationType.PersonalBadge
+
+  val fromId: Long = 0
+  val toId: Long = 0
+  val typ: String = NotificationType.PersonalBadge
 
   def body: JsObject = Json.obj("img" -> Badges.pictureUrl(badge, "icon"),
     "badge" -> badge.name)

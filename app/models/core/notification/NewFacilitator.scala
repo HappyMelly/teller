@@ -30,17 +30,23 @@ import play.api.libs.json.{Json, JsObject}
 
 /**
   * Represents facilitator notification
-  * @param person Person who became a facilitator
+ *
+  * @param facilitator Person who became a facilitator
+  * @param from Person identifier who added the facilitator
   * @param brand Brand this facilitator belongs to
   * @param version Badge markup version
   */
-case class NewFacilitator(person: Person, brand: Brand, version: Int = 1) extends INotification {
-  override val typ: String = NotificationType.Facilitator
+case class NewFacilitator(facilitator: Person, from: Long, brand: Brand, version: Int = 1) extends BrandNotification {
 
-  def body: JsObject = Json.obj("img" -> People.pictureUrl(person),
-    "name" -> person.name,
+  val brandId: Long = brand.identifier
+  val fromId: Long = from
+  val toId: Long = facilitator.identifier
+  val typ: String = NotificationType.Facilitator
+
+  def body: JsObject = Json.obj("img" -> People.pictureUrl(facilitator),
+    "name" -> facilitator.name,
     "brand" -> brand.name,
-    "url" -> controllers.core.routes.People.details(person.identifier).url)
+    "url" -> controllers.core.routes.People.details(facilitator.identifier).url)
 }
 
 object NewFacilitator {

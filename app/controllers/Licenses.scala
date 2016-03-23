@@ -146,7 +146,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       query.map { strength =>
                         repos.profileStrength.update(ProfileStrength.forFacilitator(strength))
                       }
-                      createFacilitatorAccount(person, brand)
+                      createFacilitatorAccount(person, user.person.identifier, brand)
                       val route: String = core.routes.People.details(personId).url + "#facilitation"
                       redirect(route, "success" -> "License for brand %s was added".format(brand.name))
                     }
@@ -200,7 +200,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
                       repos.profileStrength.find(person.identifier, org = false).filter(_.isDefined) map { x ⇒
                         repos.profileStrength.update(ProfileStrength.forFacilitator(x.get))
                       }
-                      createFacilitatorAccount(person, brand)
+                      createFacilitatorAccount(person, user.person.identifier, brand)
                       activity(license, user.person).created.insert(repos)
                       val route: String = core.routes.People.details(person.identifier).url + "#facilitation"
                       redirect(route, "success" -> "License for brand %s was added".format(brand.name))
@@ -334,7 +334,9 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     * @param person Person
     * @param brand Brand
     */
-  protected def createFacilitatorAccount(person: Person, brand: Brand)(implicit request: RequestHeader): Unit = {
+  protected def createFacilitatorAccount(person: Person,
+                                         from: Long,
+                                         brand: Brand)(implicit request: RequestHeader): Unit = {
     createToken(person.email, isSignUp = false).map { token =>
       val unexpirable = unexpirableToken(token)
       repos.userAccount.findByPerson(person.identifier) map {
@@ -352,7 +354,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
             repos.userAccount.update(account.copy(facilitator = true, registered = true))
           }
       } map { _ =>
-        notificationDispatcher ! NewFacilitator(person, brand)
+        notificationDispatcher ! NewFacilitator(person, from, brand)
       }
     }
   }

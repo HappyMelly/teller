@@ -306,7 +306,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
               val newBadges = validBadges.filterNot(x => facilitator.badges.contains(x.id.get))
               repos.cm.facilitator.updateBadges(valueToUpdate) flatMap { _ =>
                 for(badge <- newBadges) {
-                  notificationDispatcher ! NewBadge(person, badge)
+                  notificationDispatcher ! NewBadge(person, user.person.identifier, badge)
                   notificationDispatcher ! NewPersonalBadge(person, badge)
                 }
                 jsonSuccess("Badges were updated")

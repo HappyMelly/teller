@@ -26,35 +26,40 @@ package models.core.notification
 
 import controllers.brand.Badges
 import controllers.core.People
-import models.{INotification, NotificationType, Notification, Person}
+import models._
 import models.cm.brand.Badge
-import play.api.libs.json.{Json, JsObject}
+import play.api.libs.json.{JsObject, Json}
 
 /**
   * Represents badge notification
   *
-  * @param person Person to whom badge is assigned
+  * @param to Person to whom the badge is assigned
+  * @param from Person identifier who assigned the badge
   * @param badge Badge itself
   * @param version Badge markup version
   */
-case class NewBadge(person: Person, badge: Badge, version: Int = 2) extends INotification {
-  override val typ: String = NotificationType.Badge
+case class NewBadge(to: Person, from: Long, badge: Badge, version: Int = 2) extends BrandNotification {
+
+  val brandId: Long = badge.brandId
+  val fromId: Long = from
+  val toId: Long = to.identifier
+  val typ: String = NotificationType.Badge
 
   def body: JsObject = version match {
     case 1 => v1
     case _ => v2
   }
 
-  protected def v2: JsObject = Json.obj("img" -> People.pictureUrl(person),
-    "name" -> person.name,
+  protected def v2: JsObject = Json.obj("img" -> People.pictureUrl(to),
+    "name" -> to.name,
     "badge" -> badge.name,
     "badgeImg" -> Badges.pictureUrl(badge, "icon"),
-    "url" -> controllers.core.routes.People.details(person.identifier).url)
+    "url" -> controllers.core.routes.People.details(to.identifier).url)
 
   protected def v1: JsObject = Json.obj("img" -> Badges.pictureUrl(badge, "icon"),
-    "name" -> person.name,
+    "name" -> to.name,
     "badge" -> badge.name,
-    "url" -> controllers.core.routes.People.details(person.identifier).url)
+    "url" -> controllers.core.routes.People.details(to.identifier).url)
 }
 
 object NewBadge {
