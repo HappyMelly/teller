@@ -148,7 +148,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
             val msg = "You try to give more credits when you have"
             jsonFormError(Utilities.errorsToJson(form.withError("amount", msg)))
           } else {
-            giveCredit(brandId, giver, receiver, data, user.person.fullName)
+            giveCredit(brandId, giver, receiver, data, user.person)
           }
         } fallbackTo {
           jsonNotFound("Either brand or giver or receiver is not found")
@@ -237,7 +237,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
-  protected def giveCredit(brandId: Long, giver: Facilitator, receiver: Facilitator, data: FormData, giverName: String) = {
+  protected def giveCredit(brandId: Long, giver: Facilitator, receiver: Facilitator, data: FormData, from: Person) = {
     val credit = PeerCredit(None, brandId, receiver.personId, giver.personId, data.amount, data.reason)
     (for {
       _ <- repos.cm.facilitator.update(giver.copy(creditsGiven = giver.creditsGiven + data.amount))
@@ -245,7 +245,7 @@ class Credits @Inject() (override implicit val env: TellerRuntimeEnvironment,
       _ <- repos.cm.rep.brand.peerCredit.insert(credit)
       r <- repos.person.get(receiver.personId)
     } yield r) flatMap { person =>
-      notificationDispatcher ! CreditReceived(credit, giverName, person)
+      notificationDispatcher ! CreditReceived(credit, person, from)
       ok("Credit was saved")
     }
   }

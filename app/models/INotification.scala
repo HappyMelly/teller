@@ -46,8 +46,14 @@ case class Notification(id: Option[Long],
 trait INotification {
   val typ: String
   val version: Int
+  val toId: Long
+  val fromId: Long
   def body: JsObject
   def toNotification(personId: Long): Notification = Notification(None, personId, body, typ, version)
+}
+
+trait BrandNotification extends INotification {
+  val brandId: Long
 }
 
 object NotificationType {
