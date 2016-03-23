@@ -15,7 +15,7 @@
 
 @v2.main("Evaluation for %s".format(participantName), "participants", user) {
   @v2.element.brandHeader(brand, brands, "participants", small = true, facilitator = user.account.isFacilitatorNow) {
-    <span><a href="@controllers.event.routes.Attendees.index(brand.identifier)">Attendees</a></span>
+    <span><a href="@controllers.cm.event.routes.Attendees.index(brand.identifier)">Attendees</a></span>
   }
   <div class="row page-content">
     <div class="container">

@@ -53,7 +53,7 @@ $(document).ready( function() {
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sWrapper": "dataTables_wrapper form-inline"
     } );
-    var url = jsRoutes.controllers.event.Attendees.listByEvent($("#eventId").val()).url;
+    var url = jsRoutes.controllers.cm.event.Attendees.listByEvent($("#eventId").val()).url;
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,

@@ -61,7 +61,7 @@ function removeParticipantFromList() {
  * @param container {string} Type of container (table or link)
  */
 function showParticipantDetails(object, container) {
-    var url = jsRoutes.controllers.event.Attendees.details($(object).data('event'), $(object).data('person')).url;
+    var url = jsRoutes.controllers.cm.event.Attendees.details($(object).data('event'), $(object).data('person')).url;
     $.get(url, {}, function(data) {
         if (container == "table") {
             addParticipantDetailsToTable(object, data);
@@ -181,7 +181,7 @@ function deletePerson(object, callback) {
     if (result == true) {
         $.ajax({
             type: "DELETE",
-            url: jsRoutes.controllers.event.Attendees.delete(eventId, personId).url,
+            url: jsRoutes.controllers.cm.event.Attendees.delete(eventId, personId).url,
             data: {},
             dataType: "json"
         }).done(function(data) {

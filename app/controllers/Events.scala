@@ -25,7 +25,7 @@ package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.event.{EventForms, Helpers}
+import controllers.cm.event.{EventForms, Helpers}
 import models._
 import models.UserRole.Role
 import models.cm.event.Comparator

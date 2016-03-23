@@ -22,9 +22,9 @@
             }
         }
         @html.form(action = CSRF(attendeeId.map { value =>
-            controllers.event.routes.Attendees.update(eventId, value)
+            controllers.cm.event.routes.Attendees.update(eventId, value)
         }.getOrElse {
-            controllers.event.routes.Attendees.create(eventId)
+            controllers.cm.event.routes.Attendees.create(eventId)
         })) {
             @v2.html.block("Personal") {
                 @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
