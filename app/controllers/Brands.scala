@@ -262,10 +262,6 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
           repos.cm.rep.brand.eventType.findByBrand(id) flatMap { eventTypes =>
             ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes.sortBy(_.name)))
           }
-        case "badges" ⇒
-          repos.cm.rep.brand.badge.findByBrand(id) flatMap { badges =>
-            ok(views.html.v2.brand.tabs.badges(id, badges.sortBy(_.name)))
-          }
         case _ =>
           repos.cm.brand.findWithSettings(id) flatMap { maybeView =>
             maybeView map { view =>
