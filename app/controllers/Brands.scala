@@ -206,7 +206,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case None => notFound(views.html.notFoundPage(request.path))
       case Some(brand) =>
         (for {
-          links <- repos.cm.brand.links(id)
+          links <- repos.cm.rep.brand.link.find(id)
           coordinator <- repos.person.find(brand.ownerId)
           p <- repos.socialProfile.find(id, ProfileType.Brand)
           deletable <- repos.cm.brand.deletable(id)
@@ -226,7 +226,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     implicit handler ⇒ implicit user ⇒
       tab match {
         case "testimonials" ⇒
-          repos.cm.brand.testimonials(id) flatMap { testimonials =>
+          repos.cm.rep.brand.testimonial.findByBrand(id) flatMap { testimonials =>
             ok(views.html.v2.brand.tabs.testimonials(id, testimonials))
           }
         case _ ⇒
@@ -261,10 +261,6 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
         case "types" ⇒
           repos.cm.rep.brand.eventType.findByBrand(id) flatMap { eventTypes =>
             ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes.sortBy(_.name)))
-          }
-        case "badges" ⇒
-          repos.cm.rep.brand.badge.findByBrand(id) flatMap { badges =>
-            ok(views.html.v2.brand.tabs.badges(id, badges.sortBy(_.name)))
           }
         case _ =>
           repos.cm.brand.findWithSettings(id) flatMap { maybeView =>

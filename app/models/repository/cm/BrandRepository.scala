@@ -42,9 +42,7 @@ case class BrandWithCoordinators(brand: Brand,
 class BrandRepository(app: Application, repos: models.repository.Repositories) extends HasDatabaseConfig[JdbcProfile]
   with BrandTable
   with BrandCoordinatorTable
-  with BrandLinkTable
   with BrandSettingsTable
-  with BrandTestimonialTable
   with LicenseTable
   with PersonTable
   with ProductBrandAssociationTable
@@ -102,36 +100,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
   def delete(brand: Brand): Unit = {
     repos.socialProfile.delete(brand.id.get, ProfileType.Brand)
     db.run(brands.filter(_.id === brand.id.get).delete)
-  }
-
-  /**
-   * Deletes brand link from database
-   *
-   * Brand identifier is for security reasons. If a user passes security
-   * check for the brand, the user cannot delete links which aren't belonged to
-   * another brand.
-   *
-   * @param brandId Brand identifier
-   * @param id Link identifier
-   */
-  def deleteLink(brandId: Long, id: Long): Future[Int] = {
-    val action = TableQuery[BrandLinks].filter(_.id === id).filter(_.brandId === brandId).delete
-    db.run(action)
-  }
-
-  /**
-   * Deletes brand testimonial from database
-   *
-   * Brand identifier is for security reasons. If a user passes security
-   * check for the brand, the user cannot delete testimonials which aren't
-   * belonged to another brand.
-   *
-   * @param brandId Brand identifier
-   * @param id Testimonial identifier
-   */
-  def deleteTestimonial(brandId: Long, id: Long): Future[Int] = {
-    val action = TableQuery[BrandTestimonials].filter(_.id === id).filter(_.brandId === brandId).delete
-    db.run(action)
   }
 
   /**
@@ -271,14 +239,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
   }
 
   /**
-   * Returns testimonial if it exists
-   *
-   * @param testimonialId Testimonial identification
-   */
-  def findTestimonial(testimonialId: Long): Future[Option[BrandTestimonial]] =
-    db.run(TableQuery[BrandTestimonials].filter(_.id === testimonialId).result).map(_.headOption)
-
-  /**
    * Returns brand with its coordinators if exists; otherwise - None
     *
     * @param id Brand id
@@ -312,16 +272,12 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
     */
   def get(id: Long): Future[Brand] = db.run(brands.filter(_.id === id).result).map(_.head)
 
-  /**
-   * Returns true if the given person is a coordinator of the given brand
-    *
-    * @param brandId Brand id
-   * @param personId Person id
-   */
-  def isCoordinator(brandId: Long, personId: Long): Future[Boolean] = {
-    val query = TableQuery[BrandCoordinators].filter(_.brandId === brandId).filter(_.personId === personId).exists
-    db.run(query.result)
-  }
+//  def getWithApiConfig(id: Long): Future[(BrandWithSettings, Option[ApiConfig])] = {
+//    val query = for {
+//      brand <- brands if brand.id === id
+//      settings <- settings if settings.brandId === id
+//    } yield (brand, settings)
+//  }
 
   /**
    * Adds brand and all related records to database
@@ -339,44 +295,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
       b
     }
   }
-
-  /**
-   * Inserts the given link brand to database
-   *
-   * @param link Brand link
-   */
-  def insertLink(link: BrandLink): Future[BrandLink] = {
-    val links = TableQuery[BrandLinks]
-    val query = links returning links.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += link)
-  }
-
-  /**
-   * Inserts the given testimonial brand to database
-   *
-   * @param testimonial Brand testimonial
-   */
-  def insertTestimonial(testimonial: BrandTestimonial): Future[BrandTestimonial] = {
-    val testimonials = TableQuery[BrandTestimonials]
-    val query = testimonials returning testimonials.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += testimonial)
-  }
-
-  /**
-   * Return list of links for the given brand
-   *
-   * @param brandId Brand identifier
-   */
-  def links(brandId: Long): Future[List[BrandLink]] =
-    db.run(TableQuery[BrandLinks].filter(_.brandId === brandId).result).map(_.toList)
-
-  /**
-   * Return list of testimonials for the given brand
-   *
-   * @param brandId Brand identifier
-   */
-  def testimonials(brandId: Long): Future[List[BrandTestimonial]] =
-    db.run(TableQuery[BrandTestimonials].filter(_.brandId === brandId).result).map(_.toList)
 
   /**
    * Update brand
@@ -418,17 +336,16 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
   def updateSettings(value: Settings): Future[Int] =
     db.run(settings.filter(_.brandId === value.brandId).update(value))
 
+
   /**
-   * Updates brand testimonial in database
-   *
-   * @param testimonial Testimonital to update
-   */
-  def updateTestimonial(testimonial: BrandTestimonial): Future[Int] = {
-    val action = TableQuery[BrandTestimonials].
-        filter(_.id === testimonial.id.get).
-        filter(_.brandId === testimonial.brand).
-        update(testimonial)
-    db.run(action)
+    * Returns true if the given person is a coordinator of the given brand
+    *
+    * @param brandId Brand id
+    * @param personId Person id
+    */
+  def isCoordinator(brandId: Long, personId: Long): Future[Boolean] = {
+    val query = TableQuery[BrandCoordinators].filter(_.brandId === brandId).filter(_.personId === personId).exists
+    db.run(query.result)
   }
 
   /**

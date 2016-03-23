@@ -38,7 +38,7 @@ import scala.concurrent.Future
 /**
  * Contains a set of functions for managing team members in database
  */
-class BrandCoordinatorRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
+class CoordinatorRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with BrandCoordinatorTable
   with UserAccountTable {
 

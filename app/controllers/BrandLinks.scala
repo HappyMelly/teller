@@ -37,9 +37,9 @@ import services.TellerRuntimeEnvironment
 
 class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
-                            val services: Repositories,
+                            val repos: Repositories,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   implicit val brandLinkWrites = new Writes[BrandLink] {
     def writes(link: BrandLink): JsValue = {
@@ -57,7 +57,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
    * @param brandId Brand identifier
    */
   def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    services.cm.brand.find(brandId) flatMap {
+    repos.cm.brand.find(brandId) flatMap {
       case None => jsonNotFound(Messages("error.brand.notFound"))
       case Some(brand) =>
         val form = Form(tuple("type" -> nonEmptyText, "url" -> nonEmptyText))
@@ -65,7 +65,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
           error ⇒ jsonBadRequest("Link cannot be empty"),
           linkData ⇒ {
             val link = BrandLink(None, brandId, linkData._1, linkData._2)
-            services.cm.brand.insertLink(BrandLink.updateType(link)) flatMap { insertedLink =>
+            repos.cm.rep.brand.link.insert(BrandLink.updateType(link)) flatMap { insertedLink =>
               jsonOk(Json.toJson(insertedLink))
             }
           })
@@ -83,7 +83,7 @@ class BrandLinks @Inject() (override implicit val env: TellerRuntimeEnvironment,
    */
   def remove(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.cm.brand.deleteLink(brandId, id) flatMap { _ =>
+      repos.cm.rep.brand.link.delete(brandId, id) flatMap { _ =>
         jsonSuccess("ok")
       }
   }

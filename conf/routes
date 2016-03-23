@@ -21,6 +21,9 @@ GET           /brand/:id/tabs                                                con
 POST          /brand/:id/member                                              controllers.Brands.addCoordinator(id: Long)
 DELETE        /brand/:id/member/:personId                                    controllers.Brands.removeCoordinator(id: Long, personId: Long)
 POST          /brand/:id                                                     controllers.Brands.update(id: Long)
+
+GET           /brand/:id/api                                                 controllers.cm.brand.API.settings(id: Long)
+
 GET           /brand/:id/attendees/list                                      controllers.cm.event.Attendees.list(id: Long)
 GET           /brand/:id/attendees                                           controllers.cm.event.Attendees.index(id: Long)
 GET           /brand/:id/events                                              controllers.Brands.events(id: Long, future: Option[Boolean])
@@ -48,6 +51,7 @@ POST          /brand/:id/credits/deactivate                                  con
 GET           /brand/:id/credits/settings                                    controllers.cm.brand.Credits.settings(id: Long)
 POST          /brand/:id/credits/settings                                    controllers.cm.brand.Credits.update(id: Long)
 
+GET           /brand/:id/badges                                              controllers.cm.brand.Badges.settings(id: Long)
 GET           /brand/:id/badge                                               controllers.cm.brand.Badges.add(id: Long)
 POST          /brand/:id/badge                                               controllers.cm.brand.Badges.create(id: Long)
 DELETE        /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.delete(id: Long, badgeId: Long)
@@ -284,37 +288,7 @@ GET           /user/email/:token                                             con
 
 POST          /webhooks/stripe                                               controllers.webhooks.Stripe.event
 
-# API (v2)
-GET           /api/v2/brands                                                 controllers.api.BrandsApi.brands
-GET           /api/v2/brand/:code                                            controllers.api.BrandsApi.brand(code: String)
-GET           /api/v2/brand/:code/events                                     controllers.api.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
-GET           /api/v2/brand/:code/facilitators                               controllers.api.FacilitatorsApi.facilitators(code: String)
-GET           /api/v2/facilitator/:identifier                                controllers.api.FacilitatorsApi.facilitator(identifier: String, code: Option[String] ?= None)
-
-GET           /api/v2/brand/:code/types                                      controllers.api.EventTypesApi.types(code: String)
-
-POST          /api/v2/evaluation                                             controllers.api.EvaluationsApi.create
-POST          /api/v2/evaluation/:id/confirm                                 controllers.api.EvaluationsApi.confirm(id: String)
-
-GET           /api/v2/event/:id                                              controllers.api.EventsApi.event(id: Long)
-GET           /api/v2/event/:id/participants                                 controllers.api.ParticipantsApi.attendees(id: Long)
-
-POST          /api/v2/eventrequest/brand/:code                               controllers.api.EventRequestsApi.create(code: String)
-
-GET           /api/v2/experiments                                            controllers.api.ExperimentsApi.experiments()
-GET           /api/v2/fees/:brand                                            controllers.api.BrandFeesApi.fees(brand: String)
-
-GET           /api/v2/members/bynames                                        controllers.api.MembersApi.membersByNames(query: String)
-GET           /api/v2/members                                                controllers.api.MembersApi.members(funder: Option[Boolean] ?= None)
-GET           /api/v2/member/:identifier                                     controllers.api.MembersApi.member(identifier: String, person: Boolean ?= true)
-
-POST          /api/v2/participant                                            controllers.api.ParticipantsApi.create
-
-GET           /api/v2/people                                                 controllers.api.PeopleApi.people(active: Option[Boolean], q: Option[String])
-GET           /api/v2/person/:identifier                                     controllers.api.PeopleApi.person(identifier: String)
-
-GET           /api/v2/products                                               controllers.api.ProductsApi.products
-GET           /api/v2/product/:id                                            controllers.api.ProductsApi.product(id: Long)
+->            /api/v2                                                        api.Routes
 
 # Public assets
 GET           /assets/*file                                                  controllers.Assets.at(path="/public", file)

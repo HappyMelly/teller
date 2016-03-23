@@ -466,9 +466,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
    * @param form Form with errors
    * @param eventId Event identifier if exists
    */
-  protected def formError(user: ActiveUser,
-    form: Form[EventView],
-    eventId: Option[Long])(implicit request: Request[Any],
+  protected def formError(user: ActiveUser, form: Form[EventView], eventId: Option[Long])(implicit request: Request[Any],
       handler: be.objectify.deadbolt.scala.DeadboltHandler,
       token: play.filters.csrf.CSRF.Token) = {
     repos.cm.brand.findByUser(user.account) flatMap { brands =>

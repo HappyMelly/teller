@@ -124,6 +124,16 @@ class Badges @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
   def picture(hash: String, size: String = "") = file(Badge.picture(hash).file(size))
 
   /**
+    * Renders badge settings page for the given brand
+    * @param brandId Brand identifier
+    */
+  def settings(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    repos.cm.rep.brand.badge.findByBrand(brandId) flatMap { badges =>
+      ok(views.html.v2.brand.tabs.badges(brandId, badges.sortBy(_.name)))
+    }
+  }
+
+  /**
    * Updates the given badge if it's valid
    *
    * @param brandId Member identifier

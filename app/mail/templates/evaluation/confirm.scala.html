@@ -2,7 +2,7 @@
 
 @mail.templates.html.tmpl("Confirm your evaluation", controllers.Brands.pictureUrl(brand)) {
 
-    @mail.templates.html.title(s"Hi ${name},")
+    @mail.templates.html.title(s"Hi $name,")
     @mail.templates.html.paragraph {
         Thanks for attending a @brand.name event and providing an evaluation. Please push the button below and
         confirm your evaluation. Without this confirmation the facilitator won't be able to create a certificate

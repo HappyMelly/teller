@@ -22,19 +22,31 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.repository.cm.brand
+package controllers.cm.brand
 
-import play.api.Application
+import javax.inject.Inject
+
+import be.objectify.deadbolt.scala.cache.HandlerCache
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
+import models.repository.Repositories
+import play.api.i18n.MessagesApi
+import services.TellerRuntimeEnvironment
 
 /**
-  * Contains references to all repositories in this package
+  * Contains methods for managing brand API settings
   */
-class Repositories(app: Application) {
+class API @Inject() (override implicit val env: TellerRuntimeEnvironment,
+                      override val messagesApi: MessagesApi,
+                      val repos: Repositories,
+                      deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
-  lazy val badge: BadgeRepository = new BadgeRepository(app)
-  lazy val coordinator: CoordinatorRepository = new CoordinatorRepository(app)
-  lazy val eventType: EventTypeRepository = new EventTypeRepository(app)
-  lazy val link: LinkRepository = new LinkRepository(app)
-  lazy val peerCredit: PeerCreditRepository = new PeerCreditRepository(app)
-  lazy val testimonial: TestimonialRepository = new TestimonialRepository(app)
+  /**
+    * Renders API settings page for the given brand
+    * @param brandId Brand identifier
+    */
+  def settings(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.v2.api.settings())
+  }
 }

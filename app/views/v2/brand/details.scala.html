@@ -118,8 +118,10 @@
                                 data-menuside>
                                 Certificate Templates
                             </a>
-                            <a href="#integration" role="tab"
-                                class="b-sidemenu__link">
+                            <a data-href="@controllers.cm.brand.routes.API.settings(brand.identifier)"
+                                href="#integration"
+                                class="b-sidemenu__link"
+                                data-menuside>
                                 Integration
                             </a>
                             <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "licenseExpiration")"
@@ -128,7 +130,7 @@
                                 data-menuside>
                                 License Expiration Reminder
                             </a>
-                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "badges")"
+                            <a data-href="@controllers.cm.brand.routes.Badges.settings(brand.identifier)"
                                 href="#badges"
                                 class="b-sidemenu__link"
                                 data-menuside>
@@ -153,15 +155,7 @@
                 <div class="tab-pane" id="products"></div>
                 <div class="tab-pane" id="types"></div>
                 <div class="tab-pane" id="templates"></div>
-                <div class="tab-pane" id="integration">
-                    <h4>Evaluations</h4>
-                    <dl>
-                        <dt>Evaluation Url</dt>
-                        <dd>@brand.evaluationUrl.getOrElse("none")</dd>
-                        <dt>Evaluation Hook</dt>
-                        <dd>@brand.evaluationHookUrl.getOrElse("none")</dd>
-                    </dl>
-                </div>
+                <div class="tab-pane" id="integration"></div>
                 <div class="tab-pane" id="licenseExpiration"></div>
                 <div class="tab-pane" id="badges"></div>
                 <div class="tab-pane" id="credits"></div>

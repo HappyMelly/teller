@@ -32,7 +32,7 @@ import models.brand.BrandNotifications
 import models.cm.brand.{BrandNotifications, BrandCoordinator, Settings}
 import models.repository.PersonRepository
 import models.repository.cm.BrandRepository
-import models.repository.cm.brand.BrandCoordinatorRepository
+import models.repository.cm.brand.CoordinatorRepository
 import org.scalamock.specs2.IsolatedMockFactory
 import stubs.{ FakeRuntimeEnvironment, FakeRepositories, FakeSocialIdentity, FakeSecurity }
 
@@ -72,7 +72,7 @@ class BrandsCoordinatorsSpec extends PlayAppSpec with IsolatedMockFactory {
     with FakeSecurity
 
   val controller = new TestBrands
-  val brandTeamMemberService = mock[BrandCoordinatorRepository]
+  val brandTeamMemberService = mock[CoordinatorRepository]
   controller.brandCoordinatorService_=(brandTeamMemberService)
   val brandService = mock[BrandRepository]
   controller.brandService_=(brandService)

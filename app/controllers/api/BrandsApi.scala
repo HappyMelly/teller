@@ -172,8 +172,8 @@ class BrandsApi @Inject() (val repos: Repositories,
       owner <- repos.person.findComplete(brand.ownerId)
       member <- repos.member.findByObject(brand.ownerId, person = true)
       events <- repos.cm.event.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
-      links <- repos.cm.brand.links(id)
-      testimonials <- repos.cm.brand.testimonials(id)
+      links <- repos.cm.rep.brand.link.find(id)
+      testimonials <- repos.cm.rep.brand.testimonial.findByBrand(id)
       products <- repos.product.findByBrand(id)
       profile <- repos.socialProfile.find(id, ProfileType.Brand)
     } yield (owner, member, events, links, testimonials, products, profile)) map {

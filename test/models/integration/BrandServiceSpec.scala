@@ -29,7 +29,7 @@ import integration.PlayAppSpec
 import models.brand._
 import models.cm.brand.{BrandNotifications, BrandCoordinator, BrandLink, BrandTestimonial}
 import models.repository.cm.BrandRepository
-import models.repository.cm.brand.BrandCoordinatorRepository
+import models.repository.cm.brand.CoordinatorRepository
 
 /**
  * Tests for BrandService class

@@ -28,7 +28,7 @@ import models.repository._
 import models.repository.admin.ApiTokenRepository
 import models.repository.brand._
 import models.repository.cm._
-import models.repository.cm.brand.{EventTypeRepository, CertificateTemplateRepository, BrandFeeRepository, BrandCoordinatorRepository}
+import models.repository.cm.brand.{EventTypeRepository, CertificateTemplateRepository, BrandFeeRepository, CoordinatorRepository}
 import models.repository.cm.event.{EventInvoiceRepository, EventCancellationRepository}
 import models.repository.event._
 
@@ -37,7 +37,7 @@ trait FakeRepositories extends Repositories {
   private var _activityService = new ActivityRepository
   private var _apiTokenService = new ApiTokenRepository
   private var _brandService = new BrandRepository
-  private var _brandTeamMemberService = new BrandCoordinatorRepository
+  private var _brandTeamMemberService = new CoordinatorRepository
   private var _certificateService = new CertificateTemplateRepository
   private var _contributionService = new ContributionRepository
   private var _evaluationService = new EvaluationRepository
@@ -68,7 +68,7 @@ trait FakeRepositories extends Repositories {
   def brandService_=(service: BrandRepository) = _brandService = service
   override def brand: BrandRepository = _brandService
 
-  def brandCoordinatorService_=(service: BrandCoordinatorRepository) =
+  def brandCoordinatorService_=(service: CoordinatorRepository) =
     _brandTeamMemberService = service
   override def brandCoordinator = _brandTeamMemberService
 

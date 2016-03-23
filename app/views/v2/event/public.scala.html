@@ -1,5 +1,6 @@
 @(event: models.cm.Event, brand: Brand, facilitators: List[(Person, Float, String)])(implicit request: RequestHeader)
 
+@import controllers.core.People
 @import templates.Formatters._
 @import views.{Countries, Languages}
 @import views.ViewHelpersV2._
@@ -55,10 +56,8 @@
                                 <h3 class="b-event__title">Facilitators</h3>
                                 <div class="b-event__people-list">
                                     @for((person, rating, url) <- facilitators) {
-                                        @defining(person.photo.url.getOrElse(routes.Assets.at("images/happymelly-face-white.png").url)) { photo =>
-                                            @v2.element.personBadge(photo, url, rating) {
-                                                @person.firstName<br> @person.lastName
-                                            }
+                                        @v2.element.personBadge(People.pictureUrl(person), url, rating) {
+                                            @person.firstName<br> @person.lastName
                                         }
                                     }
                                 </div>
