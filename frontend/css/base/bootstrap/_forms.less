@@ -52,9 +52,7 @@ select[size] {
 input[type=file]:focus,
 input[type=checkbox]:focus,
 input[type=radio]:focus {
-  outline: thin dotted;
-  outline: 2px auto -webkit-focus-ring-color;
-  outline-offset: -2px
+  outline: none;
 }
 
 output {
@@ -74,7 +72,7 @@ output {
   line-height: 1.42857143;
   color: #333;
   background: #fff;
-  border: 1px solid #9b9b9b;
+  border: 1px solid #bbb;
   border-radius: 4px;
   .transition(all .15s ease);
 
@@ -317,7 +315,6 @@ textarea.input-lg {
 
   .form-control {
     border-color: #D64456;
-    color: #d64456;
 
     &:focus {
       box-shadow: none !important;
