@@ -21,6 +21,8 @@ export default class Widget {
 
     _assignEvents() {
         this.$root.on('click', '[data-tab-link]', this._onClickLink.bind(this));
+        
+        App.events.sub('hmt.asynctabs.refresh', this._onEventRefresh.bind(this));
     }
 
     _onClickLink(e) {
@@ -29,6 +31,12 @@ export default class Widget {
 
         if ($link.hasClass('state_active')) return;
         this.showTabByLink($link);
+    }
+
+    _onEventRefresh(){
+        const $currentLink = this.locals.$links.filter('.state_active');
+
+        this.showTabByLink($currentLink);
     }
 
     /**

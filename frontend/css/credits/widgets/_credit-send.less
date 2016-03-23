@@ -117,41 +117,19 @@
   right: 16px;
   font-size: 14px;
   line-height: 18px;
-  color: #ee929f;
+  color: #d44658;
   text-align: left;
-}
-
-.b-credits__send{
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  padding-top: 60px;
-  text-align: center;
-  font-size: 24px;
-  opacity: 0;
-  visibility: hidden;
-  border-radius: 4px;
-  background-color: #e7e7e7;
-  .transition(all .15s ease);
 }
 
 // states
 .b-error_show{
   .b-credits__input{
-    border-color: #EE929F;
+    border-color: #d44658;
+    border-left-color: #ec93a0;
   }
 
   .b-credits__value-hint{
-    background-color: #ee929f;
-  }
-}
-
-.b-credits_state_send{
-  .b-credits__send{
-    opacity: 1;
-    visibility: visible;
+    background-color: #ec93a0;
   }
 }
 

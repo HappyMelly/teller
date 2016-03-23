@@ -24,19 +24,28 @@ export default class Widget {
 
     _assignEvents() {
         this.$root.on('click', '[data-filter-link]', this._onClickFilter.bind(this));
+        
+        App.events.sub('hmt.sendCredit.success', this._onAddNewItem.bind(this));
     }
 
     _onClickFilter(e) {
-        const $link = $(e.currentTarget);
-        const filterText = $link.data('filter-link');
-
         e.preventDefault();
+        const $link = $(e.currentTarget);
 
-        if ($link.hasClass('state_selected')) return;
+        if ($link.hasClass('state_selected')) return;        
+        this.filterByLink($link);
+    }
 
+    filterByLink($link){
+        const filterText = $link.data('filter-link');
+        
         this.setActiveLink($link);
         this.filterList(filterText);
-    };
+    }
+
+    _onAddNewItem(data){
+        
+    }
 
     /**
      * Filter list through text
@@ -63,6 +72,8 @@ export default class Widget {
      * @param {jQuery} $el
      */
     setActiveLink($el) {
+        if ($el.hasClass('state_selected')) return;
+        
         $el.addClass('state_selected')
             .siblings().removeClass('state_selected');
     };
