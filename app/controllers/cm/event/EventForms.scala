@@ -75,7 +75,7 @@ object EventForms {
   /**
     * HTML form mapping for creating and editing.
     */
-  def event(services: Repositories)(implicit messages: Messages) = Form(mapping(
+  def event(repos: Repositories)(implicit messages: Messages) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
     "eventTypeId" -> longNumber.verifying("Wrong event type", _ > 0),
     "brandId" -> longNumber.verifying("Wrong brand", _ > 0),
@@ -125,7 +125,7 @@ object EventForms {
       view.event.details, view.event.organizer, view.event.schedule,
       view.event.notPublic, view.event.archived, view.event.confirmed,
       view.event.free, view.event.followUp, view.event.publicPage,
-      view.invoice.invoiceTo, view.event.facilitatorIds(services)))
+      view.invoice.invoiceTo, view.event.facilitatorIds(repos)))
 
   }))
 }

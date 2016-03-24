@@ -24,7 +24,7 @@
 package controllers.acceptance.events
 
 import _root_.integration.PlayAppSpec
-import controllers.Events
+import controllers.cm.Events
 import helpers.{EventHelper, OrganisationHelper}
 import models.repository.cm.EventRepository
 import models.repository.OrganisationRepository

@@ -17,7 +17,7 @@
     @for(event <- events) {
       <tr>
         <td>
-          <a href="@routes.Events.details(event.id.get).url">
+          <a href="@controllers.cm.routes.Events.details(event.id.get).url">
           @event.title
           </a>
         </td>

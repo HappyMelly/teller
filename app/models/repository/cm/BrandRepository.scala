@@ -36,10 +36,10 @@ import slick.driver.JdbcProfile
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-case class BrandWithCoordinators(brand: Brand,
-  coordinators: List[(Person, BrandCoordinator)])
+case class BrandWithCoordinators(brand: Brand, coordinators: List[(Person, BrandCoordinator)])
 
 class BrandRepository(app: Application, repos: models.repository.Repositories) extends HasDatabaseConfig[JdbcProfile]
+  with ApiConfigTable
   with BrandTable
   with BrandCoordinatorTable
   with BrandSettingsTable
@@ -272,12 +272,13 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
     */
   def get(id: Long): Future[Brand] = db.run(brands.filter(_.id === id).result).map(_.head)
 
-//  def getWithApiConfig(id: Long): Future[(BrandWithSettings, Option[ApiConfig])] = {
-//    val query = for {
-//      brand <- brands if brand.id === id
-//      settings <- settings if settings.brandId === id
-//    } yield (brand, settings)
-//  }
+  def getWithApiConfig(id: Long): Future[(BrandWithSettings, Option[ApiConfig])] = {
+    val query = for {
+      (brand, config) <- brands joinLeft TableQuery[ApiConfigs] on (_.id === _.brandId) if brand.id === id
+      settings <- settings if settings.brandId === id
+    } yield (brand, settings, config)
+    db.run(query.result).map(v => (BrandWithSettings(v.head._1, v.head._2), v.head._3))
+  }
 
   /**
    * Adds brand and all related records to database

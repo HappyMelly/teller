@@ -36,7 +36,7 @@ trait Helpers extends AsyncController {
     * @param id Event identifier
     * @param msg Message
     */
-  protected def success(id: Long, msg: String) = redirect(controllers.routes.Events.details(id), "success" -> msg)
+  protected def success(id: Long, msg: String) = redirect(controllers.cm.routes.Events.details(id), "success" -> msg)
 
   /**
     * Return redirect object with error message for the given event
@@ -44,6 +44,6 @@ trait Helpers extends AsyncController {
     * @param id Event identifier
     * @param msg Message
     */
-  protected def error(id: Long, msg: String) = redirect(controllers.routes.Events.details(id), "error" -> msg)
+  protected def error(id: Long, msg: String) = redirect(controllers.cm.routes.Events.details(id), "error" -> msg)
 
 }

@@ -107,7 +107,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
         data => {
           repos.cm.rep.event.attendee.insert(data)
-          redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was added")
+          redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
         }
       )
   }
@@ -215,7 +215,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
                 "name" -> data.attendee.fullName),
               "event" -> Json.obj(
                 "id" -> data.event.id,
-                "url" -> controllers.routes.Events.details(data.event.id.get).url,
+                "url" -> controllers.cm.routes.Events.details(data.event.id.get).url,
                 "title" -> data.event.title,
                 "longTitle" -> data.event.longTitle),
               "location" -> s"${data.event.location.city}, ${Countries.name(data.event.location.countryCode)}",
@@ -290,13 +290,13 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         errors => badRequest(views.html.v2.attendee.form(user, Some(attendeeId), eventId, errors)),
         data =>
           repos.cm.rep.event.attendee.find(attendeeId, eventId) flatMap {
-            case None => redirect(controllers.routes.Events.details(eventId), "error" -> "Unknown person")
+            case None => redirect(controllers.cm.routes.Events.details(eventId), "error" -> "Unknown person")
             case Some(attendee) =>
               if (attendee.personId.nonEmpty)
-                redirect(controllers.routes.Events.details(eventId), "error" -> "You are not allowed to update this attendee")
+                redirect(controllers.cm.routes.Events.details(eventId), "error" -> "You are not allowed to update this attendee")
               else
                 repos.cm.rep.event.attendee.update(data.copy(id = attendee.id, personId = attendee.personId)) flatMap { _ =>
-                  redirect(controllers.routes.Events.details(eventId), "success" -> "Attendee was successfully updated")
+                  redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was successfully updated")
                 }
 
           }

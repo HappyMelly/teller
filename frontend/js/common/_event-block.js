@@ -83,17 +83,17 @@ export default class Widget {
 
     //transport
     _sendConfirm(eventId){
-        const url = jsRoutes.controllers.Events.confirm(eventId).url;
+        const url = jsRoutes.controllers.cm.Events.confirm(eventId).url;
         return $.post(url, {});
     }
 
     _sendCancel(eventId){
-        const url = jsRoutes.controllers.Events.reason(eventId).url;
+        const url = jsRoutes.controllers.cm.Events.reason(eventId).url;
         return $.get(url, {});
     }
 
     _sendAcceptCancel(data, id){
-        const url = jsRoutes.controllers.Events.cancel(id).url;
+        const url = jsRoutes.controllers.cm.Events.cancel(id).url;
         return $.post(url, data);
     }
 

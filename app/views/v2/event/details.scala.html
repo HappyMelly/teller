@@ -20,7 +20,7 @@
 
 @v2.main(event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
-    <span><a href="@routes.Events.index(brand.identifier)">Events</a></span>
+    <span><a href="@controllers.cm.routes.Events.index(brand.identifier)">Events</a></span>
   }
   <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <input type="hidden" disabled id="eventId" value="@event.id"/>
@@ -61,12 +61,12 @@
                     } else {
                       <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
                     }
-                    <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
+                    <a class="btn btn-default" href="@controllers.cm.routes.Events.edit(event.id.get)">
                       Edit
                     </a>
                   </div>
                   <div class="buttons-block">
-                    <a class="btn btn-default" href="@routes.Events.duplicate(event.id.get)">
+                    <a class="btn btn-default" href="@controllers.cm.routes.Events.duplicate(event.id.get)">
                       Duplicate
                     </a>
                     <a data-id="@event.identifier"
@@ -124,7 +124,7 @@
           </div>
           <div class="row">
             <div class="col-md-12">
-              @defining(event.pageUrl(routes.Events.public(event.hashedId).url)) { maybeUrl =>
+              @defining(event.pageUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { maybeUrl =>
                   @maybeUrl.map { url =>
                     <span class="text-muted">Website: </span> <a href="@url" target="_blank">@url</a> <br/>
                   }

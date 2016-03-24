@@ -70,7 +70,7 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
       form.fold(
         formWithErrors ⇒
-          redirect(controllers.routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
+          redirect(controllers.cm.routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
         requestData ⇒ {
           (for {
             a <- services.cm.rep.event.attendee.findByEvents(List(event.identifier))

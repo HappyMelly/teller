@@ -18,7 +18,8 @@
     <div class="form">
       @v2.html.block("") { <h1>@title</h1> }
       <div id="emptyForm" value="@emptyForm"></div>
-      @v2.html.form(action = CSRF(id.map(id => routes.Events.update(id)).getOrElse(routes.Events.create()))) {
+      @v2.html.form(action = CSRF(id.map { id => controllers.cm.routes.Events.update(id)
+        }.getOrElse(controllers.cm.routes.Events.create()))) {
         @if(user.account.isFacilitatorNow) {
           <div id="currentUserId" value="@user.person.id.get"></div>
         }

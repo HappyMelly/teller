@@ -8,6 +8,6 @@ $(function(){
     App.events
         .sub('hmt.event.cancel', function(){
             const brandId = $('#brandId').val();
-            window.location.replace(jsRoutes.controllers.Events.index(brandId).url);
+            window.location.replace(jsRoutes.controllers.cm.Events.index(brandId).url);
         })
 });

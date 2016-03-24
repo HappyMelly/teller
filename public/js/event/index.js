@@ -66,7 +66,7 @@ function makeRequestUrl() {
  *   @param row {object} DataTable row object
  */
 function format(row) {
-    var url = jsRoutes.controllers.Events.detailsButtons(row.data().event.id).url;
+    var url = jsRoutes.controllers.cm.Events.detailsButtons(row.data().event.id).url;
     $.get(url).done(function (content) {
         row.child(content, 'active').show();
         App.events.pub('hmt.eventList.show')

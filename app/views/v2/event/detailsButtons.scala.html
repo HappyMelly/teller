@@ -11,12 +11,12 @@
     } else {
       <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
     }
-    <a class="btn btn-default" href="@routes.Events.edit(event.id.get)">
+    <a class="btn btn-default" href="@controllers.cm.routes.Events.edit(event.id.get)">
       Edit
     </a>
   </div>
   <div class="buttons-block">
-    <a class="btn btn-default" href="@routes.Events.duplicate(event.id.get)">
+    <a class="btn btn-default" href="@controllers.cm.routes.Events.duplicate(event.id.get)">
       Duplicate
     </a>
     <a data-id="@event.identifier"

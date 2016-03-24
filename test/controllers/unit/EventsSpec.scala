@@ -24,7 +24,7 @@
 */
 package controllers.unit
 
-import controllers.Events
+import controllers.cm.Events
 import helpers.EventHelper
 import models.cm.brand.EventType
 import models.repository.cm.LicenseRepository
@@ -33,7 +33,7 @@ import models.{Event, UserAccount}
 import org.joda.time.LocalDate
 import org.scalamock.specs2.IsolatedMockFactory
 import org.specs2.mutable._
-import stubs.{FakeRuntimeEnvironment, FakeRepositories}
+import stubs.{FakeRepositories, FakeRuntimeEnvironment}
 
 class EventsSpec extends Specification with IsolatedMockFactory {
 

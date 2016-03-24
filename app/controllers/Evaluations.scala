@@ -94,7 +94,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
   def add(eventId: Long, attendeeId: Long) = EventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       repos.cm.rep.event.attendee.find(attendeeId, eventId) flatMap {
-        case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
+        case None => redirect(controllers.cm.routes.Events.details(eventId), "error" -> "Unknown attendee")
         case Some(attendee) =>
           ok(views.html.v2.evaluation.form(user, evaluationForm(user.name), attendee))
       }
@@ -139,7 +139,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
   def create(eventId: Long, attendeeId: Long) = EventAction(List(Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
       repos.cm.rep.event.attendee.find(attendeeId, eventId) flatMap {
-        case None => redirect(routes.Events.details(eventId), "error" -> "Unknown attendee")
+        case None => redirect(controllers.cm.routes.Events.details(eventId), "error" -> "Unknown attendee")
         case Some(attendee) =>
           val form: Form[Evaluation] = evaluationForm(user.name).bindFromRequest
           form.fold(
@@ -148,7 +148,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
               val defaultHook = request.host + routes.Evaluations.confirm("").url
               val modified = evaluation.copy(eventId = eventId, attendeeId = attendeeId)
               modified.add(defaultHook, false, email, repos) flatMap { eval =>
-                redirect(routes.Events.details(eventId), "success" -> "Attendee was added")
+                redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
               }
             })
       }
@@ -169,7 +169,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
             eventActor ! evaluation.eventId
             facilitatorActor ! evaluation.eventId
             val msg = "Evaluation was successfully deleted"
-            redirect(routes.Events.details(evaluation.eventId), "success" -> msg)
+            redirect(controllers.cm.routes.Events.details(evaluation.eventId), "success" -> msg)
           }
       }
   }

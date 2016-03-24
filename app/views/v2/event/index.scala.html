@@ -5,7 +5,7 @@
 
 @v2.main("Events", "events", user) {
   @v2.element.brandHeader(brand, brands, "events", facilitator = user.account.isFacilitatorNow) {
-    <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
+    <a class="btn btn-default" href="@controllers.cm.routes.Events.add()">Add Event</a>
   }
   <div class="row js-event-list">
     <div class="container">

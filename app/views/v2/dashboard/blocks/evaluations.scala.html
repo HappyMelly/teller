@@ -20,7 +20,7 @@
                     } else {
                     <a href="@controllers.core.routes.People.details(attendee.identifier)">@attendee.fullName</a>
                     }
-                     rated <a href="@routes.Events.details(event.identifier)">@event.title</a> as
+                     rated <a href="@controllers.cm.routes.Events.details(event.identifier)">@event.title</a> as
                     @Evaluations.impression(evaluation.facilitatorImpression)
                 </p>
                 <div class="text-muted">

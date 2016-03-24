@@ -21,17 +21,18 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.cm
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.cm.event.{EventForms, Helpers}
-import models._
+import controllers.{Security, core, _}
 import models.UserRole.Role
+import models._
 import models.cm.event.Comparator
-import Comparator.FieldChange
-import models.repository.Repositories
+import models.cm.event.Comparator.FieldChange
 import models.cm.{Location, Schedule, _}
+import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data._
@@ -47,7 +48,7 @@ import scala.concurrent.Future
 class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                      override val messagesApi: MessagesApi,
                                      val repos: Repositories,
-                                     val email: Email,
+                                     val email: EmailComponent,
                                      deadbolt: DeadboltActions,
                                      handlers: HandlerCache,
                                      actionBuilder: ActionBuilders)
@@ -113,7 +114,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
               repos.cm.event.insert(view) flatMap { inserted =>
                 val log = activity(inserted.event, user.person).created.insert(repos)
                 sendEmailNotification(view.event, List.empty, log)
-                redirect(routes.Events.index(inserted.event.brandId), "success" -> "Event was added")
+                redirect(controllers.cm.routes.Events.index(inserted.event.brandId), "success" -> "Event was added")
               }
           }
         })
@@ -146,7 +147,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             redirect(core.routes.Dashboard.index(), "success" -> "Event was cancelled")
           })
       } else {
-        redirect(routes.Events.details(id), "error" -> Messages("error.event.nonDeletable"))
+        redirect(controllers.cm.routes.Events.details(id), "error" -> Messages("error.event.nonDeletable"))
       }
   }
 
@@ -265,7 +266,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
         def writes(data: Person): JsValue = {
           Json.obj(
             "name" -> data.fullName,
-            "url" -> core.routes.People.details(data.id.get).url)
+            "url" -> controllers.core.routes.People.details(data.id.get).url)
         }
       }
 
@@ -274,7 +275,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
           Json.obj(
             "event" -> Json.obj(
               "id" -> data.event.id,
-              "url" -> routes.Events.details(data.event.id.get).url,
+              "url" -> controllers.cm.routes.Events.details(data.event.id.get).url,
               "title" -> data.event.title),
             "location" -> Json.obj(
               "online" -> data.event.location.online,
@@ -294,9 +295,9 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             "actions" -> {
               Json.obj(
                 "event_id" -> data.event.id,
-                "edit" -> routes.Events.edit(data.event.id.get).url,
-                "duplicate" -> routes.Events.duplicate(data.event.id.get).url,
-                "cancel" -> routes.Events.cancel(data.event.id.get).url)
+                "edit" -> controllers.cm.routes.Events.edit(data.event.id.get).url,
+                "duplicate" -> controllers.cm.routes.Events.duplicate(data.event.id.get).url,
+                "cancel" -> controllers.cm.routes.Events.cancel(data.event.id.get).url)
             },
             "materials" -> data.event.materialsLanguage
           )
@@ -337,13 +338,16 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       case None => notFound(views.html.notFoundPage(request.path))
       case Some(event) =>
         val query = for {
-          b <- repos.cm.brand.get(event.brandId)
+          b <- repos.cm.brand.getWithApiConfig(event.brandId)
           f <- repos.cm.event.facilitators(event.identifier)
           d <- repos.cm.facilitator.find(event.brandId, f.map(_.identifier))
         } yield (b, f.sortBy(_.id), d.sortBy(_.personId))
-        query flatMap { case (brand, facilitators, stats) =>
-          val facilitatorsWithStat = facilitators.zip(stats).map(v => (v._1, v._2.publicRating, ""))
-          ok(views.html.v2.event.public(event, brand, facilitatorsWithStat))
+        query flatMap { case ((brandWithSetting, apiConfig), facilitators, stats) =>
+          val facilitatorsWithStat = facilitators.zip(stats).map { v =>
+            val url = apiConfig.map(_.facilitatorUrl(v._2.personId)).getOrElse("")
+            (v._1, v._2.publicRating, url)
+          }
+          ok(views.html.v2.event.public(event, brandWithSetting.brand, facilitatorsWithStat))
         }
     }
   }
@@ -353,9 +357,8 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
     *
     * @param id Event identifier
    */
-  def reason(id: Long) = RestrictedAction(Role.Viewer) { implicit request =>
-    implicit handler => implicit user =>
-      ok(views.html.v2.event.reason(id))
+  def reason(id: Long) = RestrictedAction(Role.Viewer) { implicit request => implicit handler => implicit user =>
+    ok(views.html.v2.event.reason(id))
   }
 
   /**
@@ -390,7 +393,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
                   val log = activity(updated.event, user.person).updated.insert(repos)
                   sendEmailNotification(updated.event, changes, log)
 
-                  redirect(routes.Events.details(id), "success" -> "Event was updated")
+                  redirect(controllers.cm.routes.Events.details(id), "success" -> "Event was updated")
               }
           }
         })

@@ -10,7 +10,7 @@
           @if(tab == "events") {
             <span class="b-brandhead__i">Events</span>
           } else {
-            <a class="link-blue b-brandhead__i" href="@routes.Events.index(activeBrand.identifier)">Events</a>
+            <a class="link-blue b-brandhead__i" href="@controllers.cm.routes.Events.index(activeBrand.identifier)">Events</a>
           }
           @if(tab == "attendees") {
             <span class="b-brandhead__i">Attendees</span>

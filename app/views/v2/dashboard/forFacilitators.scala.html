@@ -12,7 +12,7 @@
 @v2.main("Home", "", user) {
   @activeBrand.map { view =>
     @v2.element.brandHeader(view.brand, brands, facilitator = true){
-      <a class="btn btn-default" href="@routes.Events.add()">Add Event</a>
+      <a class="btn btn-default" href="@controllers.cm.routes.Events.add()">Add Event</a>
     }
   }.getOrElse {
     <div class="row brand-header">

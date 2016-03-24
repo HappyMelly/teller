@@ -116,19 +116,19 @@ GET           /report/create/:brandId/event/:eventId/status/:status        contr
 GET           /reset/:token                                                controllers.PasswordReset.resetPassword(token: String)
 POST          /reset/:token                                                controllers.PasswordReset.handleResetPassword(token: String)
 
-GET           /events                                                      controllers.Events.index(brandId: Long)
-GET           /events/filtered                                             controllers.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
-POST          /event                                                       controllers.Events.create
-GET           /events/new/                                                 controllers.Events.add
-GET           /event/:id/duplicate                                         controllers.Events.duplicate(id: Long)
-GET           /event/:id/edit                                              controllers.Events.edit(id: Long)
-GET           /event/:id/reason                                            controllers.Events.reason(id: Long)
-GET           /event/:id/public                                            controllers.Events.public(id: String)
-GET           /event/:id                                                   controllers.Events.details(id: Long)
-GET           /event/:id/detailsButtons                                    controllers.Events.detailsButtons(id: Long)
-POST          /event/:id                                                   controllers.Events.update(id: Long)
-POST          /event/:id/confirm                                           controllers.Events.confirm(id: Long)
-POST          /event/:id/cancel                                            controllers.Events.cancel(id: Long)
+GET           /events                                                      controllers.cm.Events.index(brandId: Long)
+GET           /events/filtered                                             controllers.cm.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
+POST          /event                                                       controllers.cm.Events.create
+GET           /events/new/                                                 controllers.cm.Events.add
+GET           /event/:id/duplicate                                         controllers.cm.Events.duplicate(id: Long)
+GET           /event/:id/edit                                              controllers.cm.Events.edit(id: Long)
+GET           /event/:id/reason                                            controllers.cm.Events.reason(id: Long)
+GET           /event/:id/public                                            controllers.cm.Events.public(id: String)
+GET           /event/:id                                                   controllers.cm.Events.details(id: Long)
+GET           /event/:id/detailsButtons                                    controllers.cm.Events.detailsButtons(id: Long)
+POST          /event/:id                                                   controllers.cm.Events.update(id: Long)
+POST          /event/:id/confirm                                           controllers.cm.Events.confirm(id: Long)
+POST          /event/:id/cancel                                            controllers.cm.Events.cancel(id: Long)
 POST          /event/:id/invoice                                           controllers.cm.event.Invoices.update(id: Long)
 POST          /event/:id/send                                              controllers.cm.event.Requests.send(id: Long)
 GET           /event/:id/attendee                                          controllers.cm.event.Attendees.add(id: Long)

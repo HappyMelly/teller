@@ -38,7 +38,8 @@ import scala.util.Random
 case class ApiConfig(id: Option[Long],
                      brandId: Long,
                      token: String = Random.alphanumeric.take(64).mkString,
-                     readWrite: Boolean = true,
+                     readWrite: Boolean = false,
+                     active: Boolean = false,
                      events: Option[String] = None,
                      event: Option[String] = None,
                      facilitators: Option[String] = None,
@@ -74,15 +75,16 @@ case class ApiConfig(id: Option[Long],
       facilitatorId.map(value => withEvent.replace(FACILITATOR, value.toString)).getOrElse(withEvent)
     }.getOrElse("")
   }
-}
-
-object ApiConfig {
 
   /**
-   * Returns cache identifier for ApiToken object
-    *
-    * @param token Token string identifier
-   */
-  def cacheId(token: String): String = "token_%s".format(token)
+    * Returns facilitator url pattern filled with data
+    * @param facilitatorId Facilitator identifier
+    */
+  def facilitatorUrl(facilitatorId: Long): String = activityCheck {
+    facilitator.map { pattern =>
+      pattern.replace(FACILITATOR, facilitatorId.toString)
+    }.getOrElse("")
+  }
 
+  protected def activityCheck(f: => String): String = if (active) f else ""
 }
