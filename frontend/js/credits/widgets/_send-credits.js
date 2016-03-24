@@ -101,14 +101,12 @@ export default class Widget{
 
         self._sendRequest()
             .done(() => {
+                self.validation.clearForm();
+
                 success("You have sent credits successfully!", 4500);
                 self._setNewValues();
-
-                self.validation.clearForm();
             })
             .fail((response) => {
-                self._setNewValues();
-
                 const data = $.parseJSON(response.responseText).data;
                 const errorText = self.validation.getErrorsText(data.errors);
 
@@ -157,12 +155,6 @@ export default class Widget{
     }
 
     _setNewValues() {
-        const locals = this.locals;
-        let lastCredits;
-
-        lastCredits = +parseInt(locals.$count.text()) - (+parseInt(locals.$value.val()));
-        locals.$count.text(lastCredits);
-
         App.events.pub('hmt.asynctabs.refresh');
     }
 
