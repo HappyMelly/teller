@@ -185,7 +185,7 @@ object Activity {
   }
 
   object Type extends Enumeration {
-    val ApiToken = "token"
+    val ApiConfig = "token"
     val Account = "account"
     val Attendee = "attendee"
     val BookingEntry = "bookingentry"

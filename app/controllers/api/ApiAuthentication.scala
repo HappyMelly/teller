@@ -25,7 +25,7 @@
 package controllers.api
 
 import controllers.AsyncController
-import models.admin.ApiToken
+import models.cm.brand.ApiConfig
 import models.repository.Repositories
 import play.api.Play.current
 import play.api.cache.Cache
@@ -38,7 +38,7 @@ import scala.concurrent.Future
 /**
  * Provides token-based authentication for API actions.
  */
-class ApiAuthentication(services: Repositories,
+class ApiAuthentication(repos: Repositories,
                         val messagesApi: MessagesApi) extends AsyncController {
 
   val ApiTokenParam = "api_token"
@@ -49,13 +49,13 @@ class ApiAuthentication(services: Repositories,
    * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
    * @param f Function to run
    */
-  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiToken ⇒ Future[Result]) = Action.async {
+  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiConfig ⇒ Future[Result]) = Action.async {
     implicit request ⇒
       request.getQueryString(ApiTokenParam) map { value ⇒
-        Cache.getAs[ApiToken](ApiToken.cacheId(value)) map { token ⇒
+        Cache.getAs[ApiConfig](ApiConfig.cacheId(value)) map { token ⇒
           authorize(readWrite, token)(f)
         } getOrElse {
-          services.apiToken.find(value) flatMap {
+          repos.cm.rep.brand.config.find(value) flatMap {
             case None => jsonUnauthorized
             case Some(token) => authorize(readWrite, token)(f)
           }
@@ -73,8 +73,8 @@ class ApiAuthentication(services: Repositories,
    * @param request Request object
    * @return Returns the result of function execution or Unauthorized
    */
-  protected def authorize(readWrite: Boolean, token: ApiToken)(
-    f: Request[AnyContent] ⇒ ApiToken ⇒ Future[Result])(implicit request: Request[AnyContent]): Future[Result] = {
+  protected def authorize(readWrite: Boolean, token: ApiConfig)(
+    f: Request[AnyContent] ⇒ ApiConfig ⇒ Future[Result])(implicit request: Request[AnyContent]): Future[Result] = {
     if (token.authorized(readWrite))
       f(request)(token)
     else

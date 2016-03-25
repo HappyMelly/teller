@@ -39,9 +39,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * API for adding event requests
  */
-class EventRequestsApi @Inject() (val services: Repositories,
+class EventRequestsApi @Inject() (val repos: Repositories,
                                   override val messagesApi: MessagesApi)
-  extends ApiAuthentication(services, messagesApi) {
+  extends ApiAuthentication(repos, messagesApi) {
 
   def form(brandId: Long, appName: String) = Form(mapping(
     "country" -> nonEmptyText.verifying(
@@ -70,9 +70,9 @@ class EventRequestsApi @Inject() (val services: Repositories,
     * @param brandCode Brand string identifier
    */
   def create(brandCode: String) = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
-    val name = token.appName
+    val name = token.humanIdentifier
 
-    services.cm.brand.find(brandCode) flatMap {
+    repos.cm.brand.find(brandCode) flatMap {
       case None => jsonNotFound(s"Brand $brandCode not found")
       case Some(brand) =>
         val requestData = form(brand.identifier, name).bindFromRequest()
@@ -82,7 +82,7 @@ class EventRequestsApi @Inject() (val services: Repositories,
             badRequest(Json.prettyPrint(json))
           },
           eventRequest =>
-            services.cm.rep.event.request.insert(eventRequest) flatMap { value =>
+            repos.cm.rep.event.request.insert(eventRequest) flatMap { value =>
               jsonOk(Json.obj("request_id" -> value.id))
             }
         )

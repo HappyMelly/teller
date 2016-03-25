@@ -50,7 +50,7 @@ case class ApiConfig(id: Option[Long],
 
   val identifier: Long = id.getOrElse(0)
   val humanIdentifier: String = "app for brand %s".format(brandId)
-  val objectType: String = Activity.Type.ApiToken
+  val objectType: String = Activity.Type.ApiConfig
 
   /**
     * Returns true if token is authorized to run requested action
@@ -99,4 +99,13 @@ case class ApiConfig(id: Option[Long],
   def isEvaluationModuleActive: Boolean = active && (generalEvaluation.nonEmpty || specificEventEvaluation.nonEmpty)
 
   protected def activityCheck(f: => String): String = if (active) f else ""
+}
+
+object ApiConfig {
+
+  /**
+    * Returns config cache identifier
+    * @param token Token
+    */
+  def cacheId(token: String): String = s"token_$token"
 }

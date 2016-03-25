@@ -40,9 +40,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Participants API
  */
-class ParticipantsApi @Inject() (val services: Repositories,
+class ParticipantsApi @Inject() (val repos: Repositories,
                                  override val messagesApi: MessagesApi)
-  extends ApiAuthentication(services, messagesApi) {
+  extends ApiAuthentication(repos, messagesApi) {
 
   def attendeeForm(appName: String) = Form(mapping(
     "id" -> ignored(Option.empty[Long]),
@@ -81,14 +81,14 @@ class ParticipantsApi @Inject() (val services: Repositories,
    */
   def create = TokenSecuredAction(readWrite = true) { implicit request ⇒ implicit token ⇒
 
-    val form: Form[Attendee] = attendeeForm(token.appName).bindFromRequest()(request)
+    val form: Form[Attendee] = attendeeForm(token.humanIdentifier).bindFromRequest()(request)
     form.fold(
       formWithErrors ⇒ {
         val json = Json.toJson(APIError.formValidationError(formWithErrors.errors))
         badRequest(Json.prettyPrint(json))
       },
       data ⇒ {
-        services.cm.rep.event.attendee.insert(data) flatMap { attendee =>
+        repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
         }
       })
@@ -111,7 +111,7 @@ class ParticipantsApi @Inject() (val services: Repositories,
    * @param eventId Event identifier
    */
   def attendees(eventId: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
-    services.cm.rep.event.attendee.findByEvents(List(eventId)) flatMap { attendees =>
+    repos.cm.rep.event.attendee.findByEvents(List(eventId)) flatMap { attendees =>
       jsonOk(Json.toJson(attendees.map(_._2)))
     }
   }

@@ -106,7 +106,7 @@ class EvaluationsApi @Inject() (val repos: Repositories,
    */
   def create = TokenSecuredAction(readWrite = true) { implicit request => implicit token ⇒
 
-    val name = token.appName
+    val name = token.humanIdentifier
     val updatedForm = request.body.toString.contains("reason_to_register")
     val form: Form[Evaluation] = if (updatedForm)
       updatedEvaluationForm(name).bindFromRequest()
@@ -152,7 +152,7 @@ class EvaluationsApi @Inject() (val repos: Repositories,
       case Some(x) =>
         x.confirm(email, repos)
         val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
-        Activity.insert(token.appName, Activity.Predicate.Confirmed, msg)(repos)
+        Activity.insert(token.humanIdentifier, Activity.Predicate.Confirmed, msg)(repos)
 
         jsonOk(Json.obj("success" -> "The evaluation is confirmed"))
     }

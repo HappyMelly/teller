@@ -55,7 +55,7 @@ class ApiConfigRepository(app: Application) extends HasDatabaseConfig[JdbcProfil
     db.run(configs.filter(_.token === token).result).map(_.headOption)
 
   /**
-    * Returns ApiToken if exists, None otherwise
+    * Returns api config if exists, None otherwise
     * @param brandId Token identifier
     */
   def findByBrand(brandId: Long): Future[Option[ApiConfig]] =
