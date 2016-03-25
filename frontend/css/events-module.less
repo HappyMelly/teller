@@ -71,13 +71,13 @@
     background-color: #ddd;
   }
 
-  &.active {
+  .active &{
     color: #fff;
     background-color: #468ee5;
 
     .glyphicon{
       top: -2px;
-      left: 1px;
+      .transform(rotate(180deg));
     }
   }
 }
