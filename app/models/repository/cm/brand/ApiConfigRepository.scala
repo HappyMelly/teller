@@ -40,6 +40,14 @@ class ApiConfigRepository(app: Application) extends HasDatabaseConfig[JdbcProfil
   private val configs = TableQuery[ApiConfigs]
 
   /**
+    * Activated API for the given brand
+    * @param brandId Brand identifier
+    * @param active Activate/deactivate flag
+    */
+  def activate(brandId: Long, active: Boolean): Future[Int] =
+    db.run(configs.filter(_.brandId === brandId).map(_.active).update(active))
+
+  /**
    * Returns api config if exists, None otherwise
    * @param token Token
    */
@@ -53,4 +61,22 @@ class ApiConfigRepository(app: Application) extends HasDatabaseConfig[JdbcProfil
   def findByBrand(brandId: Long): Future[Option[ApiConfig]] =
     db.run(configs.filter(_.brandId === brandId).result).map(_.headOption)
 
+  /**
+    * Inserts new config to the database
+    * @param config Config entity
+    */
+  def insert(config: ApiConfig): Future[ApiConfig] = {
+    val query = configs returning configs.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += config)
+  }
+
+  /**
+    * Update an existing API config
+    * @param config Config entity
+    */
+  def update(config: ApiConfig): Future[ApiConfig] = {
+    val updateTuple = (config.event, config.facilitator, config.generalEvaluation, config.specificEventEvaluation)
+    val query = configs.filter(_.id === config.id).map(_.forUpdate).update(updateTuple)
+    db.run(query).map(_ => config)
+  }
 }

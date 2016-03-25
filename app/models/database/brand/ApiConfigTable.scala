@@ -42,17 +42,15 @@ private[models] trait ApiConfigTable {
     def token = column[String]("TOKEN", O.Length(64, varying = false))
     def readWrite = column[Boolean]("WRITE_CALLS")
     def active = column[Boolean]("ACTIVE")
-    def events = column[Option[String]]("EVENTS")
     def event = column[Option[String]]("EVENT")
-    def facilitators = column[Option[String]]("FACILITATORS")
     def facilitator = column[Option[String]]("FACILITATOR")
     def generalEvaluation = column[Option[String]]("GENERAL_EVALUATION_FORM")
     def specificEventEvaluation = column[Option[String]]("SPECIFIC_EVENT_EVALUATION_FORM")
 
-    def * = (id.?, brandId, token, readWrite, active, events, event, facilitators, facilitator, generalEvaluation,
+    def * = (id.?, brandId, token, readWrite, active, event, facilitator, generalEvaluation,
       specificEventEvaluation) <>((ApiConfig.apply _).tupled, ApiConfig.unapply)
 
-    def forUpdate = (events, event, facilitators, facilitator, generalEvaluation, specificEventEvaluation)
+    def forUpdate = (event, facilitator, generalEvaluation, specificEventEvaluation)
   }
 
 }

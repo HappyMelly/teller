@@ -29,7 +29,10 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
+import models.cm.brand.ApiConfig
 import models.repository.Repositories
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -43,10 +46,80 @@ class API @Inject() (override implicit val env: TellerRuntimeEnvironment,
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   /**
+    * Activates API for the given brand
+    *
+    * @param brandId Brand identifier
+    */
+  def activate(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
+    val msg = "API was activated"
+    repos.cm.rep.brand.config.findByBrand(brandId) flatMap {
+      case None => repos.cm.rep.brand.config.insert(ApiConfig(None, brandId, active = true)) flatMap {
+        _ => jsonSuccess(msg)
+      }
+      case Some(config) =>
+        if (config.active)
+          jsonSuccess(msg)
+        else
+          repos.cm.rep.brand.config.activate(brandId, active = true) flatMap (_ => jsonSuccess(msg))
+    }
+  }
+
+  /**
+    * Deactivates API for the given brand
+    *
+    * @param brandId Brand identifier
+    */
+  def deactivate(brandId: Long) = BrandAction(brandId) { implicit request => implicit handler => implicit user =>
+    val msg = "API was deactivated"
+    repos.cm.rep.brand.config.findByBrand(brandId) flatMap {
+      case None => repos.cm.rep.brand.config.insert(ApiConfig(None, brandId)) flatMap (_ => jsonSuccess(msg))
+      case Some(config) =>
+        if (!config.active)
+          jsonSuccess(msg)
+        else
+          repos.cm.rep.brand.config.activate(brandId, active = false) flatMap (_ => jsonSuccess(msg))
+    }
+  }
+
+  /**
     * Renders API settings page for the given brand
+    *
     * @param brandId Brand identifier
     */
   def settings(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    ok(views.html.v2.api.settings())
+    repos.cm.rep.brand.config.findByBrand(brandId) flatMap { apiConfig =>
+      val config = apiConfig.getOrElse(ApiConfig(None, brandId))
+      ok(views.html.v2.brand.tabs.api(config))
+    }
   }
+
+  /**
+    * Handles API config form input
+    * @param brandId Brand identifier
+    */
+  def update(brandId: Long) = BrandAction(brandId) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    repos.cm.rep.brand.config.findByBrand(brandId) flatMap {
+      case None => jsonNotFound("Brand not found")
+      case Some(apiConfig) =>
+        form.bindFromRequest.fold(
+          errors => jsonFormError(errors.errorsAsJson),
+          { case (event, facilitator, generalEval, specificEventEval) =>
+            val config = apiConfig.copy(event = event,
+              facilitator = facilitator,
+              generalEvaluation = generalEval,
+              specificEventEvaluation = specificEventEval)
+            repos.cm.rep.brand.config.update(config) flatMap { _ =>
+              jsonSuccess("API config was updated")
+            }
+          }
+        )
+    }
+  }
+
+  protected val form = Form(tuple(
+    "event" -> optional(nonEmptyText),
+    "facilitator" -> optional(nonEmptyText),
+    "generalEvaluation" -> optional(nonEmptyText),
+    "specificEventEvaluation" -> optional(nonEmptyText)
+  ))
 }

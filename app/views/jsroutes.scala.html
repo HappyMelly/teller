@@ -1,10 +1,26 @@
 @()(implicit request: RequestHeader)
 
 @helper.javascriptRouter("jsRoutes")(
+    controllers.cm.brand.routes.javascript.API.activate,
+    controllers.cm.brand.routes.javascript.API.deactivate,
     controllers.cm.brand.routes.javascript.Credits.activate,
     controllers.cm.brand.routes.javascript.Credits.deactivate,
-    controllers.hm.routes.javascript.Members.updateReason,
-    controllers.hm.routes.javascript.Products.activation,
+
+    controllers.cm.event.routes.javascript.Attendees.details,
+    controllers.cm.event.routes.javascript.Attendees.delete,
+    controllers.cm.event.routes.javascript.Attendees.list,
+    controllers.cm.event.routes.javascript.Attendees.listByEvent,
+
+    controllers.cm.routes.javascript.Events.cancel,
+    controllers.cm.routes.javascript.Events.confirm,
+    controllers.cm.routes.javascript.Events.index,
+    controllers.cm.routes.javascript.Events.reason,
+    controllers.cm.routes.javascript.Events.detailsButtons,
+    controllers.cm.routes.javascript.Statistics.byFacilitators,
+    controllers.cm.routes.javascript.Statistics.byEvents,
+    controllers.cm.routes.javascript.Statistics.byCountries,
+    controllers.cm.routes.javascript.Statistics.byParticipants,
+
     controllers.core.routes.javascript.Notifications.list,
     controllers.core.routes.javascript.Notifications.read,
     controllers.core.routes.javascript.Notifications.unread,
@@ -23,20 +39,9 @@
     controllers.core.routes.javascript.UserAccounts.changePassword,
     controllers.core.routes.javascript.UserAccounts.disconnect,
     controllers.core.routes.javascript.UserAccounts.handleNewPassword,
-    controllers.cm.event.routes.javascript.Attendees.details,
-    controllers.cm.event.routes.javascript.Attendees.delete,
-    controllers.cm.event.routes.javascript.Attendees.list,
-    controllers.cm.event.routes.javascript.Attendees.listByEvent,
 
-    controllers.cm.routes.javascript.Events.cancel,
-    controllers.cm.routes.javascript.Events.confirm,
-    controllers.cm.routes.javascript.Events.index,
-    controllers.cm.routes.javascript.Events.reason,
-    controllers.cm.routes.javascript.Events.detailsButtons,
-    controllers.cm.routes.javascript.Statistics.byFacilitators,
-    controllers.cm.routes.javascript.Statistics.byEvents,
-    controllers.cm.routes.javascript.Statistics.byCountries,
-    controllers.cm.routes.javascript.Statistics.byParticipants,
+    controllers.hm.routes.javascript.Members.updateReason,
+    controllers.hm.routes.javascript.Products.activation,
 
     routes.javascript.Assets.at,
     routes.javascript.Brands.activation,
