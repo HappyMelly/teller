@@ -25,14 +25,13 @@
   <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <input type="hidden" disabled id="eventId" value="@event.id"/>
 
-  <div class="row page-content js-event-details">
-    <div class="container">
-      <div class="row event-details  content-block">
+    <div class="container p-content js-event-details">
+      <div class="row event-details">
         <div class="col-md-9">
           @views.html.v2.event.requestEvaluation(event, event.facilitatorIds(services).head, brand.evaluationUrl)
-          <div class="header-block">
+          <div class="header-block" style="padding-top: 0 ;">
             <div class="row">
-              <div class="col-md-12"><h2>@event.title</h2></div>
+              <div class="col-md-12"><h2 style="margin-top: 0;">@event.title</h2></div>
               <div class="col-md-6">
                 @dateInterval(event.schedule.start, event.schedule.end)
                 @if(event.location.online) {
@@ -164,7 +163,7 @@
                 Export to XLSX</a>
             </div>
           </div>
-          <table id="participants" class="datatables table table-rowed">
+          <table id="participants" class="datatables table">
             <thead>
               <tr>
                 <th>Attendee</th>
@@ -179,7 +178,6 @@
         </div>
       </div>
     </div>
-  </div>
   <script src="@routes.Assets.at("js/participant.js")" type="text/javascript"></script>
 
   <script src="@routes.Assets.at("js/event/widgets-details/evaluation-dlg.js")" type="text/javascript"></script>

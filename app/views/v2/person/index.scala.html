@@ -9,14 +9,14 @@
 
 @main("People", "people", user) {
 
-  @html.indexPageHeader("People") {
-    @restrict(handler, List(as(Admin.toString))) {
-      <a class="btn btn-success pull-right" href="@controllers.core.routes.People.add()">
-      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Person</a>
+  <div class="p-content">
+    @html.indexPageHeader("People") {
+      @restrict(handler, List(as(Admin.toString))) {
+        <a class="btn btn-success pull-right" href="@controllers.core.routes.People.add()">
+        <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Person</a>
+      }
     }
-  }
 
-  <div class="col-md-12">
     @if(people.isEmpty) {
       <p>There are no people</p>
     } else {
@@ -28,5 +28,5 @@
     }
   </div>
 
-	<script src="@routes.Assets.at("js/index.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("js/index.js")" type="text/javascript"></script>
 }

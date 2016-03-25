@@ -23,10 +23,6 @@
  */
 
 
-$.extend( $.fn.dataTableExt.oStdClasses, {
-    "sWrapper": "dataTables_wrapper form-inline"
-} );
-
 function addParticipantDetailsToTable(object, data) {
     var row = $(object).parents('tr').first();
     var tableContainer = $("<tr class='participant-details active'>").append(
@@ -37,7 +33,7 @@ function addParticipantDetailsToTable(object, data) {
 function addParticipantDetailsToList(object, data) {
     var body = $(object).parents('.list-group-item-body').first();
     var div = $("<div class='row list-group-item-text participant-details'>").append(
-        $("<div class='evaluation-overview col-md-12'>").append(data));
+        $("<div class='evaluation-overview type-detail'>").append(data));
     $(body).append(div);
     $(object).parents('.list-group-item').addClass('active');
 }
