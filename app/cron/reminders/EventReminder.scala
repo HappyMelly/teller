@@ -26,13 +26,14 @@ package cron.reminders
 
 import javax.inject.Inject
 
-import models.Activity
+import controllers.Utilities
+import models.cm.Event
+import models.cm.brand.ApiConfig
 import models.cm.event.EventRequest
 import models.repository.Repositories
-import org.joda.time.{Duration, LocalDate}
-import play.api.Play
-import play.api.Play.current
-import services.integrations.{Email, EmailComponent, Integrations}
+import models.{Activity, BrandWithSettings}
+import org.joda.time.LocalDate
+import services.integrations.{EmailComponent, Integrations}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -50,7 +51,7 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
       repos.cm.event.findByParameters(brandId = brand.id,future = Some(false),confirmed = Some(false)) map { events =>
         events.foreach { event ⇒
           val subject = "Confirm your event " + event.title
-          val url = Play.configuration.getString("application.baseUrl").getOrElse("")
+          val url = Utilities.fullUrl(controllers.cm.routes.Events.details(event.identifier).url)
           val body = mail.templates.event.html.confirm(event, brand, url).toString()
           email.send(event.facilitators(repos), subject, body, brand.sender)
           val msg = "confirmation email for event %s (id = %s)".format(event.title, event.id.get.toString)
@@ -65,17 +66,14 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
     */
   def sendUpcomingEventsNotification() = repos.cm.rep.event.request.findWithOneParticipant map { results =>
     results.groupBy(_.brandId).foreach { case (brandId, requests) =>
-      val endOfPeriod = LocalDate.now().plusMonths(3)
-      repos.cm.brand.get(brandId).foreach { brand =>
-        val futureEvents = repos.cm.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
-          archived = Some(false))
-        futureEvents map { unfilteredEvents =>
-          val events = unfilteredEvents.filter(_.schedule.start.isBefore(endOfPeriod))
+      validUpcomingEvents(brandId) { (events, brandWithSettings, apiConfig) =>
+        if (isEventRequestsActive(apiConfig)) {
           requests.filter(request => valid(request)).foreach { request =>
             val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
+            val brand = brandWithSettings.brand
             if (suitableEvents.nonEmpty) {
-              val url = fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
-              val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, url)(repos)
+              val url = Utilities.fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
+              val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, apiConfig.get, url)(repos)
               val subject = s"Upcoming ${brand.name} events"
               email.send(Seq(request), subject, body.toString(), brand.sender)
             }
@@ -85,33 +83,7 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
     }
   }
 
-  /**
-   * Sends email notifications to facilitators asking to confirm
-   *  upcoming events which are unconfirmed
-   */
-  def sendUpcomingConfirmation() = repos.cm.brand.findAll map { brands =>
-    brands.foreach { brand ⇒
-      val today = LocalDate.now().toDate.getTime
-      repos.cm.event.findByParameters(brandId = brand.id,future = Some(true),confirmed = Some(false)) map { events =>
-        events.filter { x =>
-          val duration = new Duration(today, x.schedule.start.toDate.getTime)
-          duration.getStandardDays == 7 || duration.getStandardDays == 30
-        }.foreach { event ⇒
-          val subject = "Confirm your event " + event.title
-          val url = Play.configuration.getString("application.baseUrl").getOrElse("")
-          val body = mail.templates.event.html.confirmUpcoming(event, brand, url).toString()
-          email.send(event.facilitators(repos), subject, body, brand.sender)
-          val msg = "upcoming confirmation email for event %s (id = %s)".format(
-            event.title,
-            event.id.get.toString)
-          Activity.insert("Teller", Activity.Predicate.Sent, msg)(repos)
-        }
-      }
-    }
-  }
-
-  protected def fullUrl(url: String) =
-    Play.configuration.getString("application.baseUrl").getOrElse("") + url
+  protected def isEventRequestsActive(apiConfig: Option[ApiConfig]): Boolean = apiConfig.exists(_.event.nonEmpty)
 
   /**
     * Returns true if the given request is time valid
@@ -120,6 +92,18 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
     */
   protected def valid(request: EventRequest): Boolean = {
     val now = LocalDate.now()
-    request.start.map(_.isBefore(now)).getOrElse(true) && request.end.map(_.isAfter(now)).getOrElse(true)
+    request.start.forall(_.isBefore(now)) && request.end.forall(_.isAfter(now))
+  }
+
+  protected def validUpcomingEvents(brandId: Long)(f: (Seq[Event], BrandWithSettings, Option[ApiConfig]) => Unit) = {
+    val endOfPeriod = LocalDate.now().plusMonths(3)
+    repos.cm.brand.getWithApiConfig(brandId).foreach { case (brandWithSettings, apiConfig) =>
+      val futureEvents = repos.cm.event.findByParameters(Some(brandId), public = Some(true), future = Some(true),
+        archived = Some(false))
+      futureEvents map { unfilteredEvents =>
+        val events = unfilteredEvents.filter(_.schedule.start.isBefore(endOfPeriod))
+        f(events, brandWithSettings, apiConfig)
+      }
+    }
   }
 }

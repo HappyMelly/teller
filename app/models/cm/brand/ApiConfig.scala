@@ -67,12 +67,10 @@ case class ApiConfig(id: Option[Long],
   /**
     * Returns event url pattern filled with data
     * @param eventId Event identifier
-    * @param facilitatorId Facilitator identifier
     */
-  def eventUrl(eventId: Option[Long], facilitatorId: Option[Long]): String = {
+  def eventUrl(eventId: Long): String = activityCheck {
     event.map { pattern =>
-      val withEvent = eventId.map(value => pattern.replace(EVENT, value.toString)).getOrElse(pattern)
-      facilitatorId.map(value => withEvent.replace(FACILITATOR, value.toString)).getOrElse(withEvent)
+      pattern.replace(EVENT, eventId.toString)
     }.getOrElse("")
   }
 

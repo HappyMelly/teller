@@ -1,9 +1,10 @@
 @import models.repository.Repositories
 @import models.cm.event.EventRequest
-@(events: List[models.cm.Event],
-        brand: Brand,
-        request: EventRequest,
-        unsubscribeLink: String)(implicit repos: Repositories)
+@(events: Seq[models.cm.Event],
+    brand: Brand,
+    request: EventRequest,
+    apiConfig: models.cm.brand.ApiConfig,
+    unsubscribeLink: String)(implicit repos: Repositories)
 
 @import views.ViewHelpersV2._
 @import views.{Countries, Languages}
@@ -29,7 +30,7 @@
             <tr>
                 <td style="font-size: 18px;mso-line-height-rule: exactly; line-height: 22px; font-family: HelveticaNeue, Arial, Helvetica, sans-serif;  color: #333333; text-align: left;">
                     @brand.webSite.map { url =>
-                        <a href="@url/events/#search=@event.identifier" target="_blank" style="color:#62bfd8!important; text-decoration: underline; font-family: HelveticaNeue, sans-serif; font-size: 18px;">
+                        <a href="@apiConfig.eventUrl(event.identifier)" target="_blank" style="color:#62bfd8!important; text-decoration: underline; font-family: HelveticaNeue, sans-serif; font-size: 18px;">
                             <span style="color:#62bfd8;">
                                 @event.title
                             </span>
