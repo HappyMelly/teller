@@ -462,7 +462,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   protected def sendPasswordEmail(person: Person, token: String)(implicit request: RequestHeader) = {
     env.mailer.sendEmail(s"Your Happy Melly Account",
       person.email,
-      (None, Some(mail.templates.password.html.member(person.firstName, token)))
+      (None, Some(mail.password.html.member(person.firstName, token)))
     )
   }
 

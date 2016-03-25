@@ -369,7 +369,7 @@ class Licenses @javax.inject.Inject() (override implicit val env: TellerRuntimeE
   protected def sendFacilitatorWelcomeEmail(person: Person, brand: String, token: String)(implicit request: RequestHeader) = {
     env.mailer.sendEmail(s"Your Facilitator Account for $brand",
       person.email,
-      (None, Some(mail.templates.password.html.facilitator(person.firstName, token, brand)))
+      (None, Some(mail.password.html.facilitator(person.firstName, token, brand)))
     )
   }
 

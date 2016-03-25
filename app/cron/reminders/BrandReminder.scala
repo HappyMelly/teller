@@ -46,7 +46,7 @@ class BrandReminder @Inject() (val email: EmailComponent, val repos: Repositorie
         val facilitatorIds = licenses.filter(_.expiring).map(_.licenseeId).distinct
         val record = s"Sending ${facilitatorIds.length} license expiration reminders to ${view.brand.name} facilitators"
         Logger.info(msg(record))
-        val body = mail.templates.brand.html.licenseExpiring(view.brand, view.settings.licenseExpirationEmailBody.get).toString()
+        val body = mail.brand.html.licenseExpiring(view.brand, view.settings.licenseExpirationEmailBody.get).toString()
         repos.person.find(facilitatorIds) map { people =>
           people.foreach { person =>
             val subject = s"Your ${view.brand.name} License Expires This Month"

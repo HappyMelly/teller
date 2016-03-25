@@ -300,7 +300,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
         cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
         repos.cm.rep.event.attendee.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
       } else if (attendee.certificate.isEmpty) {
-        val body = mail.templates.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
+        val body = mail.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
         val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
         email.send(Seq(attendee), event.facilitators(repos), bcc,
           subject, body, from = withSettings.brand.sender, richMessage = true)
@@ -322,7 +322,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
     repos.cm.brand.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
       val bcc = view.coordinators.filter(_._2.notification.evaluation).map(_._1)
       val subject = s"Your ${view.brand.name} certificate"
-      val body = mail.templates.evaluation.html.rejected(view.brand, attendee, rejector).toString()
+      val body = mail.evaluation.html.rejected(view.brand, attendee, rejector).toString()
       email.send(Seq(attendee), event.facilitators(repos), bcc, subject, body, view.brand.sender)
     }
   }

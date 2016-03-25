@@ -119,7 +119,7 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
   }
 
   private def sendWelcomeEmail(person: Person, url: String, name: String) = {
-    val body = mail.templates.html.welcome(Utilities.fullUrl(url), url, name).toString()
+    val body = mail.html.welcome(Utilities.fullUrl(url), url, name).toString()
     email.sendSystem(Seq(person), "Welcome to Happy Melly network", body)
   }
 

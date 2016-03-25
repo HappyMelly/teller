@@ -583,7 +583,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def sendCoordinatorWelcomeEmail(person: Person, brand: String, token: String)(implicit request: RequestHeader) = {
     env.mailer.sendEmail(s"Your Coordinator Account for $brand",
       person.email,
-      (None, Some(mail.templates.password.html.coordinator(person.firstName, token, brand)))
+      (None, Some(mail.password.html.coordinator(person.firstName, token, brand)))
     )
   }
 

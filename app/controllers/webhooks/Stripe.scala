@@ -213,13 +213,13 @@ class Stripe @Inject() (val repos: Repositories,
     val subject = "Your Happy Melly Membership"
     val profileUrl = Utilities.fullUrl(Members.profileUrl(member))
     val expireDate = member.until.plusWeeks(2)
-    val body = mail.templates.members.html.failedProlongation(name, profileUrl, expireDate).toString
+    val body = mail.members.html.failedProlongation(name, profileUrl, expireDate).toString
     email.sendSystem(Seq(recipient), subject, body)
   }
 
   protected def sendSuccessfulProlongationEmail(recipient: Recipient, name: String) = {
     val subject = "Your Happy Melly Membership"
-    val body = mail.templates.members.html.successfulProlongation(name).toString
+    val body = mail.members.html.successfulProlongation(name).toString
     email.sendSystem(Seq(recipient), subject, body)
   }
 

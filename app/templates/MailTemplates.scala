@@ -11,14 +11,14 @@ import securesocial.core.{BasicProfile, RuntimeEnvironment}
 class MailTemplates(env: RuntimeEnvironment) extends securesocial.controllers.MailTemplates.Default(env) {
 
   override def getPasswordChangedNoticeEmail(user: BasicProfile)(implicit request: RequestHeader, lang: Lang): (Option[Txt], Option[Html]) = {
-    (None, Some(mail.templates.password.html.changeNotice(user)(request, env)))
+    (None, Some(mail.password.html.changeNotice(user)(request, env)))
   }
 
   override def getSendPasswordResetEmail(user: BasicProfile, token: String)(implicit request: RequestHeader, lang: Lang): (Option[Txt], Option[Html]) = {
-    (None, Some(mail.templates.password.html.reset(user, token)(request, env)))
+    (None, Some(mail.password.html.reset(user, token)(request, env)))
   }
 
   override def getUnknownEmailNotice()(implicit request: RequestHeader, lang: Lang): (Option[Txt], Option[Html]) = {
-    (None, Some(mail.templates.password.html.unknownEmail()))
+    (None, Some(mail.password.html.unknownEmail()))
   }
 }

@@ -1,0 +1,23 @@
+@(name: String, profileUrl: String, expire: org.joda.time.LocalDate)
+
+@import views.ViewHelpersV2._
+
+@mail.hm.html.tmpl("Your Happy Melly Membership") {
+    @mail.hm.html.title(s"Hey $name,")
+    @mail.hm.html.paragraph {
+        Something wasn’t quite right when we attempted to automatically renew your Happy Melly membership.
+        It seems like your payment method might need updating.
+    }
+    @mail.hm.html.paragraph {
+        To maintain your Happy Melly membership, you must update your credit card details via
+        <a href="@profileUrl#membership">your Teller Account</a> before @date(expire).
+    }
+    @mail.hm.html.paragraph {
+        In the event you don’t wish to renew your membership, you don’t have to do anything. But we’d really appreciate
+        <a href="http://www.happymelly.com/contact/">a quick email</a>, or Slack message to let us know why you’ve
+        chosen not to continue.
+    }
+    @mail.hm.html.paragraph {
+        Happy Melly
+    }
+} { }

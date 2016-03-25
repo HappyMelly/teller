@@ -1,0 +1,14 @@
+@()(implicit request: RequestHeader, lang: Lang)
+
+@mail.hm.html.tmpl("Password Reset Request") {
+    <h2>Hello,</h2>
+    <p>We received a request to reset a password in our system.  The attempt has failed because we do not have
+        a registered account with this email address. It could be that you logged in using an external account such as Twitter
+        or Facebook.</p>
+    <p>
+        If you never created an account with us ignore this email, otherwise if you think you have an account with us contact
+        Sergey Kotlov (sergey.kotlov@@happymelly.com) for further assistance.
+    </p>
+    <p>All the best, <br>
+        Happy Melly Teller Team</p>
+} { }

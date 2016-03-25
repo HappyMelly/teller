@@ -1,0 +1,9 @@
+@(name: String)(implicit request: RequestHeader)
+
+@mail.hm.html.tmpl("New Password") {
+    <h2>Hi @name,</h2>
+    <p>Your password for Happy Melly Teller has been created recently.</p>
+    <p>If you didn't make that change, please <a href="mailto:support@@happymelly.com">let us know</a>.</p>
+    <p>All the best, <br>
+        Happy Melly Teller Team</p>
+} { }

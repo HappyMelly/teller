@@ -495,7 +495,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
       f <- repos.cm.event.facilitators(event.identifier)
     } yield (b.get, e, f)) map { case (brandView, eventType, facilitators) =>
       val recipients = brandView.coordinators.filter(_._2.notification.event).map(_._1) ::: facilitators
-      val body = mail.templates.event.html.details(event, eventType.name, brandView.brand, changes).toString
+      val body = mail.event.html.details(event, eventType.name, brandView.brand, changes).toString
       if (recipients.nonEmpty) {
         val subject = s"${activity.description} event"
         email.send(recipients, subject, body, brandView.brand.sender)

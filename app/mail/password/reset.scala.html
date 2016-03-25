@@ -1,0 +1,11 @@
+@(user: securesocial.core.BasicProfile, mailToken: String)(implicit request: RequestHeader,
+    env: securesocial.core.RuntimeEnvironment)
+
+@mail.hm.html.tmpl("Password Reset Request") {
+    <h2>Hi @user.firstName,</h2>
+    <p>Someone recently requested a password change for your Happy Melly Teller account. If this was you, click the button to set a new password:</p>
+    @mail.html.button("Reset Password", env.routes.resetPasswordUrl(mailToken))
+    <p>If you don't want to change your password or didn't request this, just ignore and delete this message.</p>
+    <p>All the best, <br>
+        Happy Melly Teller Team</p>
+} { }

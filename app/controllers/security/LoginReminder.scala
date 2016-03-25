@@ -64,7 +64,7 @@ class LoginReminder @Inject() (val repos: IRepositories, val messagesApi: Messag
                     if (account.byEmail) Some("Email") else None
                   )
                   val options = rawOptions.filter(_.nonEmpty).map(_.get)
-                  val content = mail.templates.password.html.remind(person, options).toString
+                  val content = mail.password.html.remind(person, options).toString
                   email.sendSystem(Seq(person), "Teller Login Reminder", content)
                   val modifiedSession = request.session - LoginReminder.Key
                   redirect(url, modifiedSession,

@@ -47,7 +47,7 @@ class MembershipReminder @Inject()(val email: EmailComponent, val repos: Reposit
     Logger.info(s"Start sending one month expiration reminders to ${validMembers.length} members")
     validMembers.foreach { member =>
       val subject = "Your Happy Melly Membership"
-      val body = mail.templates.members.html.oneMonthReminder(member, totalNumber, Members.profileUrl(member)).toString()
+      val body = mail.members.html.oneMonthReminder(member, totalNumber, Members.profileUrl(member)).toString()
 
       val recipient = if (member.person)
         Future.successful(member.memberObj._1.get)
@@ -67,7 +67,7 @@ class MembershipReminder @Inject()(val email: EmailComponent, val repos: Reposit
       val subject = "Your Happy Melly Membership"
       val membershipDuration = new Duration(member.since.toDateTimeAtCurrentTime, DateTime.now())
       val membershipInDays = membershipDuration.getStandardDays
-      val body = mail.templates.members.html.twoWeeksReminder(member,
+      val body = mail.members.html.twoWeeksReminder(member,
         membershipInDays,
         Utilities.fullUrl(Members.profileUrl(member))).toString()
 

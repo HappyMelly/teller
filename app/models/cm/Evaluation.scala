@@ -222,7 +222,7 @@ case class  Evaluation(id: Option[Long],
         val subject = s"New evaluation (General impression: $impression)"
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
         val url = Utilities.fullUrl(controllers.routes.Evaluations.details(this.identifier).url)
-        val body = mail.templates.evaluation.html.details(this, event, attendee, brand, url)(messages)
+        val body = mail.evaluation.html.details(this, event, attendee, brand, url)(messages)
         email.send(event.facilitators(services), cc, Seq(), subject, body.toString(), brand.sender)
 
         this

@@ -83,7 +83,7 @@ class CardReminder @Inject()(val email: EmailComponent, val repos: Repositories)
   protected def sendReminder(name: String, person: Person, member: Member) = {
     val subject = "Your Payment Method Has Expired"
     val url = Utilities.fullUrl(Members.profileUrl(member))
-    val body = mail.templates.members.html.cardExpiring(name, member, url)
+    val body = mail.members.html.cardExpiring(name, member, url)
     email.sendSystem(Seq(person), subject, body.toString)
   }
 }

@@ -64,7 +64,7 @@ class ProfileStrengthReminder @Inject() (val email: Email, val repos: Repositori
       for ((person, (strength, rank)) <- people) {
         val subject = "Make your profile shine"
         val url = Utilities.fullUrl("/profile")
-        val body = mail.templates.html.profileStrength(person.firstName, rank, strength, url).toString()
+        val body = mail.html.profileStrength(person.firstName, rank, strength, url).toString()
         email.sendSystem(Seq(person), subject, body)
         val msg = "profile strength reminder email for facilitator %s (id = %s)".format(
           person.fullName,

@@ -196,7 +196,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             case true =>
               createPasswordInfo(user, env.currentHasher.hash(password)) flatMap { account =>
                 env.mailer.sendEmail("New password", user.person.email,
-                  (None, Some(mail.templates.password.html.createdNotice(user.person.firstName))))
+                  (None, Some(mail.password.html.createdNotice(user.person.firstName))))
                 env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
                   _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.member))
                 }).flatMap { _ =>
@@ -230,7 +230,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
               val now = DateTime.now
               val token = EmailToken(UUID.randomUUID().toString, info._1, user.person.identifier, now, now.plusMinutes(60))
               repos.emailToken.insert(token)
-              val body = mail.templates.password.html.confirmEmail(user.person.firstName,
+              val body = mail.password.html.confirmEmail(user.person.firstName,
                 Utilities.fullUrl(routes.UserAccounts.handleEmailChange(token.token).url),
                 user.person.email)
               env.mailer.sendEmail("Confirm your email", info._1, (None, Some(body)))

@@ -52,7 +52,7 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
         events.foreach { event ⇒
           val subject = "Confirm your event " + event.title
           val url = Utilities.fullUrl(controllers.cm.routes.Events.details(event.identifier).url)
-          val body = mail.templates.event.html.confirm(event, brand, url).toString()
+          val body = mail.event.html.confirm(event, brand, url).toString()
           email.send(event.facilitators(repos), subject, body, brand.sender)
           val msg = "confirmation email for event %s (id = %s)".format(event.title, event.id.get.toString)
           Activity.insert("Teller", Activity.Predicate.Sent, msg)(repos)
@@ -73,7 +73,7 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
             val brand = brandWithSettings.brand
             if (suitableEvents.nonEmpty) {
               val url = Utilities.fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
-              val body = mail.templates.event.html.upcomingNotification(suitableEvents, brand, request, apiConfig.get, url)(repos)
+              val body = mail.event.html.upcomingNotification(suitableEvents, brand, request, apiConfig.get, url)(repos)
               val subject = s"Upcoming ${brand.name} events"
               email.send(Seq(request), subject, body.toString(), brand.sender)
             }

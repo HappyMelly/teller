@@ -63,7 +63,7 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
         attendees.map(_.filter(_.evaluation.isEmpty).foreach { view =>
           val welcomeMsg = s"Hi ${view.attendee.firstName},"
           val facilitatorId = view.event.facilitatorIds(repos).head
-          val body = mail.templates.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId, brand.evaluationUrl).toString()
+          val body = mail.evaluation.html.requestBody(welcomeMsg, view.event, facilitatorId, brand.evaluationUrl).toString()
           sendEvaluationRequest(view.attendee, brand, body)
         })
         attendees.map(_.filter(_.evaluation.exists(_.status == EvaluationStatus.Unconfirmed)).foreach { view =>
@@ -85,7 +85,7 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
    */
   def sendEvaluationRequest(attendee: Attendee, brand: Brand, body: String): Unit = {
     val subject = "Your Opinion Counts!"
-    val content = mail.templates.evaluation.html.request(brand, attendee, body).toString()
+    val content = mail.evaluation.html.request(brand, attendee, body).toString()
     email.send(Seq(attendee), subject, content, brand.sender)
   }
 
@@ -103,7 +103,7 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
       map(x ⇒ if (x.endsWith("/")) x else x + "/").
       getOrElse("https://" + hook).
       concat(token)
-    val content = mail.templates.evaluation.html.confirm(brand, attendee.fullName, url).toString()
+    val content = mail.evaluation.html.confirm(brand, attendee.fullName, url).toString()
     email.send(Seq(attendee), subject, content, brand.sender)
   }
 }
