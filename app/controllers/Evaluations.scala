@@ -145,9 +145,8 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
           form.fold(
             errors ⇒ badRequest(views.html.v2.evaluation.form(user, errors, attendee)),
             evaluation ⇒ {
-              val defaultHook = request.host + routes.Evaluations.confirm("").url
               val modified = evaluation.copy(eventId = eventId, attendeeId = attendeeId)
-              modified.add(defaultHook, false, email, repos) flatMap { eval =>
+              modified.add(false, email, repos) flatMap { eval =>
                 redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
               }
             })
@@ -246,8 +245,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
       repos.cm.evaluation.find(id) flatMap {
         case None => jsonNotFound("Evaluation not found")
         case Some(evaluation) =>
-          val defaultHook = request.host + routes.Evaluations.confirm("").url
-          evaluation.sendConfirmationRequest(defaultHook, email, repos)
+          evaluation.sendConfirmationRequest(email, repos)
           jsonSuccess("Confirmation request was sent")
       }
   }
@@ -326,4 +324,10 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
       email.send(Seq(attendee), event.facilitators(repos), bcc, subject, body, view.brand.sender)
     }
   }
+}
+
+object Evaluations {
+
+  def confirmationUrl(token: String): String =
+    Utilities.fullUrl(controllers.routes.Evaluations.confirm(token).url)
 }

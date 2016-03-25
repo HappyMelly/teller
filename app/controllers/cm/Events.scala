@@ -29,6 +29,7 @@ import controllers.cm.event.{EventForms, Helpers}
 import controllers.{Security, core, _}
 import models.UserRole.Role
 import models._
+import models.cm.brand.ApiConfig
 import models.cm.event.Comparator
 import models.cm.event.Comparator.FieldChange
 import models.cm.{Location, Schedule, _}
@@ -180,23 +181,24 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             fees <- repos.fee.findByBrand(x.event.brandId)
             invoiceOrgs <- repos.org.find(List(x.invoice.invoiceTo, x.invoice.invoiceBy.getOrElse(0L)))
             attendees <- repos.cm.rep.event.attendee.findByEvents(List(id))
-          } yield (eventType, fees, invoiceOrgs, attendees.isEmpty)
-          query flatMap { case (eventType, fees, invoiceOrgs, deletable) =>
-            val printableFees = fees.map(x ⇒ (Countries.name(x.country), x.fee.toString)).sortBy(_._1)
+            apiConfig <- repos.cm.rep.brand.config.findByBrand(x.event.brandId)
+          } yield (eventType, fees, invoiceOrgs, attendees.isEmpty, apiConfig)
+          query flatMap { case (eventType, fees, invoiceOrgs, deletable, apiConfig) =>
             val event = fees.find(_.country == x.event.location.countryCode) map { y ⇒
               Event.withFee(x.event, y.fee, eventType.maxHours)
             } getOrElse x.event
             val invoiceView = invoice(x.invoice, invoiceOrgs)
+            val config = apiConfig.getOrElse(ApiConfig(None, x.event.brandId))
 
             implicit val service: Repositories = repos
             roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
               repos.person.memberships(user.person.identifier) flatMap { orgs =>
-                ok(views.html.v2.event.details(user, view.brand, brands, orgs, event,
-                  invoiceView, eventType.name, printableFees, deletable))
+                ok(views.html.v2.event.details(user, config, view.brand, brands, orgs, event,
+                  invoiceView, eventType.name, deletable))
               }
             } { (view, brands) =>
-              ok(views.html.v2.event.details(user, view.get.brand, brands, List(), event,
-                invoiceView, eventType.name, printableFees, deletable))
+              ok(views.html.v2.event.details(user, config, view.get.brand, brands, List(), event,
+                invoiceView, eventType.name, deletable))
             } {
               redirect(core.routes.Dashboard.index())
             }

@@ -47,8 +47,6 @@ case class Brand(id: Option[Long],
     webSite: Option[String],
     blog: Option[String],
     contactEmail: String,
-    evaluationUrl: Option[String] = None,
-    evaluationHookUrl: Option[String] = None,
     active: Boolean = true,
     recordInfo: DateStamp) extends ActivityRecorder {
 

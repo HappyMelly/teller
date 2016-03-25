@@ -312,7 +312,7 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
     repos.socialProfile.update(view.profile.copy(objectId = old.identifier), ProfileType.Brand)
     val updateTuple = (u.code, u.uniqueName, u.name, u.ownerId,
       u.description, u.picture, u.tagLine, u.webSite, u.blog, u.contactEmail,
-      u.evaluationUrl, u.evaluationHookUrl, u.recordInfo.updated, u.recordInfo.updatedBy)
+      u.recordInfo.updated, u.recordInfo.updatedBy)
     db.run(brands.filter(_.id === u.id).map(_.forUpdate).update(updateTuple))
 
     updateOwnerRecord(old.identifier, view.brand.ownerId, old.ownerId)

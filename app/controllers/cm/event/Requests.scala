@@ -45,9 +45,9 @@ import services.integrations.EmailComponent
 class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
                           val email: EmailComponent,
-                          val services: Repositories,
+                          val repos: Repositories,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
   with Helpers {
 
@@ -73,20 +73,20 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
           redirect(controllers.cm.routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
         requestData ⇒ {
           (for {
-            a <- services.cm.rep.event.attendee.findByEvents(List(event.identifier))
-            b <- services.cm.brand.get(event.brandId)
+            a <- repos.cm.rep.event.attendee.findByEvents(List(event.identifier))
+            b <- repos.cm.brand.get(event.brandId)
           } yield (a, b)) flatMap { case (unfilteredAttendees, brand) =>
             val attendees = unfilteredAttendees.map(_._2).filter(a => requestData.attendeeIds.contains(a.identifier))
             if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {
               import scala.util.matching.Regex
               val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
-              val reminder = new EvaluationReminder(email, services)
+              val reminder = new EvaluationReminder(email, repos)
               attendees.foreach { attendee ⇒
                 val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
                 reminder.sendEvaluationRequest(attendee, brand, body)
               }
 
-              Activity.insert(user.name, Activity.Predicate.Sent, event.title)(services)
+              Activity.insert(user.name, Activity.Predicate.Sent, event.title)(repos)
               success(id, requestMessage(attendees))
             } else {
               error(id, "Some people are not the attendees of the event")
@@ -98,7 +98,7 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   protected def requestMessage(attendees: Seq[Attendee]): String =
     if (attendees.length == 1)
-      "Evaluation request was sent to one attendee"
+      "Evaluation request was sent to an attendee"
     else
       s"Evaluation request was sent to ${attendees.length} attendees"
 }

@@ -1,12 +1,12 @@
 @import models.repository.Repositories
 @(user: ActiveUser,
+    config: models.cm.brand.ApiConfig,
     brand: Brand,
     brands: List[Brand],
     funders: List[Organisation],
     event: models.cm.Event,
     view: models.cm.InvoiceView,
     typeName: String,
-    fees: List[(String, String)],
     deletable: Boolean)(implicit
         request: Request[Any],
         flash: Flash,
@@ -29,7 +29,7 @@
     <div class="container">
       <div class="row event-details  content-block">
         <div class="col-md-9">
-          @views.html.v2.event.requestEvaluation(event, event.facilitatorIds(services).head, brand.evaluationUrl)
+          @views.html.v2.event.requestEvaluation(config, event, event.facilitatorIds(services).head)
           <div class="header-block">
             <div class="row">
               <div class="col-md-12"><h2>@event.title</h2></div>
@@ -141,7 +141,6 @@
               }
             </div>
           </div>
-          @views.html.v2.element.brandFees(brand.name, fees)
         </div>
         @views.html.v2.event.invoice(user, funders, event, view)
         <div class="col-md-12">
@@ -153,7 +152,7 @@
               <a tabindex="-1"
               href="@controllers.cm.event.routes.Attendees.add(event.identifier)" title="Add Attendee">
                 Add Attendee</a>
-              @if(brand.evaluationUrl.isDefined) {
+              @if(config.isEvaluationModuleActive) {
                   <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
                       Send Evaluation Request</a>
               } else {

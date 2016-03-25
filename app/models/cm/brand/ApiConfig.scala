@@ -65,6 +65,20 @@ case class ApiConfig(id: Option[Long],
     true
 
   /**
+    * Returns evaluation form url filled with data
+    * @param eventId Event identifier
+    * @param facilitatorId Facilitator identifier
+    * @return
+    */
+  def evaluationUrl(eventId: Long, facilitatorId: Long): String = activityCheck {
+    specificEventEvaluation.map { pattern =>
+      pattern.replace(EVENT, eventId.toString).replace(FACILITATOR, facilitatorId.toString)
+    }.getOrElse {
+      generalEvaluation.getOrElse("")
+    }
+  }
+
+  /**
     * Returns event url pattern filled with data
     * @param eventId Event identifier
     */
@@ -83,6 +97,8 @@ case class ApiConfig(id: Option[Long],
       pattern.replace(FACILITATOR, facilitatorId.toString)
     }.getOrElse("")
   }
+
+  def isEvaluationModuleActive: Boolean = active && (generalEvaluation.nonEmpty || specificEventEvaluation.nonEmpty)
 
   protected def activityCheck(f: => String): String = if (active) f else ""
 }

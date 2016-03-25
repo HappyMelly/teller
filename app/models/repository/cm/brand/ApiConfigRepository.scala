@@ -21,21 +21,36 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package models.repository.cm.brand
 
+import models.cm.brand.ApiConfig
+import models.database.brand.ApiConfigTable
 import play.api.Application
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
+import slick.driver.JdbcProfile
 
-/**
-  * Contains references to all repositories in this package
-  */
-class Repositories(app: Application) {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-  lazy val badge: BadgeRepository = new BadgeRepository(app)
-  lazy val config: ApiConfigRepository = new ApiConfigRepository(app)
-  lazy val coordinator: CoordinatorRepository = new CoordinatorRepository(app)
-  lazy val eventType: EventTypeRepository = new EventTypeRepository(app)
-  lazy val link: LinkRepository = new LinkRepository(app)
-  lazy val peerCredit: PeerCreditRepository = new PeerCreditRepository(app)
-  lazy val testimonial: TestimonialRepository = new TestimonialRepository(app)
+class ApiConfigRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with ApiConfigTable {
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
+  import driver.api._
+  private val configs = TableQuery[ApiConfigs]
+
+  /**
+   * Returns api config if exists, None otherwise
+   * @param token Token
+   */
+  def find(token: String): Future[Option[ApiConfig]] =
+    db.run(configs.filter(_.token === token).result).map(_.headOption)
+
+  /**
+    * Returns ApiToken if exists, None otherwise
+    * @param brandId Token identifier
+    */
+  def findByBrand(brandId: Long): Future[Option[ApiConfig]] =
+    db.run(configs.filter(_.brandId === brandId).result).map(_.headOption)
+
 }

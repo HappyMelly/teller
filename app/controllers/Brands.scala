@@ -405,26 +405,21 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
     "blog" -> optional(webUrl),
     "email" -> play.api.data.Forms.email,
     "profile" -> SocialProfiles.profileMapping(ProfileType.Brand),
-    "evaluationUrl" -> optional(webUrl),
-    "evaluationHookUrl" -> optional(webUrl),
     "recordInfo" -> mapping(
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(userName),
       "updated" -> ignored(DateTime.now()),
       "updatedBy" -> ignored(userName))(DateStamp.apply)(DateStamp.unapply))({
     (id, code, uniqueName, name, ownerId, description, picture,
-     tagLine, webSite, blog, email, profile, evaluationUrl, evaluationHookUrl,
-     recordInfo) ⇒ {
+     tagLine, webSite, blog, email, profile, recordInfo) ⇒ {
       val brand = Brand(id, code, uniqueName, name, ownerId,
-        description, picture, tagLine, webSite, blog, email, evaluationUrl,
-        evaluationHookUrl, active = true, recordInfo = recordInfo)
+        description, picture, tagLine, webSite, blog, email, active = true, recordInfo = recordInfo)
       BrandProfileView(brand, profile)
     }
   })({ (view: BrandProfileView) ⇒
     Some((view.brand.id, view.brand.code, view.brand.uniqueName, view.brand.name, view.brand.ownerId,
       view.brand.description, view.brand.picture, view.brand.tagLine, view.brand.webSite, view.brand.blog,
-      view.brand.contactEmail, view.profile, view.brand.evaluationUrl, view.brand.evaluationHookUrl,
-      view.brand.recordInfo))
+      view.brand.contactEmail, view.profile, view.brand.recordInfo))
   }))
 
   /**

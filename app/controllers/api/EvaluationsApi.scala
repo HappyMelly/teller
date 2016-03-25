@@ -132,8 +132,7 @@ class EvaluationsApi @Inject() (val repos: Repositories,
             Logger.info(s"Attendee for event ${evaluation.eventId} does not exist")
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
-            val url = request.host + controllers.routes.Evaluations.confirm("").url
-            evaluation.add(url, withConfirmation = true, email, repos) flatMap { createdEvaluation =>
+            evaluation.add(withConfirmation = true, email, repos) flatMap { createdEvaluation =>
               val message = "new evaluation for " + attendee.fullName
               Activity.insert(name, Activity.Predicate.Created, message)(repos)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))

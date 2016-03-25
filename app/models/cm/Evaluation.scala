@@ -126,20 +126,19 @@ case class  Evaluation(id: Option[Long],
   /**
    * Adds new evaluation to database and sends email notification
     *
-    * @param defaultHook Link to a default confirmation page
    * @param withConfirmation If true, the evaluation should be confirmed first by the participant
    * @return Returns an updated evaluation with id
    */
-  def add(defaultHook: String, withConfirmation: Boolean = false, email: EmailComponent, services: Repositories)(implicit messages: Messages): Future[Evaluation] =
+  def add(withConfirmation: Boolean = false, email: EmailComponent, repos: Repositories)(implicit messages: Messages): Future[Evaluation] =
     if (withConfirmation) {
       val hash = Random.alphanumeric.take(64).mkString
       val confirmed = this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))
-      services.cm.evaluation.add(confirmed) flatMap { evaluation =>
-        evaluation.sendConfirmationRequest(defaultHook, email, services)
+      repos.cm.evaluation.add(confirmed) flatMap { evaluation =>
+        evaluation.sendConfirmationRequest(email, repos)
       }
     } else {
-      services.cm.evaluation.add(this.copy(status = EvaluationStatus.Pending)) flatMap { evaluation =>
-        evaluation.sendNewEvaluationNotification(email, services, messages)
+      repos.cm.evaluation.add(this.copy(status = EvaluationStatus.Pending)) flatMap { evaluation =>
+        evaluation.sendNewEvaluationNotification(email, repos, messages)
       }
     }
 
@@ -191,30 +190,28 @@ case class  Evaluation(id: Option[Long],
 
   /**
    * Sends a confirmation request to the participant
-    *
-    * @param defaultHook Link to a default confirmation page
-   * @return Returns the evaluation
    */
-  def sendConfirmationRequest(defaultHook: String, email: EmailComponent, services: Repositories): Future[Evaluation] = {
+  def sendConfirmationRequest(email: EmailComponent, repos: Repositories): Future[Evaluation] = {
     (for {
-      event <- services.cm.event.get(eventId)
-      brand <- services.cm.brand.get(event.brandId)
-      attendee <- services.cm.rep.event.attendee.find(this.attendeeId, this.eventId)
+      event <- repos.cm.event.get(eventId)
+      brand <- repos.cm.brand.get(event.brandId)
+      attendee <- repos.cm.rep.event.attendee.find(this.attendeeId, this.eventId)
     } yield (brand, attendee)) map {
       case (_, None) => this
       case (brand, Some(attendee)) =>
         val token = this.confirmationId getOrElse ""
-        (new EvaluationReminder(email, services)).sendConfirmRequest(attendee, brand, defaultHook, token)
+        val url = controllers.Evaluations.confirmationUrl(token)
+        (new EvaluationReminder(email, repos)).sendConfirmRequest(attendee, brand, url)
         this
     }
   }
 
-  protected def sendNewEvaluationNotification(email: EmailComponent, services: Repositories, messages: Messages) = {
+  protected def sendNewEvaluationNotification(email: EmailComponent, repos: Repositories, messages: Messages) = {
     (for {
-      event <- services.cm.event.get(eventId)
-      brand <- services.cm.brand.get(event.brandId)
-      attendee <- services.cm.rep.event.attendee.find(this.attendeeId, this.eventId)
-      coordinators <- services.cm.brand.coordinators(event.brandId)
+      event <- repos.cm.event.get(eventId)
+      brand <- repos.cm.brand.get(event.brandId)
+      attendee <- repos.cm.rep.event.attendee.find(this.attendeeId, this.eventId)
+      coordinators <- repos.cm.brand.coordinators(event.brandId)
     } yield (event, brand, attendee, coordinators)) map {
       case (event, _, None, _) => this
       case (event, brand, Some(attendee), coordinators) =>
@@ -223,7 +220,7 @@ case class  Evaluation(id: Option[Long],
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
         val url = Utilities.fullUrl(controllers.routes.Evaluations.details(this.identifier).url)
         val body = mail.evaluation.html.details(this, event, attendee, brand, url)(messages)
-        email.send(event.facilitators(services), cc, Seq(), subject, body.toString(), brand.sender)
+        email.send(event.facilitators(repos), cc, Seq(), subject, body.toString(), brand.sender)
 
         this
     }

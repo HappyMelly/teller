@@ -1,6 +1,6 @@
-@(event: models.cm.Event,
-    facilitatorId: Long,
-    evaluationUrl: Option[String])(implicit token: play.filters.csrf.CSRF.Token)
+@(config: models.cm.brand.ApiConfig,
+    event: models.cm.Event,
+    facilitatorId: Long)(implicit token: play.filters.csrf.CSRF.Token)
 
 @import helper.CSRF
 
@@ -60,7 +60,7 @@
                                       markdownpreview
                                       data-markdownclass = "request-dlg__markdown"
                                       data-markdownposition = "not-fixed">
-                            @mail.evaluation.html.requestBody("#### Hi PARTICIPANT_NAME_TOKEN, ####", event, facilitatorId, evaluationUrl)
+                            @mail.evaluation.html.requestBody(config, "#### Hi PARTICIPANT_NAME_TOKEN, ####", event, facilitatorId)
                             </textarea>
                         </div>
 

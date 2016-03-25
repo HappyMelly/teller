@@ -67,14 +67,6 @@
                     @v2.html.text(form("profile.phone"), '_label -> "Phone", '_help -> "")
                     @v2.html.text(form("profile.contactForm"), '_label -> "Link to contact form ", '_help -> "")
                 }
-                @v2.html.block("Hooks", Some("grey")) {
-                    @v2.html.text(form("evaluationUrl"), '_label -> "Evaluation Url",
-                        'placeholder -> "http://yourwebsite.com/evaluation",
-                        '_help -> "")
-                    @v2.html.text(form("evaluationHookUrl"), '_label -> "Evaluation Hook",
-                        'placeholder -> "http://yourwebsite.com/evaluation/confirm",
-                        '_help -> "")
-                }
                 @if(form.hasErrors) {
                     @v2.html.block("") {
                         <div class="errors">
