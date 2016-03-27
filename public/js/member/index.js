@@ -26,7 +26,7 @@
  * Filter members by their type
  */
 function filterByMembership(oSettings, aData, iDataIndex) {
-    var type = $('.membership > .filter > a.active').data('type');
+    var type = $('.membership > .b-filters__link > .active').data('type');
     var index = 3;
     if (type == 'all') {
         return true;
@@ -39,7 +39,7 @@ function filterByMembership(oSettings, aData, iDataIndex) {
  * Filter members by their object type
  */
 function filterByType(oSettings, aData, iDataIndex) {
-    var type = $('.type > .filter > a.active').data('type');
+    var type = $('.type > .b-filters__link > .active').data('type');
     var index = 6;
     switch(type) {
         case 'org': return aData[index] == 'false';
@@ -87,15 +87,15 @@ $(document).ready( function() {
     $('div.toolbar').html($('#filter-containter').html());
     $('#filter-containter').empty();
 
-    $('.membership > .filter > a').on('click', function(e) {
+    $('.membership > .b-filters__link > a').on('click', function(e) {
         e.preventDefault();
-        $('.membership > .filter > a').removeClass('active');
+        $('.membership > .b-filters__link > a').removeClass('active');
         $(this).addClass('active');
         members.fnDraw();
     });
-    $('.type > .filter > a').on('click', function(e) {
+    $('.type > .b-filters__link > a').on('click', function(e) {
         e.preventDefault();
-        $('.type > .filter > a').removeClass('active');
+        $('.type > .b-filters__link > a').removeClass('active');
         $(this).addClass('active');
         members.fnDraw();
     })
