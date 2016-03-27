@@ -17,10 +17,9 @@
   @v2.element.brandHeader(brand, brands, "participants", small = true, facilitator = user.account.isFacilitatorNow) {
     <span><a href="@controllers.cm.event.routes.Attendees.index(brand.identifier)">Attendees</a></span>
   }
-  <div class="row page-content">
+  <div class="page-content">
     <div class="container">
-      <div class="row evaluation-details content-block">
-        <div class="col-md-12">
+      <div class="evaluation-details">
           <div class="header-block">
             <div class="row">
               <div class="col-md-12"><h2>Evaluation for @participantName</h2></div>
@@ -75,7 +74,6 @@
           </div>
           @views.html.v2.evaluation.buttons(pair.eval)
         </div>
-      </div>
     </div>
   </div>
   <script type="text/javascript">

@@ -23,22 +23,17 @@
  */
 @import "settings";
 
-.page-content {
-  padding-top: 2em;
-}
+
 
 .content-block {
   margin-bottom: 50px;
+
   .block {
     .fa {
       color: black;
     }
   }
-  .table-filters {
-    padding: 1em 0;
-  }
 }
-
 
 .header-block {
   border-bottom: 1px solid @light-grey;
@@ -52,24 +47,37 @@
     margin-right: 1em;
   }
 }
+
+
 .circle-show-more {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   float: right;
-  border-radius: 21px;
-  background-color: @light-grey;
+  border-radius: 34px;
+  background-color: #e7e7e7;
   text-align: center;
-  color: @warm-grey;
-  margin-right: 1em;
+  font-size: 14px;
+  line-height: 34px;
+  color: #777777;
   cursor: pointer;
-  span {
-    padding-top: 16px;
+  .transition(all .15s ease);
+
+  .glyphicon {
+    vertical-align: middle;
+    top: 0;
   }
-  &.active {
-    color: white;
-    background-color: @dark-sky-blue;
-    span {
-      padding-top: 14px;
+
+  &:hover{
+    background-color: #ddd;
+  }
+
+  .active &{
+    color: #fff;
+    background-color: #468ee5;
+
+    .glyphicon{
+      top: -2px;
+      .transform(rotate(180deg));
     }
   }
 }

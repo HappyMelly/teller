@@ -8,6 +8,7 @@
 
 @main("Products", "products", user) {
 
+  <div class="p-content">
   @html.indexPageHeader("Products") {
     @dynamic(handler, Role.Funder.toString, "0") {
       <a class="btn btn-success pull-right" href="@hm.routes.Products.add()">
@@ -15,7 +16,6 @@
     }
   }
 
-  <div class="col-md-12">
     @if(products.isEmpty) {
       <p>There are no products</p>
     } else {

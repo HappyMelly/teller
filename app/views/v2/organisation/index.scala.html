@@ -10,24 +10,25 @@
 
 @main("Organizations", "orgs", user) {
 
-  @html.indexPageHeader("Organizations") {
-    @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
-      <a class="btn btn-success pull-right" href="@controllers.core.routes.Organisations.add()">
-      <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Organization</a>
+  <div class="p-content">
+    @html.indexPageHeader("Organizations") {
+      @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
+        <a class="btn btn-success pull-right" href="@controllers.core.routes.Organisations.add()">
+        <i class="glyphicon glyphicon-plus glyphicon-white"></i> Add Organization</a>
+      }
     }
-  }
 
-  <div class="col-md-12">
     @if(organisations.isEmpty) {
       <p>There are no organizations</p>
     } else {
       @table(organisations) { organisation =>
         @restrict(handler, List(as(Admin.toString), as(Coordinator.toString))) {
-          <a href="@controllers.core.routes.Organisations.edit(organisation.id.get)"><i class="glyphicon glyphicon-pencil"></i> Edit</a>
+          <a href="@controllers.core.routes.Organisations.edit(organisation.id.get)"><i class="glyphicon glyphicon-pencil"></i>
+            Edit</a>
         }
-			}
+      }
     }
   </div>
 
-	<script src="@routes.Assets.at("js/index.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("js/index.js")" type="text/javascript"></script>
 }
