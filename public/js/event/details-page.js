@@ -50,9 +50,6 @@ $(document).ready( function() {
     }
 
     // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
     var url = jsRoutes.controllers.cm.event.Attendees.listByEvent($("#eventId").val()).url;
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',

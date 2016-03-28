@@ -21,150 +21,158 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 @import "../../settings";
 
-div.dataTables_length label {
-  font-weight: normal;
+.b-datatable {
+  border-collapse: separate !important;
+
+  th {
+
+  }
+
+  tr:hover td {
+    background-color: #fff1d6;
+  }
+
+  td,
+  th {
+    .box-sizing(content-box);
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+
+    &:active,
+    &:focus {
+      outline: none;
+    }
+  }
+
+  th {
+    position: relative;
+    padding-right: 35px;
+    background-color: #e4e3e3;
+    cursor: pointer;
+
+    &.sorting:after,
+    &.sorting_asc:after,
+    &.sorting_desc:after {
+      position: absolute;
+      top: 15px;
+      right: 11px;
+      color: @pinkish-grey;
+      display: block;
+      font-size: 14px;
+      font-weight: 100;
+      font-family: FontAwesome;
+    }
+
+    &.sorting:before,
+    &.sorting_asc:before,
+    &.sorting_desc:before {
+      position: absolute;
+      top: 15px;
+      right: 11px;
+      color: @pinkish-grey;
+      display: block;
+      font-size:14px;
+      font-weight: 100;
+      font-family: FontAwesome;
+    }
+
+    &.sorting:before {
+      content: "\f15d";
+      padding-top: 0.12em;
+    }
+
+    &.sorting_asc:before {
+      content: "\f15d";
+      color: black;
+    }
+
+    &.sorting_desc:before {
+      content: "\f15e";
+      color: black;
+    }
+
+    &.date.sorting:before {
+      content: "\f160";
+      padding-top: 0.12em;
+    }
+
+    &.date.sorting_asc:before {
+      content: "\f160";
+      color: black;
+    }
+
+    &.date.sorting_desc:before {
+      content: "\f161";
+      color: black;
+    }
+
+    &.number.sorting:before {
+      content: "\f162";
+      padding-top: 0.12em;
+    }
+
+    &.number.sorting_asc:before {
+      content: "\f162";
+      color: black;
+    }
+
+    &.number.sorting_desc:before {
+      content: "\f163";
+      color: black;
+    }
+  }
+}
+
+.dataTables_length {
+  label {
+    font-weight: normal;
+    float: left;
+    text-align: left;
+  }
+
+  select {
+    width: 75px;
+  }
+}
+
+.dataTables_filter {
+  label {
+    font-weight: normal;
+    float: right;
+  }
+
+  input {
+    width: 16em;
+  }
+}
+
+.dataTables_info {
+  padding-top: 9px;
   float: left;
-  text-align: left;
 }
 
-div.dataTables_length select {
-  width: 75px;
-}
-
-div.dataTables_filter label {
-  font-weight: normal;
-  float: right;
-}
-
-div.dataTables_filter input {
-  width: 16em;
-}
-
-div.dataTables_info {
-  padding-top: 8px;
-}
-
-div.dataTables_paginate {
+.dataTables_paginate {
   float: right;
   margin: 0;
+
+  ul.pagination {
+    margin: 2px 0;
+    white-space: nowrap;
+  }
 }
-
-div.dataTables_paginate ul.pagination {
-  margin: 2px 0;
-  white-space: nowrap;
-}
-
-table.dataTable td,
-table.dataTable th {
-  -webkit-box-sizing: content-box;
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-}
-
-
-table.dataTable {
-  clear: both;
-  margin-top: 6px !important;
-  margin-bottom: 6px !important;
-  max-width: none !important;
-}
-
-table.dataTable thead .sorting,
-table.dataTable thead .sorting_asc,
-table.dataTable thead .sorting_desc,
-table.dataTable thead .sorting_asc_disabled,
-table.dataTable thead .sorting_desc_disabled {
-  cursor: pointer;
-}
-
-table.dataTable thead .sorting { background: url('../images/datatables/sort_both.png') no-repeat center right; }
-table.dataTable thead .sorting_asc { background: url('../images/datatables/sort_asc.png') no-repeat center right; }
-table.dataTable thead .sorting_desc { background: url('../images/datatables/sort_desc.png') no-repeat center right; }
-
-table.dataTable thead .sorting_asc_disabled { background: url('../images/datatables/sort_asc_disabled.png') no-repeat center right; }
-table.dataTable thead .sorting_desc_disabled { background: url('../images/datatables/sort_desc_disabled.png') no-repeat center right; }
-
-table.dataTable thead > tr > th {
-  padding-left: 18px;
-  padding-right: 18px;
-}
-
-table.dataTable th:active {
-  outline: none;
-}
-
-/* Scrolling */
-div.dataTables_scrollHead table {
-  margin-bottom: 0 !important;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-div.dataTables_scrollHead table thead tr:last-child th:first-child,
-div.dataTables_scrollHead table thead tr:last-child td:first-child {
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-}
-
-div.dataTables_scrollBody table {
-  border-top: none;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
-
-div.dataTables_scrollBody tbody tr:first-child th,
-div.dataTables_scrollBody tbody tr:first-child td {
-  border-top: none;
-}
-
-div.dataTables_scrollFoot table {
-  margin-top: 0 !important;
-  border-top: none;
-}
-
-/* Frustratingly the border-collapse:collapse used by Bootstrap makes the column
-   width calculations when using scrolling impossible to align columns. We have
-   to use separate
- */
-table.table-bordered.dataTable {
-  border-collapse: separate !important;
-}
-table.table-bordered thead th,
-table.table-bordered thead td {
-  border-left-width: 0;
-  border-top-width: 0;
-}
-table.table-bordered tbody th,
-table.table-bordered tbody td {
-  border-left-width: 0;
-  border-bottom-width: 0;
-}
-table.table-bordered th:last-child,
-table.table-bordered td:last-child {
-  border-right-width: 0;
-}
-div.dataTables_scrollHead table.table-bordered {
-  border-bottom-width: 0;
-}
-
-
-
 
 /*
  * TableTools styles
  */
-
-
-
 table.DTTT_selectable tbody tr {
   cursor: pointer;
 }
 
 div.DTTT .btn {
-  color: #333 !important;
+  color: #333333 !important;
   font-size: 12px;
 }
 
@@ -177,7 +185,7 @@ ul.DTTT_dropdown.dropdown-menu {
 }
 
 ul.DTTT_dropdown.dropdown-menu a {
-  color: #333 !important; /* needed only when demo_page.css is included */
+  color: #333333 !important; /* needed only when demo_page.css is included */
 }
 
 ul.DTTT_dropdown.dropdown-menu li {
@@ -212,8 +220,6 @@ div.DTTT_print_info p {
   line-height: 20px;
 }
 
-
-
 /*
  * FixedColumns styles
  */
@@ -226,7 +232,7 @@ table.DTFC_Cloned tr.even {
   margin-bottom: 0;
 }
 
-div.DTFC_RightHeadWrapper table ,
+div.DTFC_RightHeadWrapper table,
 div.DTFC_LeftHeadWrapper table {
   margin-bottom: 0 !important;
   border-top-right-radius: 0 !important;
@@ -260,128 +266,76 @@ div.DTFC_LeftFootWrapper table {
   border-top: none;
 }
 
-
-/*
- * FixedHeader styles
- */
 div.FixedHeader_Cloned table {
   margin: 0 !important
 }
 
-
-
-table.dataTable > thead > tr > th {
-  position: relative;
-  background-image: none !important;
-  padding-left: 10px;
-  padding-right: 35px;
-
-  &.sorting:after,
-  &.sorting_asc:after,
-  &.sorting_desc:after {
-    position: absolute;
-    top: 1.5em;
-    right: 8px;
-    color: @pinkish-grey;
-    display: block;
-    font-size: 0.7em;
-    font-weight: 100;
-    font-family: FontAwesome;
-  }
-
-  &.sorting:before,
-  &.sorting_asc:before,
-  &.sorting_desc:before {
-    position: absolute;
-    top: 1.5em;
-    right: 22px;
-    color: @pinkish-grey;
-    display: block;
-    font-size: 0.7em;
-    font-weight: 100;
-    font-family: FontAwesome;
-  }
-
-  &.sorting:before {
-    content: "\f15d";
-    padding-top: 0.12em;
-  }
-
-  &.sorting_asc:before {
-    content: "\f15d";
-    color: black;
-  }
-
-  &.sorting_desc:before {
-    content: "\f15e";
-    color: black;
-  }
-
-  &.date.sorting:before {
-    content: "\f160";
-    padding-top: 0.12em;
-  }
-
-  &.date.sorting_asc:before {
-    content: "\f160";
-    color: black;
-  }
-
-  &.date.sorting_desc:before{
-    content: "\f161";
-    color: black;
-  }
-
-  &.number.sorting:before {
-    content: "\f162";
-    padding-top: 0.12em;
-  }
-
-  &.number.sorting_asc:before{
-    content: "\f162";
-    color: black;
-  }
-
-  &.number.sorting_desc:before{
-    content: "\f163";
-    color: black;
-  }
-}
-
-table.dataTable > tbody > tr > td:first-child {
-  padding-left: 10px;
-}
-
-.table-filters {
-  margin-top: 10px;
-  margin-right: 40px;
-  margin-bottom: 10px;
+.b-filters {
   float: left;
+  height: 32px;
 
-  .filter {
-    position: relative;
+  &.pull-left .b-filters__i{
+    margin-right: 20px;
+  }
+
+  &.pull-right .b-filters__i {
+    margin-left: 20px;
+  }
+
+  .active {
+    color: #333333;
+    text-decoration: none !important;
+  }
+}
+
+.b-filters__i{
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+
+  &.type-right{
+    float: right;
+    margin-left: 20px;
+  }
+
+  .form-control{
     display: inline-block;
-    vertical-align: middle;
-    margin: 0 15px 0 10px;
-
-    .counter {
-      color: @grey;
-    }
-
-    a.active {
-      color: black;
-      text-decoration: none !important;
-    }
-  }
-}
-
-.dataTables_filter {
-  padding-top: 15px;
-
-  input {
     margin-left: 5px;
+    width: 16em;
+    height: 32px;
+
+    &[type="serach"]{
+      width: 175px;
+    }
+  }
+
+  label {
+    font-weight: normal;
+    float: right;
+    margin-bottom: 0;
   }
 }
+
+.b-filters__link{
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  padding-top: 5px;
+  margin: 0 15px 0 10px;
+}
+
+.b-filters__text{
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  padding-top: 5px;
+}
+
+.b-filters__count{
+  color: @grey;
+}
+
+
 
 .row-details {
   padding: 10px;

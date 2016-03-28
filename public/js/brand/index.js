@@ -36,9 +36,6 @@ function filterByStatus(oSettings, aData, iDataIndex) {
 }
 
 $(document).ready( function() {
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
     $.fn.dataTableExt.afnFiltering.push(filterByStatus);
 
     var brands = $('#brands').dataTable({

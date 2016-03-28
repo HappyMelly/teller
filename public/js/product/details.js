@@ -47,9 +47,6 @@ $(document).ready( function() {
     });
 
     // Datatables
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
     $('.datatables').each(function() {
         $(this).dataTable( {
             "sPaginationType": "bootstrap",

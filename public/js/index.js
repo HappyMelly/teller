@@ -23,9 +23,7 @@
  */
 
 $(document).ready( function() {
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper form-inline"
-    } );
+
     $('.datatables').each(function() {
         $(this).dataTable( {
             "iDisplayLength": 25,

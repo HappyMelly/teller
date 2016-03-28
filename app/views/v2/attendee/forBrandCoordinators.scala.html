@@ -11,41 +11,36 @@
           Export to XLSX</a>
     }
     <input type="hidden" id="activeBrandId" value="@brand.identifier"/>
-    <div class="row">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12 content-block">
-            <div id="filter-containter">
-              <div class="table-filters pull-right">
-                <div class="btn-group">
-                  <select id="status" class="input-sm form-control">
-                      <option value="all"></option>
-                      <option value="3">Unconfirmed</option>
-                      <option value="0">Pending</option>
-                      <option value="1">Approved</option>
-                      <option value="2">Rejected</option>
-                  </select>
+    <div class="container p-content">
+
+        <div id="filter-containter">
+            <div class="b-filters pull-right">
+                <div class="b-filters__i">
+                    <select id="status" class="input-sm form-control">
+                        <option value="all"></option>
+                        <option value="3">Unconfirmed</option>
+                        <option value="0">Pending</option>
+                        <option value="1">Approved</option>
+                        <option value="2">Rejected</option>
+                    </select>
                 </div>
-              </div>
             </div>
-            <table id="participants" class="datatables table table-rowed" brandId="@brand.identifier">
-              <thead>
-                <tr>
-                  <th width="20%">Attendee</th>
-                  <th width="20%">Event</th>
-                  <th width="15%">Location</th>
-                  <th>Dates</th>
-                  <th width="5%" align="center" id="impression"></th>
-                  <th></th>
-                  <th>Event id </th>
-                  <th></th>
-                  <th></th>
-                </tr>
-              </thead>
-            </table>
-          </div>
         </div>
-      </div>
+        <table id="participants" class="datatables table" brandId="@brand.identifier">
+            <thead>
+                <tr>
+                    <th width="20%">Attendee</th>
+                    <th width="20%">Event</th>
+                    <th width="15%">Location</th>
+                    <th>Dates</th>
+                    <th width="5%" align="center" id="impression"></th>
+                    <th></th>
+                    <th>Event id </th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
     </div>
     <link rel="stylesheet" href="@routes.Assets.at("css/attendee.css")">
     <script src="@routes.Assets.at("js/participant.js")" type="text/javascript"></script>

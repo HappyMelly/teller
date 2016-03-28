@@ -5,7 +5,8 @@
   box-sizing: border-box
 }
 
-:after, :before {
+:after,
+:before {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box
@@ -20,30 +21,40 @@ body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.42857143;
-  color: #333;
+  color: #333333;
   background-color: #fff
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit
 }
 
 a {
-  color: #337ab7;
-  text-decoration: none
-}
+  color: #4a90e2;
+  text-decoration: none;
+  .transition(color .15s ease);
 
-a:focus, a:hover {
-  color: #23527c;
-  text-decoration: underline
-}
+  &:hover {
+    color: #4a90e2;
+    text-decoration: underline
+  }
 
-a:focus {
-  outline: thin dotted;
-  outline: 5px auto -webkit-focus-ring-color;
-  outline-offset: -2px
+  &:focus {
+    outline: thin dotted;
+    outline: 2px auto -webkit-focus-ring-color;
+    outline-offset: -2px
+  }
+
+  &.disabled {
+    color: black !important;
+    text-decoration: none !important;
+    cursor: default;
+  }
 }
 
 figure {
@@ -54,7 +65,8 @@ img {
   vertical-align: middle
 }
 
-.carousel-inner > .item > a > img, .carousel-inner > .item > img, .img-responsive, .thumbnail a > img, .thumbnail > img {
+.carousel-inner > .item > a > img,
+.carousel-inner > .item > img{
   display: block;
   max-width: 100%;
   height: auto
@@ -73,9 +85,7 @@ img {
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
-  -webkit-transition: all .2s ease-in-out;
-  -o-transition: all .2s ease-in-out;
-  transition: all .2s ease-in-out
+  .transition(all .2s ease-in-out);
 }
 
 .img-circle {
@@ -100,7 +110,8 @@ hr {
   border: 0
 }
 
-.sr-only-focusable:active, .sr-only-focusable:focus {
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
   position: static;
   width: auto;
   height: auto;

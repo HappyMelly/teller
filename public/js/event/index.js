@@ -74,11 +74,6 @@ function format(row) {
 }
 
 $(document).ready( function() {
-
-    $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sWrapper": "dataTables_wrapper",
-    });
-
     var events = $('#events')
       .dataTable({
         "sDom": '<"toolbar">rtip',
@@ -135,13 +130,13 @@ $(document).ready( function() {
         },{
             "render": function(data) {
               if(data.free)
-                return '<span class="glyphicon glyphicon-ok"/> Free';
-              return (data.invoice === "Yes") ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon"/> No';
+                return '<span class="glyphicon glyphicon-ok"></span> Free';
+              return (data.invoice === "Yes") ? '<span class="glyphicon glyphicon-ok"></span> Yes' : '<span class="glyphicon"></span> No';
             },
             "targets": 6
         },{
             "render": function(data) {
-              return data ? '<span class="glyphicon glyphicon-ok"/> Yes' : '<span class="glyphicon" aria-hidden="true"/> No';
+              return data ? '<span class="glyphicon glyphicon-ok"></span> Yes' : '<span class="glyphicon" aria-hidden="true"></span> No';
             },
             "targets": 7
         },{
