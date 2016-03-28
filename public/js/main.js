@@ -78,6 +78,5 @@ $(document).ready(function() {
     var common = App.pages.Common;
 
     common.initWidgets();
-
     initializeFileUploadField();
 });
