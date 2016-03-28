@@ -1,0 +1,201 @@
+
+.b-setapi__main{
+  font-size: 18px;
+  line-height: 1;
+  margin: 15px 0 10px 0;
+}
+
+.b-setapi__active{
+  display: none;
+}
+
+.b-setapi__btn-active{
+  margin-top: 10px;
+}
+
+// deactivate
+.b-setapi__btn-deactive{
+  margin-top: 10px;
+  margin-bottom: 44px;
+  min-width: 120px;
+}
+
+.b-setapi__title{
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+  line-height: 1;
+}
+
+.b-setapi__token{
+  height: 38px;
+  margin-bottom: 14px;
+  margin-top: -5px;
+  line-height: 38px;
+  font-size: 14px;
+  text-align: center;
+  background-color: #eeeeee;
+}
+
+.b-setapi__diveder{
+  height: 1px;
+  background-color: #e7e7e7;
+  margin-top: 40px;
+  margin-bottom: 26px;
+}
+
+// Set active block
+.b-api-active{
+  display: block;
+}
+
+.b-api-active__btn{
+  margin-top: 9px;
+}
+
+// Set form
+.b-apiform{
+  display: none;
+  background-color: #fff8ea;
+  padding: 30px 15px;
+  margin-top: 15px;
+}
+
+.b-apiform__i{
+  position: relative;
+  margin-bottom: 21px;
+  text-align: left;
+}
+
+.b-apiform__label{
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 7px;
+}
+
+.b-apiform__input{
+  width: 100%;
+}
+
+.b-apiform__hint{
+  cursor: pointer;
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  height: 30px;
+  width: 30px;
+  font-size: 14px;
+  line-height: 1;
+  color: #777777;
+
+  .question{
+    position: absolute;
+    right: 11px;
+    top: 9px;
+    border-bottom: 1px dotted #777;
+  }
+
+  .text{
+    position: absolute;
+    right: 20px;
+    width: 0;
+    top: 9px;
+    border-bottom: 1px dotted #777;
+    .transition(all .15s ease);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  &:hover{
+    color: #4a90e2;
+
+    .text{
+      width: 90px;
+    }
+  }
+}
+
+.b-apiform__buttons{
+  .clearfix();
+}
+
+.b-apiform__btn-cancel{
+  float: right;
+  width: 30%;
+}
+
+.b-apiform__btn-save{
+  float: left;
+  width: 66.3%;
+}
+
+// View block
+.b-apiview{
+  display: none;
+  background-color: #fff8ea;
+  padding: 27px 15px;
+  margin-top: 18px;
+}
+
+.b-apiview__i{
+  margin-bottom: 20px;
+  text-align: left;
+
+  b{
+    display: block;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  &.state_url{
+    .b-apiview__link{
+      display: inline-block;
+    }
+
+    .b-apiview__text{
+      display: none;
+    }
+  }
+}
+
+.b-apiview__link{
+  display: none;
+}
+
+.b-apiview__btn{
+  margin-top: 8px;
+  max-width: 400px;
+  width: 100%;
+}
+
+
+/*== States ==*/
+.b-setapi_state_active{
+  .b-setapi__active{
+    display: block;
+  }
+
+  .b-setapi__deactive{
+    display: none;
+  }
+}
+
+.b-setapi_state_form{
+  .b-api-active{
+    display: none;
+  }
+
+  .b-apiform{
+    display: block;
+  }
+}
+
+.b-setapi_state_view{
+  .b-api-active{
+    display: none;
+  }
+
+  .b-apiview{
+    display: block;
+  }
+}

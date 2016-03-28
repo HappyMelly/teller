@@ -1,24 +1,173 @@
 @(config: models.cm.brand.ApiConfig)
 
-<div class="b-setcredit js-set-credits @if(config.active) {b-setcredit_state_active}" data-brand-id="@config.brandId">
-    <h4 class="b-setcredit__title">API</h4>
+<div class="b-setapi b-setapi_state_active b-setapi_state_form" data-brand-id="@config.brandId">
+    <h4 class="b-setapi__main">API</h4>
     <p>
-        You can activate and set a number of credits, so facilitators can show their
-        appreciation for each others work. Further you can use this information and
-        transform it into badges.
+        API activation helps Happy Melly Teller collaborate with your site.
+        As example, you can specify information with link to events list on your website and when participants will get thier emails about upcomming events, they will be able to go straight to your site to learn some more information.
     </p>
 
-    <div class="b-setcredit__deactive">
-        <a href="#" class="btn btn-primary b-setcredit__btn"
-        data-setcredit-activate>
+    <div class="b-setapi__deactive">
+        <a href="#" class="btn btn-primary b-setapi__btn-active"
+            data-setapi-activate>
             Activate
         </a>
     </div>
 
-    <div class="b-setcredit__active">
-        <a href="#" class="btn btn-default"
-        data-setcredit-deactivate>
+    <div class="b-setapi__active">
+        <a href="#" class="btn btn-default b-setapi__btn-deactive"
+            data-setapi-deactivate>
             Deactivate
         </a>
+
+        <h3 class="b-setapi__title">
+            Token
+        </h3>
+        <p>
+            All API requests require authentication using a application-specific token.
+            Your token is:
+        </p>
+        <div class="b-setapi__token">
+            GCv2FOAjRNfPqG5wiFYpPaj3NMNAv0MkjupBB8SB
+        </div>
+        <p>
+            About how to use it and and how to make requests to API
+                <a href="#" class="link-mblue">read the instruction</a>.
+        </p>
+        <div class="b-setapi__diveder"></div>
+
+        <h3 class="b-setapi__title">
+            Specify URLs to pages on your website which are contain:
+        </h3>
+
+        <div class="b-api-active">
+            <p>
+                list of events and facilitators, specific event or facilitator and general evaluation form and evalation form for specific event.
+            </p>
+            <a href="#" class="btn btn-primary b-api-active__btn">
+                Specify URL’s
+            </a>
+        </div>
+
+        <form class="b-apiform">
+            <div class="b-apiform__i">
+                <div class="b-apiform__hint" data-placement="right" data-toggle="tooltip" title="Used in emails to potential attendees when they requested to be notified about event they want to attend to.">
+                    <div class="question">?</div>
+                    <div class="text">Where is used</div>
+                </div>
+                <div class="b-apiform__label">
+                    List of events
+                </div>
+                <input type="text" class="b-apiform__input form-control input-sm" />
+            </div>
+            <div class="b-apiform__i">
+                <div class="b-apiform__hint">
+                    <div class="question">?</div>
+                    <div class="text">Where is used</div>
+                </div>
+                <div class="b-apiform__label">
+                    Specific event
+                </div>
+                <input type="text" class="b-apiform__input form-control input-sm" />
+            </div>
+            <div class="b-apiform__i">
+                <div class="b-apiform__hint">
+                    <div class="question">?</div>
+                    <div class="text">Where is used</div>
+                </div>
+                <div class="b-apiform__label">
+                    List of facilitators
+                </div>
+                <input type="text" class="b-apiform__input form-control input-sm" />
+            </div>
+            <div class="b-apiform__i">
+                <div class="b-apiform__hint">
+                    <div class="question">?</div>
+                    <div class="text">Where is used</div>
+                </div>
+                <div class="b-apiform__label">
+                    Specific facilitator
+                </div>
+                <input type="text" class="b-apiform__input form-control input-sm" />
+            </div>
+            <div class="b-apiform__i">
+                <div class="b-apiform__hint">
+                    <div class="question">?</div>
+                    <div class="text">Where is used</div>
+                </div>
+                <div class="b-apiform__label">
+                    Evaluation form
+                </div>
+                <input type="text" class="b-apiform__input form-control input-sm" />
+            </div>
+            <div class="b-apiform__i">
+                <div class="b-apiform__hint">
+                    <div class="question">?</div>
+                    <div class="text">Where is used</div>
+                </div>
+                <div class="b-apiform__label">
+                    Evaluation form for specific event
+                </div>
+                <input type="text" class="b-apiform__input form-control input-sm" />
+            </div>
+            <div class="b-apiform__buttons">
+                <a href="#" class="btn btn-default b-apiform__btn-cancel">
+                    Cancel
+                </a>
+                <a href="#" class="btn btn-primary b-apiform__btn-save">
+                    Save
+                </a>
+
+            </div>
+        </form>
+
+        <div class="b-apiview">
+            <div class="b-apiview__i">
+                <b>List of events</b>
+                <div class="b-apiview__text">
+                    http://management30.com/events
+                </div>
+                <a href="#" class="link-blue b-apiview__link">+ Add url</a>
+            </div>
+            <div class="b-apiview__i">
+                <b>Specific event</b>
+                <div class="b-apiview__text">
+                    http://management30.com/events/*EventId*
+                </div>
+                <a href="#" class="link-blue b-apiview__link">+ Add url</a>
+            </div>
+            <div class="b-apiview__i state_url">
+                <b>List of facilitators</b>
+                <div class="b-apiview__text">
+                    http://management30.com/events/*EventId*
+                </div>
+                <a href="#" class="link-blue b-apiview__link">+ Add url</a>
+            </div>
+            <div class="b-apiview__i">
+                <b>Specific facilitator</b>
+                <div class="b-apiview__text">
+                    http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
+                </div>
+                <a href="#" class="link-blue b-apiview__link">+ Add url</a>
+            </div>
+            <div class="b-apiview__i state_url">
+                <b>Evaluation form</b>
+                <div class="b-apiview__text">
+                    http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
+                </div>
+                <a href="#" class="link-blue b-apiview__link">+ Add url</a>
+            </div>
+            <div class="b-apiview__i state_url">
+                <b>Evaluation form for specific event</b>
+                <div class="b-apiview__text">
+                    http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
+                </div>
+                <a href="#" class="link-blue b-apiview__link">+ Add url</a>
+            </div>
+
+            <a href="#" class="btn btn-primary b-apiview__btn">
+                Edit information
+            </a>
+        </div>
     </div>
 </div>
