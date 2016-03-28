@@ -86,8 +86,6 @@ $(document).ready( function() {
         "bPaginate": false
     });
 
-    $('[data-toggle="tooltip"]').tooltip();
-
     function getOrganozationId(){
         return $('#org').text();
     }

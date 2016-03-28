@@ -44,13 +44,8 @@ function updateOrganizer(id) {
 
 $(document).ready( function() {
 
-    var $requestDlg = $('.js-request-evaluation');
-    if ($requestDlg.length){
-        new App.widgets.RequestEvaluationDlg('.js-request-evaluation');
-    }
-
     // Datatables
-    var url = jsRoutes.controllers.event.Attendees.listByEvent($("#eventId").val()).url;
+    var url = jsRoutes.controllers.cm.event.Attendees.listByEvent($("#eventId").val()).url;
     var participantTable = $('#participants').dataTable({
         "sDom": '<"toolbar">rtip',
         "iDisplayLength": 25,
@@ -111,7 +106,7 @@ $(document).ready( function() {
     $('#participants').on('draw.dt', function() {
         calculateAverageImpression(participantTable);
 
-        $requestDlg.trigger('hmt.requestDlg.render', {
+        App.events.pub('hmt.requestDlg.render', {
             table: participantTable
         });
 
@@ -121,7 +116,6 @@ $(document).ready( function() {
         buildExportLink(true)
     });
 
-    $('[data-toggle="tooltip"]').tooltip();
 
     updateOrganizer($('#organizer').data('id'));
     $('[data-toggle="popover"]').popover();

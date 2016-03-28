@@ -124,6 +124,5 @@ $(document).ready( function() {
     if (!hash) {
         hash = 'facilitators';
     }
-    $('[data-toggle="tooltip"]').tooltip();
     showTab($('#sidemenu a[href="#' + hash + '"]'), hash);
 });
