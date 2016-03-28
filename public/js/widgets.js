@@ -400,7 +400,7 @@
 
     DataTable.prototype.filterTableByLink = function($link){
         var self = this,
-            $filtersBlock = $link.closest('.table-filters');
+            $filtersBlock = $link.closest('.b-filters');
 
         if ($link.hasClass('active')) return;
 

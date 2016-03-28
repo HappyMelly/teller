@@ -43,10 +43,19 @@
 }
 
 .b-setcredit__error{
+  display: none;
   margin-top: 3px;
   padding-bottom: 18px;
   color: #d64456;
   font-size: 14px;
+}
+
+.b-setcredit__info{
+  opacity: 0;
+  visibility: hidden;
+  color: #8f8f8f;
+  margin-top: 4px;
+  .transition(all .15s ease);
 }
 
 @media screen and (max-width: 1200px) {
@@ -68,5 +77,18 @@
 
   .b-setcredit__active{
     display: block;
+  }
+}
+
+.b-setcredit_state_error{
+  .b-setcredit__error{
+    display: block;
+  }
+}
+
+.b-setcredit_state_sended{
+  .b-setcredit__info{
+    opacity: 1;
+    visibility: visible;
   }
 }

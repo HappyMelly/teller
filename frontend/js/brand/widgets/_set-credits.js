@@ -36,7 +36,10 @@ export default class Widget {
             .on('click', '[data-setcredit-activate]', this._onClickActivate.bind(this))
             .on('click', '[data-setcredit-deactivate]', this._onClickDeActivate.bind(this))
             .on('submit', '[data-setcredit-form]', this._onClickSaveCredit.bind(this))
-            .on('input', '[data-setcredit-input]', (e) => self.locals.$errors.text(''))
+            .on('input', '[data-setcredit-input]', (e) => {
+                self.$root.removeClass('b-setcredit_state_error');
+                self.locals.$errors.text('')
+            })
     }
 
     _onClickActivate(e) {
@@ -67,8 +70,12 @@ export default class Widget {
 
         self._sendFormData()
             .done(()=> {
-                self.validation.clearForm();
                 success('Credit limit was updated');
+
+                self.$root.addClass('b-setcredit_state_sended');
+                setTimeout(function(){
+                    self.$root.removeClass('b-setcredit_state_sended');
+                }, 4500);
             })
             .fail((response)=> {
                 const data = $.parseJSON(response.responseText).data;
@@ -77,6 +84,7 @@ export default class Widget {
                 if (!data.errors) return;
 
                 self.locals.$error.text(errorText);
+                self.$root.addClass('b-setcredit_state_error');
                 self.validation.setErrors(data.errors);
             })
     }
@@ -94,6 +102,7 @@ export default class Widget {
         }
         
         if (!valid){
+            this.$root.addClass('b-setcredit_state_error');
             locals.$errors.text(errorText);
         }
         

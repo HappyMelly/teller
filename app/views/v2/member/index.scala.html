@@ -1,8 +1,8 @@
 @(user: ActiveUser,
-  members: List[Member],
-  totalFee: BigDecimal)(implicit request: Request[Any],
-    flash: Flash,
-    handler: be.objectify.deadbolt.scala.DeadboltHandler)
+        members: List[Member],
+        totalFee: BigDecimal)(implicit request: Request[Any],
+        flash: Flash,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler)
 
 @import models.UserRole.Role._
 @import be.objectify.deadbolt.scala.views.html._
@@ -10,90 +10,87 @@
 @import views.Countries
 
 @v2.main("Members", "members", user) {
-    <div class="row page-content">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-12 content-block">
-                    <div class="row block">
-                        <div class="col-md-12">
-                            <div class="page-header">
-                                <h2>Total Fee €@totalFee
-                                    @restrict(handler, List(as(Admin.toString))) {
-                                        <a class="btn btn-primary pull-right"
-                                        href="@controllers.hm.routes.Members.add()">Add Funder</a>
-                                    }
-                                </h2>
-                            </div>
-                            <div class="col-md-12">
-                                <div id="filter-containter">
-                                    <div class="table-filters pull-left membership">
-                                        <span>Filter by membership: </span>
-                                        <div class="filter">
-                                            <a href="#" class="active" data-type="all">All</a>&nbsp;<span class="counter">@members.length</span>
-                                        </div>
-                                        <div class="filter">
-                                            <a href="#" data-type="Funder">Funders</a>&nbsp;<span class="counter">@members.count(_.funder)</span>
-                                        </div>
-                                        <div class="filter">
-                                            <a href="#" data-type="Supporter">Supporters</a>&nbsp;<span class="counter">@members.count(_.funder == false)</span>
-                                        </div>
-                                    </div>
-                                    <div class="table-filters pull-left type">
-                                        <span>Filter by type:</span>
-                                        <div class="filter">
-                                            <a href="#" class="active" data-type="all">All</a>&nbsp;<span class="counter">@members.length</span>
-                                        </div>
-                                        <div class="filter">
-                                            <a href="#" data-type="org">Organisations</a>&nbsp;<span class="counter">@members.count(_.person == false)</span>
-                                        </div>
-                                        <div class="filter">
-                                            <a href="#" data-type="person">People</a>&nbsp;<span class="counter">@members.count(_.person)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <table id="people" class="datatables table">
-                                    <thead>
-                                        <tr>
-                                            <th></th>
-                                            <th class="sorting_asc" width="25%">Name</th>
-                                            <th>Location</th>
-                                            <th>Type</th>
-                                            <th>Member Since</th>
-                                            <th>Member Until</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    @for(member <- members) {
-                                        <tr @if(!member.active){class="inactive"} >
-                                            <td style="text-align: center;">@if(member.person){
-                                                <i class="glyphicon glyphicon-user"></i>
-                                            }else{
-                                                <i class="glyphicon glyphicon-home"></i>
-                                            }</td>
-                                            <td><a href="@if(member.person) {
-                                                @controllers.core.routes.People.details(member.objectId) } else {
-                                                @controllers.core.routes.Organisations.details(member.objectId) }">@member.name</a></td>
-                                            <td>@member.city.map { city => @city, } @Countries.name(member.countryCode)</td>
-                                            <td>@if(member.funder){
-                                                <span class="text-sm">Funder</span>
-                                            }else{
-                                                <span class="text-sm">Supporter</span>
-                                            }</td>
-                                            <td>@member.since</td>
-                                            <td>@member.until</td>
-                                            <td>@member.person</td>
-                                        </tr>
-                                    }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+        <div class="container p-content">
+            <div class="p-header">
+                @restrict(handler, List(as(Admin.toString))) {
+                    <a class="btn btn-primary pull-right"
+                    href="@controllers.hm.routes.Members.add()">Add Funder</a>
+                }
+                <h1 class="p-header__title">Total Fee €@totalFee</h1>
+            </div>
+            <div id="filter-containter">
+                <div class="b-filters pull-left membership">
+                    <span class="b-filters__text">Filter by membership: </span>
+                    <div class="b-filters__link">
+                        <a href="#" class="active" data-type="all">All</a>
+                        <span class="b-filters__count">@members.length</span>
+                    </div>
+                    <div class="b-filters__link">
+                        <a href="#" data-type="Funder">Funders</a>
+                        <span class="b-filters__count">@members.count(_.funder)</span>
+                    </div>
+                    <div class="b-filters__link">
+                        <a href="#" data-type="Supporter">Supporters</a>
+                        <span class="b-filters__count">@members.count(_.funder == false)</span>
+                    </div>
+                </div>
+                <div class="b-filters pull-left type">
+                    <span class="b-filters__text">Filter by type:</span>
+                    <div class="b-filters__link">
+                        <a href="#" class="active" data-type="all">All</a>
+                        <span class="b-filters__count">@members.length</span>
+                    </div>
+                    <div class="b-filters__link">
+                        <a href="#" data-type="org">Organisations</a>
+                        <span class="b-filters__count">@members.count(_.person == false)</span>
+                    </div>
+                    <div class="b-filters__link">
+                        <a href="#" data-type="person">People</a>
+                        <span class="b-filters__count">@members.count(_.person)</span>
                     </div>
                 </div>
             </div>
+            <table id="people" class="datatables table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="sorting_asc" width="25%">Name</th>
+                        <th>Location</th>
+                        <th>Type</th>
+                        <th>Member Since</th>
+                        <th>Member Until</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for(member <- members) {
+                    <tr @if(!member.active) {
+                        class="inactive"} >
+                        <td style="text-align : center ;">@if(member.person) {
+                            <i class="glyphicon glyphicon-user"></i>
+                        } else {
+                            <i class="glyphicon glyphicon-home"></i>
+                        }</td>
+                        <td><a href="@if(member.person) {
+                            @controllers.core.routes.People.details(member.objectId)
+                        } else {
+                            @controllers.core.routes.Organisations.details(member.objectId)
+                        }">@member.name</a>
+                        </td>
+                        <td>@member.city.map { city => @city, } @Countries.name(member.countryCode)</td>
+                        <td>@if(member.funder) {
+                            <span class="text-sm">Funder</span>
+                        } else {
+                            <span class="text-sm">Supporter</span>
+                        }</td>
+                        <td>@member.since</td>
+                        <td>@member.until</td>
+                        <td>@member.person</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
         </div>
-    </div>
 
     <script src="@routes.Assets.at("js/member/index.js")" type="text/javascript"></script>
 }

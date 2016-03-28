@@ -5,36 +5,46 @@
   padding-left: 0;
   margin: 20px 0;
   text-align: center;
-  list-style: none
+  list-style: none;
+
+  li {
+    display: inline;
+  }
+
+  a,
+  span{
+    display: inline-block;
+    padding: 5px 14px;
+    background-color: #4A90E2;
+    border: 1px solid #e7e7e7;
+    border-radius: 15px;
+  }
+
+  a:hover,
+  a:focus {
+    text-decoration: none;
+    background-color: #eee;
+  }
+
+  .next a,
+  .next span{
+    float: right;
+  }
+
+  .previous a,
+  .previous span{
+    float: left;
+  }
+
+  .disabled > a,
+  .disabled > a:focus,
+  .disabled > a:hover,
+  .disabled > span {
+    color: #777;
+    cursor: not-allowed;
+    background-color: #fff;
+  }
 }
 
-.pager li {
-  display: inline
-}
 
-.pager li > a, .pager li > span {
-  display: inline-block;
-  padding: 5px 14px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 15px
-}
 
-.pager li > a:focus, .pager li > a:hover {
-  text-decoration: none;
-  background-color: #eee
-}
-
-.pager .next > a, .pager .next > span {
-  float: right
-}
-
-.pager .previous > a, .pager .previous > span {
-  float: left
-}
-
-.pager .disabled > a, .pager .disabled > a:focus, .pager .disabled > a:hover, .pager .disabled > span {
-  color: #777;
-  cursor: not-allowed;
-  background-color: #fff
-}

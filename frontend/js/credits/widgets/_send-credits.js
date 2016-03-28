@@ -2,6 +2,15 @@
 
 import FormHelper from "./../../common/_form-helper";
 
+
+/**
+ * Suggestion item
+ * @typedef {Object} Suggestion
+ * @property {String} value - name of persion
+ * @property {Number} data.id - id of person
+ * @property {String} data.img - url of image
+ */
+
 /**
  * Form for sending credit
  */
@@ -34,6 +43,7 @@ export default class Widget{
     }
 
     _initAutoComplete() {
+        const self = this;
         const locals = this.locals;
         const url = jsRoutes.controllers.Facilitators.search(this.$root.attr('data-brand-id')).url;
 
@@ -43,11 +53,38 @@ export default class Widget{
             minChars: 3,
             preserveInput: true,            
             onSelect: function (suggestion) {
-                locals.$to.val(suggestion.value);
+                locals.$to.val(suggestion.name);
                 locals.$toData.val(suggestion.data);
                 return true;
+            },
+            formatResult: function (suggestion, currentValue) {
+                return suggestion.value;
+            },
+            transformResult: function(response) {
+                const suggestions = $.parseJSON(response).suggestions;
+
+                return {
+                    suggestions: suggestions.map(function(item){
+                        let template = self._getSuggestTemplate(item);
+
+                        return {
+                            value: template,
+                            data: item.data.id,
+                            name: item.value
+                        }
+                    })
+                };
             }
         });
+    }
+
+    /**
+     * Render template for suggestion
+     * @param {Suggestion} data - suggestion object
+     * @private
+     */
+     _getSuggestTemplate(item){
+        return `<div class="b-suggest__img" style="background-image: url(${item.data.img})"></div><div class="b-suggest__name">${item.value}</div>`
     }
 
     _assignEvents() {
@@ -66,10 +103,8 @@ export default class Widget{
             .done(() => {
                 self.validation.clearForm();
 
-                self.$root.addClass('b-credits_state_send');
-                setTimeout(()=> {
-                    self.$root.removeClass('b-credits_state_send');
-                }, 4000)
+                success("You have sent credits successfully!", 4500);
+                self._setNewValues();
             })
             .fail((response) => {
                 const data = $.parseJSON(response.responseText).data;
@@ -119,6 +154,9 @@ export default class Widget{
         );
     }
 
+    _setNewValues() {
+        App.events.pub('hmt.asynctabs.refresh');
+    }
 
     // static
     static plugin(selector) {

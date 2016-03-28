@@ -30,6 +30,7 @@ import javax.inject.{Inject, Named}
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.core.People
 import models.UserRole.Role
 import models._
 import models.cm.Facilitator
@@ -270,7 +271,8 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       implicit val personWrites = new Writes[Person] {
         def writes(person: Person): JsValue = Json.obj(
           "value" -> person.fullName,
-          "data" -> person.identifier)
+          "data" -> Json.obj("id" -> person.identifier,
+            "img" -> People.pictureUrl(person)))
       }
 
       repos.cm.license.allLicensees(brandId) flatMap { facilitators =>

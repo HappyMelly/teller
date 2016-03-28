@@ -21,6 +21,8 @@ export default class Widget {
 
     _assignEvents() {
         this.$root.on('click', '[data-tab-link]', this._onClickLink.bind(this));
+        
+        App.events.sub('hmt.asynctabs.refresh', this._onEventRefresh.bind(this));
     }
 
     _onClickLink(e) {
@@ -29,6 +31,14 @@ export default class Widget {
 
         if ($link.hasClass('state_active')) return;
         this.showTabByLink($link);
+    }
+
+    _onEventRefresh(){
+        const $currentLink = this.locals.$links.filter('.state_active').first();
+        const indexCurrentTab = this.loadedTabs.indexOf($currentLink.attr('href'));
+
+        this.loadedTabs.splice(indexCurrentTab, 1);
+        this.showTabByLink($currentLink);
     }
 
     /**
@@ -53,13 +63,14 @@ export default class Widget {
     /**
      *  Load content and insert into target div
      * @param {String} url      - url of loaded content
-     * @param {jQuery} target   - div where we should insert content
+     * @param {jQuery} target   - div where we should insert conten
      */
     _loadContent(url, target){
         const self = this;
+        const isShouldLoad = ($.inArray(target, self.loadedTabs) < 0 && url);
         let defer = $.Deferred();
 
-        if ($.inArray(target, self.loadedTabs) < 0 && url) {
+        if (isShouldLoad) {
             $.get(url, (data) => {
                 self.loadedTabs.push(target);
                 $(target).html(data);

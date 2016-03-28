@@ -37,7 +37,7 @@ import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, Messages}
+import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.{Logger, Play}
@@ -48,7 +48,7 @@ import securesocial.core.providers.utils.PasswordValidator
 import securesocial.core.services.SaveMode
 import securesocial.core.utils._
 import securesocial.core.{AuthenticationMethod, BasicProfile, SecureSocial}
-import services.TellerRuntimeEnvironment
+import services.{LoginIdentityService, TellerRuntimeEnvironment}
 import services.integrations.Email
 import views.Countries
 
@@ -299,7 +299,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                   }
                   val (customerId, card) = subscribe(person, org, data)
                   addCustomerRecord(customerId, card, person, org)
-                  activeRecord(person, org)
+                  activateRecords(person, org)
                   val futureMember = org map { x ⇒
                     x.becomeMember(funder = false, data.fee, person.id.get, repos)
                   } getOrElse {
@@ -371,11 +371,13 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
 
   /**
     * Activates temporary records making them valid ones
+ *
     * @param person Person
     * @param org Organisation
     */
-  protected def activeRecord(person: Person, org: Option[Organisation]): Unit = {
+  protected def activateRecords(person: Person, org: Option[Organisation]): Unit = {
     repos.person.update(person.copy(active = true))
+    repos.socialProfile.update(person.profile.copy(objectId = person.identifier), ProfileType.Person)
     org map { value =>
       repos.org.update(value.copy(active = true))
       person.addRelation(value.identifier, repos)
