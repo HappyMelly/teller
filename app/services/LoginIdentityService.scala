@@ -210,7 +210,7 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
   }
 
   protected def linkedEntities(to: BasicProfile, profil: SocialProfile, acc: UserAccount): (UserAccount, SocialProfile) = {
-    val withLink = profile(to)
+    val withLink = LoginIdentityService.profile(to)
     to.providerId match {
       case FacebookProvider.Facebook ⇒
         (acc.copy(facebook = Some(to.userId)), profil.copy(facebookUrl = withLink.facebookUrl))
@@ -221,18 +221,6 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
       case TwitterProvider.Twitter ⇒
         (acc.copy(twitter = Some(to.userId)), profil.copy(twitterHandle = withLink.twitterHandle))
     }
-  }
-
-  /**
-    * Returns a social profile for the given basic profile
-    *
-    * @param profile Basic profile
-    */
-  protected def profile(profile: BasicProfile): SocialProfile = profile.providerId match {
-    case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = Some(findFacebookUrl(profile)))
-    case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(profile)))
-    case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(profile)))
-    case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(profile)))
   }
 
   /**
@@ -250,8 +238,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
             existance <- repos.registeringUser.exists(profile.userId, profile.providerId)
             identity <- repos.identity.findByEmail(profile.userId)
           } yield (existance, identity)) flatMap {
-            case (false, _) => println("shit"); Future.failed(new AuthenticationException)
-            case (true, None) => println("shit 2"); Future.failed(new AuthenticationException)
+            case (false, _) => Future.failed(new AuthenticationException)
+            case (true, None) => Future.failed(new AuthenticationException)
             case (true, Some(identity)) => Future.successful(user(identity))
           }
       }
@@ -294,7 +282,7 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
     val account = UserAccount.empty(0)
     val (firstName, lastName) = userNames(identity)
     val person = Person(firstName, lastName, identity.profile.email.getOrElse(""))
-    person.profile_=(profile(identity.profile))
+    person.profile_=(LoginIdentityService.profile(identity.profile))
     ActiveUser(identity.profile.userId, identity.profile.providerId, account, person)
   }
 
@@ -316,9 +304,37 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
         user.profile.lastName.getOrElse(""))
   }
 
+}
+
+object LoginIdentityService {
+
+  val TwitterSettings = "https://api.twitter.com/1.1/account/settings.json"
+  val ScreenName = "screen_name"
+
+  val FacebookProfile = "https://graph.facebook.com/me?fields=link&return_ssl_resources=1&access_token="
+  val Link = "link"
+
+  val GoogleProfile = "https://www.googleapis.com/plus/v1/people/me?fields=url&access_token="
+  val URL = "url"
+
+  val LinkedInProfile = "http://api.linkedin.com/v1/people/~:(public-profile-url)?format=json"
+  val PublicProfileUrl = "publicProfileUrl"
+
   /**
-   * Returns the Facebook profile URL for the Secure Social identity being used to log in, or throws an authentication error.
-   */
+    * Returns a social profile for the given basic profile
+    *
+    * @param profile Basic profile
+    */
+  def profile(profile: BasicProfile): SocialProfile = profile.providerId match {
+    case FacebookProvider.Facebook ⇒ SocialProfile(facebookUrl = Some(findFacebookUrl(profile)))
+    case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(profile)))
+    case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(profile)))
+    case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(profile)))
+  }
+
+  /**
+    * Returns the Facebook profile URL for the Secure Social identity being used to log in, or throws an authentication error.
+    */
   private def findFacebookUrl(profile: BasicProfile): String = {
     assert(profile.providerId == FacebookProvider.Facebook, "Facebook identity required")
     profile.oAuth2Info.map { info ⇒
@@ -352,8 +368,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
   }
 
   /**
-   * Returns the Google+ profile URL for the Secure Social identity being used to log in, or throws an authentication error.
-   */
+    * Returns the Google+ profile URL for the Secure Social identity being used to log in, or throws an authentication error.
+    */
   private def findGooglePlusUrl(profile: BasicProfile): String = {
     assert(profile.providerId == GoogleProvider.Google, "Google identity required")
     profile.oAuth2Info.map { info ⇒
@@ -384,8 +400,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
   }
 
   /**
-   * Returns the LinkedIn profile URL for the Secure Social identity being used to log in, or throws an authentication error.
-   */
+    * Returns the LinkedIn profile URL for the Secure Social identity being used to log in, or throws an authentication error.
+    */
   private def findLinkedInUrl(profile: BasicProfile): String = {
     assert(profile.providerId == LinkedInProvider.LinkedIn, "LinkedIn identity required")
     val info = profile.oAuth1Info.get
@@ -415,8 +431,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
   }
 
   /**
-   * Returns the Twitter handle for the Secure Social identity being used to log in, or throws an authentication error.
-   */
+    * Returns the Twitter handle for the Secure Social identity being used to log in, or throws an authentication error.
+    */
   private def findTwitterHandle(profile: BasicProfile): String = {
     assert(profile.providerId == TwitterProvider.Twitter, "Twitter identity required")
     val info = profile.oAuth1Info.get
@@ -431,19 +447,4 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
     }
     Await.result(response, Duration.create(5, TimeUnit.SECONDS))
   }
-}
-
-object LoginIdentityService {
-
-  val TwitterSettings = "https://api.twitter.com/1.1/account/settings.json"
-  val ScreenName = "screen_name"
-
-  val FacebookProfile = "https://graph.facebook.com/me?fields=link&return_ssl_resources=1&access_token="
-  val Link = "link"
-
-  val GoogleProfile = "https://www.googleapis.com/plus/v1/people/me?fields=url&access_token="
-  val URL = "url"
-
-  val LinkedInProfile = "http://api.linkedin.com/v1/people/~:(public-profile-url)?format=json"
-  val PublicProfileUrl = "publicProfileUrl"
 }
