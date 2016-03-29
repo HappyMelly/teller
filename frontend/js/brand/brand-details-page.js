@@ -1,6 +1,7 @@
 'use strict';
 
 import SetCredits from "./widgets/_set-credits";
+import SetApi from "./widgets/_set-api";
 
 $(function(){
     App.events
@@ -10,6 +11,7 @@ $(function(){
 
             //tab api
             $('[data-toggle="tooltip"]').tooltip();
+            SetApi.plugin('.js-set-api');
 
         })
 });

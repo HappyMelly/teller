@@ -83,7 +83,7 @@ export default class FormHelper {
         $parent.addClass('b-error_show');
         $('<div class="b-error" />')
             .text(errorText)
-            .prependTo($parent);
+            .appendTo($parent);
 
         this.arrErrors.push({
             name: $input.attr('name'),
@@ -133,6 +133,19 @@ export default class FormHelper {
         });
 
         return errorTxt;
+    }
+
+    getFormData(){
+        let ajaxData = {};
+
+        this.$inputs.map((index, el) => {
+            const $el = $(el);
+            const name = $el.attr('name');
+
+            name && (ajaxData[name] = $el.val())
+        });
+
+        return ajaxData;
     }
 
     /**
