@@ -1,0 +1,10 @@
+@**
+ * Generates a modal form
+ *@
+@(id: String)(body: => Html)
+
+<div class="b-prompt__dlg modal-dialog " id="@id">
+  <div class="b-prompt__content">
+    @body
+  </div>
+</div>

@@ -1,6 +1,6 @@
 @(config: models.cm.brand.ApiConfig)
 
-<div class="b-setapi b-setapi_state_active b-setapi_state_form" data-brand-id="@config.brandId">
+<div class="b-setapi js-set-api" data-brand-id="@config.brandId">
     <h4 class="b-setapi__main">API</h4>
     <p>
         API activation helps Happy Melly Teller collaborate with your site.
@@ -15,8 +15,9 @@
     </div>
 
     <div class="b-setapi__active">
-        <a href="#" class="btn btn-default b-setapi__btn-deactive"
-            data-setapi-deactivate>
+        <a href="javascript: void(0)"
+            class="btn btn-default b-setapi__btn-deactive"
+            data-setapi-promptbtn>
             Deactivate
         </a>
 
@@ -44,12 +45,12 @@
             <p>
                 list of events and facilitators, specific event or facilitator and general evaluation form and evalation form for specific event.
             </p>
-            <a href="#" class="btn btn-primary b-api-active__btn">
+            <a href="#" class="btn btn-primary b-api-active__btn" data-setapi-specify>
                 Specify URL’s
             </a>
         </div>
 
-        <form class="b-apiform">
+        <form class="b-apiform" data-setapi-form>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint" data-placement="right" data-toggle="tooltip" title="Used in emails to potential attendees when they requested to be notified about event they want to attend to.">
                     <div class="question">?</div>
@@ -58,7 +59,8 @@
                 <div class="b-apiform__label">
                     List of events
                 </div>
-                <input type="text" class="b-apiform__input form-control input-sm" />
+                <input type="text" name="events" class="b-apiform__input form-control input-sm"
+                    value="http://management30.com/events" />
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -68,7 +70,8 @@
                 <div class="b-apiform__label">
                     Specific event
                 </div>
-                <input type="text" class="b-apiform__input form-control input-sm" />
+                <input type="text" name="event" class="b-apiform__input form-control input-sm"
+                    value="http://management30.com/event" />
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -78,7 +81,8 @@
                 <div class="b-apiform__label">
                     List of facilitators
                 </div>
-                <input type="text" class="b-apiform__input form-control input-sm" />
+                <input type="text" name="facilitators" class="b-apiform__input form-control input-sm"
+                    value="http://website.com/ListOfFacilitators" />
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -88,7 +92,7 @@
                 <div class="b-apiform__label">
                     Specific facilitator
                 </div>
-                <input type="text" class="b-apiform__input form-control input-sm" />
+                <input type="text" name="facilitator" class="b-apiform__input form-control input-sm" />
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -98,7 +102,7 @@
                 <div class="b-apiform__label">
                     Evaluation form
                 </div>
-                <input type="text" class="b-apiform__input form-control input-sm" />
+                <input type="text" name="evaluation-form" class="b-apiform__input form-control input-sm" />
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -108,56 +112,57 @@
                 <div class="b-apiform__label">
                     Evaluation form for specific event
                 </div>
-                <input type="text" class="b-apiform__input form-control input-sm" />
+                <input type="text" name="evaluation-event" class="b-apiform__input form-control input-sm" />
             </div>
             <div class="b-apiform__buttons">
-                <a href="#" class="btn btn-default b-apiform__btn-cancel">
+                <a href="#" class="btn btn-default b-apiform__btn-cancel"
+                    data-seatpi-form-cancel>
                     Cancel
                 </a>
-                <a href="#" class="btn btn-primary b-apiform__btn-save">
+                <a href="#" class="btn btn-primary b-apiform__btn-save"
+                    data-seatpi-form-save>
                     Save
                 </a>
-
             </div>
         </form>
 
-        <div class="b-apiview">
-            <div class="b-apiview__i">
+        <div class="b-apiview" data-setapi-view>
+            <div class="b-apiview__i" data-setapi-field="events">
                 <b>List of events</b>
                 <div class="b-apiview__text">
                     http://management30.com/events
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i">
+            <div class="b-apiview__i" data-setapi-field="event">
                 <b>Specific event</b>
                 <div class="b-apiview__text">
                     http://management30.com/events/*EventId*
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i state_url">
+            <div class="b-apiview__i" data-setapi-field="facilitators">
                 <b>List of facilitators</b>
                 <div class="b-apiview__text">
                     http://management30.com/events/*EventId*
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i">
+            <div class="b-apiview__i" data-setapi-field="facilitator">
                 <b>Specific facilitator</b>
                 <div class="b-apiview__text">
                     http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i state_url">
+            <div class="b-apiview__i" data-setapi-field="evaluation-form">
                 <b>Evaluation form</b>
                 <div class="b-apiview__text">
                     http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i state_url">
+            <div class="b-apiview__i" data-setapi-field="evaluation-event">
                 <b>Evaluation form for specific event</b>
                 <div class="b-apiview__text">
                     http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
@@ -165,9 +170,32 @@
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
 
-            <a href="#" class="btn btn-primary b-apiview__btn">
+            <a href="#" class="btn btn-primary b-apiview__btn" data-setapi-editform>
                 Edit information
             </a>
         </div>
+
+    </div>
+
+    <div id="dlg-apiset" class="modal fade b-prompt " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-setapi-modal>
+    @v2.html.prompt("") {
+        <h3 class="b-prompt__title">
+            Are you sure you want to deactivate API?
+        </h3>
+        <div class="b-prompt__text">
+            Deactivation will block communication with your website.
+            You can always activate it back with the other tocken.
+        </div>
+        <div class="b-prompt__buttons">
+            <a href="#" class="btn btn-default b-prompt__btn-cancel" data-dismiss="modal">
+                No, stay active
+            </a>
+            <a href="#" class="btn btn-primary b-prompt__btn-accept"
+                data-dismiss="modal"
+                data-setapi-deacticate>
+                Yes, deactivate API
+            </a>
+        </div>
+    }
     </div>
 </div>
