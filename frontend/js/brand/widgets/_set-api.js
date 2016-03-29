@@ -57,7 +57,7 @@ export default class Widget {
                 if (!$root.hasClass('b-setapi_state_active')){
                     $root.addClass('b-setapi_state_active');
                 }
-                success('You are successfully activate api')
+                success('API was successfully activated')
             })
     }
 
@@ -76,7 +76,7 @@ export default class Widget {
         self._sendDeactivate(self.brandId)
             .done(()=>{
                 $root.removeClass('b-setapi_state_active');
-                success('You are successfully deactivate api')
+                success('API was successfully deactivated')
             })
     }
 
@@ -85,12 +85,9 @@ export default class Widget {
         const self = this;
         const $root = self.$root;
 
-        self._sendSpecify(self.brandId)
-            .done(()=>{
-                if (!$root.hasClass('b-setapi_state_form')){
-                    $root.addClass('b-setapi_state_form');
-                }
-            })
+        if (!$root.hasClass('b-setapi_state_form')){
+            $root.addClass('b-setapi_state_form');
+        }
     }
 
     _onClickSubmit(e){
@@ -101,7 +98,7 @@ export default class Widget {
         if (!self.isFormValid()) return;
         
         const formData = this.formHelper.getFormData();
-        self._sendUrlsData(formData)
+        self._sendUrlsData(self.brandId, formData)
             .done(()=>{
                 this._saveFormData($inputs);
                 this._prepareView($inputs);
@@ -251,17 +248,12 @@ export default class Widget {
     }
 
     _sendDeactivate(brandId){
-        const url =  jsRoutes.controllers.cm.brand.API.deactivate(brandId).url;
+        const url = jsRoutes.controllers.cm.brand.API.deactivate(brandId).url;
         return $.post(url);
     }
 
-    _sendSpecify(brandId){
-        const url = '/specifybtn/' + brandId;
-        return $.post(url);
-    }
-
-    _sendUrlsData(formData){
-        const url = '/send/form';
+    _sendUrlsData(brandId, formData){
+        const url = jsRoutes.controllers.cm.brand.API.update(brandId).url;
         return $.post(url, formData);
     }
 

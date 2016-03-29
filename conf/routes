@@ -27,8 +27,8 @@ POST          /brand/:id/delete                                              con
 GET           /brand/:code/picture                                           controllers.Brands.picture(code: String)
 POST          /brand/:id/picture/delete                                      controllers.Brands.deletePicture(id: Long)
 
-GET           /brand/:id/api/activate                                        controllers.cm.brand.API.activate(id: Long)
-GET           /brand/:id/api/deactivate                                      controllers.cm.brand.API.deactivate(id: Long)
+POST          /brand/:id/api/activate                                        controllers.cm.brand.API.activate(id: Long)
+POST          /brand/:id/api/deactivate                                      controllers.cm.brand.API.deactivate(id: Long)
 GET           /brand/:id/api                                                 controllers.cm.brand.API.settings(id: Long)
 POST          /brand/:id/api                                                 controllers.cm.brand.API.update(id: Long)
 

@@ -96,6 +96,9 @@ case class ApiConfig(id: Option[Long],
     }.getOrElse("")
   }
 
+  def isEmpty: Boolean = event.isEmpty && facilitator.isEmpty && generalEvaluation.isEmpty &&
+    specificEventEvaluation.isEmpty
+
   def isEvaluationModuleActive: Boolean = active && (generalEvaluation.nonEmpty || specificEventEvaluation.nonEmpty)
 
   protected def activityCheck(f: => String): String = if (active) f else ""
