@@ -45,7 +45,7 @@ export default class Widget{
     _initAutoComplete() {
         const self = this;
         const locals = this.locals;
-        const url = jsRoutes.controllers.Facilitators.search(this.$root.attr('data-brand-id')).url;
+        const url = jsRoutes.controllers.cm.Facilitators.search(this.$root.attr('data-brand-id')).url;
 
         locals.$to.autocomplete({
             serviceUrl: url,

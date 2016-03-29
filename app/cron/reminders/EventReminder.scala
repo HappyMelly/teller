@@ -72,7 +72,7 @@ class EventReminder @Inject() (val email: EmailComponent, val repos: Repositorie
             val suitableEvents = events.filter(_.location.countryCode == request.countryCode)
             val brand = brandWithSettings.brand
             if (suitableEvents.nonEmpty) {
-              val url = Utilities.fullUrl(controllers.routes.EventRequests.unsubscribe(request.hashedId).url)
+              val url = Utilities.fullUrl(controllers.cm.routes.EventRequests.unsubscribe(request.hashedId).url)
               val body = mail.event.html.upcomingNotification(suitableEvents, brand, request, apiConfig.get, url)(repos)
               val subject = s"Upcoming ${brand.name} events"
               email.send(Seq(request), subject, body.toString(), brand.sender)

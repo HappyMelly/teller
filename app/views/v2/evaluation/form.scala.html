@@ -13,7 +13,7 @@
 
 @v2.main("Evaluation", "attendees", user) {
     <div class="form">
-    @v2.html.form(action = CSRF(routes.Evaluations.create(attendee.eventId, attendee.identifier))) {
+    @v2.html.form(action = CSRF(controllers.cm.routes.Evaluations.create(attendee.eventId, attendee.identifier))) {
         @v2.html.block("") {
             <h1>Add evaluation for @attendee.fullName</h1>
         }

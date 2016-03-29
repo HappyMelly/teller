@@ -29,7 +29,7 @@
 function loadDetails(row) {
     var requestId = $(row.node()).data('id');
     var brandId = $(row.node()).data('brand');
-    var url = jsRoutes.controllers.EventRequests.details(brandId, requestId).url;
+    var url = jsRoutes.controllers.cm.EventRequests.details(brandId, requestId).url;
     $.get(url).done(function (content) {
         row.child(content, 'active').show();
     }).fail(function (jqXHR, textStatus, errorThrown) {

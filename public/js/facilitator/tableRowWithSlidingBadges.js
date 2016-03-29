@@ -68,7 +68,7 @@
 
     TableRowWithSlidingBadges.prototype.updateBadgesList = function(){
         var self = this,
-            url = jsRoutes.controllers.Facilitators.badges(this.data.personId, this.data.brandId).url,
+            url = jsRoutes.controllers.cm.Facilitators.badges(this.data.personId, this.data.brandId).url,
             $placeholder = self.$el.find('.js-row-badgeslist');
 
         if (!$placeholder.length) return;

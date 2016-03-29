@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -17,21 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms,
- * you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.cm
 
 import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Security
 import models.cm.facilitator.Material
 import models.repository.Repositories
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json, Writes}
 import services.TellerRuntimeEnvironment
 

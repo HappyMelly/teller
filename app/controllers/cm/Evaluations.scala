@@ -22,13 +22,14 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.cm
 
-import javax.inject.{Named, Inject}
+import javax.inject.{Inject, Named}
 
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Activities, BrandAware, Security, Utilities}
 import models.UserRole._
 import models._
 import models.cm._
@@ -201,7 +202,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
                   view.get.settings.certificates,
                   facilitator,
                   endorsement))
-              } { redirect(core.routes.Dashboard.index()) }
+              } { redirect(controllers.core.routes.Dashboard.index()) }
           }
       }
   }
@@ -329,5 +330,5 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
 object Evaluations {
 
   def confirmationUrl(token: String): String =
-    Utilities.fullUrl(controllers.routes.Evaluations.confirm(token).url)
+    Utilities.fullUrl(controllers.cm.routes.Evaluations.confirm(token).url)
 }

@@ -25,6 +25,7 @@
 package models.cm
 
 import controllers.Utilities
+import controllers.cm.Evaluations
 import cron.reminders.EvaluationReminder
 import models.cm.event.Attendee
 import models.{Activity, ActivityRecorder, DateStamp}
@@ -200,7 +201,7 @@ case class  Evaluation(id: Option[Long],
       case (_, None) => this
       case (brand, Some(attendee)) =>
         val token = this.confirmationId getOrElse ""
-        val url = controllers.Evaluations.confirmationUrl(token)
+        val url = controllers.cm.Evaluations.confirmationUrl(token)
         (new EvaluationReminder(email, repos)).sendConfirmRequest(attendee, brand, url)
         this
     }
@@ -218,7 +219,7 @@ case class  Evaluation(id: Option[Long],
         val impression = views.Evaluations.impression(facilitatorImpression)
         val subject = s"New evaluation (General impression: $impression)"
         val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-        val url = Utilities.fullUrl(controllers.routes.Evaluations.details(this.identifier).url)
+        val url = Utilities.fullUrl(controllers.cm.routes.Evaluations.details(this.identifier).url)
         val body = mail.evaluation.html.details(this, event, attendee, brand, url)(messages)
         email.send(event.facilitators(repos), cc, Seq(), subject, body.toString(), brand.sender)
 

@@ -18,14 +18,14 @@
       <tr><td>
         @Messages("country." + country.country)&nbsp;
         @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
-          <a class="pull-right" href="@routes.Facilitators.deleteCountry(personId, country.country)">Delete</a>
+          <a class="pull-right" href="@controllers.cm.routes.Facilitators.deleteCountry(personId, country.country)">Delete</a>
         }
       </td></tr>
     }
     </tbody>
   </table>
   @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
-    <form method="POST" action="@CSRF(routes.Facilitators.addCountry(personId))">
+    <form method="POST" action="@CSRF(controllers.cm.routes.Facilitators.addCountry(personId))">
       <div class="form-group">
         <select name="country" class="form-control input-sm">
         @for(country <- Countries.all.toList.filterNot(c => countries.exists(_.country == c._1))) {

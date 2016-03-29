@@ -27,13 +27,13 @@
           @if(tab == "facilitators") {
             <span class="b-brandhead__i">Facilitators</span>
           } else {
-            <a class="link-blue b-brandhead__i" href="@routes.Facilitators.index(activeBrand.identifier)">Facilitators</a>
+            <a class="link-blue b-brandhead__i" href="@controllers.cm.routes.Facilitators.index(activeBrand.identifier)">Facilitators</a>
           }
           @if(!facilitator) {
             @if(tab == "requests") {
               <span class="b-brandhead__i">Requests</span>
             } else {
-              <a class="link-blue b-brandhead__i" href="@routes.EventRequests.index(activeBrand.identifier)">Requests</a>
+              <a class="link-blue b-brandhead__i" href="@controllers.cm.routes.EventRequests.index(activeBrand.identifier)">Requests</a>
             }
             <a class="link-blue b-brandhead__i" href="@routes.Brands.details(activeBrand.identifier).url">
               Settings

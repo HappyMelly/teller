@@ -26,7 +26,7 @@ package cron.reminders
 
 import javax.inject.Inject
 
-import controllers.Evaluations
+import controllers.cm.Evaluations
 import models._
 import models.cm.EvaluationStatus
 import models.cm.brand.ApiConfig

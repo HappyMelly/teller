@@ -51,7 +51,7 @@
           <td>
           @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
             <a data-id="@material.id.get" href="#" class="remove font-sm"
-            data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
+            data-href="@controllers.cm.routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
           }
           </td>
         </tr>
@@ -60,7 +60,7 @@
     </table>
     @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
       <form class="form-inline material-form" method="POST"
-      action="@CSRF(routes.Materials.create(person.id.get))">
+      action="@CSRF(controllers.cm.routes.Materials.create(person.id.get))">
         <input type="hidden" name="brandId" value="0"/>
         <select name="type" id="linkType" class="form-control input-sm">
           <option value="article">Article</option>
@@ -91,7 +91,7 @@
             <td>
             @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
               <a data-id="@material.id.get" href="#" class="remove font-sm"
-              data-href="@routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
+              data-href="@controllers.cm.routes.Materials.remove(person.id.get, material.id.get)">Delete</a>
             }
             </td>
           </tr>
@@ -100,7 +100,7 @@
       </table>
       @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
         <form class="form-inline material-form" method="POST"
-        action="@CSRF(routes.Materials.create(person.id.get))">
+        action="@CSRF(controllers.cm.routes.Materials.create(person.id.get))">
           <input type="hidden" name="brandId" value="@brandData._1.brandId"/>
           <select name="type" id="linkType" class="form-control input-sm">
             <option value="article">Article</option>

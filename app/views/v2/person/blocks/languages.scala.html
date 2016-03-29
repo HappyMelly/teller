@@ -17,14 +17,14 @@
         <tr><td>
           @Languages.all.get(language.language)&nbsp;
           @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
-            <a class="pull-right" href="@routes.Facilitators.deleteLanguage(personId, language.language)">Delete</a>
+            <a class="pull-right" href="@controllers.cm.routes.Facilitators.deleteLanguage(personId, language.language)">Delete</a>
           }
         </td></tr>
       }
     </tbody>
   </table>
   @dynamic(handler, Role.ProfileEditor.toString, personId.toString) {
-    <form method="POST" action="@CSRF(routes.Facilitators.addLanguage(personId))">
+    <form method="POST" action="@CSRF(controllers.cm.routes.Facilitators.addLanguage(personId))">
       <div class="form-group">
         <select name="language" class="form-control input-sm">
           @for(language <- Languages.all.toList.filterNot(

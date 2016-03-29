@@ -21,7 +21,7 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package controllers
+package controllers.cm
 
 import java.text.Collator
 import java.util.Locale
@@ -31,6 +31,7 @@ import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.core.People
+import controllers.{BrandAware, Security, core}
 import models.UserRole.Role
 import models._
 import models.cm.Facilitator

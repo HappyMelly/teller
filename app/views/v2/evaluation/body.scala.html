@@ -5,7 +5,7 @@
 @identical.map { value =>
   <br/><br/>
   <span class="identical text-danger">
-    Identical @if(value.approved) { approved } else { rejected } evaluation <a href="@routes.Evaluations.details(value.identifier)">exists</a>.
+    Identical @if(value.approved) { approved } else { rejected } evaluation <a href="@controllers.cm.routes.Evaluations.details(value.identifier)">exists</a>.
     We recommend to <a class="delete-person" href="#" data-id="@evaluation.attendeeId">delete</a> this participant and his/her evaluation.
   </span>
 }
@@ -57,7 +57,7 @@
     }
   </div>
   <div class="buttons-block">
-    <a class="btn btn-default" href="@routes.Evaluations.details(evaluation.identifier)">View</a>
+    <a class="btn btn-default" href="@controllers.cm.routes.Evaluations.details(evaluation.identifier)">View</a>
     @*<button class="btn btn-default move-evaluation" data-id="@evaluation.identifier">Move</button>*@
     <button class="btn btn-default delete-evaluation" data-id="@evaluation.identifier">Delete</button>
   </div>

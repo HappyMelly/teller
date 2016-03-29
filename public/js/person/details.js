@@ -102,7 +102,7 @@ function addMaterial(materialId, brandId, personId, materialType, material) {
                     .addClass('remove font-sm')
                     .attr('href', '#')
                     .attr('data-id', materialId)
-                    .attr('data-href', jsRoutes.controllers.Materials.remove(personId, materialId).url)))
+                    .attr('data-href', jsRoutes.controllers.cm.Materials.remove(personId, materialId).url)))
     );
     showHideMaterialTables();
 }

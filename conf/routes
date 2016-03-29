@@ -44,8 +44,8 @@ POST          /brand/:id/badge/:badgeId                                      con
 
 POST          /brand/:id/coordinator/:personId/type/:notification/off        controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
 POST          /brand/:id/coordinator/:personId/type/:notification/on         controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
-GET           /brand/:id/eventrequests                                       controllers.EventRequests.index(id: Long)
-GET           /brand/:id/eventrequest/:requestId                             controllers.EventRequests.details(id: Long, requestId: Long)
+GET           /brand/:id/eventrequests                                       controllers.cm.EventRequests.index(id: Long)
+GET           /brand/:id/eventrequest/:requestId                             controllers.cm.EventRequests.details(id: Long, requestId: Long)
 
 POST          /brand/:id/credits/activate                                    controllers.cm.brand.Credits.activate(id: Long)
 POST          /brand/:id/credits/deactivate                                  controllers.cm.brand.Credits.deactivate(id: Long)
@@ -58,9 +58,9 @@ POST          /brand/:brandId/eventtype/:id                                  con
 GET           /brand/:brandId/eventtype/:id/delete                           controllers.EventTypes.delete(brandId: Long, id: Long)
 GET           /brand/:id/eventtypes                                          controllers.EventTypes.index(id: Long)
 
-GET           /brand/:id/facilitators/list                                   controllers.Facilitators.list(id: Long)
-GET           /brand/:id/facilitators                                        controllers.Facilitators.index(id: Long)
-GET           /brand/:id/facilitators/find                                   controllers.Facilitators.search(id: Long, query: Option[String])
+GET           /brand/:id/facilitators/list                                   controllers.cm.Facilitators.list(id: Long)
+GET           /brand/:id/facilitators                                        controllers.cm.Facilitators.index(id: Long)
+GET           /brand/:id/facilitators/find                                   controllers.cm.Facilitators.search(id: Long, query: Option[String])
 
 POST          /brand/:id/settings/licensereminder/off                        controllers.cm.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
 POST          /brand/:id/settings/licensereminder/on                         controllers.cm.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
@@ -104,16 +104,16 @@ POST          /person/:personId/endorsements/positions                       con
 POST          /person/:personId/endorsements/add                             controllers.Endorsements.createFromSelected(personId: Long)
 POST          /event/:eventId/endorsement/evaluation/:evaluationId           controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
-POST          /evaluation/:id/approve                                        controllers.Evaluations.approve(id: Long)
-POST          /evaluation/:id/reject                                         controllers.Evaluations.reject(id: Long)
-POST          /evaluation/:id/confirmrequest                                 controllers.Evaluations.sendConfirmationRequest(id: Long)
-GET           /evaluation/:id                                              controllers.Evaluations.details(id: Long)
-DELETE        /evaluation/:id                                              controllers.Evaluations.delete(id: Long)
+POST          /evaluation/:id/approve                                        controllers.cm.Evaluations.approve(id: Long)
+POST          /evaluation/:id/reject                                         controllers.cm.Evaluations.reject(id: Long)
+POST          /evaluation/:id/confirmrequest                                 controllers.cm.Evaluations.sendConfirmationRequest(id: Long)
+GET           /evaluation/:id                                              controllers.cm.Evaluations.details(id: Long)
+DELETE        /evaluation/:id                                              controllers.cm.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
-GET           /evaluation/confirm/:confirmationId                          controllers.Evaluations.confirm(confirmationId: String)
+GET           /evaluation/confirm/:confirmationId                          controllers.cm.Evaluations.confirm(confirmationId: String)
 
-POST          /person/:personId/material                                   controllers.Materials.create(personId: Long)
-DELETE        /person/:personId/material/:id                               controllers.Materials.remove(personId: Long, id: Long)
+POST          /person/:personId/material                                   controllers.cm.Materials.create(personId: Long)
+DELETE        /person/:personId/material/:id                               controllers.cm.Materials.remove(personId: Long, id: Long)
 
 GET           /report/create/:brandId/event/:eventId/status/:status        controllers.cm.Reports.create(brandId: Long, eventId: Long, status: Int)
 
@@ -137,15 +137,15 @@ POST          /event/:id/invoice                                           contr
 POST          /event/:id/send                                              controllers.cm.event.Requests.send(id: Long)
 GET           /event/:id/attendee                                          controllers.cm.event.Attendees.add(id: Long)
 POST          /event/:id/attendee                                          controllers.cm.event.Attendees.create(id: Long)
-GET           /event/:id/attendee/:attendeeId/evaluation/new               controllers.Evaluations.add(id: Long, attendeeId: Long)
-POST          /event/:id/attendee/:attendeeId/evaluation/new               controllers.Evaluations.create(id: Long, attendeeId: Long)
+GET           /event/:id/attendee/:attendeeId/evaluation/new               controllers.cm.Evaluations.add(id: Long, attendeeId: Long)
+POST          /event/:id/attendee/:attendeeId/evaluation/new               controllers.cm.Evaluations.create(id: Long, attendeeId: Long)
 GET           /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.details(id: Long, attendeeId: Long)
 GET           /event/:id/attendee/:attendeeId/edit                         controllers.cm.event.Attendees.edit(id: Long, attendeeId: Long)
 POST          /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.update(id: Long, attendeeId: Long)
 DELETE        /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.delete(id: Long, attendeeId: Long)
 GET           /event/:id/attendees                                         controllers.cm.event.Attendees.listByEvent(id: Long)
 
-GET           /eventrequest/:id/unsubscribe                                controllers.EventRequests.unsubscribe(id: String)
+GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)
@@ -157,13 +157,13 @@ POST          /member/:id/experiment/:experimentId                         contr
 
 GET           /experiment/:id/picture                                      controllers.hm.Experiments.picture(id: Long, size: String ?= "")
 
-POST          /facilitator/:id/country                                     controllers.Facilitators.addCountry(id: Long)
-POST          /facilitator/:id/language                                    controllers.Facilitators.addLanguage(id: Long)
-GET           /facilitator/:id/brand/:brandId/badges                       controllers.Facilitators.badges(id: Long, brandId: Long)
-POST          /facilitator/:id/brand/:brandId/badges                       controllers.Facilitators.updateBadges(id: Long, brandId: Long)
-GET           /facilitator/:id/country/:country/delete                     controllers.Facilitators.deleteCountry(id: Long, country: String)
-GET           /facilitator/:id/language/:lang/delete                       controllers.Facilitators.deleteLanguage(id: Long, lang: String)
-GET           /facilitator/:id/brand/:brandId                              controllers.Facilitators.details(id: Long, brandId: Long)
+POST          /facilitator/:id/country                                     controllers.cm.Facilitators.addCountry(id: Long)
+POST          /facilitator/:id/language                                    controllers.cm.Facilitators.addLanguage(id: Long)
+GET           /facilitator/:id/brand/:brandId/badges                       controllers.cm.Facilitators.badges(id: Long, brandId: Long)
+POST          /facilitator/:id/brand/:brandId/badges                       controllers.cm.Facilitators.updateBadges(id: Long, brandId: Long)
+GET           /facilitator/:id/country/:country/delete                     controllers.cm.Facilitators.deleteCountry(id: Long, country: String)
+GET           /facilitator/:id/language/:lang/delete                       controllers.cm.Facilitators.deleteLanguage(id: Long, lang: String)
+GET           /facilitator/:id/brand/:brandId                              controllers.cm.Facilitators.details(id: Long, brandId: Long)
 
 GET           /license/:id/edit                                            controllers.Licenses.edit(id: Long)
 POST          /license/:id                                                 controllers.Licenses.update(id: Long)

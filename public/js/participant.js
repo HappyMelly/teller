@@ -116,7 +116,7 @@ function getActiveRow() {
  */
 function rejectEvaluation(object, callback) {
     var evaluationId = $(object).data('id');
-    var url = jsRoutes.controllers.Evaluations.reject(evaluationId).url;
+    var url = jsRoutes.controllers.cm.Evaluations.reject(evaluationId).url;
     $.post(url, {}, function(data) {
         callback(data);
         var caption = "Evaluation is rejected and a notification is sent to the participant";
@@ -131,7 +131,7 @@ function rejectEvaluation(object, callback) {
  */
 function approveEvaluation(object, callback) {
     var evaluationId = $(object).data('id');
-    var url = jsRoutes.controllers.Evaluations.approve(evaluationId).url;
+    var url = jsRoutes.controllers.cm.Evaluations.approve(evaluationId).url;
     $.post(url, {}, function(data) {
         callback(data);
         var caption = "Evaluation is approved and certificate is sent to the participant";
@@ -150,7 +150,7 @@ function deleteEvaluation(object, container) {
     if (result == true) {
         $.ajax({
             type: "DELETE",
-            url: jsRoutes.controllers.Evaluations.delete(evaluationId).url,
+            url: jsRoutes.controllers.cm.Evaluations.delete(evaluationId).url,
             data: {}
         }).done(function(data) {
             if (container == "table") {
@@ -215,7 +215,7 @@ function generateCertificate(object) {
  */
 function sendConfirmationRequest(object) {
     var evaluationId = $(object).data('id');
-    var url = jsRoutes.controllers.Evaluations.sendConfirmationRequest(evaluationId).url;
+    var url = jsRoutes.controllers.cm.Evaluations.sendConfirmationRequest(evaluationId).url;
     $.post(url, {}, function(data) {
         success(JSON.parse(data).message);
     }).fail(function(jqXHR) {

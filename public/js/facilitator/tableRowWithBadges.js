@@ -89,7 +89,7 @@
 
     TableRowWithBadges.prototype.getBadgesList = function(cb){
         var self = this,
-            url = jsRoutes.controllers.Facilitators.details(this.data.personId, this.data.brandId).url;
+            url = jsRoutes.controllers.cm.Facilitators.details(this.data.personId, this.data.brandId).url;
 
         $.get(url).done(function (content) {
             self.$modalContent.html(content);
@@ -118,7 +118,7 @@
     TableRowWithBadges.prototype.saveBadges = function(){
         var self = this,
             arrBadges,
-            url = jsRoutes.controllers.Facilitators.updateBadges(this.data.personId, this.data.brandId).url;
+            url = jsRoutes.controllers.cm.Facilitators.updateBadges(this.data.personId, this.data.brandId).url;
 
         arrBadges = self.prepareBadgesList();
 

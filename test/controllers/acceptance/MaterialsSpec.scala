@@ -25,7 +25,7 @@
 package controllers.acceptance
 
 import _root_.integration.PlayAppSpec
-import controllers.Materials
+import controllers.cm.Materials
 import helpers._
 import models.cm.facilitator.Material
 import models.repository.PersonRepository
