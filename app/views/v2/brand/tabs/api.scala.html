@@ -4,8 +4,9 @@
     data-brand-id="@config.brandId">
     <h4 class="b-setapi__main">API</h4>
     <p>
-        API activation helps Happy Melly Teller collaborate with your site.
-        As example, you can specify information with link to events list on your website and when participants will get their emails about upcoming events, they will be able to go straight to your site to learn some more information.
+        API allows to integrate your website with Happy Melly Teller.
+        For example, you can show event schedule or profiles of facilitators on your website. You can also integrate
+        an evaluation form to collect feedback from attendees.
     </p>
 
     <div class="b-setapi__deactive">
@@ -26,15 +27,15 @@
             Token
         </h3>
         <p>
-            All API requests require authentication using a application-specific token.
+            API requests require authentication by application-specific token.
             Your token is:
         </p>
         <div class="b-setapi__token">
             @config.token
         </div>
         <p>
-            About how to use it and and how to make requests to API
-                <a target="_blank" href="@controllers.core.routes.Dashboard.apiv2()" class="link-mblue">read the instruction</a>.
+            To learn how to use API and integrate it with your website,
+                <a target="_blank" href="@controllers.core.routes.Dashboard.apiv2()" class="link-mblue">read the instructions</a>.
         </p>
         <div class="b-setapi__diveder"></div>
 
@@ -53,7 +54,7 @@
 
         <form class="b-apiform" data-setapi-form>
             <div class="b-apiform__i">
-                <div class="b-apiform__hint state_hovered" data-placement="right" data-toggle="tooltip" title="Used in emails to potential attendees when they requested to be notified about event they want to attend to.">
+                <div class="b-apiform__hint state_hovered" data-placement="right" data-toggle="tooltip" title="Used in emails to potential attendees when they filled in event request form on your website to be notified about upcoming events in their area">
                     <div class="question">?</div>
                     <div class="text">Where is it used</div>
                 </div>
@@ -71,7 +72,7 @@
                 </div>
             </div>
             <div class="b-apiform__i">
-                <div class="b-apiform__hint">
+                <div class="b-apiform__hint" data-placement="right" data-toggle="tooltip" title="Used on a public event page which facilitators could use to promote their event. If not set, visitors won't be able to check facilitators' profile">
                     <div class="question">?</div>
                     <div class="text">Where is it used</div>
                 </div>
@@ -89,7 +90,7 @@
                 </div>
             </div>
             <div class="b-apiform__i">
-                <div class="b-apiform__hint">
+                <div class="b-apiform__hint" data-placement="right" data-toggle="tooltip" title="Used in evaluation request email sent by facilitators to event attendees. You should fill in either this field or the next one to allow facilitators to send evaluation requests">
                     <div class="question">?</div>
                     <div class="text">Where is it used</div>
                 </div>
@@ -104,7 +105,7 @@
 
             </div>
             <div class="b-apiform__i">
-                <div class="b-apiform__hint">
+                <div class="b-apiform__hint" data-placement="right" data-toggle="tooltip" title="Used in evaluation request email sent by facilitators to event attendees. You should fill in either this field or the previous one to allow facilitators to send evaluation requests">
                     <div class="question">?</div>
                     <div class="text">Where is it used</div>
                 </div>

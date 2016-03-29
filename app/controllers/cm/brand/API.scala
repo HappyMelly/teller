@@ -21,7 +21,6 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-
 package controllers.cm.brand
 
 import javax.inject.Inject
@@ -117,9 +116,12 @@ class API @Inject() (override implicit val env: TellerRuntimeEnvironment,
   }
 
   protected val form = Form(tuple(
-    "event" -> optional(nonEmptyText),
-    "facilitator" -> optional(nonEmptyText),
+    "event" -> optional(nonEmptyText).
+      verifying(s"Url should contain ${ApiConfig.EVENT}", _.forall(_.contains(ApiConfig.EVENT))),
+    "facilitator" -> optional(nonEmptyText).
+      verifying(s"Url should contain ${ApiConfig.FACILITATOR}", _.forall(_.contains(ApiConfig.FACILITATOR))),
     "generalEvaluation" -> optional(nonEmptyText),
-    "specificEventEvaluation" -> optional(nonEmptyText)
+    "specificEventEvaluation" -> optional(nonEmptyText).
+      verifying(s"Url should contain ${ApiConfig.EVENT}", _.forall(_.contains(ApiConfig.EVENT)))
   ))
 }

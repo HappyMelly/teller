@@ -45,9 +45,6 @@ case class ApiConfig(id: Option[Long],
                      generalEvaluation: Option[String] = None,
                      specificEventEvaluation: Option[String] = None) extends ActivityRecorder {
 
-  val EVENT = "*EventId*"
-  val FACILITATOR = "*FacilitatorId*"
-
   val identifier: Long = id.getOrElse(0)
   val humanIdentifier: String = "app for brand %s".format(brandId)
   val objectType: String = Activity.Type.ApiConfig
@@ -70,7 +67,7 @@ case class ApiConfig(id: Option[Long],
     */
   def evaluationUrl(eventId: Long, facilitatorId: Long): String = activityCheck {
     specificEventEvaluation.map { pattern =>
-      pattern.replace(EVENT, eventId.toString).replace(FACILITATOR, facilitatorId.toString)
+      pattern.replace(ApiConfig.EVENT, eventId.toString).replace(ApiConfig.FACILITATOR, facilitatorId.toString)
     }.getOrElse {
       generalEvaluation.getOrElse("")
     }
@@ -82,17 +79,17 @@ case class ApiConfig(id: Option[Long],
     */
   def eventUrl(eventId: Long): String = activityCheck {
     event.map { pattern =>
-      pattern.replace(EVENT, eventId.toString)
+      pattern.replace(ApiConfig.EVENT, eventId.toString)
     }.getOrElse("")
   }
 
   /**
     * Returns facilitator url pattern filled with data
-    * @param facilitatorId Facilitator identifier
+    * @param facilitatorId Facilitator identifier (unique name or numerical id)
     */
   def facilitatorUrl(facilitatorId: Long): String = activityCheck {
     facilitator.map { pattern =>
-      pattern.replace(FACILITATOR, facilitatorId.toString)
+      pattern.replace(ApiConfig.FACILITATOR, facilitatorId.toString)
     }.getOrElse("")
   }
 
@@ -105,6 +102,8 @@ case class ApiConfig(id: Option[Long],
 }
 
 object ApiConfig {
+  val EVENT = "*EventId*"
+  val FACILITATOR = "*FacilitatorId*"
 
   /**
     * Returns config cache identifier
