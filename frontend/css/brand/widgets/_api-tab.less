@@ -63,7 +63,7 @@
 
 .b-apiform__i{
   position: relative;
-  margin-bottom: 21px;
+  margin-bottom: 22px;
   text-align: left;
 
   .tooltip{
@@ -76,13 +76,15 @@
   }
 
   .b-error{
-    position: static;
-    left: 0;
-    top: 0;
-    font-size: 14px;
-    line-height: 20px;
-    margin-top: 4px;
+    display: none;
   }
+}
+
+.b-apiform__subtext{
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #777777;
 }
 
 .b-apiform__label{
@@ -93,6 +95,7 @@
 
 .b-apiform__input{
   width: 100%;
+  font-size: 14px;
   background: #ffffff;
 }
 
@@ -125,11 +128,17 @@
     white-space: nowrap;
   }
 
+  &.state_hovered{
+    .text{
+      width: 100px;
+    }
+  }
+
   &:hover{
     color: #4a90e2;
 
     .text{
-      width: 90px;
+      width: 100px;
     }
   }
 }
@@ -146,6 +155,13 @@
 .b-apiform__btn-save{
   float: left;
   width: 66.3%;
+}
+
+.b-apiform__errors{
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #D64456;
 }
 
 // View block

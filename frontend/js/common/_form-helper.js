@@ -46,7 +46,7 @@ export default class FormHelper {
     _isValidInput($input) {
         const value = $.trim($input.val());
 
-        if (!value) {
+        if (!value && !$input.hasClass('type-optional')) {
             this._setError($input, 'Empty');
             return false;
         }

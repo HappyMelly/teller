@@ -34,7 +34,7 @@
         </div>
         <p>
             About how to use it and and how to make requests to API
-                <a href="@controllers.core.routes.Dashboard.apiv2()" class="link-mblue">read the instruction</a>.
+                <a target="_blank" href="@controllers.core.routes.Dashboard.apiv2()" class="link-mblue">read the instruction</a>.
         </p>
         <div class="b-setapi__diveder"></div>
 
@@ -53,15 +53,22 @@
 
         <form class="b-apiform" data-setapi-form>
             <div class="b-apiform__i">
-                <div class="b-apiform__hint" data-placement="right" data-toggle="tooltip" title="Used in emails to potential attendees when they requested to be notified about event they want to attend to.">
+                <div class="b-apiform__hint state_hovered" data-placement="right" data-toggle="tooltip" title="Used in emails to potential attendees when they requested to be notified about event they want to attend to.">
                     <div class="question">?</div>
                     <div class="text">Where is it used</div>
                 </div>
                 <div class="b-apiform__label">
                     Specific event
                 </div>
-                <input type="text" name="event" class="b-apiform__input form-control input-sm"
-                    placeholder="http://yourwebsite.com/event/*EventId*" value="@config.event" />
+                <input type="text"
+                    name="event"
+                    class="b-apiform__input form-control input-sm type-optional"
+                    placeholder="http://yourwebsite.com/event/*EventId*"
+                    value="@config.event" />
+
+                <div class="b-apiform__subtext">
+                    Use *EventId* combination instead of Event Id number.
+                </div>
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -71,8 +78,15 @@
                 <div class="b-apiform__label">
                     Specific facilitator
                 </div>
-                <input type="text" name="facilitator" class="b-apiform__input form-control input-sm"
-                    placeholder="http://yourwebsite.com/facilitator/*FacilitatorId*" value="@config.facilitator"/>
+                <input type="text"
+                    name="facilitator"
+                    class="b-apiform__input form-control input-sm type-optional"
+                    placeholder="http://yourwebsite.com/facilitator/*FacilitatorId*"
+                    value="@config.facilitator"/>
+
+                <div class="b-apiform__subtext">
+                    Use *FacilitatoriId* or *FacilitatorName* combination instead of Facilitator Id number or name.
+                </div>
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -82,8 +96,12 @@
                 <div class="b-apiform__label">
                     Evaluation form
                 </div>
-                <input type="text" name="evaluation-form" class="b-apiform__input form-control input-sm"
-                    placeholder="http://yourwebsite.com/evaluation/" value="@config.generalEvaluation"/>
+                <input type="text"
+                    name="evaluation-form"
+                    class="b-apiform__input form-control input-sm type-optional"
+                    placeholder="http://yourwebsite.com/evaluation/"
+                    value="@config.generalEvaluation"/>
+
             </div>
             <div class="b-apiform__i">
                 <div class="b-apiform__hint">
@@ -93,18 +111,28 @@
                 <div class="b-apiform__label">
                     Evaluation form for a specific event
                 </div>
-                <input type="text" name="evaluation-event" class="b-apiform__input form-control input-sm"
-                    placeholder="http://yourwebsite.com/evaluation/*EventId*/*FacilitatorId*" value="@config.specificEventEvaluation"/>
+                <input type="text"
+                    name="evaluation-event"
+                    class="b-apiform__input form-control input-sm type-optional"
+                    placeholder="http://yourwebsite.com/evaluation/*EventId*/*FacilitatorId*"
+                    value="@config.specificEventEvaluation"/>
+
+                <div class="b-apiform__subtext">
+                    Use *EventId* combination instead of Event Id number. Use *FacilitatoriId* or *FacilitatorName* combination instead of Facilitator Id number or name.
+                </div>
             </div>
             <div class="b-apiform__buttons">
                 <a href="#" class="btn btn-default b-apiform__btn-cancel"
-                    data-seatpi-form-cancel>
+                    data-setapi-form-cancel>
                     Cancel
                 </a>
                 <a href="#" class="btn btn-primary b-apiform__btn-save"
-                    data-seatpi-form-save>
+                    data-setapi-form-save>
                     Save
                 </a>
+            </div>
+            <div class="b-apiform__errors" data-setapi-errors>
+
             </div>
         </form>
 

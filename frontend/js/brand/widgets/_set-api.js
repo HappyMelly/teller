@@ -28,7 +28,8 @@ export default class Widget {
             $form: $root.find('[data-setapi-form]'),
             $view: $root.find('[data-setapi-view]'),
             $modal: $root.find('[data-setapi-modal]'),
-            $inputs: $root.find('.b-apiform__input')
+            $inputs: $root.find('.b-apiform__input'),
+            $error: $root.find('[data-setapi-errors]')
         };
     }
 
@@ -40,8 +41,8 @@ export default class Widget {
             .on('click', '[data-setapi-deacticate]', this._onClickDeactivate.bind(this))
 
             .on('submit', '[data-setapi-form]', this._onClickSubmit.bind(this))
-            .on('click', '[data-seatpi-form-save]', this._onClickSubmit.bind(this))
-            .on('click', '[data-seatpi-form-cancel]', this._onClickFormCancel.bind(this))
+            .on('click', '[data-setapi-form-save]', this._onClickSubmit.bind(this))
+            .on('click', '[data-setapi-form-cancel]', this._onClickFormCancel.bind(this))
 
             .on('click', '[data-setapi-editform]', this._onClickEditForm.bind(this))
             .on('click', '.b-apiview__link', this._onClickAddUrl.bind(this));
@@ -82,8 +83,7 @@ export default class Widget {
 
     _onClickSpecify(e){
         e.preventDefault();
-        const self = this;
-        const $root = self.$root;
+        const $root = this.$root;
 
         if (!$root.hasClass('b-setapi_state_form')){
             $root.addClass('b-setapi_state_form');
@@ -100,6 +100,7 @@ export default class Widget {
         const formData = this.formHelper.getFormData();
         self._sendUrlsData(self.brandId, formData)
             .done(()=>{
+                self.locals.$error.text('');
                 this._saveFormData($inputs);
                 this._prepareView($inputs);
                 this._showView();
@@ -108,16 +109,22 @@ export default class Widget {
             })
             .fail((response)=>{
                 const data = $.parseJSON(response.responseText).data;
+                const errorText = self.formHelper.getErrorsText(data.errors);
 
                 if (!data.errors) return;
+
                 self.formHelper.setErrors(data.errors);
+                self.locals.$error.text(errorText);
             })
     }
 
     _onClickFormCancel(e){
         e.preventDefault();
+
         this._restoreFormData(this.locals.$inputs);
         this.formHelper.removeErrors();
+        this.locals.$error.text('');
+
         this._showView();
     }
 
