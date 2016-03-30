@@ -26,11 +26,12 @@ libraryDependencies ++= Seq(
     "mysql" % "mysql-connector-java" % "5.1.34",
     "org.apache.poi" % "poi" % "3.14",
     "org.apache.poi" % "poi-ooxml" % "3.14",
-    "org.scalamock" %% "scalamock-specs2-support" % "3.2.2" % Test,
     "org.joda" % "joda-money" % "0.11",
+    "org.jsoup" % "jsoup" % "1.7.3",
     "org.pegdown" % "pegdown" % "1.6.0",
     "org.planet42" %% "laika-core" % "0.5.1",
-    "org.jsoup" % "jsoup" % "1.7.3",
+    "org.scalamock" %% "scalamock-specs2-support" % "3.2.2" % Test,
+    "org.twitter4j" % "twitter4j-core" % "4.0.4",
     "ws.securesocial" %% "securesocial" % "3.0-M4",
     "net.kaliber" %% "play-s3" % "7.0.2" //s3 amazon support
   )
