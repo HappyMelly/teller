@@ -323,7 +323,6 @@ $(document).ready( function() {
         "bPaginate": false
     });
 
-    $('[data-toggle="tooltip"]').tooltip();
     $('#saveReason').on('click', updateReason);
 
 

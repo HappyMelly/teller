@@ -70,7 +70,4 @@ $(document).ready( function() {
         [filterByRegion, filterByLicense]
     );
 
-    $('[data-toggle="tooltip"]').tooltip();
-
-
 });
