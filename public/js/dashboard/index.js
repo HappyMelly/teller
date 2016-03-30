@@ -23,13 +23,7 @@
  */
 
 
-/**
- * This function is called from 'cancelEvent' function
- */
-function afterEventCancellation(object) {
-    $(object).parents('.upcoming-event').remove();
-    updateUpcomingEventsNumber();
-}
+
 
 $(document).ready( function() {
     initializeParticipantActions("list");

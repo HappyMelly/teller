@@ -60,7 +60,6 @@ $(document).ready( function() {
             "bPaginate": false
         });
     });
-    $('[data-toggle="tooltip"]').tooltip();
 
     // Select functionality for product details page
     $("#contributor > select").change(function(){

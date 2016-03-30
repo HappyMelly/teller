@@ -187,6 +187,19 @@ export default class FormHelper {
         })
     }
 
+    getFormData(){
+        let ajaxData = {};
+        
+        this.$inputs.map((index, el) => {
+            const $el = $(el);
+            const name = $el.attr('name');
+
+            name && (ajaxData[name] = $el.val())
+        });
+        
+        return ajaxData;
+    }
+
     clearForm() {
         this.$inputs.each((index, el) => {
             const $el = $(el);

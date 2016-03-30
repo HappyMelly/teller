@@ -28,9 +28,7 @@ $(document).ready( function() {
     $('form.delete').submit(function() {
         return confirm('Delete this ' + $(this).attr('text') + '? You cannot undo this action.');
     });
-
-
-    // Datatables
+    
 
     $('.datatables').each(function() {
         $(this).dataTable( {
