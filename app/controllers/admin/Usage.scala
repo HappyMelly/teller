@@ -209,8 +209,11 @@ class Usage @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvi
     */
   protected def licenseStatsByCountry(licenses: List[License]) = {
     val (start, _) = chargeablePeriod()
-    repos.person.find(licenses.map(_.licenseeId).distinct) map { facilitators =>
-      repos.person.collection.addresses(facilitators)
+    val query = for {
+      facilitators <- repos.person.find(licenses.map(_.licenseeId).distinct)
+      _ <- repos.person.collection.addresses(facilitators)
+    } yield facilitators
+    query map { facilitators =>
       licenses.map { license =>
         (license, facilitators.find(_.identifier == license.licenseeId).map(_.address.countryCode).get)
       }.groupBy(_._1.brandId).map { byBrand =>
