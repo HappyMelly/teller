@@ -63,6 +63,7 @@
                 </div>
                 <input type="text"
                     name="event"
+                    title="Specific event"
                     class="b-apiform__input form-control input-sm type-optional"
                     placeholder="http://yourwebsite.com/event/*EventId*"
                     value="@config.event" />
@@ -81,6 +82,7 @@
                 </div>
                 <input type="text"
                     name="facilitator"
+                    title="Specific facilitator"
                     class="b-apiform__input form-control input-sm type-optional"
                     placeholder="http://yourwebsite.com/facilitator/*FacilitatorId*"
                     value="@config.facilitator"/>
@@ -99,6 +101,7 @@
                 </div>
                 <input type="text"
                     name="generalEvaluation"
+                    title="Evaluation form"
                     class="b-apiform__input form-control input-sm type-optional"
                     placeholder="http://yourwebsite.com/evaluation/"
                     value="@config.generalEvaluation"/>
@@ -114,6 +117,7 @@
                 </div>
                 <input type="text"
                     name="specificEventEvaluation"
+                    title="Evaluation form for a specific event"
                     class="b-apiform__input form-control input-sm type-optional"
                     placeholder="http://yourwebsite.com/evaluation/*EventId*/*FacilitatorId*"
                     value="@config.specificEventEvaluation"/>
@@ -132,9 +136,7 @@
                     Save
                 </a>
             </div>
-            <div class="b-apiform__errors" data-setapi-errors>
-
-            </div>
+            <div class="b-apiform__errors" data-setapi-errors></div>
         </form>
 
         <div class="b-apiview" data-setapi-view>

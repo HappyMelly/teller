@@ -1,5 +1,12 @@
 'use strict';
 
+/**
+ * Errors
+ * @typedef {Object} ListErrors
+ * @property {String} name - name of field
+ * @property {String} error - error description
+ */
+
 export default class FormHelper {
     /**
      * Validate form through inputs
@@ -120,7 +127,9 @@ export default class FormHelper {
     }
 
     /**
-     * Get txt version of all errors
+     * Get text version of errors in one line.
+     * @param {ListErrors} errors
+     * @returns {string}
      */
     getErrorsText(errors) {
         const arrErrors = errors || this.arrErrors;
@@ -130,6 +139,26 @@ export default class FormHelper {
             const name = item.name[0].toUpperCase() + item.name.substr(1);
 
             errorTxt += `${name}: ${item.error}. `;
+        });
+
+        return errorTxt;
+    }
+
+    /**
+     * Get list of errors with full title (from input title attribute)
+     * @param {ListErrors} errors - list of errors
+     * @returns {string}
+     */
+    getErrorsFull(errors) {
+        const arrErrors = errors || this.arrErrors;
+        const $body = $('body');
+        let errorTxt = '';
+
+        arrErrors.forEach((item) => {
+            const $input = $body.find(`input[name="${item.name}"]`).first();
+            const name = $input.length? $input.attr('title'): item.name;
+
+            errorTxt += `<b>${name}</b>: ${item.error}.  <br><br>`;
         });
 
         return errorTxt;

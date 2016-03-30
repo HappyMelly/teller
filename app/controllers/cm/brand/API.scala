@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.Security
+import controllers.{Security, Utilities}
 import models.cm.brand.ApiConfig
 import models.repository.Repositories
 import play.api.data.Form
@@ -101,7 +101,7 @@ class API @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case None => jsonNotFound("Brand not found")
       case Some(apiConfig) =>
         form.bindFromRequest.fold(
-          errors => jsonFormError(errors.errorsAsJson),
+          errors => jsonFormError(Utilities.errorsToJson(errors)),
           { case (event, facilitator, generalEval, specificEventEval) =>
             val config = apiConfig.copy(event = event,
               facilitator = facilitator,

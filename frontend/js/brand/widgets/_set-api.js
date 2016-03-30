@@ -100,7 +100,7 @@ export default class Widget {
         const formData = this.formHelper.getFormData();
         self._sendUrlsData(self.brandId, formData)
             .done(()=>{
-                self.locals.$error.text('');
+                self.locals.$error.html('');
                 this._saveFormData($inputs);
                 this._prepareView($inputs);
                 this._showView();
@@ -109,12 +109,12 @@ export default class Widget {
             })
             .fail((response)=>{
                 const data = $.parseJSON(response.responseText).data;
-                const errorText = self.formHelper.getErrorsText(data.errors);
+                const errorText = self.formHelper.getErrorsFull(data.errors);
 
                 if (!data.errors) return;
 
                 self.formHelper.setErrors(data.errors);
-                self.locals.$error.text(errorText);
+                self.locals.$error.html(errorText);
             })
     }
 
@@ -123,7 +123,7 @@ export default class Widget {
 
         this._restoreFormData(this.locals.$inputs);
         this.formHelper.removeErrors();
-        this.locals.$error.text('');
+        this.locals.$error.html('');
 
         this._showView();
     }
