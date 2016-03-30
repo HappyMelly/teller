@@ -86,7 +86,7 @@
                     value="@config.facilitator"/>
 
                 <div class="b-apiform__subtext">
-                    Use *FacilitatoriId* or *FacilitatorName* combination instead of Facilitator Id number or name.
+                    Use *FacilitatoriId* combination instead of Facilitator Id number.
                 </div>
             </div>
             <div class="b-apiform__i">
@@ -98,7 +98,7 @@
                     Evaluation form
                 </div>
                 <input type="text"
-                    name="evaluation-form"
+                    name="generalEvaluation"
                     class="b-apiform__input form-control input-sm type-optional"
                     placeholder="http://yourwebsite.com/evaluation/"
                     value="@config.generalEvaluation"/>
@@ -113,13 +113,13 @@
                     Evaluation form for a specific event
                 </div>
                 <input type="text"
-                    name="evaluation-event"
+                    name="specificEventEvaluation"
                     class="b-apiform__input form-control input-sm type-optional"
                     placeholder="http://yourwebsite.com/evaluation/*EventId*/*FacilitatorId*"
                     value="@config.specificEventEvaluation"/>
 
                 <div class="b-apiform__subtext">
-                    Use *EventId* combination instead of Event Id number. Use *FacilitatoriId* or *FacilitatorName* combination instead of Facilitator Id number or name.
+                    Use *EventId* combination instead of Event Id number. You can also use *FacilitatoriId* combination instead of Facilitator Id number.
                 </div>
             </div>
             <div class="b-apiform__buttons">
@@ -152,14 +152,14 @@
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i" data-setapi-field="evaluation-form">
+            <div class="b-apiview__i" data-setapi-field="generalEvaluation">
                 <b>Evaluation form</b>
                 <div class="b-apiview__text">
                     http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
                 </div>
                 <a href="#" class="link-blue b-apiview__link">+ Add url</a>
             </div>
-            <div class="b-apiview__i" data-setapi-field="evaluation-event">
+            <div class="b-apiview__i" data-setapi-field="specificEventEvaluation">
                 <b>Evaluation form for a specific event</b>
                 <div class="b-apiview__text">
                     http://management30.com/facilitators/about/?trainer=*siminderova_alexandra*
