@@ -26,16 +26,18 @@ package security
 
 import _root_.java.util.UUID
 
-import oauth.signpost.exception.OAuthException
 import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.JsValue
-import play.api.libs.oauth.{ConsumerKey, OAuth, RequestToken, ServiceInfo, _}
+import play.api.libs.oauth.{ConsumerKey, OAuth, ServiceInfo, _}
 import play.api.mvc.Results.Redirect
 import play.api.mvc.{AnyContent, Request}
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import securesocial.core.{AuthenticationException, AuthenticationResult, BasicProfile, IdentityProvider, OAuth1Info}
 import securesocial.core.AuthenticationMethod
+import twitter4j.TwitterFactory
+import twitter4j.auth.RequestToken
+import twitter4j.conf.ConfigurationBuilder
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
@@ -60,29 +62,45 @@ trait OAuth1Client {
 object OAuth1Client {
   /**
     * A default implementation based on the Play client
+    *
     * @param serviceInfo
     */
   class Default(val serviceInfo: ServiceInfo, val httpService: HttpService)(implicit val executionContext: ExecutionContext) extends OAuth1Client {
     private val client = OAuth(serviceInfo, use10a = true)
     override def redirectUrl(token: String): String = client.redirectUrl(token)
 
-    private def withFuture(call: => Either[OAuthException, RequestToken]): Future[RequestToken] = Future {
+    private def withFuture(call: => Either[Exception, RequestToken]): Future[RequestToken] = Future {
       call match {
         case Left(error) => throw error
         case Right(token) => token
       }
     }
 
-    override def retrieveOAuth1Info(token: RequestToken, verifier: String) = withFuture {
-      client.retrieveAccessToken(token, verifier)
-    }.map(accessToken => OAuth1Info(accessToken.token, accessToken.secret))
+    override def retrieveOAuth1Info(token: RequestToken, verifier: String) = {
+      val cb = new ConfigurationBuilder()
+      cb.setOAuthConsumerKey(serviceInfo.key.key)
+      cb.setOAuthConsumerSecret(serviceInfo.key.secret)
+      cb.setOAuthAuthenticationURL(token.getAuthenticationURL)
+      val factory = (new TwitterFactory(cb.build())).getInstance()
+      val accessToken = factory.getOAuthAccessToken(token, verifier)
+      Future.successful(OAuth1Info(accessToken.getToken, accessToken.getTokenSecret))
+    }
 
     override def retrieveRequestToken(callbackURL: String) = withFuture {
-      client.retrieveRequestToken(callbackURL)
+      val cb = new ConfigurationBuilder()
+      cb.setOAuthConsumerKey(serviceInfo.key.key)
+      cb.setOAuthConsumerSecret(serviceInfo.key.secret)
+      val factory = (new TwitterFactory(cb.build())).getInstance()
+      try {
+        Right(factory.getOAuthRequestToken(callbackURL))
+      }
+      catch {
+        case e: Exception => Left(e)
+      }
     }
 
     override def retrieveProfile(url: String, info: OAuth1Info): Future[JsValue] =
-      httpService.url(url).sign(OAuthCalculator(serviceInfo.key, RequestToken(info.token, info.secret))).get().map(_.json)
+      httpService.url(url).sign(OAuthCalculator(serviceInfo.key, play.api.libs.oauth.RequestToken(info.token, info.secret))).get().map(_.json)
   }
 }
 
@@ -91,6 +109,7 @@ object ServiceInfoHelper {
 
   /**
     * A helper method to create a service info from the properties file
+    *
     * @param id
     * @return
     */
@@ -145,7 +164,7 @@ abstract class OAuth1Provider(
           case accessToken =>
             val cacheKey = UUID.randomUUID().toString
             debug(sessionIdentifier, 145)
-            val redirect = Redirect(client.redirectUrl(accessToken.token)).withSession(request.session +
+            val redirect = Redirect(client.redirectUrl(accessToken.getToken)).withSession(request.session +
               (OAuth1Provider.CacheKey -> cacheKey))
             // set the cache key timeoutfor 5 minutes, plenty of time to log in
             cacheService.set(cacheKey, accessToken, 300).map {
@@ -174,9 +193,7 @@ abstract class OAuth1Provider(
               logger.error("[securesocial] error retrieving entry from cache", e)
               throw new AuthenticationException()
           };
-          accessToken <- client.retrieveOAuth1Info(
-            RequestToken(requestToken.get.token, requestToken.get.secret), verifier.get
-          ).recover {
+          accessToken <- client.retrieveOAuth1Info(requestToken.get, verifier.get).recover {
             case e =>
               debug(sessionIdentifier, 179)
               logger.error("[securesocial] error retrieving access token", e)
