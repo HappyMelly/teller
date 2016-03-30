@@ -29,8 +29,6 @@ export default class Widget {
         const self = this;
         e.preventDefault();
 
-        debugger;
-
         if(!self.validation.isValidInputs()) return;
 
         const formData = self.validation.getFormData();
@@ -39,7 +37,7 @@ export default class Widget {
                 self.$root.modal('hide');
                 self.validation.clearForm();
 
-                this.$root.trigger('hmt.emailconnect.success');
+                self.$root.trigger('hmt.emailconnect.success');
             })
             .fail(function(response){
                 const data = $.parseJSON(response.responseText).data;
