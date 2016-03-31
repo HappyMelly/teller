@@ -123,10 +123,14 @@
           </div>
           <div class="row">
             <div class="col-md-12">
-              @defining(event.pageUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { maybeUrl =>
-                  @maybeUrl.map { url =>
-                    <span class="text-muted">Website: </span> <a href="@url" target="_blank">@url</a> <br/>
+              @if(event.publicPage) {
+                  @defining(controllers.Utilities.fullUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { url =>
+                      <span class="text-muted">Event page: </span> <a href="@url" target="_blank">@url</a> <br/>
+
                   }
+              }
+              @event.organizer.webSite.map { url =>
+                  <span class="text-muted">Organizer Website: </span> <a href="@url" target="_blank">@url</a> <br/>
               }
               @event.organizer.registrationPage.map { url =>
                 <span class="text-muted">Registration: </span><a href="@url" target="_blank">@url</a><br/>

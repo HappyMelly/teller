@@ -105,40 +105,15 @@
             <div class="col-md-7" id="addOrgBlock"></div>
           </div>
 
-          <div class="form-group @if(form.error("organizer.webSite").isDefined) {has-error} "
-            id="organizer_webSite_field">
-            <label  class="control-label col-md-2">Organizer website</label>
-            <div class="control-label col-md-7">
-              <label class="b-radio">
-                <input type="radio" class="b-radio__input" name="pageType" value="true"
-                  @if(form("pageType").value.contains("true")) { checked }>
-                <i class="b-radio__icon"></i>
-                <div class="b-radio__text">
-                  Use Teller generated page
-                </div>
-              </label>
-              <label class="b-radio">
-                <input type="radio" class="b-radio__input"  name="pageType" value="false"
-                  @if(form("pageType").value.contains("false")) { checked }>
-                <i class="b-radio__icon"></i>
-                <div class="b-radio__text">
-                  Enter web site URL
-                </div>
-
-                <div class="b-radio__content">
-                  <input id="organizer_webSite" name="@form("organizer.webSite").name"
-                    class="form-control h-weight400" placeholder="http://" value="@form("organizer.webSite").value">
-                </div>
-
-              </label>
-            </div>
-            <div class="col-md-2 field-type">
-              Web site URL
-            </div>
-          </div>
-
+          @v2.html.text(form("organizer.webSite"), '_label -> "Organizer website",
+            'placeholder -> "http://", '_type -> "Web site URL", '_help -> "")
           @v2.html.text(form("organizer.registrationPage"), '_label -> "Registration page",
             'placeholder -> "http:// or mailto:", '_type -> "Web site URL or email address")
+          @v2.html.checkboxWithDescription(form("pageType"),
+            '_label -> "Event page",
+            '_desc -> "Teller will generate a page dedicated to this event which you can use to promote the event",
+            '_help -> "")
+
         }
         @v2.html.block("Misc", Some("yellow")) {
           @v2.html.checkboxWithDescription(form("followUp"),

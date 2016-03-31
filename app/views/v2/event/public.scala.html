@@ -40,6 +40,11 @@
                                 @text.markdown
                             </div>
                         }
+                        @event.organizer.webSite.map { url =>
+                            <div class="p-public__text">
+                                <span class="text-muted">Organizer Website: </span> <a href="@url" target="_blank">@url</a> <br/>
+                            </div>
+                        }
 
                         <div class="b-event">
                             <div class="b-event__info">
