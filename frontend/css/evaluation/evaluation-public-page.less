@@ -1,0 +1,52 @@
+@import "./../settings";
+@import "./public-widgets/_evaluat-info.less";
+@import "./public-widgets/_evaluat-form.less";
+
+
+.p-evaluat{
+  text-align: left;
+  max-width: 975px;
+  margin: 0 auto;
+  padding: 15px 15px 50px;
+}
+
+.p-evaluat__hint{
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  color: #ee929f;
+  margin-bottom: 39px;
+}
+
+.p-evaluat__main{
+  .clearfix();
+}
+
+.p-evaluat__aside{
+  padding-top: 28px;
+  float: right;
+  width: 218px;
+  margin-left: 50px;
+}
+
+.p-evaluat__content{
+  overflow: hidden;
+}
+
+.p-evaluat__content-inner{
+  width: 532px;
+}
+
+@media screen and (max-width: 850px) {
+  .p-evaluat__content-inner{
+    width: 460px;
+  }
+
+  .p-evaluat__aside{
+    margin-left: 20px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+
+}

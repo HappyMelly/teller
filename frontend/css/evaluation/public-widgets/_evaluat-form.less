@@ -1,0 +1,147 @@
+
+
+.b-evalform__title{
+  font-size: 30px;
+  font-weight: 400;
+  margin: 0 0 11px 0;
+}
+
+.b-evalform{
+  font-size: 14px;
+  line-height: 20px;
+
+  &.type-2{
+    display: none;
+  }
+}
+
+.b-evalform__sub{
+  margin-bottom: 19px;
+  font-size: 14px;
+  color: #777777;
+
+  b{
+    display: block;
+    font-size: 18px;
+    line-height: 26px;
+    margin-bottom: -1px;
+    font-weight: 400;
+    color: #333333;
+  }
+}
+
+.b-evalform__i{
+  margin-bottom: 18px;
+}
+
+.b-evalform__label{
+  margin-bottom: 7px;
+  font-weight: 700;
+}
+
+.b-evalform__textarea{
+  border-color: #9b9b9b;
+  width: 100%;
+  resize: none;
+  min-height: 0 !important;
+  height: 90px !important;
+}
+
+.b-evalform__input{
+  border-color: #9b9b9b;
+  width: 100%;
+
+  &.type-birth{
+    width: 107px;
+  }
+}
+
+.b-evalform__select{
+  border-color: #9b9b9b;
+  width: 266px;
+}
+
+.b-evalform__next{
+  font-size: 18px;
+  min-width: 300px;
+  margin-top: 36px;
+  line-height: 1;
+  padding-top: 14px;
+  padding-bottom: 16px;
+}
+
+.b-evalform__buttons{
+  margin-top: 47px;
+}
+
+.b-evalform__cancel,
+.b-evalform__submit{
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1;
+  padding-top: 14px;
+  vertical-align: top;
+  padding-bottom: 16px;
+}
+
+.b-evalform__submit{
+  width: 56.3%;
+}
+
+.b-evalform__cancel{
+  float: right;
+  width: 41%;
+}
+
+.b-evalform__adress{
+  margin-bottom: 10px;
+}
+
+.b-evalform__link{
+  color: #4a90e2;
+  text-decoration: none !important;
+
+  span{
+    display: inline-block;
+    line-height: 1;
+    border-bottom: 1px dashed #4a90e2;
+  }
+
+  .text-hide{
+    display: none;
+  }
+}
+
+.b-evalform__adress-con{
+  margin-left: 30px;
+  margin-bottom: 30px;
+  display: none;
+}
+
+
+/*== state second step ==*/
+.b-evalform_state_second{
+  .b-evalform__step.type-1{
+    display: none;
+  }
+
+  .b-evalform__step.type-2{
+    display: block;
+  }
+}
+
+.b-evalform_show_adress{
+  .b-evalform__adress-con{
+    display: block;
+  }
+
+  .b-evalform__link{
+    .text-show{
+      display: none;
+    }
+
+    .text-hide{
+      display: inline-block;
+    }
+  }
+}
