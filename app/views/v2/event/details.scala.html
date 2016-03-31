@@ -20,160 +20,194 @@
 
 @v2.main(event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
-    <span><a href="@controllers.cm.routes.Events.index(brand.identifier)">Events</a></span>
   }
   <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <input type="hidden" disabled id="eventId" value="@event.id"/>
 
-    <div class="container p-content js-event-details">
-      <div class="row event-details">
-        <div class="col-md-9">
-          @views.html.v2.event.requestEvaluation(config, event, event.facilitatorIds(services).head)
-          <div class="header-block" style="padding-top: 0;">
-            <div class="row">
-              <div class="col-md-12"><h2 style="margin-top: 0;">@event.title</h2></div>
-              <div class="col-md-6">
-                @dateInterval(event.schedule.start, event.schedule.end)
-                @if(event.location.online) {
-                  online
-                } else {
-                  in @event.location.city, @Countries.name(event.location.countryCode)
-                }
-              </div>
-              <div class="col-md-4">
-                Event Rating @views.html.v2.element.rating(event.rating)
-              </div>
+    <div class="container p-content">
+      <div class="b-breadcrumb">
+        <a href="@controllers.cm.routes.Events.index(brand.identifier)" class="b-breadcrumb__i link-blue">Events</a>
+        <span class="b-breadcrumb__div"><i class="fa fa-chevron-right"></i></span>
+      </div>
+
+      <div class=" p-eventdet">
+        @views.html.v2.event.requestEvaluation(config, event, event.facilitatorIds(services).head)
+
+        <div class="p-eventdet__header" style="padding-top : 0 ;">
+          <h2 class="p-eventdet__title">@event.title</h2>
+          <div class="p-eventdet__sub">
+            <div class="p-eventdet__sub-i">
+              @dateInterval(event.schedule.start, event.schedule.end)
+              @if(event.location.online) {
+                online
+              } else {
+                in @event.location.city, @Countries.name(event.location.countryCode)
+              }
+            </div>
+            <div class="p-eventdet__sub-i">
+              Event Rating @views.html.v2.element.rating(event.rating)
             </div>
           </div>
-          <div class="header-block">
-            <div class="row">
-              <div class="col-md-12">
-                <div class="buttons js-event-controls">
-                  <div class="buttons-block">
-                    @if(!event.confirmed) {
-                      <a href="#"
-                        data-id="@event.identifier"
-                        class="btn btn-primary"
-                        data-event-confirm>
-                        Confirm
-                      </a>
-                    } else {
-                      <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
+        </div>
+
+        <div class="row">
+          <div class="col-md-9">
+            <div class="p-eventdet__buttons">
+              <div class="buttons js-event-controls">
+                <div class="buttons-block">
+                  @if(!event.confirmed) {
+                    <a href="#"
+                    data-id="@event.identifier"
+                    class="btn btn-primary"
+                    data-event-confirm>
+                      Confirm
+                    </a>
+                  } else {
+                    <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
+                  }
+                  <a class="btn btn-default" href="@controllers.cm.routes.Events.edit(event.id.get)">
+                    Edit
+                  </a>
+                </div>
+                <div class="buttons-block">
+                  <a class="btn btn-default" href="@controllers.cm.routes.Events.duplicate(event.id.get)">
+                    Duplicate
+                  </a>
+                  <a data-id="@event.identifier"
+                  class="btn btn-default"
+                  data-event-cancel
+                  id="cancelButton" @if(!deletable) {
+                    disabled="disabled"} >
+                    Cancel
+                  </a>
+                </div>
+              </div>
+            </div>
+            @if(user.account.isCoordinatorNow) {
+              @if(!event.schedule.validateTotalHours) {
+                <div class="alert alert-warning">
+                  <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
+                  suspiciously less than a number of hours per day multiplied to a number of days.
+                </div>
+              }
+            }
+
+            <div class="event-info">
+              <div class="event-info__list">
+                  <div class="event-info__col">
+                    <div class="event-info__title">Facilitators</div>
+                    @for(facilitator <- event.facilitators(services)) {
+                      <div class="b-facilitator">
+                        <a class="b-facilitator__link" href="@controllers.core.routes.People.details(facilitator.id.getOrElse(0))">
+                          @v2.element.photo(facilitator, "70")
+                        </a>
+                        <div class="b-facilitator__name">
+                          <div class="inner">@facilitator.fullName</div>
+                        </div>
+                      </div>
                     }
-                    <a class="btn btn-default" href="@controllers.cm.routes.Events.edit(event.id.get)">
-                      Edit
-                    </a>
                   </div>
-                  <div class="buttons-block">
-                    <a class="btn btn-default" href="@controllers.cm.routes.Events.duplicate(event.id.get)">
-                      Duplicate
-                    </a>
-                    <a data-id="@event.identifier"
-                      class="btn btn-default"
-                      data-event-cancel
-                      id="cancelButton" @if(!deletable) {disabled="disabled"} >
-                      Cancel
-                    </a>
+                  <div class="event-info__col">
+                    <div class="event-info__title">Event rundown</div>
+
+                    <div class="clearfix">
+                      <div class="event-info__col">
+                        <dt class="text-muted">Spoken Language</dt>
+                        <dd>@event.spokenLanguage</dd>
+
+                        @event.materialsLanguage.map { language =>
+                          <dt class="text-muted">Materials in</dt>
+                          <dd>@language</dd>
+                        }
+
+                        <dt class="text-muted">Hours</dt>
+                        <dd>@event.schedule.totalHours (per day: @event.schedule.hoursPerDay)</dd>
+                      </div>
+
+                      <div class="event-info__col">
+                        <dt class="text-muted">Event type</dt>
+                        <dd>@typeName</dd>
+
+                        <dt class="text-muted">Organizer</dt>
+                        <dd id="organizer" data-id="@event.organizer.id"></dd>
+                      </div>
+                    </div>
                   </div>
+              </div>
+
+              <div class="event-desc">
+                <div class="event-desc__i">
+                  <a href="#" class="event-desc__copy" data-toggle="tooltip" title="Copy link"></a>
+                  @defining(event.pageUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { maybeUrl =>
+                    @maybeUrl.map { url =>
+                      <span class="text-muted">Website: </span>
+                      <a href="@url" class="link-mblue" target="_blank">@url</a>
+                    }
+                  }
+                </div>
+                <div class="event-desc__i">
+                  <a href="#" class="event-desc__copy" data-toggle="tooltip" title="Copy link"></a>
+                    @event.organizer.registrationPage.map { url =>
+                      <span class="text-muted">Registration: </span>
+                      <a href="@url" class="link-mblue" target="_blank">@url</a>
+                    }
+                </div>
+                <div class="event-desc__i type-full">
+                  @event.details.description.map { desc =>
+                    <span class="text-muted">Description: </span>@desc.markdown
+                  }
+                </div>
+                <div class="event-desc__i type-full">
+                  @event.details.specialAttention.map { attention =>
+                    <span class="text-muted">Special attention: </span>@attention.markdown<br/>
+                  }
                 </div>
               </div>
             </div>
           </div>
-          @if(user.account.isCoordinatorNow) {
-            @if(!event.schedule.validateTotalHours) {
-              <div class="alert alert-warning">
-                <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
-                suspiciously less than a number of hours per day multiplied to a number of days.
+
+          @views.html.v2.event.invoice(user, funders, event, view)
+
+          <div class="col-md-12">
+            <div class="event-table">
+              <div class="event-table__title">
+                Attendees
               </div>
-            }
-          }
-        </div>
-        <div class="col-md-9">
-          <div class="row">
-            <div class="col-md-12 event-info">
-            <div class="column">
-              <div class="title">Facilitators</div>
-              @for(facilitator <- event.facilitators(services)) {
-                <a href="@controllers.core.routes.People.details(facilitator.id.getOrElse(0))">
-                  @v2.element.photo(facilitator, "70")
+              <div class="event-table__links">
+                <a tabindex="-1"
+                  class="link-blue event-table__i"
+                  href="@controllers.cm.event.routes.Attendees.add(event.identifier)" title="Add Attendee">
+                  Add Attendee
                 </a>
-                <span class="name">@facilitator.fullName</span><br/>
-              }
-            </div>
-            <div class="column">
-              <div class="title">Event rundown</div>
-              <div class="column">
-                <dt>Spoken Language</dt>
-                <dd>@event.spokenLanguage</dd>
-                @event.materialsLanguage.map { language =>
-                  <dt>Materials in</dt>
-                  <dd>@language</dd>
+                @if(config.isEvaluationModuleActive) {
+                    <a class="link-blue event-table__i" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
+                        Send Evaluation Request
+                    </a>
+                } else {
+                    <span class="event-table__i" data-toggle="tooltip" data-placement="top"
+                      title="Ask your brand coordinator to set an evaluation url to send evaluation requests">Send Evaluation Request</span>
                 }
-                <dt>Hours</dt>
-                <dd>@event.schedule.totalHours (per day: @event.schedule.hoursPerDay)</dd>
-              </div>
-              <div class="column">
-                <dt class="text-muted">Event type</dt>
-                <dd>@typeName</dd>
-                <dt class="text-muted">Organizer</dt>
-                <dd id="organizer" data-id="@event.organizer.id"></dd>
+                <a id="exportLink"
+                  class="link-blue event-table__i"
+                  href="javascript: void(0)"
+                  title="Only evaluations, currently visible in the table, will be exported">
+                  Export to XLSX
+                </a>
               </div>
             </div>
+            <table id="participants" class="datatables table">
+              <thead>
+                <tr>
+                  <th>Attendee</th>
+                  <th align="center" id="impression"></th>
+                  <th>Evaluation Date</th>
+                  <th>Handled Date</th>
+                  <th>Certificate Number</th>
+                  <th></th>
+                </tr>
+              </thead>
+            </table>
           </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              @defining(event.pageUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { maybeUrl =>
-                  @maybeUrl.map { url =>
-                    <span class="text-muted">Website: </span> <a href="@url" target="_blank">@url</a> <br/>
-                  }
-              }
-              @event.organizer.registrationPage.map { url =>
-                <span class="text-muted">Registration: </span><a href="@url" target="_blank">@url</a><br/>
-              }
-              <br/>
-              @event.details.description.map { desc =>
-                <span class="text-muted">Description: </span>@desc.markdown<br/>
-              }
-              @event.details.specialAttention.map { attention =>
-                <span class="text-muted">Special attention: </span>@attention.markdown<br/>
-              }
-            </div>
-          </div>
-        </div>
-        @views.html.v2.event.invoice(user, funders, event, view)
-        <div class="col-md-12">
-          <div class="table-title">
-            <div class="pull-left">
-              <span class="name">Attendees</span>
-            </div>
-            <div class="pull-right">
-              <a tabindex="-1"
-              href="@controllers.cm.event.routes.Attendees.add(event.identifier)" title="Add Attendee">
-                Add Attendee</a>
-              @if(config.isEvaluationModuleActive) {
-                  <a tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
-                      Send Evaluation Request</a>
-              } else {
-                  <span data-toggle="tooltip" data-placement="top"
-                    title="Ask your brand coordinator to set an evaluation url to send evaluation requests">Send Evaluation Request</span>
-              }
-              <a id="exportLink" href="" title="Only evaluations, currently visible in the table, will be exported">
-                Export to XLSX</a>
-            </div>
-          </div>
-          <table id="participants" class="datatables table">
-            <thead>
-              <tr>
-                <th>Attendee</th>
-                <th align="center" id="impression"></th>
-                <th>Evaluation Date</th>
-                <th>Handled Date</th>
-                <th>Certificate Number</th>
-                <th></th>
-              </tr>
-            </thead>
-          </table>
         </div>
       </div>
     </div>
