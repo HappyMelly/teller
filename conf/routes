@@ -107,6 +107,7 @@ POST          /event/:eventId/endorsement/evaluation/:evaluationId           con
 POST          /evaluation/:id/approve                                        controllers.cm.Evaluations.approve(id: Long)
 POST          /evaluation/:id/reject                                         controllers.cm.Evaluations.reject(id: Long)
 POST          /evaluation/:id/confirmrequest                                 controllers.cm.Evaluations.sendConfirmationRequest(id: Long)
+GET           /evaluation/public                                           controllers.cm.Evaluations.public()
 GET           /evaluation/:id                                              controllers.cm.Evaluations.details(id: Long)
 DELETE        /evaluation/:id                                              controllers.cm.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
