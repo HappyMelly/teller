@@ -2,7 +2,7 @@
 
 .b-event{
   padding-top: 16px;
-  padding-bottom: 22px;
+  padding-bottom: 18px;
   border-top: 1px solid #eaeaea;
   border-bottom: 1px solid #eaeaea;
   .clearfix();
@@ -21,7 +21,7 @@
 }
 
 .b-event__title{
-  margin: 0 0 14px 0;
+  margin: 0 0 15px 0;
   font-size: 14px;
   line-height: 1;
   font-weight: 600;
@@ -29,7 +29,7 @@
 }
 
 .b-event__people{
-  overflow: hidden;
+  float: right;
 }
 
 .b-event__people-list{
@@ -51,10 +51,9 @@
 }
 
 .b-persprofile__img{
-  position: absolute;
   display: block;
-  left: 0;
-  top: 0;
+  float: left;
+  margin-right: 10px;
   width: 70px;
   height: 70px;
   border-radius: 10px;
@@ -67,9 +66,17 @@
 }
 
 .b-persprofile__con{
-  margin-left: 80px;
   position: relative;
   top: -1px;
+  overflow: hidden;
+  display: table;
+  height: 70px;
+  width: 120px;
+
+  .inner{
+    display: table-cell;
+    vertical-align: middle;
+  }
 
   h3{
     font-size: 18px;
