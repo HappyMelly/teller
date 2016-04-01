@@ -27,8 +27,8 @@
                                 style="background-image : url(@controllers.core.People.pictureUrl(facilitator)) ;"></div>
                             <div class="b-evalinfo__name">
                                 <div class="inner">
-                                @facilitator.firstName<br> @facilitator.lastName
-                            </div>
+                                    @facilitator.firstName<br> @facilitator.lastName
+                                </div>
                             </div>
                         </div>
                     }
@@ -36,7 +36,7 @@
             </div>
 
             <form class="p-evaluat__content" data-action="@controllers.cm.routes.PublicEvaluations.create(event.hashedId)">
-                <div class="p-evaluat__content-inner b-evalform_state_second">
+                <div class="p-evaluat__content-inner ">
                     <h2 class="b-evalform__title">
                         Submit your evaluation <!--, Jeremah-->
                     </h2>
