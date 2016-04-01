@@ -132,20 +132,6 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
   }
 
   /**
-    * Confirms the given evaluation
-    *
-    * @param confirmationId Confirmation unique id
-    */
-  def confirm(confirmationId: String) = Action.async { implicit request ⇒
-    repos.cm.evaluation.findByConfirmationId(confirmationId) flatMap {
-      case None => notFound(views.html.evaluation.notfound())
-      case Some(evaluation) =>
-        evaluation.confirm(email, repos)
-        ok(views.html.evaluation.confirmed())
-    }
-  }
-
-  /**
    * Add form submits to this action
     *
     * @param eventId Event identifier to create evaluation for
@@ -219,10 +205,6 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
               } { redirect(controllers.core.routes.Dashboard.index()) }
           }
       }
-  }
-
-  def public() = Action.async { implicit request =>
-    ok(views.html.v2.evaluation.public())
   }
 
   /**
@@ -334,5 +316,5 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
 object Evaluations {
 
   def confirmationUrl(token: String): String =
-    Utilities.fullUrl(controllers.cm.routes.Evaluations.confirm(token).url)
+    Utilities.fullUrl(controllers.cm.routes.PublicEvaluations.confirm(token).url)
 }
