@@ -23,10 +23,11 @@
  */
 package controllers.api
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import models._
-import models.cm.{EvaluationStatus, Evaluation}
+import models.cm.{Evaluation, EvaluationStatus}
 import models.repository.Repositories
 import org.joda.time.DateTime
 import play.api.Logger
@@ -34,7 +35,6 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
-import services.integrations.EmailComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -43,7 +43,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 class EvaluationsApi @Inject() (val repos: Repositories,
                                 override val messagesApi: MessagesApi,
-                                val email: EmailComponent) extends ApiAuthentication(repos, messagesApi) {
+                                @Named("evaluation-mailer") mailer: ActorRef)
+  extends ApiAuthentication(repos, messagesApi) {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(appName: String, edit: Boolean = false) = Form(mapping(
@@ -132,7 +133,7 @@ class EvaluationsApi @Inject() (val repos: Repositories,
             Logger.info(s"Attendee for event ${evaluation.eventId} does not exist")
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
-            evaluation.add(withConfirmation = true, email, repos) flatMap { createdEvaluation =>
+            evaluation.add(withConfirmation = true, repos, mailer) flatMap { createdEvaluation =>
               val message = "new evaluation for " + attendee.fullName
               Activity.insert(name, Activity.Predicate.Created, message)(repos)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
@@ -150,7 +151,7 @@ class EvaluationsApi @Inject() (val repos: Repositories,
     repos.cm.evaluation.findByConfirmationId(confirmationId) flatMap {
       case None => jsonNotFound("Unknown evaluation")
       case Some(x) =>
-        x.confirm(email, repos)
+        x.confirm(repos, mailer)
         val msg = "participant %s confirmed evaluation %s".format(x.attendeeId, x.eventId)
         Activity.insert(token.humanIdentifier, Activity.Predicate.Confirmed, msg)(repos)
 

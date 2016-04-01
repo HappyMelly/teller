@@ -24,17 +24,16 @@
 
 package cron.reminders
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
-import controllers.cm.Evaluations
+import akka.actor.ActorRef
 import models._
 import models.cm.EvaluationStatus
 import models.cm.brand.ApiConfig
-import models.cm.event.{Attendee, AttendeeView}
+import models.cm.event.AttendeeView
 import models.repository.Repositories
 import org.joda.time.{Duration, LocalDate}
 import play.api.Logger
-import services.integrations._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -42,7 +41,7 @@ import scala.concurrent.Future
 /**
  * Contains methods for notifying Teller users about their evaluations
  */
-class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Repositories) extends Integrations {
+class EvaluationReminder @Inject() (val repos: Repositories, @Named("evaluation-mailer") mailer: ActorRef) {
 
   /**
    * Sends evaluation and confirmation requests to participants of events
@@ -65,28 +64,6 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
     }
   }
 
-  /**
-    * Sends request to evaluate an event to the given attendee
-    */
-  def sendEvaluationRequest(attendee: Attendee, brand: Brand, body: String): Unit = {
-    val subject = "Your Opinion Counts!"
-    val content = mail.evaluation.html.request(brand, attendee, body).toString()
-    email.send(Seq(attendee), subject, content, brand.sender)
-  }
-
-  /**
-    * Sends request to confirm an evaluation to the given attendee
-    *
-    * @param attendee Attendee
-    * @param brand Brand
-    * @param hook Confirmation url
-    */
-  def sendConfirmRequest(attendee: Attendee, brand: Brand, hook: String): Unit = {
-    val subject = "Confirm your %s evaluation" format brand.name
-    val content = mail.evaluation.html.confirm(brand, attendee.fullName, hook).toString()
-    email.send(Seq(attendee), subject, content, brand.sender)
-  }
-
   protected def isEvaluationModuleActive(apiConfig: Option[ApiConfig]): Boolean =
     apiConfig.exists(_.isEvaluationModuleActive)
 
@@ -95,14 +72,14 @@ class EvaluationReminder @Inject() (val email: EmailComponent, val repos: Reposi
       val welcomeMsg = s"Hi ${view.attendee.firstName},"
       val facilitatorId = view.event.facilitatorIds(repos).head
       val body = mail.evaluation.html.requestBody(config, welcomeMsg, view.event, facilitatorId).toString()
-      sendEvaluationRequest(view.attendee, brand, body)
+      mailer ! ("request", view.attendee, brand, body)
     }
   }
 
   protected def handleUnconfirmedAttendees(attendees: Seq[AttendeeView], brand: Brand) = {
     attendees.filter(_.evaluation.exists(_.status == EvaluationStatus.Unconfirmed)).foreach { view =>
       view.evaluation.get.confirmationId.foreach { token =>
-        sendConfirmRequest(view.attendee, brand, Evaluations.confirmationUrl(token))
+        mailer ! ("confirm", view.attendee, brand, token)
       }
     }
   }
