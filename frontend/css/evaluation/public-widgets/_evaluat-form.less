@@ -31,7 +31,20 @@
 }
 
 .b-evalform__i{
+  position: relative;
   margin-bottom: 18px;
+
+  .b-error{
+    font-size: 12px;
+    line-height: 1;
+    right: 5px;
+    top: 15px;
+  }
+
+  &.type-select .h-rel{
+    display: inline-block;
+    padding-right: 60px;
+  }
 }
 
 .b-evalform__label{
@@ -107,8 +120,18 @@
     border-bottom: 1px dashed #4a90e2;
   }
 
-  .text-hide{
+  .texts-hide{
     display: none;
+  }
+
+  &.state_active{
+    .text-show{
+      display: none;
+    }
+
+    .texts-hide{
+      display: inline-block;
+    }
   }
 }
 
@@ -130,18 +153,3 @@
   }
 }
 
-.b-evalform_show_adress{
-  .b-evalform__adress-con{
-    display: block;
-  }
-
-  .b-evalform__link{
-    .text-show{
-      display: none;
-    }
-
-    .text-hide{
-      display: inline-block;
-    }
-  }
-}
