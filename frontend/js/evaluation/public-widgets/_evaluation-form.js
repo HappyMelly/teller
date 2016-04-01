@@ -114,7 +114,7 @@ export default class Widget {
     /**
      * Save data into localStorage
      * @param {String} key
-     * @param {Object} data
+     * @param {Object|null} data
      * @private
      */
     _saveDataToLocal(key, data){
@@ -122,9 +122,9 @@ export default class Widget {
     }
 
     /**
-     * Get data from localStorage and values to html controls
+     * Get data from localStorage and set values to html controls
      * @param {String} key - unique key for LocalStorage
-     * @param {jQuery|null} $controls - list of controls
+     * @param {jQuery} $controls - list of controls
      * @private
      */
     _setDataFromLocal(key, $controls){
