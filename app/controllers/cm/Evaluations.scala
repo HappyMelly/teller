@@ -33,16 +33,13 @@ import controllers.{Activities, BrandAware, Security, Utilities}
 import models.UserRole._
 import models._
 import models.cm._
-import models.cm.event.Attendee
 import models.cm.facilitator.Endorsement
 import models.repository.Repositories
-import models.repository.cm.BrandWithCoordinators
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
 import services.integrations.{EmailComponent, Integrations}
 
