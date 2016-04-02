@@ -33,16 +33,13 @@ import controllers.{Activities, BrandAware, Security, Utilities}
 import models.UserRole._
 import models._
 import models.cm._
-import models.cm.event.Attendee
 import models.cm.facilitator.Endorsement
 import models.repository.Repositories
-import models.repository.cm.BrandWithCoordinators
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.Json
-import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
 import services.integrations.{EmailComponent, Integrations}
 
@@ -52,6 +49,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
                              override val messagesApi: MessagesApi,
                              val email: EmailComponent,
                              val repos: Repositories,
+                             @Named("evaluation-mailer") mailer: ActorRef,
                              @Named("event-rating") eventActor: ActorRef,
                              @Named("facilitator-rating") facilitatorActor: ActorRef,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
@@ -116,8 +114,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
               // recalculate ratings
               eventActor ! evaluation.eventId
               facilitatorActor ! evaluation.eventId
-
-              sendApprovalConfirmation(user.person, evaluation, view.attendee, event)
+              mailer ! ("approve", user.person, evaluation, view.attendee, event)
 
               jsonOk(Json.obj("date" -> evaluation.handled))
             }
@@ -147,7 +144,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
             errors ⇒ badRequest(views.html.v2.evaluation.form(user, errors, attendee)),
             evaluation ⇒ {
               val modified = evaluation.copy(eventId = eventId, attendeeId = attendeeId)
-              modified.add(false, email, repos) flatMap { eval =>
+              modified.add(false, repos, mailer) flatMap { eval =>
                 redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
               }
             })
@@ -222,7 +219,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
               // recalculate ratings
               eventActor ! view.evaluation.eventId
               facilitatorActor ! view.evaluation.eventId
-              sendRejectionConfirmation(user.person, view.attendee, event)
+              mailer ! ("reject", user.person, view.attendee, event)
 
               jsonOk(Json.obj("date" -> evaluation.handled))
             }
@@ -246,7 +243,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
       repos.cm.evaluation.find(id) flatMap {
         case None => jsonNotFound("Evaluation not found")
         case Some(evaluation) =>
-          evaluation.sendConfirmationRequest(email, repos)
+          mailer ! ("confirm", evaluation)
           jsonSuccess("Confirmation request was sent")
       }
   }
@@ -266,51 +263,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
       Future.successful((false, None))
   }
 
-  /**
-   * Sends confirmation email that evaluation was approved
-    *
-    * @param approver Person who approved the given evaluation
-   * @param evaluation Evaluation
-   * @param attendee Attendee
-   * @param event Related event
-   */
-  protected def sendApprovalConfirmation(approver: Person, evaluation: Evaluation, attendee: Attendee, event: Event) = {
-    (for {
-      withSettings <- repos.cm.brand.findWithSettings(event.brandId) if withSettings.isDefined
-      coordinators <- repos.cm.brand.coordinators(event.brandId)
-    } yield (withSettings.get, coordinators)) foreach { case (withSettings, coordinators) =>
-      val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-      if (attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
-        val cert = new Certificate(evaluation.handled, event, attendee)
-        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
-        repos.cm.rep.event.attendee.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
-      } else if (attendee.certificate.isEmpty) {
-        val body = mail.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
-        val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
-        email.send(Seq(attendee), event.facilitators(repos), bcc,
-          subject, body, from = withSettings.brand.sender, richMessage = true)
-      } else {
-        val cert = new Certificate(evaluation.handled, event, attendee, renew = true)
-        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
-      }
-    }
-  }
 
-  /**
-   * Sends confirmation email that evaluation was rejected
-    *
-    * @param rejector Person who rejected the evaluation
-   * @param attendee Attendee
-   * @param event Related event
-   */
-  protected def sendRejectionConfirmation(rejector: Person, attendee: Attendee, event: Event) = {
-    repos.cm.brand.findWithCoordinators(event.brandId).filter(_.isDefined).map(_.get) foreach { view ⇒
-      val bcc = view.coordinators.filter(_._2.notification.evaluation).map(_._1)
-      val subject = s"Your ${view.brand.name} certificate"
-      val body = mail.evaluation.html.rejected(view.brand, attendee, rejector).toString()
-      email.send(Seq(attendee), event.facilitators(repos), bcc, subject, body, view.brand.sender)
-    }
-  }
 }
 
 object Evaluations {

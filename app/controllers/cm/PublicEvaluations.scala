@@ -23,8 +23,9 @@
  */
 package controllers.cm
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import controllers.{Activities, AsyncController, Utilities}
 import models.cm.event.Attendee
 import models.cm.{Evaluation, EvaluationStatus}
@@ -36,7 +37,6 @@ import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.Action
 import services.TellerRuntimeEnvironment
-import services.integrations.{EmailComponent, Integrations}
 import views.Countries
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,11 +46,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
                                    override val messagesApi: MessagesApi,
-                                   val email: EmailComponent,
+                                   @Named("evaluation-mailer") mailer: ActorRef,
                                    val repos: Repositories)
   extends AsyncController
     with I18nSupport
-    with Integrations
     with Activities {
 
   val APP_NAME = "System"
@@ -83,13 +82,14 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
     repos.cm.evaluation.findByConfirmationId(confirmationId) flatMap {
       case None => notFound(views.html.evaluation.notfound())
       case Some(evaluation) =>
-        evaluation.confirm(email, repos)
+        evaluation.confirm(repos, mailer)
         ok(views.html.evaluation.confirmed())
     }
   }
 
   /**
     * Adds new attendee and evaluation for the event and sends confirmation email
+    *
     * @param eventId Hashed event identifier
     */
   def create(eventId: String) = Action.async { implicit request =>
@@ -102,7 +102,7 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
           { case (attendee, evaluation) =>
             (for {
               a <- repos.cm.rep.event.attendee.insert(attendee)
-              e <- evaluation.copy(attendeeId = a.identifier).add(withConfirmation = true, email, repos)
+              e <- evaluation.copy(attendeeId = a.identifier).add(withConfirmation = true, repos, mailer)
               _ <- repos.cm.rep.event.attendee.update(attendee.copy(evaluationId = e.id))
             } yield ()) flatMap { _ =>
               jsonSuccess("")

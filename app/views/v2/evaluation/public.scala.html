@@ -60,10 +60,10 @@
                             </div>
                             <div class="h-rel">
                                 <select name="question_2" id="" class="form-control b-evalform__select">
-                                    <option value="" disabled selected>Choose an impression</option>
-                                    <option value="1">1</option>
-                                    <option value="1">2</option>
-                                    <option value="1">3</option>
+                                    <option value="" disabled selected>Choose impression</option>
+                                    @for(impression <- Evaluations.impressions) {
+                                        <option value="@impression._1">@impression._2</option>
+                                    }
                                 </select>
                             </div>
                         </div>
@@ -89,7 +89,7 @@
                             </div>
                             <div class="h-rel">
                                 <select name="question_5" id="" class="form-control b-evalform__select">
-                                    <option value="" disabled selected>Choose option</option>
+                                    <option value="" disabled selected>Choose impression</option>
                                     @for(impression <- Evaluations.impressions) {
                                         <option value="@impression._1">@impression._2</option>
                                     }
@@ -110,7 +110,7 @@
                             </div>
                             <div class="h-rel">
                                 <select name="question_7" id="" class="form-control b-evalform__select">
-                                    <option value="" disabled selected>Choose option</option>
+                                    <option value="" disabled selected>Choose impression</option>
                                     @for(impression <- Evaluations.impressions) {
                                         <option value="@impression._1">@impression._2</option>
                                     }
@@ -178,7 +178,7 @@
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">City</div>
                             <div class="h-rel">
-                                <input type="text" name="city" class="form-control b-evalform__input" />
+                                <input type="text" name="address.city" class="form-control b-evalform__input" />
                             </div>
                         </div>
                         <div class="b-evalform__i type-select">
@@ -206,25 +206,25 @@
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">Address line 1</div>
                                     <div class="h-rel">
-                                        <input type="text" name="address1" class="form-control b-evalform__input type-optional" />
+                                        <input type="text" name="address.street_1" class="form-control b-evalform__input type-optional" />
                                     </div>
                                 </div>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">Address line 2</div>
                                     <div class="h-rel">
-                                        <input type="text" name="address2" class="form-control b-evalform__input type-optional" />
+                                        <input type="text" name="address.street_2" class="form-control b-evalform__input type-optional" />
                                     </div>
                                 </div>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">Postcode</div>
                                     <div class="h-rel">
-                                        <input type="text" name="postcode" class="form-control b-evalform__input type-optional type-numeric" />
+                                        <input type="text" name="address.postcode" class="form-control b-evalform__input type-optional type-numeric" />
                                     </div>
                                 </div>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">State</div>
                                     <div class="h-rel">
-                                        <input type="text" name="state" class="form-control b-evalform__input type-optional" />
+                                        <input type="text" name="address.state" class="form-control b-evalform__input type-optional" />
                                     </div>
                                 </div>
                             </div>
