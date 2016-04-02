@@ -5,7 +5,7 @@
 
 
 @v2.layout.public(s"Evaluation for ${event.title}", responsive = true) {
-    <div class="p-evaluat">
+    <div class="p-evaluat js-evaluation-form">
         <div class="p-evaluat__hint">
             @brand.name Events
         </div>
@@ -35,7 +35,7 @@
                 </div>
             </div>
 
-            <form class="p-evaluat__content" data-action="@controllers.cm.routes.PublicEvaluations.create(event.hashedId)">
+            <form class="p-evaluat__content" data-action="@controllers.cm.routes.PublicEvaluations.create(event.hashedId)" data-eval-form>
                 <div class="p-evaluat__content-inner ">
                     <h2 class="b-evalform__title">
                         Submit your evaluation <!--, Jeremah-->
@@ -50,84 +50,104 @@
                             <div class="b-evalform__label">
                                 1. What is the reason you registered for this event?
                             </div>
-                            <textarea name="question_1" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            <div class="h-rel">
+                                <textarea name="question_1" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            </div>
                         </div>
-                        <div class="b-evalform__i">
+                        <div class="b-evalform__i type-select">
                             <div class="b-evalform__label">
                                 2. General impression of the trainer/facilitator?
                             </div>
-                            <select name="question_2" id="" class="form-control b-evalform__select">
-                                <option value="" disabled selected>Choose an impression</option>
-                                <option value="1">1</option>
-                                <option value="1">2</option>
-                                <option value="1">3</option>
-                            </select>
+                            <div class="h-rel">
+                                <select name="question_2" id="" class="form-control b-evalform__select">
+                                    <option value="" disabled selected>Choose an impression</option>
+                                    <option value="1">1</option>
+                                    <option value="1">2</option>
+                                    <option value="1">3</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 3. What were specific qualities of the facilitator(s)?
                             </div>
-                            <textarea name="question_3" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            <div class="h-rel">
+                                <textarea name="question_3" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 4. How can the facilitator(s) make the next event better?
                             </div>
-                            <textarea name="question_4" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            <div class="h-rel">
+                                <textarea name="question_4" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            </div>
                         </div>
-                        <div class="b-evalform__i">
+                        <div class="b-evalform__i type-select">
                             <div class="b-evalform__label">
                                 5. General impression of the content/courseware?
                             </div>
-                            <select name="question_5" id="" class="form-control b-evalform__select">
-                                <option value="" disabled selected>Choose option</option>
-                                @for(impression <- Evaluations.impressions) {
-                                    <option value="@impression._1">@impression._2</option>
-                                }
-                            </select>
+                            <div class="h-rel">
+                                <select name="question_5" id="" class="form-control b-evalform__select">
+                                    <option value="" disabled selected>Choose option</option>
+                                    @for(impression <- Evaluations.impressions) {
+                                        <option value="@impression._1">@impression._2</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 6. What can we add, change or delete in the content/courseware?
                             </div>
-                            <textarea name="question_6" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            <div class="h-rel">
+                                <textarea name="question_6" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            </div>
                         </div>
-                        <div class="b-evalform__i">
+                        <div class="b-evalform__i type-select">
                             <div class="b-evalform__label">
                                 7. General impression of the host/organizer?
                             </div>
-                            <select name="question_7" id="" class="form-control b-evalform__select">
-                                <option value="" disabled selected>Choose option</option>
-                                @for(impression <- Evaluations.impressions) {
-                                    <option value="@impression._1">@impression._2</option>
-                                }
-                            </select>
+                            <div class="h-rel">
+                                <select name="question_7" id="" class="form-control b-evalform__select">
+                                    <option value="" disabled selected>Choose option</option>
+                                    @for(impression <- Evaluations.impressions) {
+                                        <option value="@impression._1">@impression._2</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 8. What can the host/organizer improve for the next event?
                             </div>
-                            <textarea name="question_8" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            <div class="h-rel">
+                                <textarea name="question_8" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 9. Which action items did you take away from the course/event?
                             </div>
-                            <textarea name="question_9" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            <div class="h-rel">
+                                <textarea name="question_9" id="" cols="30" rows="10" class="b-evalform__textarea form-control"></textarea>
+                            </div>
                         </div>
-                        <div class="b-evalform__i">
+                        <div class="b-evalform__i type-select">
                             <div class="b-evalform__label">
                                 10. How likely are you to recommend this event to others?
                             </div>
-                            <select name="question_10" id="" class="form-control b-evalform__select">
-                                <option value="" disabled selected>Choose option</option>
-                                @for(recommendation <- Evaluations.recommendations) {
-                                    <option value="@recommendation._1">@recommendation._2</option>
-                                }
-                            </select>
+                            <div class="h-rel">
+                                <select name="question_10" id="" class="form-control b-evalform__select">
+                                    <option value="" disabled selected>Choose option</option>
+                                    @for(recommendation <- Evaluations.recommendations) {
+                                        <option value="@recommendation._1">@recommendation._2</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
 
-                        <a href="#" class="btn btn-primary b-evalform__next">
+                        <a href="#" class="btn btn-primary b-evalform__next" data-eval-next>
                             Send evaluation
                         </a>
                     </div>
@@ -140,55 +160,73 @@
 
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">First name</div>
-                            <input type="text" name="first_name" class="form-control b-evalform__input" />
+                            <div class="h-rel">
+                                <input type="text" name="first_name" class="form-control b-evalform__input" />
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">Last name</div>
-                            <input type="text" name="last_name" class="form-control b-evalform__input" />
+                            <div class="h-rel">
+                                <input type="text" name="last_name" class="form-control b-evalform__input" />
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">Birthday (optional)</div>
-                            <input type="text" name="birth" class="form-control b-evalform__input type-birth type-optional" />
+                            <div class="h-rel">
+                                <input type="text" name="birth" class="form-control b-evalform__input type-birth type-optional" />
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">City</div>
-                            <input type="text" name="city" class="form-control b-evalform__input" />
+                            <div class="h-rel">
+                                <input type="text" name="city" class="form-control b-evalform__input" />
+                            </div>
                         </div>
-                        <div class="b-evalform__i">
+                        <div class="b-evalform__i type-select">
                             <div class="b-evalform__label">
                                 Country
                             </div>
-                            <select name="country" id="" class="form-control b-evalform__select">
-                                <option value="" disabled selected>Choose country</option>
-                                @for(country <- Countries.all) {
-                                    <option value="@country._1">@country._2</option>
-                                }
-                            </select>
+                            <div class="h-rel">
+                                <select name="country" id="" class="form-control b-evalform__select">
+                                    <option value="" disabled selected>Choose country</option>
+                                    @for(country <- Countries.all) {
+                                        <option value="@country._1">@country._2</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__adress">
-                                <a href="#" class="b-evalform__link">
+                                <a href="#" class="b-evalform__link" data-eval-toggle>
                                     + <span class="text-show">Show full address</span>
-                                    <span class="text-hide">Hide full address</span>
+                                    <span class="texts-hide">Hide full address</span>
                                 </a> <br>
                                 (Required when the facilitator has promised to send a book or other goodies)
                             </div>
-                            <div class="b-evalform__adress-con">
+                            <div class="b-evalform__adress-con" data-eval-address>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">Address line 1</div>
-                                    <input type="text" name="address1" class="form-control b-evalform__input" />
+                                    <div class="h-rel">
+                                        <input type="text" name="address1" class="form-control b-evalform__input type-optional" />
+                                    </div>
                                 </div>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">Address line 2</div>
-                                    <input type="text" name="address2" class="form-control b-evalform__input" />
+                                    <div class="h-rel">
+                                        <input type="text" name="address2" class="form-control b-evalform__input type-optional" />
+                                    </div>
                                 </div>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">Postcode</div>
-                                    <input type="text" name="postcode" class="form-control b-evalform__input" />
+                                    <div class="h-rel">
+                                        <input type="text" name="postcode" class="form-control b-evalform__input type-optional type-numeric" />
+                                    </div>
                                 </div>
                                 <div class="b-evalform__i">
                                     <div class="b-evalform__label">State</div>
-                                    <input type="text" name="state" class="form-control b-evalform__input" />
+                                    <div class="h-rel">
+                                        <input type="text" name="state" class="form-control b-evalform__input type-optional" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -196,39 +234,46 @@
                             <div class="b-evalform__label">
                                 Organisation (optional)
                             </div>
-                            <input type="text" name="organization" class="form-control b-evalform__input type-optional" />
+                            <div class="h-rel">
+                                <input type="text" name="organization" class="form-control b-evalform__input type-optional" />
+                            </div>
                         </div>
-                        <div class="b-evalform__i">
+                        <div class="b-evalform__i type-select">
                             <div class="b-evalform__label">
                                 Which best describes what you do? (optional)
                             </div>
-                            <select name="description" id="" class="form-control b-evalform__select type-optional">
-                                <option value="" disabled selected>Choose area</option>
-                                @for(role <- Attendees.roles) {
-                                    <option value="@role">@role</option>
-                                }
-                            </select>
+                            <div class="h-rel">
+                                <select name="description" id="" class="form-control b-evalform__select type-optional">
+                                    <option value="" disabled selected>Choose area</option>
+                                    @for(role <- Attendees.roles) {
+                                        <option value="@role">@role</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 Email address
                             </div>
-                            <input type="email" name="email" class="form-control b-evalform__input" />
+                            <div class="h-rel">
+                                <input type="email" name="email" class="form-control b-evalform__input type-email" />
+                            </div>
                         </div>
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">
                                 Comments (optional)
                             </div>
-                            <textarea name="comment" id="" cols="30" rows="10" class="b-evalform__textarea form-control type-optional"></textarea>
+                            <div class="h-rel">
+                                <textarea name="comment" id="" cols="30" rows="10" class="b-evalform__textarea form-control type-optional"></textarea>
+                            </div>
                         </div>
                         <div class="b-evalform__buttons">
-                            <a href="#" class="btn btn-default b-evalform__cancel">
+                            <a href="#" class="btn btn-default b-evalform__cancel" data-eval-previous>
                                 Edit previous step
                             </a>
-                            <a href="#" class="btn btn-primary b-evalform__submit">
+                            <button type="submit" class="btn btn-primary b-evalform__submit" data-eval-submit>
                                 Send evaluation
-                            </a>
-
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -237,8 +282,5 @@
     </div>
 
     <link rel="stylesheet" href="@routes.Assets.at("css/evaluation/evaluation-public-page.css")">
-
-
-
-
+    <script src="@routes.Assets.at("js/package/evaluation-public.js")" type="text/javascript"></script>
 }
