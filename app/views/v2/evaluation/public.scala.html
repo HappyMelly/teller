@@ -37,11 +37,12 @@
 
             <form class="p-evaluat__content" data-action="@controllers.cm.routes.PublicEvaluations.create(event.hashedId)" data-eval-form>
                 <div class="p-evaluat__content-inner ">
-                    <h2 class="b-evalform__title">
-                        Submit your evaluation <!--, Jeremah-->
-                    </h2>
+                    <div class="b-evalform">
+                        <h2 class="b-evalform__title">
+                            Submit your evaluation <!--, Jeremah-->
+                        </h2>
 
-                    <div class="b-evalform__step type-1" data-eval-step1>
+                        <div class="b-evalform__step type-1" data-eval-step1>
                         <div class="b-evalform__sub">
                             <b>Answer to 10 questions about event you attended to.</b>
                             All fields are required.
@@ -150,8 +151,7 @@
                             Next step
                         </a>
                     </div>
-
-                    <div class="b-evalform__step type-2" data-eval-step2>
+                        <div class="b-evalform__step type-2" data-eval-step2>
                         <div class="b-evalform__sub">
                             <b>Final step: add your personal data.</b>
                             All fields are required, except marked as optional.
@@ -273,6 +273,16 @@
                             <button type="submit" class="btn btn-primary b-evalform__submit" data-eval-submit>
                                 Send evaluation
                             </button>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="b-evalfinal">
+                        <h2 class="b-evalfinal__title">
+                            Thank you for the evaluation!
+                        </h2>
+                        <div class="b-evalfinal__p">
+                            <b>Check your mailbox, please</b>. We've sent a confirmation link there.
+                            Click the link in the email to confirm your evaluation and register it the system.
                         </div>
                     </div>
                 </div>

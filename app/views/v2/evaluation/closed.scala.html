@@ -1,0 +1,54 @@
+@(event: models.cm.Event, facilitators: List[Person], brand: Brand)(implicit request: RequestHeader)
+
+@import views.{Attendees, Countries, Evaluations}
+@import views.ViewHelpersV2._
+
+
+@v2.layout.public(s"Evaluation for ${event.title}", responsive = true) {
+    <div class="p-evaluat js-evaluation-form">
+        <div class="p-evaluat__hint">
+            @brand.name Events
+        </div>
+
+        <div class="p-evaluat__main">
+            <div class="p-evaluat__aside">
+                <div class="b-evalinfo">
+                    <div class="b-evalinfo__title">
+                        @event.title
+                    </div>
+                    <div class="b-evalinfo__date">
+                        @dateInterval(event.schedule.start, event.schedule.end)<br>
+                        in @event.location.city, @Countries.name(event.location.countryCode)
+                    </div>
+
+                    @for(facilitator <- facilitators) {
+                        <div class="b-evalinfo-i">
+                            <div class="b-evalinfo-i__img"
+                                style="background-image : url(@controllers.core.People.pictureUrl(facilitator)) ;"></div>
+                            <div class="b-evalinfo__name">
+                                <div class="inner">
+                                    @facilitator.firstName<br> @facilitator.lastName
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="p-evaluat__content">
+                <div class="p-evaluat__content-inner ">
+                    <h2 class="b-evalform__title">
+                        The facilitators closed this event for accepting evaluations.
+                    </h2>
+                    <p class="b-evalform__p">
+                        Please contact Simone Ramson:
+                            <a href="mailto:simonramson.com" class="link-mblue">simonramson.com</a>, or Patrick Lerua:
+                            <a href="mailto:simonramson.com" class="link-mblue">patricklerua.com</a>, for more information.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="@routes.Assets.at("css/evaluation/evaluation-public-page.css")">
+}

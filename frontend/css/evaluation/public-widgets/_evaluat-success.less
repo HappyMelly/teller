@@ -1,0 +1,45 @@
+
+.b-evalfinal{
+  display: none;
+}
+
+.b-evalfinal__title{
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 400;
+  margin: 0 0 11px 0;
+}
+
+.b-evalfinal__p{
+  font-size: 14px;
+  line-height: 20px;
+  position: relative;
+  margin-top: 19px;
+
+  &:before{
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 63px;
+    height: 40px;
+    left: -75px;
+    background: url(/assets/images/evaluation/icon-mail.png) no-repeat;
+    -webkit-background-size: cover;
+    background-size: cover;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .b-evalfinal__title{
+    margin-top: 17px;
+  }
+
+  .b-evalfinal__p{
+    font-size: 18px;
+    line-height: 26px;
+
+    &:before{
+      display: none;
+    }
+  }
+}

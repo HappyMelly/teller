@@ -79,9 +79,7 @@ export default class Widget {
         self._sendEvaluation(formData)
             .done(function(){
                 self._resetForm();
-                self.showStep(1);
-
-                success("Your evaluation has been send successfully")
+                self.$root.addClass('p-evaluat_state_success');
             })
             .fail(function(response){
                 const data = $.parseJSON(response.responseText).data;
@@ -113,10 +111,10 @@ export default class Widget {
      */
     showStep(number = 1){
         const $root = this.$root;
-        const isShowStep2 = (number == 2) && (!$root.hasClass('b-evalform_state_second'));
+        const isShowStep2 = (number == 2) && (!$root.hasClass('p-evaluat_state_second'));
 
         this.currentStep = number;
-        $root.toggleClass('b-evalform_state_second', isShowStep2);
+        $root.toggleClass('p-evaluat_state_second', isShowStep2);
     }
 
     /**

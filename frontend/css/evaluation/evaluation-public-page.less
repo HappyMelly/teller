@@ -1,6 +1,8 @@
 @import "./../settings";
 @import "./public-widgets/_evaluat-info.less";
 @import "./public-widgets/_evaluat-form.less";
+@import "./public-widgets/_evaluat-fake.less";
+@import "./public-widgets/_evaluat-success.less";
 
 
 .p-evaluat{
@@ -36,6 +38,31 @@
 
 .p-evaluat__content-inner{
   width: 532px;
+}
+
+/*== States ==*/
+.p-evaluat_state_second{
+  .b-evalform__step.type-1{
+    display: none;
+  }
+
+  .b-evalform__step.type-2{
+    display: block;
+  }
+}
+
+.p-evaluat_state_success{
+  .p-evaluat__content{
+    overflow: visible;
+  }
+
+  .b-evalform{
+    display: none;
+  }
+
+  .b-evalfinal{
+    display: block;
+  }
 }
 
 @media screen and (max-width: 850px) {
