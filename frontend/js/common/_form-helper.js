@@ -40,7 +40,9 @@ export default class FormHelper {
         $controls.each((index, control) => {
             const $control = $(control);
 
-            if (!this._isValidInput($control)) error += 1;
+            if (!this._isValidInput($control)) {
+                error += 1;
+            }
         });
         return Boolean(!error);
     }

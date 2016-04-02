@@ -26,7 +26,9 @@ export default class Widget {
             $controlsStep1: $root.find('.b-evalform__step.type-1 .form-control'),
             $controlsStep2: $root.find('.b-evalform__step.type-2 .form-control'),
             $addressBlock: $root.find('[data-eval-address]'),
-            $form: $root.find('[data-eval-form]')
+            $form: $root.find('[data-eval-form]'),
+            $step1: $root.find('[data-eval-step1]'),
+            $step2: $root.find('[data-eval-step2]')
         };
     }
 
@@ -68,19 +70,25 @@ export default class Widget {
 
     _onClickSubmitBtn(e){
         e && e.preventDefault();
+        const self = this;
 
-        if (!this.helperStep2.isValidInputs()) return;
-        this._saveDataToLocal('step2', this.helperStep2.getFormData());
+        if (!self.helperStep2.isValidInputs()) return;
+        self._saveDataToLocal('step2', self.helperStep2.getFormData());
 
-        const formData = $.extend({}, this.helperStep1.getFormData(), this.helperStep2.getFormData());
-        this._sendEvaluation(formData)
+        const formData = $.extend({}, self.helperStep1.getFormData(), self.helperStep2.getFormData());
+        self._sendEvaluation(formData)
             .done(function(){
-                this._resetForm();
+                self._resetForm();
+                self.showStep(1);
 
                 success("Your evaluation has been send successfully")
             })
             .fail(function(response){
+                const data = $.parseJSON(response.responseText).data;
 
+                if (!data.errors) return;
+
+                self.formHelper.setErrors(data.errors);
             })
     }
 

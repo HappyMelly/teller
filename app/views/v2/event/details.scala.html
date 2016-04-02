@@ -137,17 +137,17 @@
 
               <div class="event-desc">
                 <div class="event-desc__i">
-                  <a href="#" class="event-desc__copy" data-toggle="tooltip" title="Copy link"></a>
                   @defining(event.pageUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { maybeUrl =>
                     @maybeUrl.map { url =>
+                      <div class="event-desc__copy js-clipboard" data-clipboard-text="@url" ></div>
                       <span class="text-muted">Website: </span>
                       <a href="@url" class="link-mblue" target="_blank">@url</a>
                     }
                   }
                 </div>
                 <div class="event-desc__i">
-                  <a href="#" class="event-desc__copy" data-toggle="tooltip" title="Copy link"></a>
                     @event.organizer.registrationPage.map { url =>
+                      <div class="event-desc__copy js-clipboard" data-clipboard-text="@url" ></div>
                       <span class="text-muted">Registration: </span>
                       <a href="@url" class="link-mblue" target="_blank">@url</a>
                     }
@@ -214,6 +214,8 @@
   <script src="@routes.Assets.at("js/participant.js")" type="text/javascript"></script>
   <script src="@routes.Assets.at("js/event/details-page.js")" type="text/javascript"></script>
 
+
+  <script src="@routes.Assets.at("javascripts/clipboard/zeroclipboard.min.js")"></script>
   <script src="@routes.Assets.at("js/package/event-details-page.js")" type="text/javascript"></script>
   <link rel="stylesheet" href="@routes.Assets.at("css/events/details-page.css")">
 }

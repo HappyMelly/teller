@@ -41,7 +41,7 @@
                         Submit your evaluation <!--, Jeremah-->
                     </h2>
 
-                    <div class="b-evalform__step type-1">
+                    <div class="b-evalform__step type-1" data-eval-step1>
                         <div class="b-evalform__sub">
                             <b>Answer to 10 questions about event you attended to.</b>
                             All fields are required.
@@ -146,13 +146,12 @@
                                 </select>
                             </div>
                         </div>
-
                         <a href="#" class="btn btn-primary b-evalform__next" data-eval-next>
-                            Send evaluation
+                            Next step
                         </a>
                     </div>
 
-                    <div class="b-evalform__step type-2">
+                    <div class="b-evalform__step type-2" data-eval-step2>
                         <div class="b-evalform__sub">
                             <b>Final step: add your personal data.</b>
                             All fields are required, except marked as optional.
@@ -173,7 +172,7 @@
                         <div class="b-evalform__i">
                             <div class="b-evalform__label">Birthday (optional)</div>
                             <div class="h-rel">
-                                <input type="text" name="birth" class="form-control b-evalform__input type-birth type-optional" />
+                                <input type="text" name="birth" class="form-control b-evalform__input type-birth type-optional" data-type="date" />
                             </div>
                         </div>
                         <div class="b-evalform__i">
@@ -187,7 +186,7 @@
                                 Country
                             </div>
                             <div class="h-rel">
-                                <select name="country" id="" class="form-control b-evalform__select">
+                                <select name="address.country" id="" class="form-control b-evalform__select">
                                     <option value="" disabled selected>Choose country</option>
                                     @for(country <- Countries.all) {
                                         <option value="@country._1">@country._2</option>
