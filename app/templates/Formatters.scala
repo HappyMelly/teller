@@ -28,7 +28,7 @@ import org.joda.money.Money
 import org.joda.time.{ LocalDate, DateTimeZone, DateTime }
 import org.jsoup.Jsoup
 import org.jsoup.safety.Whitelist
-import org.pegdown.PegDownProcessor
+import org.pegdown.{PegDownProcessor, Extensions}
 import play.twirl.api.Html
 
 /**
@@ -60,9 +60,9 @@ object Formatters {
      * Interpret the string as Markdown and convert to HTML.
      */
     def markdown: Html = {
-      val html = new PegDownProcessor().markdownToHtml(string)
-      val cleanHtml = Jsoup.clean(html, Whitelist.basic())
-      Html(cleanHtml)
+      val html = new PegDownProcessor(Extensions.AUTOLINKS | Extensions.ATXHEADERSPACE).markdownToHtml(string)
+      val cleanHtml = Jsoup.clean(html, Whitelist.relaxed())
+      Html(html)
     }
   }
 }

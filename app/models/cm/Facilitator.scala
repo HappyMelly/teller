@@ -45,8 +45,9 @@ case class Facilitator(id: Option[Long] = None,
                       numberOfPublicEvaluations: Int = 0,
                       numberOfPrivateEvaluations: Int = 0,
                       badges: List[Long] = List(),
-                       creditsGiven: Int = 0,
-                       creditsReceived: Int = 0)
+                      creditsGiven: Int = 0,
+                      creditsReceived: Int = 0,
+                      postEventTemplate: Option[String] = None)
 
 object Facilitator {
 

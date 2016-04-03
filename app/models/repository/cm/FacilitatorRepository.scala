@@ -174,7 +174,7 @@ class FacilitatorRepository(app: Application) extends HasDatabaseConfig[JdbcProf
         facilitator.publicMedian, facilitator.privateMedian,
         facilitator.publicNps, facilitator.privateNps,
         facilitator.numberOfPublicEvaluations, facilitator.numberOfPrivateEvaluations,
-        facilitator.creditsGiven, facilitator.creditsReceived))
+        facilitator.creditsGiven, facilitator.creditsReceived, facilitator.postEventTemplate))
     db.run(action).map(_ => facilitator)
   }
 
