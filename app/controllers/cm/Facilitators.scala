@@ -318,6 +318,16 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       )
   }
 
+  /**
+    * Updates post event template for current user for the given brand
+    * @param brandId Brand identifier
+    * @return
+    */
+  def updatePostEventTemplate(brandId: Long) = RestrictedAction(Role.Facilitator) { implicit request =>
+    implicit handler => implicit user =>
+      ok("")
+  }
+
   protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {
     left.getYear == right.getYear && left.getMonthOfYear == right.getMonthOfYear
   }
