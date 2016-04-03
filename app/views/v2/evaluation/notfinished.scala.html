@@ -1,6 +1,6 @@
 @(event: models.cm.Event, facilitators: List[Person], brand: Brand)(implicit request: RequestHeader)
 
-@import views.{Attendees, Countries, Evaluations}
+@import views.Countries
 @import views.ViewHelpersV2._
 
 
@@ -38,10 +38,10 @@
             <div class="p-evaluat__content">
                 <div class="p-evaluat__content-inner ">
                     <h2 class="b-evalform__title">
-                        This event hasn't finished yet.
+                        This event is not ended yet.
                     </h2>
                     <p class="b-evalform__fake-p">
-                        Please come back when it's finished, after 22 of September.
+                        Please come back when it's over, after @date(event.schedule.end).
                     </p>
 
                     <div class="p-evaluat__fake type-sm"></div>

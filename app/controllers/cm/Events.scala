@@ -42,7 +42,6 @@ import play.api.libs.json._
 import play.api.mvc._
 import services.TellerRuntimeEnvironment
 import services.integrations._
-import views.Countries
 
 import scala.concurrent.Future
 

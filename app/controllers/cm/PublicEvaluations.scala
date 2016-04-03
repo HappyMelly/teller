@@ -63,12 +63,16 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
     repos.cm.event.find(eventId) flatMap {
       case None => notFound(views.html.notFoundPage("/"))
       case Some(event) =>
-        //TODO make check for evaluation validity
         (for {
           f <- repos.cm.event.facilitators(event.identifier)
           b <- repos.cm.brand.get(event.brandId)
         } yield (f, b)) flatMap { case (facilitators, brand) =>
-          ok(views.html.v2.evaluation.public(event, facilitators, brand))
+          if (!event.past)
+            ok(views.html.v2.evaluation.notfinished(event, facilitators, brand))
+          else if (event.archived)
+            ok(views.html.v2.evaluation.closed(event, facilitators, brand))
+          else
+            ok(views.html.v2.evaluation.public(event, facilitators, brand))
         }
     }
   }
@@ -96,19 +100,23 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
     repos.cm.event.find(eventId) flatMap {
       case None => jsonNotFound("You try to evaluation an event which doesn't exist")
       case Some(event) =>
-        //TODO make check for evaluation validity
-        form(event.identifier).bindFromRequest.fold(
-          errors => jsonFormError(Utilities.errorsToJson(errors)),
-          { case (attendee, evaluation) =>
-            (for {
-              a <- repos.cm.rep.event.attendee.insert(attendee)
-              e <- evaluation.copy(attendeeId = a.identifier).add(withConfirmation = true, repos, mailer)
-              _ <- repos.cm.rep.event.attendee.update(attendee.copy(evaluationId = e.id))
-            } yield ()) flatMap { _ =>
-              jsonSuccess("")
+        if (!event.past)
+          jsonConflict("The event is not ended yet. Please come back later")
+        else if (event.archived)
+          jsonConflict("The facilitators closed this event for accepting evaluations")
+        else
+          form(event.identifier).bindFromRequest.fold(
+            errors => jsonFormError(Utilities.errorsToJson(errors)),
+            { case (attendee, evaluation) =>
+              (for {
+                a <- repos.cm.rep.event.attendee.insert(attendee)
+                e <- evaluation.copy(attendeeId = a.identifier).add(withConfirmation = true, repos, mailer)
+                _ <- repos.cm.rep.event.attendee.update(attendee.copy(evaluationId = e.id))
+              } yield ()) flatMap { _ =>
+                jsonSuccess("")
+              }
             }
-          }
-        )
+          )
     }
   }
 

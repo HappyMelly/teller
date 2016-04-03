@@ -3,6 +3,14 @@
 @import views.{Attendees, Countries, Evaluations}
 @import views.ViewHelpersV2._
 
+@contact(facilitators: Seq[Person]) = {
+    @if(facilitators.length == 1) {
+        @facilitators.head.fullName, <a href="mailto:@facilitators.head.email" class="link-mblue">@facilitators.head.email</a>
+    } else {
+        @facilitators.head.fullName, <a href="mailto:@facilitators.head.email" class="link-mblue">@facilitators.head.email</a>
+        or @facilitators.last.fullName, <a href="mailto:@facilitators.last.email" class="link-mblue">@facilitators.last.email</a>
+    }
+}
 
 @v2.layout.public(s"Evaluation for ${event.title}", responsive = true) {
     <div class="p-evaluat js-evaluation-form">
@@ -41,9 +49,7 @@
                         The facilitators closed this event for accepting evaluations.
                     </h2>
                     <p class="b-evalform__p">
-                        Please contact Simone Ramson:
-                            <a href="mailto:simonramson.com" class="link-mblue">simonramson.com</a>, or Patrick Lerua:
-                            <a href="mailto:simonramson.com" class="link-mblue">patricklerua.com</a>, for more information.
+                        Please contact @contact(facilitators) for more information.
                     </p>
                 </div>
             </div>
