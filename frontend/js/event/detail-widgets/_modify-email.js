@@ -7,6 +7,7 @@ export default class Widget {
         this.$root = $(selector);
         this.locals = this._getDom();
         this.formHelper = new FormHelper(this.locals.$textarea);
+        this.template = this.locals.$textarea.val();
 
         this._assignEvent();
     }
@@ -16,6 +17,7 @@ export default class Widget {
 
         return {
             $link: $root.find('[data-emailmod-link]'),
+            $defaultTemplate: $root.find('[data-emailmod-default]'),
             $modal: $root.find('[data-emailmod-dlg]'),
             $form: $root.find('[data-emailmod-form]'),
             $textarea: $root.find('[data-emailmod-textarea]'),
@@ -24,10 +26,15 @@ export default class Widget {
     }
 
     _assignEvent(){
+        const self = this;
+
         this.$root
             .on('click', '[data-emailmod-link]', this._onClickShowModal.bind(this))
             .on('click', '[data-emailmod-mark]', this._onClickUseTemplate.bind(this))
-            .on('click', '[data-emailmod-cancel]', this._onClickCancel.bind(this))
+            .on('hide.bs.modal', (e)=>{
+                e.stopPropagation();
+                self._onCloseModal();
+            });
 
         this.locals.$form.on('submit', this._onSubmitForm.bind(this));
     }
@@ -39,27 +46,28 @@ export default class Widget {
 
     _onClickUseTemplate(e){
         e.preventDefault();
+        const locals = this.locals;
+
+        locals.$textarea.val(locals.$defaultTemplate.text());
     }
 
-    _onClickCancel(e){
-        e.preventDefault();
-
-        this.formHelper.clearForm();
+    _onCloseModal(){
+        this.locals.$textarea.val(this.template);
         this.formHelper.removeErrors();
-        this.locals.$modal.modal('hide');
     }
 
     _onSubmitForm(e){
         e.preventDefault();
         const self = this;
+        const locals = this.locals;
 
         if (!self.formHelper.isValidInputs()) return;
         const formData = self.formHelper.getFormData();
 
         self._sendEmailContent(formData)
             .done(()=>{
-                self.formHelper.clearForm();
-                self.locals.$modal.modal('hide');
+                self.template = locals.$textarea.val();
+                locals.$modal.modal('hide');
 
                 success('Email is modified');
             })
