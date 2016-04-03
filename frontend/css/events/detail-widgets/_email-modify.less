@@ -1,0 +1,115 @@
+
+.modify-email{
+  display: none !important;
+  margin-top: 28px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.modify-email__link{
+  display: block;
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 2px;
+  font-weight: bold;
+  color: #333333;
+  text-decoration: none !important;
+
+  &:before{
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 14px;
+    background: url(/assets/images/events/icon-email-sm.png) no-repeat;
+    -webkit-background-size: cover;
+    background-size: cover;
+  }
+
+  span{
+    display: inline-block;
+    line-height: 1;
+    vertical-align: top;
+    border-bottom: 1px dashed #333;
+  }
+
+  &:hover{
+    color: #4a90e2 !important;
+
+    span{
+      border-bottom-color: #4a90e2;
+    }
+  }
+}
+
+.modify-email__hint{
+  color: #777777;
+}
+
+//dlg
+.dlg-modify{
+  .b-modal__dlg{
+    width: 944px;
+  }
+
+  .b-modal__title{
+    margin-bottom: 13px;
+  }
+
+  .b-modal__content{
+    padding: 24px 20px 30px;
+  }
+}
+
+.dlg-modify__i{
+  position: relative;
+  width: 446px;
+
+  .b-error{
+    font-size: 12px;
+    top: 4px;
+  }
+}
+
+.dlg-modify__textarea{
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 13px;
+  min-height: 300px !important;
+  resize: none;
+}
+
+.dlg-modify__markdown{
+  width: 450px;
+  position: absolute;
+  left: 100%;
+  margin-left: 15px;
+  top: 0;
+  height: 300px;
+}
+
+.dlg-modify__buttons{
+  text-align: left;
+}
+
+.dlg-modify__cancel,
+.dlg-modify__submit{
+  display: inline-block;
+  vertical-align: top;
+  padding-top: 14px;
+  padding-bottom: 16px;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.dlg-modify__submit{
+  width: 294px;
+  margin-right: 8px;
+}
+
+.dlg-modify__cancel{
+  width: 139px;
+}

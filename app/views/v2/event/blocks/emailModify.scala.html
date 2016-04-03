@@ -1,0 +1,36 @@
+
+<div class="modify-email js-modify-email">
+    <a href="#" class="modify-email__link" data-emailmod-link>
+        <span>Modify post-event email</span>
+    </a>
+    <div class="modify-email__hint">
+        Share course materials and additional information with attendees. Email will be sent automatically after certificate generating.
+    </div>
+
+    <div data-emailmod-dlg class="modal fade b-modal dlg-modify" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+        @v2.html.modal("", "Modify post-event email") {
+            <form action="/senddata" class="dlg-modify__form" data-emailmod-form>
+                <a data-emailmod-mark href="#" class="dlg-modify__link link-blue">
+                    Use markdown for formating.
+                </a>
+                <div class="dlg-modify__i">
+                    <textarea
+                        name="email-text"
+                        data-emailmod-textarea
+                        markdownpreview
+                        data-markdownclass = "dlg-modify__markdown"
+                        data-markdownposition = "not-fixed"
+                        class="dlg-modify__textarea form-control"></textarea>
+                </div>
+                <div class="dlg-modify__buttons">
+                    <button type="submit" class="btn btn-primary dlg-modify__submit">
+                        Save
+                    </button>
+                    <a href="#" class="btn btn-default dlg-modify__cancel" data-emailmod-cancel>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        }
+    </div>
+</div>

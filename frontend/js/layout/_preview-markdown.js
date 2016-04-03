@@ -141,7 +141,7 @@ export default class Widget {
 
 
     // static
-    static plugin(selector, options) {
+    static plugin(selector) {
         const $elems = $(selector);
         if (!$elems.length) return;
 
@@ -150,6 +150,7 @@ export default class Widget {
             let data     = $element.data('widget.preview.markdown');
 
             if (!data) {
+                let options = $element.data();
                 data = new Widget(el, options);
                 $element.data('widget', data);
             }

@@ -165,8 +165,12 @@
               </div>
             </div>
           </div>
-
-          @views.html.v2.event.invoice(user, funders, event, view)
+          <div class="col-md-3 h-aright">
+            <div class="p-eventdet__aside">
+              @views.html.v2.event.blocks.invoice(user, funders, event, view)
+              @views.html.v2.event.blocks.emailModify()
+            </div>
+          </div>
 
           <div class="col-md-12">
             <div class="event-table">
