@@ -28,7 +28,9 @@ export default class Widget {
             $addressBlock: $root.find('[data-eval-address]'),
             $form: $root.find('[data-eval-form]'),
             $step1: $root.find('[data-eval-step1]'),
-            $step2: $root.find('[data-eval-step2]')
+            $errorsStep1: $root.find('[data-eval-error1]'),
+            $step2: $root.find('[data-eval-step2]'),
+            $errorsStep2: $root.find('[data-eval-error2]')
         };
     }
 
@@ -83,10 +85,12 @@ export default class Widget {
             })
             .fail(function(response){
                 const data = $.parseJSON(response.responseText).data;
+                const errorText = self.helperStep2.getErrorsFull(data.errors);
 
                 if (!data.errors) return;
 
-                self.formHelper.setErrors(data.errors);
+                self.helperStep2.setErrors(data.errors, false);
+                self.locals.$errorsStep2.html(errorText);
             })
     }
 
@@ -152,14 +156,12 @@ export default class Widget {
 
     _resetForm(){
         this.helperStep1.clearForm();
-        this.helperStep1.removeErrors();
         this._saveDataToLocal('step1', null);
 
         this.helperStep2.clearForm();
-        this.helperStep2.removeErrors();
+        this.locals.$errorsStep2.html('');
         this._saveDataToLocal('step2', null);
     }
-
 
     //transport
     _sendEvaluation(formData){

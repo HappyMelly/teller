@@ -150,131 +150,146 @@
                         <a href="#" class="btn btn-primary b-evalform__next" data-eval-next>
                             Next step
                         </a>
+                            <div data-eval-error1 class="b-evalform__errors"></div>
                     </div>
                         <div class="b-evalform__step type-2" data-eval-step2>
-                        <div class="b-evalform__sub">
-                            <b>Final step: add your personal data.</b>
-                            All fields are required, except marked as optional.
-                        </div>
+                            <div class="b-evalform__sub">
+                                <b>Final step: add your personal data.</b>
+                                All fields are required, except marked as optional.
+                            </div>
 
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">First name</div>
-                            <div class="h-rel">
-                                <input type="text" name="first_name" class="form-control b-evalform__input" />
-                            </div>
-                        </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">Last name</div>
-                            <div class="h-rel">
-                                <input type="text" name="last_name" class="form-control b-evalform__input" />
-                            </div>
-                        </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">Birthday (optional)</div>
-                            <div class="h-rel">
-                                <input type="text" name="birth" class="form-control b-evalform__input type-birth type-optional" data-type="date" />
-                            </div>
-                        </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">City</div>
-                            <div class="h-rel">
-                                <input type="text" name="address.city" class="form-control b-evalform__input" />
-                            </div>
-                        </div>
-                        <div class="b-evalform__i type-select">
-                            <div class="b-evalform__label">
-                                Country
-                            </div>
-                            <div class="h-rel">
-                                <select name="address.country" id="" class="form-control b-evalform__select">
-                                    <option value="" disabled selected>Choose country</option>
-                                    @for(country <- Countries.all) {
-                                        <option value="@country._1">@country._2</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__adress">
-                                <a href="#" class="b-evalform__link" data-eval-toggle>
-                                    + <span class="text-show">Show full address</span>
-                                    <span class="texts-hide">Hide full address</span>
-                                </a> <br>
-                                (Required when the facilitator has promised to send a book or other goodies)
-                            </div>
-                            <div class="b-evalform__adress-con" data-eval-address>
-                                <div class="b-evalform__i">
-                                    <div class="b-evalform__label">Address line 1</div>
-                                    <div class="h-rel">
-                                        <input type="text" name="address.street_1" class="form-control b-evalform__input type-optional" />
-                                    </div>
-                                </div>
-                                <div class="b-evalform__i">
-                                    <div class="b-evalform__label">Address line 2</div>
-                                    <div class="h-rel">
-                                        <input type="text" name="address.street_2" class="form-control b-evalform__input type-optional" />
-                                    </div>
-                                </div>
-                                <div class="b-evalform__i">
-                                    <div class="b-evalform__label">Postcode</div>
-                                    <div class="h-rel">
-                                        <input type="text" name="address.postcode" class="form-control b-evalform__input type-optional type-numeric" />
-                                    </div>
-                                </div>
-                                <div class="b-evalform__i">
-                                    <div class="b-evalform__label">State</div>
-                                    <div class="h-rel">
-                                        <input type="text" name="address.state" class="form-control b-evalform__input type-optional" />
-                                    </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">First name</div>
+                                <div class="h-rel">
+                                    <input type="text" name="first_name"
+                                        class="form-control b-evalform__input"
+                                        title="First name" />
                                 </div>
                             </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">Last name</div>
+                                <div class="h-rel">
+                                    <input type="text" name="last_name"
+                                        class="form-control b-evalform__input"
+                                        title="Last name"/>
+                                </div>
+                            </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">Birthday (optional)</div>
+                                <div class="h-rel">
+                                    <input type="text" name="birth"
+                                        class="form-control b-evalform__input type-birth type-optional" data-evaluat-birth
+                                        placeholder="dd.mm.yyyy"/>
+                                </div>
+                            </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">City</div>
+                                <div class="h-rel">
+                                    <input type="text" name="address.city"
+                                        class="form-control b-evalform__input"
+                                        title="City" />
+                                </div>
+                            </div>
+                            <div class="b-evalform__i type-select">
+                                <div class="b-evalform__label">
+                                    Country
+                                </div>
+                                <div class="h-rel">
+                                    <select name="address.country" id=""
+                                        class="form-control b-evalform__select"
+                                        title="Country">
+                                        <option value="" disabled selected>Choose country</option>
+                                        @for(country <- Countries.all) {
+                                            <option value="@country._1">@country._2</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__adress">
+                                    <a href="#" class="b-evalform__link" data-eval-toggle>
+                                        + <span class="text-show">Show full address</span>
+                                        <span class="texts-hide">Hide full address</span>
+                                    </a> <br>
+                                    (Required when the facilitator has promised to send a book or other goodies)
+                                </div>
+                                <div class="b-evalform__adress-con" data-eval-address>
+                                    <div class="b-evalform__i">
+                                        <div class="b-evalform__label">Address line 1</div>
+                                        <div class="h-rel">
+                                            <input type="text" name="address.street_1" class="form-control b-evalform__input type-optional" />
+                                        </div>
+                                    </div>
+                                    <div class="b-evalform__i">
+                                        <div class="b-evalform__label">Address line 2</div>
+                                        <div class="h-rel">
+                                            <input type="text" name="address.street_2" class="form-control b-evalform__input type-optional" />
+                                        </div>
+                                    </div>
+                                    <div class="b-evalform__i">
+                                        <div class="b-evalform__label">Postcode</div>
+                                        <div class="h-rel">
+                                            <input type="text" name="address.postcode" class="form-control b-evalform__input type-optional type-numeric" />
+                                        </div>
+                                    </div>
+                                    <div class="b-evalform__i">
+                                        <div class="b-evalform__label">State</div>
+                                        <div class="h-rel">
+                                            <input type="text" name="address.state" class="form-control b-evalform__input type-optional" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">
+                                    Organisation (optional)
+                                </div>
+                                <div class="h-rel">
+                                    <input type="text" name="organization" class="form-control b-evalform__input type-optional" />
+                                </div>
+                            </div>
+                            <div class="b-evalform__i type-select">
+                                <div class="b-evalform__label">
+                                    Which best describes what you do? (optional)
+                                </div>
+                                <div class="h-rel">
+                                    <select name="description" id="" class="form-control b-evalform__select type-optional">
+                                        <option value="" disabled selected>Choose area</option>
+                                        @for(role <- Attendees.roles) {
+                                            <option value="@role">@role</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">
+                                    Email address
+                                </div>
+                                <div class="h-rel">
+                                    <input type="email" name="email"
+                                        class="form-control b-evalform__input type-email"
+                                        title="Email address" />
+                                </div>
+                            </div>
+                            <div class="b-evalform__i">
+                                <div class="b-evalform__label">
+                                    Comments (optional)
+                                </div>
+                                <div class="h-rel">
+                                    <textarea name="comment" id="" cols="30" rows="10" class="b-evalform__textarea form-control type-optional"></textarea>
+                                </div>
+                            </div>
+                            <div class="b-evalform__buttons">
+                                <a href="#" class="btn btn-default b-evalform__cancel" data-eval-previous>
+                                    Edit previous step
+                                </a>
+                                <button type="submit" class="btn btn-primary b-evalform__submit" data-eval-submit>
+                                    Send evaluation
+                                </button>
+                            </div>
+                            <div data-eval-error2 class="b-evalform__errors"></div>
+
                         </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">
-                                Organisation (optional)
-                            </div>
-                            <div class="h-rel">
-                                <input type="text" name="organization" class="form-control b-evalform__input type-optional" />
-                            </div>
-                        </div>
-                        <div class="b-evalform__i type-select">
-                            <div class="b-evalform__label">
-                                Which best describes what you do? (optional)
-                            </div>
-                            <div class="h-rel">
-                                <select name="description" id="" class="form-control b-evalform__select type-optional">
-                                    <option value="" disabled selected>Choose area</option>
-                                    @for(role <- Attendees.roles) {
-                                        <option value="@role">@role</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">
-                                Email address
-                            </div>
-                            <div class="h-rel">
-                                <input type="email" name="email" class="form-control b-evalform__input type-email" />
-                            </div>
-                        </div>
-                        <div class="b-evalform__i">
-                            <div class="b-evalform__label">
-                                Comments (optional)
-                            </div>
-                            <div class="h-rel">
-                                <textarea name="comment" id="" cols="30" rows="10" class="b-evalform__textarea form-control type-optional"></textarea>
-                            </div>
-                        </div>
-                        <div class="b-evalform__buttons">
-                            <a href="#" class="btn btn-default b-evalform__cancel" data-eval-previous>
-                                Edit previous step
-                            </a>
-                            <button type="submit" class="btn btn-primary b-evalform__submit" data-eval-submit>
-                                Send evaluation
-                            </button>
-                        </div>
-                    </div>
                     </div>
                     <div class="b-evalfinal">
                         <h2 class="b-evalfinal__title">
@@ -291,5 +306,8 @@
     </div>
 
     <link rel="stylesheet" href="@routes.Assets.at("css/evaluation/evaluation-public-page.css")">
+
+
+    <script src="@routes.Assets.at("javascripts/jquery.inputmask.bundle.min.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("js/package/evaluation-public.js")" type="text/javascript"></script>
 }

@@ -81,16 +81,18 @@ export default class FormHelper {
     /**
      * Set error for control
      * @param {jQuery} $control
-     * @param {string} errorText
+     * @param {String} errorText
+     * @param {Boolean} insertError
      */
-    _setError($control, errorText) {
+    _setError($control, errorText, insertError = true) {
         const $parent = $control.parent();
         const $error = $parent.find('.b-error');
 
         if ($error.length) return;
 
         $parent.addClass('b-error_show');
-        $('<div class="b-error" />')
+        
+        insertError && $('<div class="b-error" />')
             .text(errorText)
             .appendTo($parent);
 
@@ -119,12 +121,13 @@ export default class FormHelper {
     /**
      * Set errors
      * @param {Array} errors - [{name: "email", error: "empty"}, {name: "password", error: "empty"}]
+     * @param {Boolean} insertError - insert error description to the Dom 
      */
-    setErrors(errors) {
+    setErrors(errors, insertError = true) {
         errors.forEach((item) => {
             const $currentControl = this.$controls.filter('[name="' + item.name + '"]').first();
 
-            if ($currentControl.length) this._setError($currentControl, item.error)
+            if ($currentControl.length) this._setError($currentControl, item.error, insertError)
         })
     }
 
@@ -152,12 +155,12 @@ export default class FormHelper {
      * @returns {string}
      */
     getErrorsFull(errors) {
+        const self = this;
         const arrErrors = errors || this.arrErrors;
-        const $body = $('body');
         let errorTxt = '';
 
         arrErrors.forEach((item) => {
-            const $control = $body.find(`input[name="${item.name}"]`).first();
+            const $control = self.$controls.filter(`[name="${item.name}"]`).first();
             const name = $control.length? $control.attr('title'): item.name;
 
             errorTxt += `<b>${name}</b>: ${item.error}.  <br><br>`;
