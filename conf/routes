@@ -1,5 +1,11 @@
 # Application pages
 
+# we put 'public' pages first to reinforce the use of new public links for events and evaluation confirmation
+GET           /public/evaluation/confirm/:confirmationId                     controllers.cm.PublicEvaluations.confirm(confirmationId: String)
+GET           /public/evaluation/:eventId                                    controllers.cm.PublicEvaluations.add(eventId: String)
+POST          /public/evaluation/:eventId                                    controllers.cm.PublicEvaluations.create(eventId: String)
+GET           /public/event/:id                                              controllers.cm.Events.public(id: String)
+
 GET           /                                                              controllers.core.Dashboard.index
 GET           /about                                                         controllers.core.Dashboard.about
 GET           /apiv2                                                         controllers.core.Dashboard.apiv2
@@ -92,16 +98,6 @@ GET           /credits                                                       con
 POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
 POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
 
-POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword
-
-GET           /person/:personId/endorsement                                  controllers.Endorsements.add(personId: Long)
-GET           /person/:personId/endorsement/select                           controllers.Endorsements.renderSelectForm(personId: Long)
-GET           /person/:personId/endorsement/:id                              controllers.Endorsements.edit(personId: Long, id: Long)
-POST          /person/:personId/endorsement                                  controllers.Endorsements.create(personId: Long)
-POST          /person/:personId/endorsement/:id                              controllers.Endorsements.update(personId: Long, id: Long)
-DELETE        /person/:personId/endorsement/:id                              controllers.Endorsements.remove(personId: Long, id: Long)
-POST          /person/:personId/endorsements/positions                       controllers.Endorsements.updatePositions(personId: Long)
-POST          /person/:personId/endorsements/add                             controllers.Endorsements.createFromSelected(personId: Long)
 POST          /event/:eventId/endorsement/evaluation/:evaluationId           controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
 
 POST          /evaluation/:id/approve                                        controllers.cm.Evaluations.approve(id: Long)
@@ -110,7 +106,7 @@ POST          /evaluation/:id/confirmrequest                                 con
 GET           /evaluation/:id                                              controllers.cm.Evaluations.details(id: Long)
 DELETE        /evaluation/:id                                              controllers.cm.Evaluations.delete(id: Long)
 # it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
-GET           /evaluation/confirm/:confirmationId                          controllers.cm.Evaluations.confirm(confirmationId: String)
+GET           /evaluation/confirm/:confirmationId                          controllers.cm.PublicEvaluations.confirm(confirmationId: String)
 
 POST          /person/:personId/material                                   controllers.cm.Materials.create(personId: Long)
 DELETE        /person/:personId/material/:id                               controllers.cm.Materials.remove(personId: Long, id: Long)
@@ -208,6 +204,17 @@ POST          /organization/:id                                              con
 GET           /organizations/search                                          controllers.core.Organisations.search(query: Option[String])
 POST          /organization/:id/logo                                         controllers.core.Organisations.uploadLogo(id: Long)
 
+POST          /password/reset                                                controllers.PasswordReset.handleStartResetPassword
+
+GET           /person/:personId/endorsement                                  controllers.Endorsements.add(personId: Long)
+GET           /person/:personId/endorsement/select                           controllers.Endorsements.renderSelectForm(personId: Long)
+GET           /person/:personId/endorsement/:id                              controllers.Endorsements.edit(personId: Long, id: Long)
+POST          /person/:personId/endorsement                                  controllers.Endorsements.create(personId: Long)
+POST          /person/:personId/endorsement/:id                              controllers.Endorsements.update(personId: Long, id: Long)
+DELETE        /person/:personId/endorsement/:id                              controllers.Endorsements.remove(personId: Long, id: Long)
+POST          /person/:personId/endorsements/positions                       controllers.Endorsements.updatePositions(personId: Long)
+POST          /person/:personId/endorsements/add                             controllers.Endorsements.createFromSelected(personId: Long)
+
 GET           /people                                                        controllers.core.People.index
 
 GET           /person/new                                                    controllers.core.People.add
@@ -225,7 +232,6 @@ GET           /person/:id/photo                                              con
 DELETE        /person/:id/photo/delete                                       controllers.core.ProfilePhotos.delete(id: Long)
 POST          /person/:id/photo                                              controllers.core.ProfilePhotos.update(id: Long)
 GET           /person/:id/photo/choose                                       controllers.core.ProfilePhotos.choose(id: Long)
-
 
 GET           /person/:id/licenses/new                                       controllers.Licenses.add(id: Long)
 POST          /person/:id/licenses/new                                       controllers.Licenses.create(id: Long)

@@ -24,15 +24,11 @@
 
 package models.cm
 
-import controllers.Utilities
-import controllers.cm.Evaluations
-import cron.reminders.EvaluationReminder
+import akka.actor.ActorRef
 import models.cm.event.Attendee
-import models.{Activity, ActivityRecorder, DateStamp}
 import models.repository._
+import models.{Activity, ActivityRecorder, DateStamp}
 import org.joda.time.LocalDate
-import play.api.i18n.Messages
-import services.integrations.EmailComponent
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -130,16 +126,18 @@ case class  Evaluation(id: Option[Long],
    * @param withConfirmation If true, the evaluation should be confirmed first by the participant
    * @return Returns an updated evaluation with id
    */
-  def add(withConfirmation: Boolean = false, email: EmailComponent, repos: Repositories)(implicit messages: Messages): Future[Evaluation] =
+  def add(withConfirmation: Boolean = false, repos: Repositories, mailer: ActorRef): Future[Evaluation] =
     if (withConfirmation) {
       val hash = Random.alphanumeric.take(64).mkString
       val confirmed = this.copy(status = EvaluationStatus.Unconfirmed, confirmationId = Some(hash))
-      repos.cm.evaluation.add(confirmed) flatMap { evaluation =>
-        evaluation.sendConfirmationRequest(email, repos)
+      repos.cm.evaluation.add(confirmed) map { evaluation =>
+        mailer ! ("confirm", evaluation)
+        evaluation
       }
     } else {
-      repos.cm.evaluation.add(this.copy(status = EvaluationStatus.Pending)) flatMap { evaluation =>
-        evaluation.sendNewEvaluationNotification(email, repos, messages)
+      repos.cm.evaluation.add(this.copy(status = EvaluationStatus.Pending)) map { evaluation =>
+        mailer ! ("new", this)
+        evaluation
       }
     }
 
@@ -183,47 +181,10 @@ case class  Evaluation(id: Option[Long],
   /**
    * Sets the evaluation to Pending state and returns the updated evaluation
    */
-  def confirm(email: EmailComponent, services: Repositories)(implicit messages: Messages): Future[Evaluation] = {
-    this.copy(status = EvaluationStatus.Pending).update(services) flatMap { evaluation =>
-      evaluation.sendNewEvaluationNotification(email, services, messages)
-    }
-  }
-
-  /**
-   * Sends a confirmation request to the participant
-   */
-  def sendConfirmationRequest(email: EmailComponent, repos: Repositories): Future[Evaluation] = {
-    (for {
-      event <- repos.cm.event.get(eventId)
-      brand <- repos.cm.brand.get(event.brandId)
-      attendee <- repos.cm.rep.event.attendee.find(this.attendeeId, this.eventId)
-    } yield (brand, attendee)) map {
-      case (_, None) => this
-      case (brand, Some(attendee)) =>
-        val token = this.confirmationId getOrElse ""
-        val url = controllers.cm.Evaluations.confirmationUrl(token)
-        (new EvaluationReminder(email, repos)).sendConfirmRequest(attendee, brand, url)
-        this
-    }
-  }
-
-  protected def sendNewEvaluationNotification(email: EmailComponent, repos: Repositories, messages: Messages) = {
-    (for {
-      event <- repos.cm.event.get(eventId)
-      brand <- repos.cm.brand.get(event.brandId)
-      attendee <- repos.cm.rep.event.attendee.find(this.attendeeId, this.eventId)
-      coordinators <- repos.cm.brand.coordinators(event.brandId)
-    } yield (event, brand, attendee, coordinators)) map {
-      case (event, _, None, _) => this
-      case (event, brand, Some(attendee), coordinators) =>
-        val impression = views.Evaluations.impression(facilitatorImpression)
-        val subject = s"New evaluation (General impression: $impression)"
-        val cc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-        val url = Utilities.fullUrl(controllers.cm.routes.Evaluations.details(this.identifier).url)
-        val body = mail.evaluation.html.details(this, event, attendee, brand, url)(messages)
-        email.send(event.facilitators(repos), cc, Seq(), subject, body.toString(), brand.sender)
-
-        this
+  def confirm(services: Repositories, mailer: ActorRef): Future[Evaluation] = {
+    this.copy(status = EvaluationStatus.Pending).update(services) map { evaluation =>
+      mailer ! ("new", this)
+      evaluation
     }
   }
 

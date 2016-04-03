@@ -40,8 +40,12 @@
   padding: 1em 0;
 }
 .buttons-block {
-  padding-right: 5em;
   float: left;
+
+  &:first-child{
+    padding-right: 5em;
+  }
+
   .btn {
     min-width: 9em;
     margin-right: 1em;
@@ -77,55 +81,17 @@
 
     .glyphicon{
       top: -2px;
-      .transform(rotate(180deg));
+      left: 1px;
     }
   }
 }
 
-.event-details {
-  .event-info {
-    padding-top: 2.5em;
-    padding-bottom: 4em;
-    .column {
-      width: 50%;
-      float: left;
-      img.photo {
-        padding-bottom: 1em;
-        padding-right: 1em;
-      }
-      dt {
-        color: @grey;
-        font-weight: normal;
-      }
-      dd {
-        padding-bottom: 1em;
-      }
-      .title {
-        color: @grey;
-        padding-bottom: 1em;
-        font-weight: bold;
-      }
-    }
-  }
-  .name {
-    font-size: 18px;
-  }
-  .table-title {
-    width: 100%;
-    padding-bottom: 0.5em;
-    display: inline-table;
-    .pull-right {
-      padding-top: 0.4em;
-      a, span {
-        padding-left: 3em;
-      }
-    }
-  }
-}
+
 .send-confirmation-request {
   padding-left: 1.6em;
   line-height: 2em;
 }
+
 .evaluations {
   .list-group-item {
     padding: 1px 15px;

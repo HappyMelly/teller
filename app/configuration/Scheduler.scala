@@ -24,9 +24,9 @@
 package configuration
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Named, Inject, Singleton}
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import cron.SubscriptionUpdater
 import cron.cleaners.{ExpiredEventRequestCleaner, TokenCleaner}
 import cron.reminders._
@@ -48,6 +48,7 @@ trait IScheduler
 class Scheduler @Inject() (val env: Environment,
                            val email: Email,
                            val repos: Repositories,
+                           @Named("evaluation-mailer") mailer: ActorRef,
                            val actors: ActorSystem) extends IScheduler {
   start
 
@@ -73,7 +74,7 @@ class Scheduler @Inject() (val env: Environment,
     membership.sendOneMonthExpirationReminder()
     val event = new EventReminder(email, repos)
     event.sendPostFactumConfirmation()
-    val evaluation = new EvaluationReminder(email, repos)
+    val evaluation = new EvaluationReminder(repos, mailer)
     evaluation.sendToAttendees()
     Facilitator.updateFacilitatorExperience(repos)
     val subscription = new SubscriptionUpdater(repos)

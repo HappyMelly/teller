@@ -23,12 +23,12 @@
  */
 package controllers.cm.event
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.{Activities, Security}
-import cron.reminders.EvaluationReminder
 import models.Activity
 import models.UserRole.Role
 import models.cm.event.Attendee
@@ -45,11 +45,14 @@ import services.integrations.EmailComponent
 class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
                           val email: EmailComponent,
+                          @Named("evaluation-mailer") mailer: ActorRef,
                           val repos: Repositories,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
   with Helpers {
+
+  case class EvaluationRequestData(attendeeIds: List[Long], body: String)
 
   /**
     * Send requests for evaluation to participants of the event
@@ -58,17 +61,8 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def send(id: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒ implicit event =>
-      case class EvaluationRequestData(attendeeIds: List[Long], body: String)
-      val form = Form(mapping(
-        "participantIds" -> list(longNumber),
-        "body" -> nonEmptyText.verifying(
-          "The letter's body doesn't contains a link",
-          (b: String) ⇒ {
-            val url = """https?:\/\/""".r findFirstIn b
-            url.isDefined
-          }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply)).bindFromRequest
 
-      form.fold(
+      form.bindFromRequest.fold(
         formWithErrors ⇒
           redirect(controllers.cm.routes.Events.details(id), "error" -> "Provided data are wrong. Please, check a request form."),
         requestData ⇒ {
@@ -80,10 +74,9 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
             if (requestData.attendeeIds.forall(p ⇒ attendees.exists(_.identifier == p))) {
               import scala.util.matching.Regex
               val namePattern = new Regex( """(PARTICIPANT_NAME_TOKEN)""", "name")
-              val reminder = new EvaluationReminder(email, repos)
               attendees.foreach { attendee ⇒
                 val body = namePattern replaceAllIn(requestData.body, m ⇒ attendee.fullName)
-                reminder.sendEvaluationRequest(attendee, brand, body)
+                mailer ! ("request", attendee, brand, body)
               }
 
               Activity.insert(user.name, Activity.Predicate.Sent, event.title)(repos)
@@ -94,6 +87,15 @@ class Requests @Inject() (override implicit val env: TellerRuntimeEnvironment,
           }
         })
   }
+
+  protected def form = Form(mapping(
+    "participantIds" -> list(longNumber),
+    "body" -> nonEmptyText.verifying(
+      "The letter's body doesn't contains a link",
+      (b: String) ⇒ {
+        val url = """https?:\/\/""".r findFirstIn b
+        url.isDefined
+      }))(EvaluationRequestData.apply)(EvaluationRequestData.unapply))
 
 
   protected def requestMessage(attendees: Seq[Attendee]): String =

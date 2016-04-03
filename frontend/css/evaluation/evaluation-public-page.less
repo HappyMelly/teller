@@ -1,0 +1,213 @@
+@import "./../settings";
+@import "./public-widgets/_evaluat-info.less";
+@import "./public-widgets/_evaluat-form.less";
+@import "./public-widgets/_evaluat-fake.less";
+@import "./public-widgets/_evaluat-success.less";
+
+
+.p-evaluat{
+  text-align: left;
+  max-width: 975px;
+  margin: 0 auto;
+  padding: 0 15px 50px;
+}
+
+.p-evaluat__hint{
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  color: #ee929f;
+  padding-top: 15px;
+  padding-bottom: 39px;
+}
+
+.p-evaluat__main{
+  .clearfix();
+}
+
+.p-evaluat__aside{
+  padding-top: 28px;
+  float: right;
+  width: 218px;
+  margin-left: 50px;
+}
+
+.p-evaluat__content{
+  overflow: hidden;
+}
+
+.p-evaluat__content-inner{
+  width: 532px;
+}
+
+/*== States ==*/
+.p-evaluat_state_second{
+  .b-evalform__step.type-1{
+    display: none;
+  }
+
+  .b-evalform__step.type-2{
+    display: block;
+  }
+}
+
+.p-evaluat_state_success{
+  .p-evaluat__content{
+    overflow: visible;
+  }
+
+  .b-evalform{
+    display: none;
+  }
+
+  .b-evalfinal{
+    display: block;
+  }
+}
+
+@media screen and (max-width: 850px) {
+  .p-evaluat__content-inner{
+    width: 460px;
+  }
+
+  .p-evaluat__aside{
+    margin-left: 20px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .p-evaluat{
+    padding-right: 0;
+    padding-left: 0;
+    overflow: hidden;
+  }
+
+  .p-evaluat__hint{
+    padding-bottom: 13px;
+    padding-right: 20px;
+    padding-left: 20px;
+    font-weight: 400;
+    background-color: #EEEEEE;
+  }
+
+  //right block
+  .p-evaluat__aside{
+    width: auto;
+    float: none;
+    margin-left: 0;
+    padding-top: 0;
+    padding-right: 20px;
+    padding-left: 20px;
+    background-color: #EEEEEE;
+  }
+
+  .b-evalinfo{
+    box-shadow: none;
+    padding: 0 0 1px;
+  }
+
+  .b-evalinfo__title{
+    margin-bottom: 9px;
+  }
+
+  .b-evalinfo__date{
+    font-size: 18px;
+    line-height: 26px;
+    margin-bottom: 12px;
+  }
+
+  .b-evalinfo__name{
+    width: 100%;
+    position: relative;
+    top: -5px;
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  .p-evaluat__content{
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+
+  .p-evaluat__content-inner{
+    width: auto;
+  }
+
+  .b-evalform__title{
+    margin-top: 17px;
+  }
+
+  .b-evalform__sub{
+    font-size: 18px;
+    line-height: 26px;
+    margin-bottom: 17px;
+
+    b{
+      margin-bottom: 1px;
+    }
+  }
+
+  .b-evalform__i{
+    margin-bottom: 14px;
+  }
+
+  .b-evalform__label{
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .b-evalform__adress{
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  .b-evalform__link{
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  .b-evalform__textarea,
+  .b-evalform__input,
+  .b-evalform__select{
+    font-size: 18px;
+  }
+
+  .b-evalform__textarea{
+    height: 135px !important;
+  }
+
+  .b-evalform__buttons{
+    margin-top: 25px;
+    padding-bottom: 70px;
+    position: relative;
+    text-align: center;
+  }
+
+  .b-evalform__submit{
+    float: none;
+    min-width: 280px;
+  }
+
+  .b-evalform__cancel{
+    float: none;
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    width: 210px;
+    margin-left: -105px;
+  }
+
+  .b-evalform__next{
+    min-width: 290px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .b-evalform__select{
+    width: 100%;
+  }
+
+  .b-evalform__input{
+    width: 100% !important;
+  }
+}

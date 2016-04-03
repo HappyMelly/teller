@@ -10,56 +10,58 @@
 export default class FormHelper {
     /**
      * Validate form through inputs
-     * @param {jQuery} $inputs
+     * @param {jQuery} $controls
      */
-    constructor($inputs) {
-        this.$inputs = $inputs;
+    constructor($controls) {
+        this.$controls = $controls;
         this.arrErrors = [];
         this._assignEvents();
     }
 
     _assignEvents() {
-        this.$inputs.on('input', (e) => {
-            const $input = $(e.currentTarget);
+        this.$controls.on('input change', (e) => {
+            const $control = $(e.currentTarget);
 
-            this._validateImmediate($input);
-            this._removeError($input);
+            this._validateImmediate($control);
+            this._removeError($control);
         });
     }
 
-    _validateImmediate($input){
-        if ($input.hasClass('type-numeric')) {
-            $input.val($input.val().replace(/[^\d]+/g, ''));
+    _validateImmediate($control){
+        if ($control.hasClass('type-numeric')) {
+            $control.val($control.val().replace(/[^\d]+/g, ''));
         }
     }
 
     isValidInputs() {
-        const $inputs = this.$inputs;
+        const $controls = this.$controls;
         let error = 0;
 
-        $inputs.each((index, input) => {
-            const $input = $(input);
+        $controls.each((index, control) => {
+            const $control = $(control);
 
-            if (!this._isValidInput($input)) error += 1;
+            if (!this._isValidInput($control)) {
+                error += 1;
+            }
         });
         return Boolean(!error);
     }
 
     /**
-     * Check given input, is it valid?
-     * @param {jQuery} $input
-     * @returns {boolean} - Is valid input?
+     * Check given control, is it valid?
+     * @param {jQuery} $control
+     * @returns {boolean} - Is valid control?
      */
-    _isValidInput($input) {
-        const value = $.trim($input.val());
+    _isValidInput($control) {
+        const value = $.trim($control.val());
 
-        if (!value && !$input.hasClass('type-optional')) {
-            this._setError($input, 'Empty');
+        if (!value && !$control.hasClass('type-optional')) {
+            this._setError($control, 'Empty');
             return false;
         }
 
-        if (($input.hasClass('type-email')) && !this._isValidEmail(value)) {
-            this._setError($input, 'Email is not valid');
+        if (($control.hasClass('type-email')) && !this._isValidEmail(value)) {
+            this._setError($control, 'Email is not valid');
             return false;
         }
 
@@ -77,12 +79,12 @@ export default class FormHelper {
     }
 
     /**
-     * Set error for input
-     * @param {jQuery} $input
+     * Set error for control
+     * @param {jQuery} $control
      * @param {string} errorText
      */
-    _setError($input, errorText) {
-        const $parent = $input.parent();
+    _setError($control, errorText) {
+        const $parent = $control.parent();
         const $error = $parent.find('.b-error');
 
         if ($error.length) return;
@@ -93,24 +95,24 @@ export default class FormHelper {
             .appendTo($parent);
 
         this.arrErrors.push({
-            name: $input.attr('name'),
+            name: $control.attr('name'),
             error: errorText
         })
     }
 
     /**
-     * Remove error for input
-     * @param {jQuery} $input
+     * Remove error for control
+     * @param {jQuery} $control
      */
-    _removeError($input) {
-        const $parent = $input.parent();
+    _removeError($control) {
+        const $parent = $control.parent();
 
         $parent
             .removeClass('b-error_show')
             .find('.b-error').remove();
 
         this.arrErrors = this.arrErrors.filter(function (item) {
-            return item.name !== $input.attr('name')
+            return item.name !== $control.attr('name')
         })
     }
 
@@ -120,9 +122,9 @@ export default class FormHelper {
      */
     setErrors(errors) {
         errors.forEach((item) => {
-            const $currentInput = this.$inputs.filter('[name="' + item.name + '"]').first();
+            const $currentControl = this.$controls.filter('[name="' + item.name + '"]').first();
 
-            if ($currentInput.length) this._setError($currentInput, item.error)
+            if ($currentControl.length) this._setError($currentControl, item.error)
         })
     }
 
@@ -145,7 +147,7 @@ export default class FormHelper {
     }
 
     /**
-     * Get list of errors with full title (from input title attribute)
+     * Get list of errors with full title (from control title attribute)
      * @param {ListErrors} errors - list of errors
      * @returns {string}
      */
@@ -155,8 +157,8 @@ export default class FormHelper {
         let errorTxt = '';
 
         arrErrors.forEach((item) => {
-            const $input = $body.find(`input[name="${item.name}"]`).first();
-            const name = $input.length? $input.attr('title'): item.name;
+            const $control = $body.find(`input[name="${item.name}"]`).first();
+            const name = $control.length? $control.attr('title'): item.name;
 
             errorTxt += `<b>${name}</b>: ${item.error}.  <br><br>`;
         });
@@ -167,7 +169,7 @@ export default class FormHelper {
     getFormData(){
         let ajaxData = {};
 
-        this.$inputs.map((index, el) => {
+        this.$controls.map((index, el) => {
             const $el = $(el);
             const name = $el.attr('name');
 
@@ -181,7 +183,7 @@ export default class FormHelper {
      * Remove all errors
      */
     removeErrors() {
-        this.$inputs.each((index, el) => {
+        this.$controls.each((index, el) => {
             const $el = $(el);
             this._removeError($el)
         })
@@ -190,7 +192,7 @@ export default class FormHelper {
     getFormData(){
         let ajaxData = {};
         
-        this.$inputs.map((index, el) => {
+        this.$controls.map((index, el) => {
             const $el = $(el);
             const name = $el.attr('name');
 
@@ -201,7 +203,7 @@ export default class FormHelper {
     }
 
     clearForm() {
-        this.$inputs.each((index, el) => {
+        this.$controls.each((index, el) => {
             const $el = $(el);
             if (!$el.attr("disabled"))  $el.val('');
         })

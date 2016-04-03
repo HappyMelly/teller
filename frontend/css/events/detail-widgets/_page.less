@@ -1,0 +1,166 @@
+
+// header
+.p-eventdet__header{
+  margin-bottom: 22px;
+  max-width: 75%;
+}
+
+.p-eventdet__title{
+  font-size: 30px;
+  line-height: 40px;
+  font-weight: 400;
+  margin: 0 0 6px 0;
+}
+
+.p-eventdet__sub{
+  text-align: left;
+}
+
+.p-eventdet__sub-i{
+  display: inline-block;
+  vertical-align: top;
+  min-width: 230px;
+  padding-right: 40px;
+}
+
+.p-eventdet__buttons{
+  .clearfix();
+  padding: 15px 0;
+  border-top:1px solid #E7E7E7;
+  border-bottom:1px solid #E7E7E7;
+  margin-bottom: 26px;
+}
+
+// event info
+.event-info__list{
+  .clearfix();
+  margin-bottom: 31px;
+}
+
+.event-info__col{
+  float: left;
+  width: 50%;
+
+  dd,
+  dt{
+    line-height: 20px;
+  }
+
+  dt{
+    font-weight: 400;
+  }
+
+  dd{
+    margin-bottom: 11px;
+  }
+}
+
+.event-info__title{
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 17px;
+}
+
+.event-info__i{
+  display: block;
+}
+
+// urls
+.event-urls{
+  margin-bottom: 40px;
+}
+
+.event-desc__i{
+  position: relative;
+  margin-bottom: 3px;
+  padding-left: 28px;
+
+  &.type-full{
+    margin-top: 16px;
+    padding-left: 0;
+  }
+}
+
+.event-desc__copy{
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 19px;
+  height: 19px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  .transition(all .15s ease);
+  cursor: pointer;
+  
+  &:before{
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 5px;
+    width: 13px;
+    height: 8px;
+    background: url(/assets/images/events/icon-copy.png) no-repeat;
+    -webkit-background-size: cover;
+    background-size: cover ;
+    opacity: .7;
+    .transition(all .15s ease);
+  }
+  
+  &.zeroclipboard-is-hover{
+    border-color: #656565;
+
+    &:before{
+      opacity: 1;
+    }
+  }
+}
+
+//table
+.event-table{
+  .clearfix();
+  margin-top: 50px;
+}
+
+.event-table__title{
+  float: left;
+  font-size: 24px;
+  line-height: 1;
+  margin-right: 30px;
+}
+
+.event-table__links{
+  overflow: hidden;
+  text-align: right;
+}
+
+.event-table__i{
+  display: inline-block;
+  vertical-align: top;
+  margin-left: 3em;
+  margin-top: 9px;
+}
+
+// facilitator
+.b-facilitator{
+  display: block;
+  margin-bottom: 15px;
+}
+
+.b-facilitator__link{
+  float: left;
+  margin-right: 17px;
+}
+
+.b-facilitator__name{
+  display: table;
+  height: 70px;
+  font-size: 18px;
+  line-height: 23px;
+  text-align: left;
+  max-width: 200px;
+
+  .inner{
+    display: table-cell;
+    vertical-align: middle;
+  }
+}

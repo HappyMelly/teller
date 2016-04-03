@@ -35,7 +35,6 @@
 @import "widgets/_badges";
 @import "widgets/_notification";
 @import "widgets/_notification-list";
-@import "widgets/_event-block";
 @import "widgets/_payment";
 
 // error
@@ -64,6 +63,37 @@
   }
 }
 
+// photo
+.b-photo{
+  display: block;
+  width: 70px;
+  height: 70px;
+  background-repeat:no-repeat;
+  background-position: 50% 50%;
+  -webkit-background-size: cover;
+  background-size: cover;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+// breacrumbs
+.b-breadcrumb{
+  margin-bottom: 8px;
+  text-align: left;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+}
+
+.b-breadcrumb__i{
+  font-size: 24px;
+  margin-right: 2px;
+}
+
+.b-breadcrumb__div{
+  color: #4a90e2;
+  font-size: 18px;
+}
+
 
 // other styles
 .notification-widget {
@@ -72,8 +102,7 @@
 }
 
 .grey-widget {
-  background-color: #eeeeee;
-  box-shadow: 0 7px 4px 10px #eeeeee;
+  background-color: #e7e7e7;
 
   .strength-value {
     font-size: 24px;
