@@ -24,7 +24,9 @@
 
 package models.cm.brand
 
+import controllers.Utilities
 import models.{Activity, ActivityRecorder}
+import models.cm.Event
 
 import scala.util.Random
 
@@ -61,20 +63,28 @@ case class ApiConfig(id: Option[Long],
 
   /**
     * Returns evaluation form url filled with data
-    * @param eventId Event identifier
+    *
+    * @param event Event
     * @param facilitatorId Facilitator identifier
     * @return
     */
-  def evaluationUrl(eventId: Long, facilitatorId: Long): String = activityCheck {
-    specificEventEvaluation.map { pattern =>
-      pattern.replace(ApiConfig.EVENT, eventId.toString).replace(ApiConfig.FACILITATOR, facilitatorId.toString)
-    }.getOrElse {
-      generalEvaluation.getOrElse("")
-    }
+  def evaluationUrl(event: Event, facilitatorId: Long): String = {
+    val url = Utilities.fullUrl(controllers.cm.routes.PublicEvaluations.add(event.hashedId).url)
+    if (active)
+      specificEventEvaluation.map { pattern =>
+        pattern.
+          replace(ApiConfig.EVENT, event.identifier.toString).
+          replace(ApiConfig.FACILITATOR, facilitatorId.toString)
+      }.getOrElse {
+        generalEvaluation.getOrElse(url)
+      }
+    else
+      url
   }
 
   /**
     * Returns event url pattern filled with data
+    *
     * @param eventId Event identifier
     */
   def eventUrl(eventId: Long): String = activityCheck {
@@ -85,6 +95,7 @@ case class ApiConfig(id: Option[Long],
 
   /**
     * Returns facilitator url pattern filled with data
+    *
     * @param facilitatorId Facilitator identifier (unique name or numerical id)
     */
   def facilitatorUrl(facilitatorId: Long): String = activityCheck {
@@ -107,6 +118,7 @@ object ApiConfig {
 
   /**
     * Returns config cache identifier
+    *
     * @param token Token
     */
   def cacheId(token: String): String = s"token_$token"
