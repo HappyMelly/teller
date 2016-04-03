@@ -12,32 +12,32 @@ export default class Widget {
         }
 
         this.client = new ZeroClipboard(element);
+        this.$client = $('.global-zeroclipboard-container').first();
+
         this._assignEvents();
     }
 
     _assignEvents() {
-        this.client
-            .on('ready', this._onEventReady.bind(this))
-            .on('aftercopy', this._onEventAfter.bind(this));
-    }
+        const self = this;
 
-    _onEventReady(){
-
+        this.client.on('aftercopy', this._onEventAfter.bind(this));
+        this.$client.on('mouseenter', () =>{
+                self.$client
+                    .attr('title', 'Copy link')
+                    .tooltip('show');
+            })
     }
 
     _onEventAfter(){
-        const self = this;
-        const $root = self.$root;
+        const $root = this.$root;
+        this.$client.tooltip('hide');
 
-        $root.addClass('state_copied')
-            .attr('title', 'Copied')
+        $root.attr('title', 'Copied')
             .tooltip('show');
 
         setTimeout(()=>{
             $root.tooltip('hide')
-                .attr('title', '')
-                .attr('data-original-title', '')
-                .removeClass('state_copied');
+                .attr('title', '');
         }, 2500)
     }
 
