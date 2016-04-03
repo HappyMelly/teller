@@ -20,7 +20,6 @@
 
 @v2.main(event.title + " - Event", "events", user, withMelly = true) {
   @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
-    <span><a href="@controllers.cm.routes.Events.index(brand.identifier)">Events</a></span>
   }
   <input type="hidden" disabled id="brandId" value="@event.brandId"/>
   <input type="hidden" disabled id="eventId" value="@event.id"/>
