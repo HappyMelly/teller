@@ -29,7 +29,7 @@ import javax.inject.{Inject, Named}
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.{Activities, BrandAware, Security, Utilities}
+import controllers._
 import models.UserRole._
 import models._
 import models.cm._
@@ -49,7 +49,7 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
                              override val messagesApi: MessagesApi,
                              val email: EmailComponent,
                              val repos: Repositories,
-                             @Named("evaluation-mailer") mailer: ActorRef,
+                             @Named("evaluation-mailer") val mailer: ActorRef,
                              @Named("event-rating") eventActor: ActorRef,
                              @Named("facilitator-rating") facilitatorActor: ActorRef,
                              deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
@@ -57,7 +57,8 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
   with I18nSupport
   with Integrations
   with Activities
-  with BrandAware {
+  with BrandAware
+  with CertificateFactory {
 
   /** HTML form mapping for creating and editing. */
   def evaluationForm(userName: String) = Form(mapping(
@@ -106,17 +107,19 @@ class Evaluations @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def approve(id: Long) = EvaluationAction(List(Role.Facilitator, Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      repos.cm.evaluation.findWithAttendee(id) flatMap {
-        case None => notFound("")
-        case Some(view) =>
+      (for {
+        b <- repos.cm.brand.findWithSettings(event.brandId)
+        e <- repos.cm.evaluation.findWithAttendee(id)
+      } yield (b, e)) flatMap {
+        case (None, _) => jsonNotFound("Internal error. Please contact a support team")
+        case (_, None) => jsonNotFound("Evaluation not found")
+        case (Some(withSettings), Some(view)) =>
           if (view.evaluation.approvable) {
             view.evaluation.approve(repos) flatMap { evaluation =>
               // recalculate ratings
               eventActor ! evaluation.eventId
               facilitatorActor ! evaluation.eventId
-              mailer ! ("approve", user.person, evaluation, view.attendee, event)
-
-              jsonOk(Json.obj("date" -> evaluation.handled))
+              generateCertificate(evaluation.handled, event, withSettings, view.attendee, user.person)
             }
           } else {
             val error = view.evaluation.status match {

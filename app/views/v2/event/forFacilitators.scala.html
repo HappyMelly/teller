@@ -1,0 +1,226 @@
+@import models.repository.Repositories
+@(user: ActiveUser,
+    config: models.cm.brand.ApiConfig,
+    brand: Brand,
+    brands: List[Brand],
+    event: models.cm.Event,
+    view: models.cm.InvoiceView,
+    typeName: String,
+    deletable: Boolean,
+    postEventTemplate: Option[String])(implicit
+        request: Request[Any],
+        flash: Flash,
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        repos: Repositories)
+
+@import templates.Formatters._
+@import views.Countries
+@import views.ViewHelpers.dateInterval
+
+@v2.main(event.title + " - Event", "events", user, withMelly = true) {
+  @v2.element.brandHeader(brand, brands, "events", small = true, facilitator = user.account.isFacilitatorNow) {
+  }
+  <input type="hidden" disabled id="brandId" value="@event.brandId"/>
+  <input type="hidden" disabled id="eventId" value="@event.id"/>
+
+    <div class="container p-content">
+      <div class="b-breadcrumb">
+        <a href="@controllers.cm.routes.Events.index(brand.identifier)" class="b-breadcrumb__i link-blue">Events</a>
+        <span class="b-breadcrumb__div"><i class="fa fa-chevron-right"></i></span>
+      </div>
+
+      <div class=" p-eventdet">
+        @views.html.v2.event.requestEvaluation(config, event, event.facilitatorIds(repos).head)
+
+        <div class="p-eventdet__header" style="padding-top : 0 ;">
+          <h2 class="p-eventdet__title">@event.title</h2>
+          <div class="p-eventdet__sub">
+            <div class="p-eventdet__sub-i">
+              @dateInterval(event.schedule.start, event.schedule.end)
+              @if(event.location.online) {
+                online
+              } else {
+                in @event.location.city, @Countries.name(event.location.countryCode)
+              }
+            </div>
+            <div class="p-eventdet__sub-i">
+              Event Rating @views.html.v2.element.rating(event.rating)
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-9">
+            <div class="p-eventdet__buttons">
+              <div class="buttons js-event-controls">
+                <div class="buttons-block">
+                  @if(!event.confirmed) {
+                    <a href="#"
+                    data-id="@event.identifier"
+                    class="btn btn-primary"
+                    data-event-confirm>
+                      Confirm
+                    </a>
+                  } else {
+                    <a href="#" class="btn btn-primary" disabled="disabled">Confirmed</a>
+                  }
+                  <a class="btn btn-default" href="@controllers.cm.routes.Events.edit(event.id.get)">
+                    Edit
+                  </a>
+                </div>
+                <div class="buttons-block">
+                  <a class="btn btn-default" href="@controllers.cm.routes.Events.duplicate(event.id.get)">
+                    Duplicate
+                  </a>
+                  <a data-id="@event.identifier"
+                  class="btn btn-default"
+                  data-event-cancel
+                  id="cancelButton" @if(!deletable) {
+                    disabled="disabled"} >
+                    Cancel
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="event-info">
+              <div class="event-info__list">
+                  <div class="event-info__col">
+                    <div class="event-info__title">Facilitators</div>
+                    @for(facilitator <- event.facilitators(repos)) {
+                      <div class="b-facilitator">
+                        <a class="b-facilitator__link" href="@controllers.core.routes.People.details(facilitator.id.getOrElse(0))">
+                          @v2.element.photo(facilitator, "70")
+                        </a>
+                        <div class="b-facilitator__name">
+                          <div class="inner">@facilitator.fullName</div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  <div class="event-info__col">
+                    <div class="event-info__title">Event rundown</div>
+
+                    <div class="clearfix">
+                      <div class="event-info__col">
+                        <dt class="text-muted">Spoken Language</dt>
+                        <dd>@event.spokenLanguage</dd>
+
+                        @event.materialsLanguage.map { language =>
+                          <dt class="text-muted">Materials in</dt>
+                          <dd>@language</dd>
+                        }
+
+                        <dt class="text-muted">Hours</dt>
+                        <dd>@event.schedule.totalHours (per day: @event.schedule.hoursPerDay)</dd>
+                      </div>
+
+                      <div class="event-info__col">
+                        <dt class="text-muted">Event type</dt>
+                        <dd>@typeName</dd>
+
+                        <dt class="text-muted">Organizer</dt>
+                        <dd id="organizer" data-id="@event.organizer.id"></dd>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+
+              <div class="event-desc">
+                <div class="event-desc__i">
+                @defining(config.evaluationUrl(event, event.facilitatorIds(repos).head)) { url =>
+                  <div class="event-desc__copy js-clipboard" data-clipboard-text="@url" ></div>
+                  <span class="text-muted">Evaluation page: </span>
+                  <a href="@url" class="link-mblue" target="_blank">@url</a>
+                }
+                </div>
+                <div class="event-desc__i">
+                  @if(event.publicPage) {
+                    @defining(controllers.Utilities.fullUrl(controllers.cm.routes.Events.public(event.hashedId).url)) { url =>
+                        <div class="event-desc__copy js-clipboard" data-clipboard-text="@url" ></div>
+                        <span class="text-muted">Event page: </span>
+                        <a href="@url" class="link-mblue" target="_blank">@url</a>
+                    }
+                  }
+                </div>
+                <div class="event-desc__i">
+                    @event.organizer.webSite.map { url =>
+                      <div class="event-desc__copy js-clipboard" data-clipboard-text="@url" ></div>
+                      <span class="text-muted">Organizer Website: </span>
+                      <a href="@url" class="link-mblue" target="_blank">@url</a>
+                    }
+                </div>
+                <div class="event-desc__i">
+                    @event.organizer.registrationPage.map { url =>
+                      <div class="event-desc__copy js-clipboard" data-clipboard-text="@url" ></div>
+                      <span class="text-muted">Registration: </span>
+                      <a href="@url" class="link-mblue" target="_blank">@url</a>
+                    }
+                </div>
+                <div class="event-desc__i type-full">
+                  @event.details.description.map { desc =>
+                    <span class="text-muted">Description: </span>@desc.markdown
+                  }
+                </div>
+                <div class="event-desc__i type-full">
+                  @event.details.specialAttention.map { attention =>
+                    <span class="text-muted">Special attention: </span>@attention.markdown<br/>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 h-aright">
+            <div class="p-eventdet__aside">
+              @views.html.v2.event.blocks.invoice(user, List(), event, view)
+              @views.html.v2.event.blocks.emailModify(brand, user.person, event, postEventTemplate)
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="event-table">
+              <div class="event-table__title">
+                Attendees
+              </div>
+              <div class="event-table__links">
+                <a tabindex="-1"
+                  class="link-blue event-table__i"
+                  href="@controllers.cm.event.routes.Attendees.add(event.identifier)" title="Add Attendee">
+                  Add Attendee
+                </a>
+                <a class="link-blue event-table__i" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
+                    Send Evaluation Request
+                </a>
+                <a id="exportLink"
+                  class="link-blue event-table__i"
+                  href="javascript: void(0)"
+                  title="Only evaluations, currently visible in the table, will be exported">
+                  Export to XLSX
+                </a>
+              </div>
+            </div>
+            <table id="participants" class="datatables table">
+              <thead>
+                <tr>
+                  <th>Attendee</th>
+                  <th align="center" id="impression"></th>
+                  <th>Evaluation Date</th>
+                  <th>Handled Date</th>
+                  <th>Certificate Number</th>
+                  <th></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  <script src="@routes.Assets.at("js/participant.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.at("js/event/details-page.js")" type="text/javascript"></script>
+
+
+  <script src="@routes.Assets.at("javascripts/clipboard/zeroclipboard.min.js")"></script>
+  <script src="@routes.Assets.at("js/package/event-details-page.js")" type="text/javascript"></script>
+  <link rel="stylesheet" href="@routes.Assets.at("css/events/details-page.css")">
+}

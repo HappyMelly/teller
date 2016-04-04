@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -23,17 +23,33 @@
  */
 package models
 
-case class Experiment(id: Option[Long],
-                 memberId: Long,
-                 name: String,
-                 description: String,
-                 picture: Boolean,
-                 url: Option[String],
-                 recordInfo: DateStamp)
+case class ScaledImageCopy(file: File, width: Int)
 
-object Experiment {
+/**
+ * Represents an image scaled to several sizes
+ */
+case class ScaledImage(name: String, cacheKey: String) {
 
-  def picture(id: Long): ScaledImage =
-    ScaledImage(s"experiments/$id", s"experiments.$id")
+  val files = List(
+    ScaledImageCopy(File.image(name + "_icon", cacheKey + "_icon"), 64),
+    ScaledImageCopy(File.image(name + "_thumbnail", cacheKey + "_thumbnail"), 160),
+    ScaledImageCopy(File.image(name + "_small", cacheKey + "_small"), 300),
+    ScaledImageCopy(File.image(name, cacheKey), 500),
+    ScaledImageCopy(File.image(name + "_large", cacheKey + "_large"), 1024))
 
+  /**
+   * Returns file copy by its size or thumbnail if the size doesn't exist
+   * @param size Name of size
+   */
+  def file(size: String): File = {
+    val token = if (size.nonEmpty)
+      name + "_" + size
+    else
+      name
+    files.find(_.file.name == token).map(_.file).getOrElse(files.head.file)
+  }
+
+  def remove() {
+    files.foreach(f => f.file.remove())
+  }
 }

@@ -192,12 +192,16 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
             implicit val service: Repositories = repos
             roleDiffirentiator(user.account, Some(x.event.brandId)) { (view, brands) =>
               repos.person.memberships(user.person.identifier) flatMap { orgs =>
-                ok(views.html.v2.event.details(user, config, view.brand, brands, orgs, event,
+                ok(views.html.v2.event.forCoordinators(user, config, view.brand, brands, orgs, event,
                   invoiceView, eventType.name, deletable))
               }
             } { (view, brands) =>
-              ok(views.html.v2.event.details(user, config, view.get.brand, brands, List(), event,
-                invoiceView, eventType.name, deletable))
+              repos.cm.facilitator.find(x.event.brandId, user.person.identifier) flatMap {
+                case None => redirect(core.routes.Dashboard.index(), "error" -> "You don't have rights to see this page")
+                case Some(facilitator) =>
+                  ok(views.html.v2.event.forFacilitators(user, config, view.get.brand, brands, event,
+                    invoiceView, eventType.name, deletable, facilitator.postEventTemplate))
+              }
             } {
               redirect(core.routes.Dashboard.index())
             }
@@ -398,6 +402,39 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
               }
           }
         })
+  }
+
+
+  /**
+    * Updates post event template for current user for the given brand
+    *
+    * @param eventId Brand identifier
+    * @return
+    */
+  def updatePostEventTemplate(eventId: Long) = RestrictedAction(Role.Facilitator) { implicit request =>
+    implicit handler => implicit user =>
+      val form = Form(single("email-text" -> nonEmptyText))
+      form.bindFromRequest.fold(
+        errors => jsonFormError(Utilities.errorsToJson(errors)),
+        template => {
+          val query = for {
+            e <- repos.cm.event.find(eventId) if e.nonEmpty
+            f <- repos.cm.facilitator.find(e.get.brandId, user.person.identifier)
+          } yield (e.get, f)
+          query flatMap {
+            case (_, None) => jsonBadRequest("You are not a facilitator of this brand")
+            case (event, Some(facilitator)) =>
+              (for {
+                _ <- repos.cm.facilitator.update(facilitator.copy(postEventTemplate = Some(template)))
+                _ <- repos.cm.event.updatePostEventTemplate(eventId, template)
+              } yield ()) flatMap { _ =>
+                jsonSuccess("Post event template was successfully updated")
+              }
+          } recover { case _ =>
+            NotFound(Json.obj("message" -> "Event not found"))
+          }
+        }
+      )
   }
 
   /**

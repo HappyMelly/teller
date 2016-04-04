@@ -41,6 +41,8 @@ trait AsyncController extends Controller with I18nSupport {
 
   protected def jsonConflict(msg: String) = Future.successful(Conflict(Json.obj("message" -> msg)))
 
+  protected def jsonForbidden(msg: String) = Future.successful(Forbidden(Json.obj("message" -> msg)))
+
   protected def jsonFormError(errors: JsValue) = Future.successful(BadRequest(Json.obj("data" -> errors)))
 
   protected def jsonNotFound(msg: String) = Future.successful(NotFound(Json.obj("message" -> msg)))
@@ -61,7 +63,7 @@ trait AsyncController extends Controller with I18nSupport {
 
   protected def badRequest[C](content: C)(implicit writeable: Writeable[C]) = Future.successful(BadRequest(content))
 
-  protected def forbidden(content: Html) = Future.successful(Forbidden(content))
+  protected def forbidden[C](content: C)(implicit writeable: Writeable[C]) = Future.successful(Forbidden(content))
 
   protected def notFound[C](content: C)(implicit writeable: Writeable[C]) = Future.successful(NotFound(content))
 

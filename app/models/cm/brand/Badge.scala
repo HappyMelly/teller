@@ -23,10 +23,11 @@
  */
 package models.cm.brand
 
-import models.{DateStamp, Image}
+import models.{DateStamp, ScaledImage}
 
 /**
   * Represents badges for facilitators
+ *
   * @param id Identifier
   * @param brandId Related brand
   * @param name Name of the badge
@@ -37,5 +38,5 @@ case class Badge(id: Option[Long], brandId: Long, name: String, file: String, re
 
 object Badge {
 
-  def picture(hash: String): Image = Image(s"badges/$hash", s"badges.$hash")
+  def picture(hash: String): ScaledImage = ScaledImage(s"badges/$hash", s"badges.$hash")
 }

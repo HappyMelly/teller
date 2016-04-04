@@ -67,13 +67,15 @@ private[models] trait EventTable extends BrandTable {
     def rating = column[Float]("RATING")
     def hashedId = column[String]("HASHED_ID")
     def publicPage = column[Boolean]("PUBLIC_PAGE")
+    def postEventTemplate = column[Option[String]]("POST_EVENT_TEMPLATE")
+
     def brand = foreignKey("BRAND_FK", brandId, TableQuery[Brands])(_.id)
 
     type EventHList = Option[Long] :: Long :: Long :: String :: String ::
       Option[String] :: Option[String] :: String :: String :: Option[String] ::
       Option[String] :: Long :: Option[String] :: Option[String] :: LocalDate ::
       LocalDate :: Int :: Int :: Boolean :: Boolean :: Boolean :: Boolean ::
-      Boolean :: Float :: String :: Boolean :: HNil
+      Boolean :: Float :: String :: Boolean :: Option[String] :: HNil
 
     def createEvent(e: EventHList): Event = e match {
       case id ::
@@ -102,6 +104,7 @@ private[models] trait EventTable extends BrandTable {
         rating ::
         hashedId ::
         publicPage ::
+        postEventTemplate ::
         HNil =>
         Event(id, eventTypeId, brandId, title,
           Language(spokenLanguage, secondSpokenLanguage, materialsLanguage),
@@ -109,7 +112,7 @@ private[models] trait EventTable extends BrandTable {
           Details(description, specialAttention),
           Organizer(organizerId, webSite, registrationPage),
           Schedule(start, end, hoursPerDay, totalHours),
-          notPublic, archived, confirmed, free, followUp, rating, hashedId, publicPage)
+          notPublic, archived, confirmed, free, followUp, rating, hashedId, publicPage, postEventTemplate)
     }
 
     def extractEvent(e: Event): Option[EventHList] =
@@ -120,14 +123,14 @@ private[models] trait EventTable extends BrandTable {
         e.organizer.webSite :: e.organizer.registrationPage ::
         e.schedule.start :: e.schedule.end :: e.schedule.hoursPerDay ::
         e.schedule.totalHours :: e.notPublic :: e.archived :: e.confirmed :: e.free ::
-        e.followUp :: e.rating :: e.hashedId :: e.publicPage :: HNil)
+        e.followUp :: e.rating :: e.hashedId :: e.publicPage :: e.postEventTemplate :: HNil)
 
     def * = (id.? :: eventTypeId :: brandId :: title :: spokenLanguage ::
       secondSpokenLanguage :: materialsLanguage :: city :: countryCode ::
       description :: specialAttention :: organizerId :: webSite ::
       registrationPage :: start :: end :: hoursPerDay ::
       totalHours :: notPublic :: archived :: confirmed :: free :: followUp ::
-      rating :: hashedId :: publicPage :: HNil) <> (createEvent, extractEvent)
+      rating :: hashedId :: publicPage :: postEventTemplate :: HNil) <> (createEvent, extractEvent)
 
     def forInsert = eventTypeId :: brandId :: title :: spokenLanguage ::
       secondSpokenLanguage :: materialsLanguage :: city :: countryCode :: description ::
@@ -138,7 +141,8 @@ private[models] trait EventTable extends BrandTable {
     def forUpdate = eventTypeId :: brandId :: title :: spokenLanguage ::
       secondSpokenLanguage :: materialsLanguage :: city :: countryCode :: description ::
       specialAttention :: organizerId :: webSite :: registrationPage :: start :: end ::
-      hoursPerDay :: totalHours :: notPublic :: archived :: confirmed :: free :: followUp :: publicPage :: HNil
+      hoursPerDay :: totalHours :: notPublic :: archived :: confirmed :: free :: followUp ::
+      publicPage :: HNil
   }
 
 }

@@ -113,6 +113,7 @@ case class Event(
     rating: Float = 0.0f,
     hashedId : String = Random.alphanumeric.take(64).mkString,
     publicPage: Boolean = false,
+    postEventTemplate: Option[String] = None,
     fee: Option[Money] = None) extends ActivityRecorder {
 
   private var _facilitators: Option[List[Person]] = None

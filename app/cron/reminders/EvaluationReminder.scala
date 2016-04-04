@@ -56,21 +56,19 @@ class EvaluationReminder @Inject() (val repos: Repositories, @Named("evaluation-
         c <- repos.cm.rep.brand.config.findByBrand(brand.identifier)
       } yield (a, c)
       query map { case (attendees, apiConfig) =>
-        if (isEvaluationModuleActive(apiConfig)) {
-          handleAttendeesWithoutEvaluation(attendees, brand, apiConfig.get)
-        }
+        handleAttendeesWithoutEvaluation(attendees, brand, apiConfig)
         handleUnconfirmedAttendees(attendees, brand)
       }
     }
   }
 
-  protected def isEvaluationModuleActive(apiConfig: Option[ApiConfig]): Boolean =
-    apiConfig.exists(_.isEvaluationModuleActive)
-
-  protected def handleAttendeesWithoutEvaluation(attendees: Seq[AttendeeView], brand: Brand, config: ApiConfig) = {
+  protected def handleAttendeesWithoutEvaluation(attendees: Seq[AttendeeView],
+                                                 brand: Brand,
+                                                 apiConfig: Option[ApiConfig]) = {
     attendees.filter(_.evaluation.isEmpty).foreach { view =>
       val welcomeMsg = s"Hi ${view.attendee.firstName},"
       val facilitatorId = view.event.facilitatorIds(repos).head
+      val config = apiConfig.getOrElse(ApiConfig(None, brand.identifier))
       val body = mail.evaluation.html.requestBody(config, welcomeMsg, view.event, facilitatorId).toString()
       mailer ! ("request", view.attendee, brand, body)
     }

@@ -31,7 +31,7 @@ import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.core.People
-import controllers.{BrandAware, Security, core}
+import controllers.{Utilities, BrandAware, Security, core}
 import models.UserRole.Role
 import models._
 import models.cm.Facilitator
@@ -264,6 +264,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
 
   /**
     * Returns list of facilitators for the given brand satisfying the given query
+ *
     * @param brandId Brand identifier
     * @param query Query
     */
@@ -316,16 +317,6 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
               }
           }
       )
-  }
-
-  /**
-    * Updates post event template for current user for the given brand
-    * @param brandId Brand identifier
-    * @return
-    */
-  def updatePostEventTemplate(brandId: Long) = RestrictedAction(Role.Facilitator) { implicit request =>
-    implicit handler => implicit user =>
-      ok("")
   }
 
   protected def equalMonths(left: LocalDate, right: LocalDate): Boolean = {

@@ -217,9 +217,7 @@ object Person {
 
   def fullFileName(id: Long): String = s"signatures/$id"
 
-  def signature(id: Long): File =
-    File.image(Person.fullFileName(id), Person.cacheId(id))
+  def signature(id: Long): File = File.image(Person.fullFileName(id), Person.cacheId(id))
 
-  def photo(id: Long): File =
-    File.image(s"photos/$id", s"photos.$id")
+  def photo(id: Long): File = File.image(s"photos/$id", s"photos.$id")
 }

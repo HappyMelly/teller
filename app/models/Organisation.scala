@@ -98,8 +98,7 @@ object Organisation {
    *
    * @param id Organisation identifier
    */
-  def logo(id: Long): File =
-    File.image(s"organisations/$id", s"organisations.$id")
+  def logo(id: Long): File = File.image(s"organisations/$id", s"organisations.$id")
 
   /**
    * Returns an organisation with only two required fields filled

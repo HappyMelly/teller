@@ -83,8 +83,8 @@ DELETE        /brand/:brandId/testimonial/:id                                con
 GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
 POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
 
-GET           /certificate/:id                                               controllers.Certificates.certificate(id: String)
-GET           /certificate/new/:eventId/:personId                            controllers.Certificates.create(eventId: Long, personId: Long)
+GET           /certificate/:id                                               controllers.cm.Certificates.certificate(id: String)
+GET           /certificate/new/:eventId/:personId                            controllers.cm.Certificates.create(eventId: Long, personId: Long)
 
 POST          /commercial-customer/:interested                               controllers.admin.CommercialCustomers.reply(interested: Boolean)
 
@@ -140,6 +140,7 @@ GET           /event/:id/attendee/:attendeeId/edit                         contr
 POST          /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.update(id: Long, attendeeId: Long)
 DELETE        /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.delete(id: Long, attendeeId: Long)
 GET           /event/:id/attendees                                         controllers.cm.event.Attendees.listByEvent(id: Long)
+POST          /event/:id/template                                          controllers.cm.Events.updatePostEventTemplate(id: Long)
 
 GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 

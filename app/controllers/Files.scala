@@ -23,15 +23,14 @@
  */
 package controllers
 
-import fly.play.s3.BucketFile
-import models.{ File, Image }
+import models.{File, ScaledImage}
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
+
 import scala.concurrent.Future
 import scala.io.Source
-import services.S3Bucket
 
 class FileNotExist(msg: String) extends RuntimeException(msg)
 
@@ -66,11 +65,9 @@ trait Files extends Controller {
         val source = Source.fromFile(picture.ref.file.getPath, encoding)
         val byteArray = source.toArray.map(_.toByte)
         source.close()
-        S3Bucket.add(BucketFile(file.name, file.fileType, byteArray)).map { unit ⇒
+        file.copy(data = byteArray).upload().map { _ =>
           Cache.remove(file.cacheKey)
           true
-        }.recover {
-          case _ ⇒ Future.failed(new RuntimeException("File cannot be temporary saved"))
         }
       } getOrElse Future.failed(new FileNotExist("File field does not exist"))
     } getOrElse Future.failed(new RuntimeException("Please choose a file"))
@@ -83,7 +80,7 @@ trait Files extends Controller {
    * @param image File object
    * @param fieldName Name of a file field on the form
    */
-  protected def uploadImage(image: Image, fieldName: String)(implicit request: Request[AnyContent]): Future[Any] = {
+  protected def uploadImage(image: ScaledImage, fieldName: String)(implicit request: Request[AnyContent]): Future[Any] = {
     request.body.asMultipartFormData.map { data ⇒
       data.file(fieldName).map { picture ⇒
         val source = com.sksamuel.scrimage.Image.fromFile(picture.ref.file)
@@ -96,13 +93,11 @@ trait Files extends Controller {
             source.fit(f.width, height).bytes
           else
             source.bytes
-          S3Bucket.add(BucketFile(f.file.name, f.file.fileType, bytes))
+          f.file.copy(data = bytes).upload()
         }
         Future.sequence(buckets).map { unit =>
           image.files.foreach(f => Cache.remove(f.file.cacheKey))
           true
-        }.recover {
-          case _ ⇒ Future.failed(new RuntimeException("File cannot be temporary saved"))
         }
       } getOrElse Future.failed(new FileNotExist("Please choose a file"))
     } getOrElse Future.failed(new FileNotExist("Please choose a file"))

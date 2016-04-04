@@ -1,3 +1,17 @@
+@(brand: Brand, facilitator: Person, event: models.cm.Event, postEventEmail: Option[String])
+
+@defaultTemplate() = {
+Hi {{ATTENDEE_NAME}},
+
+Thanks for attending a @brand.name event. Your certificate was created by @facilitator.fullName,
+@facilitator.email. Please download the attachment to view the certificate.
+
+Thank you for attending!
+
+The @brand.name team
+
+http://management30.com
+}
 
 <div class="modify-email js-modify-email">
     <a href="#" class="modify-email__link" data-emailmod-link>
@@ -9,9 +23,14 @@
 
     <div data-emailmod-dlg class="modal fade b-modal dlg-modify" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
         @v2.html.modal("", "Modify post-event email") {
-            <form action="/senddata" class="dlg-modify__form" data-emailmod-form>
+            <form action="@controllers.cm.routes.Events.updatePostEventTemplate(event.identifier)"
+                class="dlg-modify__form" data-emailmod-form>
                 <a data-emailmod-mark href="#" class="dlg-modify__link link-blue">
-                    Use markdown for formating.
+                    @if(postEventEmail.nonEmpty) {
+                        Use last saved template
+                    } else {
+                        Use existing template
+                    }
                 </a>
                 <div class="dlg-modify__i">
                     <textarea
@@ -20,18 +39,9 @@
                         markdownpreview
                         data-markdownclass = "dlg-modify__markdown"
                         data-markdownposition = "not-fixed"
-                        class="dlg-modify__textarea form-control"></textarea>
+                        class="dlg-modify__textarea form-control">@event.postEventTemplate.getOrElse("")</textarea>
                 </div>
-                <div data-emailmod-default class="dlg-modify__default h-hidden">Hi {{ATTENDEE_NAME}},
-
-Thanks for attending a {{BRAND_NAME}} event. Your certificate was created by {{FACILITATOR_NAME}},
-test@@mail.ru. Please download the attachment to view the certificate.
-
-Thank you for attending!
-
-The {{BRAND_NAME}} team
-
-http://management30.com
+                <div data-emailmod-default class="dlg-modify__default h-hidden">@postEventEmail.getOrElse(defaultTemplate())
                 </div>
 
                 <div class="dlg-modify__buttons">

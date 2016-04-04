@@ -328,6 +328,9 @@ class EventRepository(app: Application, repos: models.repository.Repositories) e
   def updateRating(eventId: Long, rating: Float): Unit =
     db.run(events.filter(_.id === eventId).map(_.rating).update(rating))
 
+  def updatePostEventTemplate(eventId: Long, template: String): Future[Int] =
+    db.run(events.filter(_.id === eventId).map(_.postEventTemplate).update(Some(template)))
+
   /**
    * Applies time filter on query
    *

@@ -24,7 +24,7 @@
 package stubs
 
 import controllers.Files
-import models.{File, Image}
+import models.{File, ScaledImage}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc._
 
@@ -48,7 +48,7 @@ trait FakeFiles extends Files {
       Future.failed(new RuntimeException("error"))
   }
 
-  override protected def uploadImage(image: Image, fieldName: String)(
+  override protected def uploadImage(image: ScaledImage, fieldName: String)(
     implicit request: Request[AnyContent]): Future[Any] = {
     if (_uploadValue)
       Future[Boolean](_uploadValue)

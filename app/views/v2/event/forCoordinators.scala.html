@@ -31,8 +31,6 @@
       </div>
 
       <div class=" p-eventdet">
-        @views.html.v2.event.requestEvaluation(config, event, event.facilitatorIds(repos).head)
-
         <div class="p-eventdet__header" style="padding-top : 0 ;">
           <h2 class="p-eventdet__title">@event.title</h2>
           <div class="p-eventdet__sub">
@@ -83,13 +81,11 @@
                 </div>
               </div>
             </div>
-            @if(user.account.isCoordinatorNow) {
-              @if(!event.schedule.validateTotalHours) {
-                <div class="alert alert-warning">
-                  <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
-                  suspiciously less than a number of hours per day multiplied to a number of days.
-                </div>
-              }
+            @if(!event.schedule.validateTotalHours) {
+              <div class="alert alert-warning">
+                <i class="glyphicon glyphicon-info-sign"></i> Number of <b>total hours</b> is
+                suspiciously less than a number of hours per day multiplied to a number of days.
+              </div>
             }
 
             <div class="event-info">
@@ -182,7 +178,6 @@
           <div class="col-md-3 h-aright">
             <div class="p-eventdet__aside">
               @views.html.v2.event.blocks.invoice(user, funders, event, view)
-              @views.html.v2.event.blocks.emailModify()
             </div>
           </div>
 
@@ -197,14 +192,9 @@
                   href="@controllers.cm.event.routes.Attendees.add(event.identifier)" title="Add Attendee">
                   Add Attendee
                 </a>
-                @if(config.isEvaluationModuleActive) {
-                    <a class="link-blue event-table__i" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
-                        Send Evaluation Request
-                    </a>
-                } else {
-                    <span class="event-table__i" data-toggle="tooltip" data-placement="top"
-                      title="Ask your brand coordinator to set an evaluation url to send evaluation requests">Send Evaluation Request</span>
-                }
+                <a class="link-blue event-table__i" tabindex="-1" href="#request" data-toggle="modal" title="Request Evaluation">
+                    Send Evaluation Request
+                </a>
                 <a id="exportLink"
                   class="link-blue event-table__i"
                   href="javascript: void(0)"

@@ -22,29 +22,28 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package controllers
+package controllers.cm
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
-import models.cm.Certificate
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.{Files, Security}
 import models.UserRole.Role
+import models.cm.Certificate
 import models.repository.Repositories
 import org.joda.time.LocalDate
 import play.api.i18n.MessagesApi
-import play.api.libs.json.Json
 import services.TellerRuntimeEnvironment
-import services.integrations.EmailComponent
-
-import scala.concurrent.Future
 
 class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironment,
                               override val messagesApi: MessagesApi,
-                              val email: EmailComponent,
-                              val services: Repositories,
+                              @Named("evaluation-mailer") val mailer: ActorRef,
+                              val repos: Repositories,
                               deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
+  with CertificateFactory
   with Files {
 
   /**
@@ -53,27 +52,17 @@ class Certificates @Inject() (override implicit val env: TellerRuntimeEnvironmen
    * @param eventId Event identifier
    * @param attendeeId Person identifier
    */
-  def create(eventId: Long,
-             attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
+  def create(eventId: Long, attendeeId: Long) = EventAction(List(Role.Facilitator, Role.Coordinator), eventId) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      if (event.free) {
-        Future.successful(NotFound)
-      } else {
-        (for {
-          attendee <- services.cm.rep.event.attendee.find(attendeeId, eventId)
-          brand <- services.cm.brand.findWithCoordinators(event.brandId)
-        } yield (attendee, brand)) flatMap {
-          case (None, _) => Future.successful(NotFound)
-          case (_, None) => notFound("Brand not found")
-          case (Some(attendee), Some(brand)) =>
-            val issued = attendee.issued getOrElse LocalDate.now()
-            val certificate = new Certificate(Some(issued), event, attendee, renew = true)
-            certificate.generateAndSend(brand, user.person, email, services)
-            val withCertificate = attendee.copy(certificate = Some(certificate.id), issued = Some(issued))
-            services.cm.rep.event.attendee.updateCertificate(withCertificate) flatMap { _ =>
-              jsonOk(Json.obj("certificate" -> certificate.id))
-            }
-        }
+      (for {
+        attendee <- repos.cm.rep.event.attendee.find(attendeeId, eventId)
+        brand <- repos.cm.brand.findWithSettings(event.brandId)
+      } yield (attendee, brand)) flatMap {
+        case (None, _) => jsonNotFound("Attendee not found")
+        case (_, None) => jsonNotFound("Brand not found")
+        case (Some(attendee), Some(withSettings)) =>
+          val issued = attendee.issued.getOrElse(LocalDate.now())
+          generateCertificate(Some(issued), event, withSettings, attendee, user.person)
       }
   }
 

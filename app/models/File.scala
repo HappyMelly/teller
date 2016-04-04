@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -24,19 +24,26 @@
 package models
 
 import fly.play.s3.{ BucketFile, S3Exception }
+import play.api.Logger
 import play.api.Play.current
 import play.api.cache.Cache
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import services.S3Bucket
 
-case class File(fileType: String,
-    name: String,
-    cacheKey: String) {
+case class UploadException(msg: String) extends RuntimeException(msg)
+
+case class File(fileType: String, name: String, cacheKey: String, data: Array[Byte] = Array[Byte]()) {
 
   def remove() {
     Cache.remove(cacheKey)
     S3Bucket.remove(name)
+  }
+
+  def upload(): Future[Unit] = S3Bucket.add(BucketFile(name, fileType, data)).recover {
+    case e: RuntimeException ⇒
+      Logger.error(e.getMessage)
+      Future.failed(new UploadException("Problems with uploading file to the cloud"))
   }
 
   def uploadToCache(): Future[Array[Byte]] = {
@@ -55,9 +62,7 @@ case class File(fileType: String,
 
 object File {
 
-  def image(name: String, cacheKey: String): File =
-    File("image/jpeg", name, cacheKey)
+  def image(name: String, cacheKey: String): File = File("image/jpeg", name, cacheKey)
 
-  def pdf(name: String, cacheKey: String): File =
-    File("application/pdf", name, cacheKey)
+  def pdf(name: String, cacheKey: String): File = File("application/pdf", name, cacheKey)
 }

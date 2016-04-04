@@ -196,10 +196,10 @@ function deletePerson(object, callback) {
 function generateCertificate(object) {
     var eventId = $(object).data('event');
     var personId = $(object).data('person');
-    var url = jsRoutes.controllers.Certificates.create(eventId, personId).url;
+    var url = jsRoutes.controllers.cm.Certificates.create(eventId, personId).url;
     $.get(url, {}, function(data) {
         var certificate = JSON.parse(data).certificate;
-        var url = jsRoutes.controllers.Certificates.certificate(certificate).url;
+        var url = jsRoutes.controllers.cm.Certificates.certificate(certificate).url;
         $(object).removeClass('generate-certificate').off('click');
         if (!$(object).hasClass('btn')) {
             $(object).attr('href', url).attr('target', '_blank').text(certificate);
@@ -391,7 +391,7 @@ function drawCertificate(data) {
             html += ' data-person="' + data.person + '">Generate</a>';
             return html;
         } else {
-            var url = jsRoutes.controllers.Certificates.certificate(data.certificate.number).url;
+            var url = jsRoutes.controllers.cm.Certificates.certificate(data.certificate.number).url;
             return '<a href="' + url + '" target="_blank">' + data.certificate.number + '</a>';
         }
     } else {

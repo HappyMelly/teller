@@ -28,14 +28,15 @@ import javax.inject.Inject
 import akka.actor.Actor
 import controllers.Utilities
 import models.cm.event.Attendee
-import models.cm.{Certificate, Evaluation, Event}
+import models.cm.{CertificateFile, Evaluation, Event}
 import models.repository.IRepositories
-import models.repository.cm.BrandWithCoordinators
 import models.{Brand, Person}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import services.integrations.EmailComponent
+import templates.Formatters._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
 
 /**
   * Responsible for sending all evaluation-related emails
@@ -45,8 +46,10 @@ class Mailer @Inject() (val email: EmailComponent,
                         val messagesApi: MessagesApi) extends Actor with I18nSupport {
 
   def receive = {
-    case ("approve", approver: Person, evaluation: Evaluation, attendee: Attendee, event: Event) =>
-      sendApproval(approver, evaluation, attendee, event)
+    case ("approve", approver: Person, attendee: Attendee, brand: Brand, event: Event, file: CertificateFile) =>
+      sendApproval(approver, attendee, brand, event, file)
+    case ("approve", approver: Person, attendee: Attendee, brand: Brand, event: Event) =>
+      sendApprovalWithoutCertificate(approver, attendee, brand, event)
     case ("confirm", evaluation: Evaluation) => sendConfirmation(evaluation)
     case ("confirm", attendee: Attendee, brand: Brand, hook: String) => sendConfirmation(attendee, brand, hook)
     case ("new", evaluation: Evaluation) => newEvaluation(evaluation)
@@ -56,32 +59,53 @@ class Mailer @Inject() (val email: EmailComponent,
   }
 
   /**
+    * Return content for approval email
+    * @param event Event
+    * @param attendee Attendee
+    * @param default Default content
+    * @return
+    */
+  protected def approvalEmail(event: Event, attendee: Attendee, default: String): String = {
+    val TOKEN = "{{ATTENDEE_NAME}}"
+    event.postEventTemplate match {
+      case None => default
+      case Some(template) => template.replace(TOKEN, attendee.firstName).markdown.toString()
+    }
+  }
+
+  /**
     * Sends confirmation email that evaluation was approved
     *
     * @param approver Person who approved the given evaluation
-    * @param evaluation Evaluation
     * @param attendee Attendee
     * @param event Related event
     */
-  protected def sendApproval(approver: Person, evaluation: Evaluation, attendee: Attendee, event: Event) = {
-    (for {
-      withSettings <- repos.cm.brand.findWithSettings(event.brandId) if withSettings.isDefined
-      coordinators <- repos.cm.brand.coordinators(event.brandId)
-    } yield (withSettings.get, coordinators)) foreach { case (withSettings, coordinators) =>
+  protected def sendApproval(approver: Person, attendee: Attendee, brand: Brand, event: Event, file: CertificateFile) = {
+    repos.cm.brand.coordinators(event.brandId) map { coordinators =>
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
-      if (attendee.certificate.isEmpty && withSettings.settings.certificates && !event.free) {
-        val cert = new Certificate(evaluation.handled, event, attendee)
-        cert.generateAndSend(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
-        repos.cm.rep.event.attendee.updateCertificate(attendee.copy(certificate = Some(cert.id), issued = cert.issued))
-      } else if (attendee.certificate.isEmpty) {
-        val body = mail.evaluation.html.approvedNoCert(withSettings.brand, attendee, approver).toString()
-        val subject = s"Your ${withSettings.brand.name} event's evaluation approval"
-        email.send(Seq(attendee), event.facilitators(repos), bcc,
-          subject, body, from = withSettings.brand.sender, richMessage = true)
-      } else {
-        val cert = new Certificate(evaluation.handled, event, attendee, renew = true)
-        cert.send(BrandWithCoordinators(withSettings.brand, coordinators), approver, email, repos)
-      }
+      val default = mail.evaluation.html.approved(brand, attendee, approver).toString()
+      val body = approvalEmail(event, attendee, default)
+      val subject = s"Your ${brand.name} certificate"
+      email.send(Seq(attendee), event.facilitators(repos), bcc,
+        subject, body, brand.sender, attachment = Some((file.path, file.name)))
+    }
+  }
+
+  /**
+    * Sends confirmation email that evaluation was approved
+    *
+    * @param approver Person who approved the given evaluation
+    * @param attendee Attendee
+    * @param event Related event
+    */
+  protected def sendApprovalWithoutCertificate(approver: Person, attendee: Attendee, brand: Brand, event: Event) = {
+    repos.cm.brand.coordinators(event.brandId) map { coordinators =>
+      val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
+      val default = mail.evaluation.html.approvedNoCert(brand, attendee, approver).toString()
+      val body = approvalEmail(event, attendee, default)
+      val subject = s"Your ${brand.name} event's evaluation approval"
+      email.send(Seq(attendee), event.facilitators(repos), bcc,
+        subject, body, from = brand.sender, richMessage = true)
     }
   }
 
@@ -101,6 +125,7 @@ class Mailer @Inject() (val email: EmailComponent,
 
   /**
     * Sends confirmation request to the attendee of the given evaluation
+    *
     * @param evaluation Evaluation
     */
   protected def sendConfirmation(evaluation: Evaluation): Unit = {
@@ -162,4 +187,5 @@ class Mailer @Inject() (val email: EmailComponent,
     val content = mail.evaluation.html.request(brand, attendee, body).toString()
     email.send(Seq(attendee), subject, content, brand.sender)
   }
+
 }
