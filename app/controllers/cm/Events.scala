@@ -114,7 +114,7 @@ class Events @javax.inject.Inject() (override implicit val env: TellerRuntimeEnv
               repos.cm.event.insert(view) flatMap { inserted =>
                 val log = activity(inserted.event, user.person).created.insert(repos)
                 sendEmailNotification(view.event, List.empty, log)
-                redirect(controllers.cm.routes.Events.index(inserted.event.brandId), "success" -> "Event was added")
+                redirect(controllers.cm.routes.Events.details(inserted.event.identifier), "success" -> "Event was added")
               }
           }
         })

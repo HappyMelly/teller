@@ -28,7 +28,7 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
-import models.Person
+import models.{Member, Person}
 import models.UserRole.Role._
 import models.core.payment._
 import models.repository.Repositories
@@ -125,7 +125,7 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
     repos.member.findByObject(customer.objectId, customer.objectType == CustomerType.Person) flatMap {
       case None => badRequest("Member not found")
       case Some(member) =>
-        if (member.fee == amount) {
+        if (isSameAmount(member, amount)) {
           ok("Your contribution level was changed")
         } else {
           if (member.newFee.nonEmpty) {
@@ -151,4 +151,15 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
+  /**
+    * Returns true if a new amount equals to the latest set fee
+    * @param member Member
+    * @param amount New amount
+    */
+  protected def isSameAmount(member: Member, amount: BigDecimal): Boolean = {
+    member.newFee match {
+      case Some(fee) => fee == amount
+      case None => member.fee == amount
+    }
+  }
 }

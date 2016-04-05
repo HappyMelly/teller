@@ -73,8 +73,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
    */
   def add(memberId: Long) = RestrictedAction(Role.Viewer) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      Future.successful(
-        Ok(views.html.v2.experiment.form(user, memberId, form(user.name))))
+      ok(views.html.v2.experiment.form(user, memberId, form(user.name)))
   }
 
   /**

@@ -31,7 +31,7 @@ import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.core.People
-import controllers.{Utilities, BrandAware, Security, core}
+import controllers.{BrandAware, Security, core}
 import models.UserRole.Role
 import models._
 import models.cm.Facilitator

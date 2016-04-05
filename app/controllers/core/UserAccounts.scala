@@ -239,9 +239,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
             }
             response getOrElse {
               val errors = form.withError("password", "Wrong password")
-              Future.successful(
-                BadRequest(Json.obj("data" -> Utilities.errorsToJson(errors)))
-              )
+              jsonFormError(Utilities.errorsToJson(errors))
             }
           }
         }

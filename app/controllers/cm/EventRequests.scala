@@ -54,7 +54,7 @@ class EventRequests @Inject() (override implicit val env: TellerRuntimeEnvironme
   def details(brandId: Long, requestId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
       repos.cm.rep.event.request.find(requestId) flatMap {
-        case None => jsonBadRequest("Event request not found")
+        case None => badRequest("Event request not found")
         case Some(eventRequest) => ok(views.html.v2.eventRequest.details(eventRequest))
       }
   }

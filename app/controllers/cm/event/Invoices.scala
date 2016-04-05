@@ -38,9 +38,9 @@ import services.TellerRuntimeEnvironment
   */
 class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
                           override val messagesApi: MessagesApi,
-                          val services: Repositories,
+                          val repos: Repositories,
                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
   with Helpers {
 
@@ -53,19 +53,19 @@ class Invoices @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def update(id: Long) = EventAction(List(Role.Coordinator), id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒ implicit event =>
-      services.cm.event.findWithInvoice(id) flatMap {
+      repos.cm.event.findWithInvoice(id) flatMap {
         case None => notFound("")
         case Some(view) =>
           EventForms.invoice.bindFromRequest.fold(
             formWithErrors ⇒ error(id, "Invoice data are wrong. Please try again"),
             invoiceData ⇒ {
               val (invoiceBy, number) = invoiceData
-              services.org.find(invoiceBy) flatMap {
+              repos.org.find(invoiceBy) flatMap {
                 case None => notFound("Organisation not found")
                 case Some(_) =>
                   val invoice = view.invoice.copy(invoiceBy = Some(invoiceBy), number = number)
-                  services.cm.rep.event.invoice.update(invoice)
-                  activity(view.event, user.person).updated.insert(services)
+                  repos.cm.rep.event.invoice.update(invoice)
+                  activity(view.event, user.person).updated.insert(repos)
                   success(id, "Invoice data was successfully updated")
               }
             })

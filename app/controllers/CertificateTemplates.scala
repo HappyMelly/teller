@@ -49,9 +49,9 @@ case class FakeCertificateTemplate(language: String,
 
 class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                       override val messagesApi: MessagesApi,
-                                      val services: Repositories,
+                                      val repos: Repositories,
                                       deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
     with Activities
     with I18nSupport {
 
@@ -73,8 +73,8 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
   def add(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.cm.brand.find(brandId)
-        templates <- services.cm.certificate.findByBrand(brandId)
+        brand <- repos.cm.brand.find(brandId)
+        templates <- repos.cm.certificate.findByBrand(brandId)
       } yield (brand, templates)) flatMap {
         case (None, _) => Future.successful(NotFound)
         case (Some(brand), templates) =>
@@ -91,8 +91,8 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
   def create(brandId: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       (for {
-        brand <- services.cm.brand.find(brandId)
-        templates <- services.cm.certificate.findByBrand(brandId)
+        brand <- repos.cm.brand.find(brandId)
+        templates <- repos.cm.certificate.findByBrand(brandId)
       } yield (brand, templates)) flatMap {
         case (None, _) => Future.successful(NotFound)
         case (Some(brand), templates) =>
@@ -125,7 +125,7 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
                     secondSource.toArray.map(_.toByte))
                   firstSource.close()
                   secondSource.close()
-                  services.cm.certificate.insert(tpl) flatMap { _ =>
+                  repos.cm.certificate.insert(tpl) flatMap { _ =>
                     redirect(routes.Brands.details(brandId).url + "#templates", "success" -> "Template was added")
                   }
                 }
@@ -144,7 +144,7 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
   def template(id: Long, single: Boolean) = RestrictedAction(Viewer) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       val contentType = "image/jpeg"
-      services.cm.certificate.find(id) flatMap {
+      repos.cm.certificate.find(id) flatMap {
         case None => Future.successful(Ok(Array[Byte]()).as(contentType))
         case Some(template) =>
           if (single) {
@@ -163,10 +163,10 @@ class CertificateTemplates @Inject() (override implicit val env: TellerRuntimeEn
    */
   def delete(brandId: Long, id: Long) = BrandAction(brandId) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.cm.certificate.find(id) flatMap {
+      repos.cm.certificate.find(id) flatMap {
         case None => notFound("Template not found")
         case Some(template) =>
-          services.cm.certificate.delete(id) flatMap { _ =>
+          repos.cm.certificate.delete(id) flatMap { _ =>
             redirect(routes.Brands.details(template.brandId).url + "#templates", "success" -> "Template was deleted")
           }
       }

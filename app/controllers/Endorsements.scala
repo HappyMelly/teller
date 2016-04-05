@@ -232,7 +232,7 @@ class Endorsements @Inject() (override implicit val env: TellerRuntimeEnvironmen
               }
           }
         } else {
-          jsonBadRequest("Internal error. You shouldn't be able to make this request")
+          jsonForbidden("Internal error. You shouldn't be able to make this request")
         }
   }
 

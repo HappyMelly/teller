@@ -40,9 +40,9 @@ import scala.concurrent.Future
 
 class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
-                               val services: Repositories,
+                               val repos: Repositories,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env)
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities {
 
   /** HTML form mapping for creating and editing. */
@@ -75,13 +75,13 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
         formWithErrors ⇒ redirect(route, "error" -> "A role for a contributor cannot be empty"),
         success ⇒ {
           val contributor: Future[Option[ActivityRecorder]] = if (success.isPerson)
-            services.person.find(success.contributorId)
+            repos.person.find(success.contributorId)
           else
-            services.org.find(success.contributorId)
+            repos.org.find(success.contributorId)
           contributor flatMap {
             case None => redirect(route, "error" -> "Contributor not found")
             case Some(c) =>
-              services.contribution.insert(success) flatMap { _ =>
+              repos.contribution.insert(success) flatMap { _ =>
                 redirect(route, "success" -> "Contributor was added")
               }
           }
@@ -97,10 +97,10 @@ class Contributions @Inject() (override implicit val env: TellerRuntimeEnvironme
    */
   def delete(id: Long, page: String) = DynamicAction(Funder, 0) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      services.contribution.find(id) flatMap {
+      repos.contribution.find(id) flatMap {
         case None => notFound("Contribution not found")
         case Some(contribution) =>
-          services.contribution.delete(id) flatMap { _ =>
+          repos.contribution.delete(id) flatMap { _ =>
             val route: String = if (page == "organisation") {
               core.routes.Organisations.details(contribution.contributorId).url
             } else if (page == "product") {

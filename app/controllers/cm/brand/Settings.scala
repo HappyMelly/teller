@@ -37,9 +37,9 @@ import services.TellerRuntimeEnvironment
   */
 class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                        override val messagesApi: MessagesApi,
-                                       val services: Repositories,
+                                       val repos: Repositories,
                                        deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, services)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   /**
     * Turns off license expiration reminder for the given brand
@@ -48,11 +48,11 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
     */
   def turnLicenseExpirationReminderOff(brandId: Long) = BrandAction(brandId) { implicit request =>
     implicit handler => implicit user =>
-      services.cm.brand.findWithSettings(brandId) flatMap {
+      repos.cm.brand.findWithSettings(brandId) flatMap {
         case None => jsonNotFound("Brand not found")
         case Some(view) =>
           if (view.settings.licenseExpirationEmail) {
-            services.cm.brand.updateSettings(view.settings.copy(licenseExpirationEmail = false))
+            repos.cm.brand.updateSettings(view.settings.copy(licenseExpirationEmail = false))
           }
           jsonSuccess("Reminder is turned off")
       }
@@ -68,16 +68,16 @@ class Settings @javax.inject.Inject() (override implicit val env: TellerRuntimeE
       Form(single("content" -> nonEmptyText)).bindFromRequest().fold(
         errors => jsonBadRequest("Email body is empty"),
         content => {
-          services.cm.brand.findWithSettings(brandId) flatMap {
+          repos.cm.brand.findWithSettings(brandId) flatMap {
             case None => jsonNotFound("Brand not found")
             case Some(view) =>
               if (view.settings.licenseExpirationEmail) {
-                services.cm.brand.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
+                repos.cm.brand.updateSettings(view.settings.copy(licenseExpirationEmailBody = Some(content)))
                 jsonSuccess("Reminder email is updated")
               } else {
                 val settings = view.settings.copy(licenseExpirationEmailBody = Some(content),
                   licenseExpirationEmail = true)
-                services.cm.brand.updateSettings(settings)
+                repos.cm.brand.updateSettings(settings)
                 jsonSuccess("Reminder is turned on")
               }
           }
