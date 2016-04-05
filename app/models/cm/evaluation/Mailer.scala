@@ -65,11 +65,15 @@ class Mailer @Inject() (val email: EmailComponent,
     * @param default Default content
     * @return
     */
-  protected def approvalEmail(event: Event, attendee: Attendee, default: String): String = {
+  protected def approvalEmail(event: Event, attendee: Attendee, brand: Brand, default: String): String = {
     val TOKEN = "{{ATTENDEE_NAME}}"
     event.postEventTemplate match {
       case None => default
-      case Some(template) => template.replace(TOKEN, attendee.firstName).markdown.toString()
+      case Some(template) =>
+        val content = mail.html.tmpl(s"Your ${brand.name} certificate", controllers.Brands.pictureUrl(brand)) {
+          template.replace(TOKEN, attendee.firstName).markdown
+        }
+        content.toString
     }
   }
 
@@ -84,7 +88,7 @@ class Mailer @Inject() (val email: EmailComponent,
     repos.cm.brand.coordinators(event.brandId) map { coordinators =>
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
       val default = mail.evaluation.html.approved(brand, attendee, approver).toString()
-      val body = approvalEmail(event, attendee, default)
+      val body = approvalEmail(event, attendee, brand, default)
       val subject = s"Your ${brand.name} certificate"
       email.send(Seq(attendee), event.facilitators(repos), bcc,
         subject, body, brand.sender, attachment = Some((file.path, file.name)))
@@ -102,7 +106,7 @@ class Mailer @Inject() (val email: EmailComponent,
     repos.cm.brand.coordinators(event.brandId) map { coordinators =>
       val bcc = coordinators.filter(_._2.notification.evaluation).map(_._1)
       val default = mail.evaluation.html.approvedNoCert(brand, attendee, approver).toString()
-      val body = approvalEmail(event, attendee, default)
+      val body = approvalEmail(event, attendee, brand, default)
       val subject = s"Your ${brand.name} event's evaluation approval"
       email.send(Seq(attendee), event.facilitators(repos), bcc,
         subject, body, from = brand.sender, richMessage = true)

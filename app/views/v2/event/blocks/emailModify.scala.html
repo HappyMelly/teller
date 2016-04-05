@@ -1,7 +1,6 @@
 @(brand: Brand, facilitator: Person, event: models.cm.Event, postEventEmail: Option[String])
 
-@defaultTemplate() = {
-Hi {{ATTENDEE_NAME}},
+@defaultTemplate() = {Hi {{ATTENDEE_NAME}},
 
 Thanks for attending a @brand.name event. Your certificate was created by @facilitator.fullName,
 @facilitator.email. Please download the attachment to view the certificate.
