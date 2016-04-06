@@ -26,13 +26,11 @@
 package models
 
 import models.repository._
-import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Random
 
 /**
  * A person, such as the owner or employee of an organisation.

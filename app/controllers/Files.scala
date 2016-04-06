@@ -73,7 +73,6 @@ trait Files extends Controller {
     } getOrElse Future.failed(new RuntimeException("Please choose a file"))
   }
 
-
   /**
    * Uploads picture to Amazon cloud
    *
@@ -95,6 +94,7 @@ trait Files extends Controller {
             source.bytes
           f.file.copy(data = bytes).upload()
         }
+
         Future.sequence(buckets).map { unit =>
           image.files.foreach(f => Cache.remove(f.file.cacheKey))
           true

@@ -48,6 +48,56 @@ function filterByType(oSettings, aData, iDataIndex) {
     }
 }
 
+function getQueryStringParams() {
+    var a = window.location.search.substr(1).split('&');
+    if (a == "") return {};
+    var b = {};
+    for (var i = 0; i < a.length; ++i)
+    {
+        var p=a[i].split('=', 2);
+        if (p.length == 1)
+            b[p[0]] = "";
+        else
+            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+    }
+    return b;
+}
+
+function handleQueryParams(table) {
+    var params = getQueryStringParams();
+    if (params['type'] == 'funder') {
+        $('[data-type="Supporter"]').removeClass('active');
+        $('[data-type="Funder"]').addClass('active');
+        $('[data-type="all"]').removeClass('active');
+    }
+    if (params['type'] == 'supporter') {
+        $('[data-type="Funder"]').removeClass('active');
+        $('[data-type="Supporter"]').addClass('active');
+        $('[data-type="all"]').removeClass('active');
+    }
+    if (params['search'] && params['search'].length > 0) {
+        table.search(params['search']);
+    }
+    if (params['sort'] && params['sort'].length > 0) {
+        var direction = 'asc';
+        if (params['direction'] == 'asc' || params['direction'] == 'desc') {
+            direction = params['direction'];
+        }
+        switch (params['sort']) {
+            case 'name':
+                table.order([1, direction]);
+                break;
+            case 'location':
+                table.order([2, direction]);
+                break;
+            case 'since':
+                table.order([4, direction]);
+                break
+        }
+    }
+    table.draw();
+}
+
 $.fn.dataTableExt.afnFiltering.push(filterByMembership);
 $.fn.dataTableExt.afnFiltering.push(filterByType);
 
@@ -66,7 +116,7 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 } );
 
 $(document).ready( function() {
-    var members = $('#people').dataTable({
+    var members = $('#people').DataTable({
         "dom": '<"toolbar pull-left">frtip',
         "iDisplayLength": 25,
         "asStripeClasses":[],
@@ -86,17 +136,19 @@ $(document).ready( function() {
     });
     $('div.toolbar').html($('#filter-containter').html());
     $('#filter-containter').empty();
+    $('[data-toggle="tooltip"]').tooltip();
 
     $('.membership > .b-filters__link > a').on('click', function(e) {
         e.preventDefault();
         $('.membership > .b-filters__link > a').removeClass('active');
         $(this).addClass('active');
-        members.fnDraw();
+        members.draw();
     });
     $('.type > .b-filters__link > a').on('click', function(e) {
         e.preventDefault();
         $('.type > .b-filters__link > a').removeClass('active');
         $(this).addClass('active');
-        members.fnDraw();
-    })
+        members.draw();
+    });
+    handleQueryParams(members);
 });

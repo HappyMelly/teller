@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.{Security, Files, Utilities}
+import controllers.{Files, Security, Utilities}
 import models.repository.Repositories
 import models.{Person, Photo}
 import play.api.data.Form

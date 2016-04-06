@@ -64,12 +64,13 @@
                 </thead>
                 <tbody>
                 @for(member <- members) {
-                    <tr @if(!member.active) {
-                        class="inactive"} >
-                        <td style="text-align : center ;">@if(member.person) {
-                            <i class="glyphicon glyphicon-user"></i>
+                    <tr @if(!member.active) { class="inactive"} >
+                        <td style="text-align: center; color: #777777;">@if(member.person) {
+                            <i class="glyphicon glyphicon-user" data-toggle="tooltip"
+                                data-placement="top" title="Person"></i>
                         } else {
-                            <i class="glyphicon glyphicon-home"></i>
+                            <i class="glyphicon glyphicon-home" data-toggle="tooltip"
+                            data-placement="top" title="Organisation"></i>
                         }</td>
                         <td><a href="@if(member.person) {
                             @controllers.core.routes.People.details(member.objectId)
