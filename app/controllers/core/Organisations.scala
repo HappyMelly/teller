@@ -43,6 +43,7 @@ import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
+import scala.util.Random
 
 class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
@@ -166,12 +167,12 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
     * Deletes logo of the given organisation
     *
-    * @param id Organisation identifier
+    * @param id Organisation logo identifier
     */
-  def deleteLogo(id: Long) = DynamicAction(Role.OrgMember, id) {
+  def deleteLogo(id: Long, logoId: String) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      Organisation.logo(id).remove()
-      repos.org.updateLogo(id, false)
+      Organisation.logo(logoId).remove()
+      repos.org.updateLogo(id, None)
       val route = routes.Organisations.details(id).url
       jsonOk(Json.obj("link" -> controllers.routes.Assets.at("images/happymelly-face-white.png").url))
   }
@@ -228,9 +229,9 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
     * Retrieve and cache a logo of the given organisation
     *
-    * @param id Organisation identifier
+    * @param id Organisation logo identifier
     */
-  def logo(id: Long) = file(Organisation.logo(id))
+  def logo(id: String) = file(Organisation.logo(id))
 
   /**
     * Returns name of the given organisation
@@ -304,10 +305,11 @@ class Organisations @Inject() (override implicit val env: TellerRuntimeEnvironme
     */
   def uploadLogo(id: Long) = DynamicAction(Role.OrgMember, id) {
     implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      uploadFile(Organisation.logo(id), "logo") flatMap { _ ⇒
-        repos.org.updateLogo(id, true)
+      val logoId = Random.alphanumeric.take(32).mkString
+      uploadFile(Organisation.logo(logoId), "logo") flatMap { _ ⇒
+        repos.org.updateLogo(id, Some(logoId))
         val route = routes.Organisations.details(id).url
-        jsonOk(Json.obj("link" -> Organisations.logoUrl(id)))
+        jsonOk(Json.obj("link" -> Organisations.logoUrl(logoId)))
       } recover {
         case e: RuntimeException ⇒ BadRequest(Json.obj("message" -> e.getMessage))
       }
@@ -330,7 +332,6 @@ object Organisations {
     "blog" -> optional(webUrl),
     "email" -> optional(play.api.data.Forms.email),
     "about" -> optional(text),
-    "logo" -> ignored(false),
     "active" -> ignored(true),
     "dateStamp" -> mapping(
       "created" -> ignored(DateTime.now()),
@@ -339,11 +340,11 @@ object Organisations {
       "updatedBy" -> ignored(user.name))(DateStamp.apply)(DateStamp.unapply))({
     (id, name, address, vatNumber,
      registrationNumber, profile, webSite, blog, email, about,
-     logo, active, dateStamp) ⇒
+     active, dateStamp) ⇒
       val org = Organisation(id, name, address.street1, address.street2,
         address.city, address.province, address.postCode, address.countryCode,
         vatNumber, registrationNumber, webSite,
-        blog, email, about, logo, active, dateStamp)
+        blog, email, about, None, active, dateStamp)
       OrgView(org, profile)
   })({
     (v: OrgView) ⇒
@@ -351,17 +352,17 @@ object Organisations {
         v.org.city, v.org.province, v.org.postCode, v.org.countryCode)
       Some((v.org.id, v.org.name, address, v.org.vatNumber,
         v.org.registrationNumber, v.profile, v.org.webSite,
-        v.org.blog, v.org.contactEmail, v.org.about, v.org.logo, v.org.active,
+        v.org.blog, v.org.contactEmail, v.org.about, v.org.active,
         v.org.dateStamp))
   }))
 
   /**
     * Returns url to an organisation's logo
     *
-    * @param orgId Organisation identifier
+    * @param logoId Organisation logo identifier
     */
-  def logoUrl(orgId: Long): Option[String] = {
-    val logo = Organisation.logo(orgId)
-    Utilities.cdnUrl(logo.name).orElse(Some(Utilities.fullUrl(routes.Organisations.logo(orgId).url)))
+  def logoUrl(logoId: String): Option[String] = {
+    val logo = Organisation.logo(logoId)
+    Utilities.cdnUrl(logo.name).orElse(Some(Utilities.fullUrl(routes.Organisations.logo(logoId).url)))
   }
 }

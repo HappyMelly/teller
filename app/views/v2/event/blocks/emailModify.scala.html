@@ -28,7 +28,9 @@ http://management30.com
                     @if(postEventEmail.nonEmpty) {
                         Use last saved email
                     } else {
-                        Use existing template
+                        @if(event.postEventTemplate.nonEmpty) {
+                            Use existing template
+                        }
                     }
                 </a>
                 <div class="dlg-modify__i">
@@ -38,7 +40,7 @@ http://management30.com
                         markdownpreview
                         data-markdownclass = "dlg-modify__markdown"
                         data-markdownposition = "not-fixed"
-                        class="dlg-modify__textarea form-control">@event.postEventTemplate.getOrElse("")</textarea>
+                        class="dlg-modify__textarea form-control">@event.postEventTemplate.getOrElse(defaultTemplate())</textarea>
                 </div>
                 <div data-emailmod-default class="dlg-modify__default h-hidden">@postEventEmail.getOrElse(defaultTemplate())
                 </div>

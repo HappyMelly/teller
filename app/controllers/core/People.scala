@@ -451,7 +451,6 @@ object People {
         Await.result(services.identity.checkEmail(suppliedEmail, userId), 10.seconds)
       }),
       "birthday" -> optional(jodaLocalDate),
-      "signature" -> boolean,
       "address" -> addressMapping,
       "bio" -> optional(text),
       "interests" -> optional(text),
@@ -463,11 +462,11 @@ object People {
         "createdBy" -> ignored(editorName),
         "updated" -> ignored(DateTime.now()),
         "updatedBy" -> ignored(editorName))(DateStamp.apply)(DateStamp.unapply))(
-      { (id, firstName, lastName, emailAddress, birthday, signature,
+      { (id, firstName, lastName, emailAddress, birthday,
          address, bio, interests, webSite, blog, active, dateStamp) ⇒
       {
         val person = Person(id, firstName, lastName, emailAddress, birthday, Photo.empty,
-          signature, address.id.getOrElse(0), bio, interests,
+          None, address.id.getOrElse(0), bio, interests,
           webSite, blog, virtual = false, active = active, dateStamp = dateStamp)
         person.address_=(address)
         person
@@ -476,7 +475,7 @@ object People {
       { (p: Person) ⇒
         Some(
           (p.id, p.firstName, p.lastName, p.email, p.birthday,
-            p.signature, p.address, p.bio, p.interests, p.webSite, p.blog, p.active, p.dateStamp))
+            p.address, p.bio, p.interests, p.webSite, p.blog, p.active, p.dateStamp))
       }))
   }
 }

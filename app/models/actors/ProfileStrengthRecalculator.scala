@@ -17,29 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
- * If you have questions concerning this license or the applicable additional terms, you may contact
- * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * If you have questions concerning this license or the applicable additional
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package modules
 
-import com.google.inject.AbstractModule
-import models.actors._
-import models.cm.evaluation.Mailer
-import play.api.libs.concurrent.AkkaGuiceSupport
-import services.integrations.EmailActor
+package models.actors
+
+import javax.inject.Inject
+
+import akka.actor.Actor
+import models.repository.Repositories
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Created by sery0ga on 06/02/16.
+  * Updates profile strengths
   */
-class ActorModule extends AbstractModule with AkkaGuiceSupport {
-  override def configure(): Unit = {
-    bindActor[EmailActor]("email")
-    bindActor[Mailer]("evaluation-mailer")
-    bindActor[EventRatingCalculator]("event-rating")
-    bindActor[FacilitatorRatingCalculator]("facilitator-rating")
-    bindActor[NotificationDispatcher]("notification")
-    bindActor[PeerCreditsConfigurator]("peer-credits")
-    bindActor[ProfileStrengthRecalculator]("profile-strength")
+class ProfileStrengthRecalculator @Inject() (val repos: Repositories) extends Actor {
+
+  def receive = {
+    case ("complete", id: Long, name: String) =>
+      repos.profileStrength.find(id, org = false).filter(_.isDefined) foreach { strength ⇒
+        repos.profileStrength.update(strength.get.markComplete(name))
+      }
+    case ("incomplete", id: Long, name: String) =>
+      repos.profileStrength.find(id, org = false).filter(_.isDefined) foreach { strength ⇒
+        repos.profileStrength.update(strength.get.markIncomplete(name))
+      }
   }
 }

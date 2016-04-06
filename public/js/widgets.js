@@ -211,8 +211,8 @@
 
     UploadPhotoWidget.prototype.deleteCustomImage = function(){
         this.isSetCustomImage = false;
-        $('#uploadCustomPhoto').attr('src', jsRoutes.controllers.Assets.at('images/happymelly-face-white.png'))
-    }
+        $('#uploadCustomPhoto').attr('src', jsRoutes.controllers.Assets.at('images/happymelly-face-white.png').url);
+    };
 
     UploadPhotoWidget.prototype.updatePhoto = function(){
         var self = this,
@@ -257,7 +257,7 @@
         $('.b-avatar__img-real').attr('src', src);
         self.$el.addClass('b-avatar_stat_real');
 
-        App.events.pub('hmtReloadCompletionWidgethmt');
+        App.events.pub('hmtReloadCompletionWidget');
     }
 
     UploadPhotoWidget.prototype.deletePhoto = function(){

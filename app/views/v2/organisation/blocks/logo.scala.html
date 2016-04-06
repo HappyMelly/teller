@@ -6,12 +6,15 @@
 @import be.objectify.deadbolt.scala.views.html._
 @import models.UserRole.Role
 
-<div class="b-avatar js-organization-photo @if(org.logo) { b-avatar_stat_real } ">
+<div class="b-avatar js-organization-photo @if(org.logoId.nonEmpty) { b-avatar_stat_real } ">
   <div style="display: none ;" id="org">@org.identifier</div>
 
   @dynamicOr(handler, Role.OrgMember.toString, org.identifier.toString) {
-    <img width="@width" class="b-avatar__img b-avatar__img-real"
-      src="@controllers.core.Organisations.logoUrl(org.identifier)"/>
+    @org.logoId.map { logoId =>
+        <img width="@width" class="b-avatar__img b-avatar__img-real" src="@controllers.core.Organisations.logoUrl(logoId)"/>
+    }.getOrElse {
+        <img width="@width" class="b-avatar__img b-avatar__img-real" src="@routes.Assets.at("images/add-logo.png")"/>
+    }
 
     <a href="#" class="js-choose-link">
         <img width="@width" class="b-avatar__img b-avatar__img-fake"
@@ -30,12 +33,11 @@
       </a>
     </div>
   } {
-    @if(org.logo) {
-      <img id="photo" width="@width" class="b-avatar__img"
-      src="@controllers.core.Organisations.logoUrl(org.identifier)"/>
-    } else {
-      <img id="photo" width="@width" class="b-avatar__img"
-      src="@routes.Assets.at("images/add-logo.png")"/>
+    @org.logoId.map { logoId =>
+        <img id="photo" width="@width" class="b-avatar__img"
+        src="@controllers.core.Organisations.logoUrl(logoId)"/>
+    }.getOrElse {
+        <img id="photo" width="@width" class="b-avatar__img" src="@routes.Assets.at("images/add-logo.png")"/>
     }
   }
 
@@ -48,10 +50,10 @@
         actionId = Some("uploadBtnSave")) {
         <div class="b-photoupload">
           <div class="b-photoupload__item type_active" id="custom">
-            @if(org.logo) {
+            @org.logoId.map { logoId =>
               <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto"
-                src="@controllers.core.Organisations.logoUrl(org.identifier)"/>
-            } else {
+                src="@controllers.core.Organisations.logoUrl(logoId)"/>
+            }.getOrElse {
               <img class="b-photoupload__img"  width="250" id="uploadCustomPhoto"
                 src="@routes.Assets.at("images/happymelly-face-white.png")"/>
             }

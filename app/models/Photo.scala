@@ -26,14 +26,14 @@ package models
 
 import scravatar.Gravatar
 
-case class Photo(id: Option[String], url: Option[String])
+case class Photo(typ: Option[String], url: Option[String], photoId: Option[String] = None)
 
 object Photo {
 
-  def parse(url: Option[String]): Photo = {
+  def parse(url: Option[String], photoId: Option[String]): Photo = {
     url map {
-      case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url)
-      case s if s.contains("photo") ⇒ Photo(Some("custom"), url)
+      case s if s.contains("gravatar") ⇒ Photo(Some("gravatar"), url, photoId)
+      case s if s.contains("photo") ⇒ Photo(Some("custom"), url, photoId)
       case _ ⇒ Photo.empty
     } getOrElse Photo.empty
   }

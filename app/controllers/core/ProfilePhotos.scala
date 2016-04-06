@@ -23,22 +23,26 @@
  */
 package controllers.core
 
-import javax.inject.Inject
+import javax.inject.{Named, Inject}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.{Files, Security, Utilities}
 import models.repository.Repositories
-import models.{Person, Photo}
+import models.{ProfileStrength, Person, Photo}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
 import services.TellerRuntimeEnvironment
 
+import scala.util.Random
+
 class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironment,
                                override val messagesApi: MessagesApi,
                                val repos: Repositories,
+                               @Named("profile-strength") recalculator: ActorRef,
                                deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
     with Files {
@@ -52,9 +56,9 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     repos.person.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
-        val active = person.photo.id getOrElse "nophoto"
-        ok(views.html.v2.person.photoSelection(id, Photo.gravatarUrl(person.email),
-          routes.ProfilePhotos.photo(id).url, active))
+        val active = person.photo.typ getOrElse "nophoto"
+        val photoUrl = person.photo.photoId.map(x => routes.ProfilePhotos.photo(x).url).getOrElse("")
+        ok(views.html.v2.person.photoSelection(id, Photo.gravatarUrl(person.email), photoUrl, active))
     }
   }
 
@@ -64,12 +68,12 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param id Person identifier
     */
   def delete(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    repos.person.findComplete(id) flatMap {
+    repos.person.find(id) flatMap {
       case None => notFound("Person not found")
       case Some(person) =>
-        Person.photo(id).remove()
-        repos.person.update(person.copy(photo = Photo.empty)) flatMap { _ =>
-          val route = routes.People.details(id).url
+        person.signatureId.foreach(x => Person.photo(x).remove())
+        repos.person.updatePhoto(id, None, None) flatMap { _ =>
+          recalculator ! ("incomplete", id, ProfileStrength.Steps.PHOTO)
           jsonOk(Json.obj("link" -> controllers.routes.Assets.at("images/add-photo.png").url))
         }
     }
@@ -78,9 +82,9 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
   /**
     * Retrieve and cache a photo of the given person
     *
-    * @param id Person identifier
+    * @param id Person photo identifier
     */
-  def photo(id: Long) = file(Person.photo(id))
+  def photo(id: String) = file(Person.photo(id))
 
   /**
     * Updates profile photo
@@ -92,15 +96,19 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     form.fold(
       withError ⇒ jsonBadRequest("No option is provided"),
       photoType ⇒
-        repos.person.findComplete(id) flatMap {
+        repos.person.find(id) flatMap {
           case None => notFound("Person not found")
           case Some(person) =>
+            val oldPhotoId = person.photo.photoId.getOrElse("")
             val photo = photoType match {
               case "nophoto" ⇒ Photo.empty
-              case "gravatar" ⇒ Photo(photoType, person.email)
-              case _ ⇒ Photo(Some(photoType), photoUrl(id))
+              case "gravatar" ⇒ Photo(photoType, person.email).copy(photoId = Some(oldPhotoId))
+              case _ ⇒ Photo(Some(photoType), photoUrl(oldPhotoId), Some(oldPhotoId))
             }
-            repos.person.update(person.copy(photo = photo)) flatMap { _ =>
+            repos.person.updatePhoto(id, photo.photoId, photo.url) flatMap { _ =>
+              if (photo.typ.nonEmpty) {
+                recalculator ! ("complete", id, ProfileStrength.Steps.PHOTO)
+              }
               jsonSuccess("ok")
             }
         })
@@ -112,20 +120,27 @@ class ProfilePhotos @Inject() (override implicit val env: TellerRuntimeEnvironme
     * @param id Person identifier
     */
   def upload(id: Long) = ProfileAction(id) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    uploadFile(Person.photo(id), "photo") flatMap { _ ⇒
-      val route = routes.People.details(id).url
-      jsonOk(Json.obj("link" -> routes.ProfilePhotos.photo(id).url))
-    } recover {
-      case e ⇒ BadRequest(Json.obj("message" -> e.getMessage))
+    repos.person.find(id) flatMap {
+      case None => jsonNotFound("Person not found")
+      case Some(person) =>
+        val photoId = Random.alphanumeric.take(32).mkString
+        uploadFile(Person.photo(photoId), "photo") flatMap { _ ⇒
+          val url = photoUrl(photoId)
+          repos.person.updatePhoto(id, Some(photoId), url) flatMap { _ =>
+            jsonOk(Json.obj("link" -> url))
+          }
+        } recover {
+          case e ⇒ BadRequest(Json.obj("message" -> e.getMessage))
+        }
     }
   }
 
   /**
     * Returns url to a person's photo
     *
-    * @param id Person identifier
+    * @param id Person photo identifier
     */
-  protected def photoUrl(id: Long): Option[String] = {
+  protected def photoUrl(id: String): Option[String] = {
     val photo = Person.photo(id)
     Utilities.cdnUrl(photo.name).orElse(Some(Utilities.fullUrl(routes.ProfilePhotos.photo(id).url)))
   }

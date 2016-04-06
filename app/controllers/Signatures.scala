@@ -24,20 +24,23 @@
 
 package controllers
 
-import javax.inject.Inject
+import javax.inject.{Named, Inject}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import models.Person
+import models.{Person, ProfileStrength}
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
+import scala.util.Random
 
 class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
                             override val messagesApi: MessagesApi,
                             val repos: Repositories,
+                            @Named("profile-strength") recalculator: ActorRef,
                             deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Files
@@ -53,11 +56,12 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
       repos.person.findComplete(personId) flatMap {
         case None => notFound("Person not found")
         case Some(person) =>
-          val result = if (person.signature) {
-            Person.signature(personId).remove()
-            repos.person.update(person.copy(signature = false))
-          } else {
-            Future.successful(None)
+          val result = person.signatureId match {
+            case None => Future.successful(None)
+            case Some(signature) =>
+              Person.signature(signature).remove()
+              recalculator ! ("incomplete", personId, ProfileStrength.Steps.SIGNATURE)
+              repos.person.updateSignature(personId, None)
           }
           result flatMap { _ =>
             val route: String = core.routes.People.details(personId).url + "#facilitation"
@@ -69,9 +73,9 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /**
    * Retrieve and cache a signature of a person
    *
-   * @param personId Person identifier
+   * @param signatureId Person signature identifier
    */
-  def signature(personId: Long) = file(Person.signature(personId))
+  def signature(signatureId: String) = file(Person.signature(signatureId))
 
   /**
    * Upload a new signature to Amazon
@@ -84,8 +88,10 @@ class Signatures @Inject() (override implicit val env: TellerRuntimeEnvironment,
         case None => notFound("Person not found")
         case Some(person) =>
           val route: String = core.routes.People.details(personId).url + "#facilitation"
-          uploadFile(Person.signature(personId), "signature") map { _ ⇒
-            repos.person.update(person.copy(signature = true))
+          val signatureId = Random.alphanumeric.take(32).mkString
+          uploadFile(Person.signature(signatureId), "signature") map { _ ⇒
+            repos.person.updateSignature(personId, Some(signatureId))
+            recalculator ! ("complete", personId, ProfileStrength.Steps.SIGNATURE)
             Redirect(route).flashing("success" -> "Signature was uploaded")
           } recover {
             case e: RuntimeException ⇒ Redirect(route).flashing("error" -> e.getMessage)

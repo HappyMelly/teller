@@ -101,43 +101,20 @@ object CertificateRenderer {
         firstName, 400, 150, 0)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER,
         secondName, 640, 150, 0)
-      if (firstFacilitator.signature) {
-        val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(), 5 seconds)
-        try {
-          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
-          signature.setAbsolutePosition(350, 175)
-          signature.scaleToFit(90, 80)
-          document.add(signature)
-        } catch {
-          case _: Throwable => Unit
-        }
+      firstFacilitator.signatureId.foreach { signature =>
+        renderSignature(signature, (90, 80), (350, 175), document)
       }
-      if (secondFacilitator.signature) {
-        val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(), 5 seconds)
-        try {
-          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
-          signature.setAbsolutePosition(590, 175)
-          signature.scaleToFit(90, 80)
-          document.add(signature)
-        } catch {
-          case _: Throwable => Unit
-        }
+      secondFacilitator.signatureId.foreach { signature =>
+        renderSignature(signature, (90, 80), (590, 175), document)
       }
+
     } else {
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, issueDate, 480, 90, 0)
       val facilitator = facilitators.head
       val name = new Phrase(facilitator.fullName.toUpperCase, arialFont)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 480, 150, 0)
-      if (facilitator.signature) {
-        val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(), 5 seconds)
-        try {
-          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
-          signature.scaleToFit(115, 100)
-          signature.setAbsolutePosition(410, 170)
-          document.add(signature)
-        } catch {
-          case _: Throwable => Unit
-        }
+      facilitator.signatureId.foreach { signature =>
+        renderSignature(signature, (115, 100), (410, 170), document)
       }
     }
     canvas.restoreState
@@ -208,50 +185,36 @@ object CertificateRenderer {
       val secondName = new Phrase(secondFacilitator.fullName, font)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, firstName, 650, 290, 0)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, secondName, 650, 185, 0)
-      if (firstFacilitator.signature) {
-        val imageData = Await.result(Person.signature(firstFacilitator.id.get).uploadToCache(),
-          5 seconds)
-        try {
-          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
-          signature.setAbsolutePosition(595, 300)
-          signature.scaleToFit(100, 95)
-          document.add(signature)
-        } catch {
-          case _: Throwable => Unit
-        }
+      firstFacilitator.signatureId.foreach { signature =>
+        renderSignature(signature, (100, 95), (595, 300), document)
       }
-      if (secondFacilitator.signature) {
-        val imageData = Await.result(Person.signature(secondFacilitator.id.get).uploadToCache(),
-          5 seconds)
-        try {
-          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
-          signature.setAbsolutePosition(595, 180)
-          signature.scaleToFit(100, 95)
-          document.add(signature)
-        } catch {
-          case _: Throwable => Unit
-        }
+      secondFacilitator.signatureId.foreach { signature =>
+        renderSignature(signature, (100, 95), (595, 180), document)
       }
+
     } else {
       val facilitator = facilitators.head
       val name = new Phrase(facilitator.fullName, font)
       ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, name, 650, 185, 0)
-      if (facilitator.signature) {
-        val imageData = Await.result(Person.signature(facilitator.id.get).uploadToCache(),
-          5 seconds)
-        try {
-          val signature = com.itextpdf.text.Image.getInstance(imageData, true)
-          signature.scaleToFit(155, 100)
-          signature.setAbsolutePosition(570, 205)
-          document.add(signature)
-        } catch {
-          case _: Throwable => Unit
-        }
+      facilitator.signatureId.foreach { signature =>
+        renderSignature(signature, (155, 100), (570, 205), document)
       }
     }
     canvas.restoreState
     document.close()
 
     output.toByteArray
+  }
+
+  protected def renderSignature(id: String, scale: (Int, Int), position: (Int, Int), document: Document) = {
+    val imageData = Await.result(Person.signature(id).uploadToCache(), 5 seconds)
+    try {
+      val signature = com.itextpdf.text.Image.getInstance(imageData, true)
+      signature.scaleToFit(scale._1, scale._2)
+      signature.setAbsolutePosition(position._1, position._2)
+      document.add(signature)
+    } catch {
+      case _: Throwable => Unit
+    }
   }
 }

@@ -39,9 +39,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-class MembersApi @Inject() (val services: Repositories,
+class MembersApi @Inject() (val repos: Repositories,
                             override val messagesApi: MessagesApi)
-  extends ApiAuthentication(services, messagesApi) {
+  extends ApiAuthentication(repos, messagesApi) {
 
   case class MemberView(member: Member, country: String)
   case class MemberPersonView(member: Member, experiments: List[Experiment], person: PersonView)
@@ -49,7 +49,7 @@ class MembersApi @Inject() (val services: Repositories,
   case class MemberOrgView(member: Member,
                            experiments: List[Experiment],
                            orgView: OrgView)
-  
+
   /**
    * Implicit conversion of MemberView used in lists
    */
@@ -104,7 +104,7 @@ class MembersApi @Inject() (val services: Repositories,
         "contributions" -> view.contributions)
     }
   }
-  
+
   val personMemberWrites = new Writes[MemberPersonView] {
     def writes(view: MemberPersonView): JsValue = {
       Json.obj(
@@ -162,7 +162,7 @@ class MembersApi @Inject() (val services: Repositories,
    */
   def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) { implicit request ⇒
     implicit token ⇒
-      services.member.findAll flatMap { members =>
+      repos.member.findAll flatMap { members =>
         val activeMembers = members.filter(_.active)
         val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse activeMembers
         val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
@@ -178,10 +178,10 @@ class MembersApi @Inject() (val services: Repositories,
   def membersByNames(query: String) = TokenSecuredAction(readWrite = false) { implicit request => implicit token =>
     val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
     (for {
-      p <- services.person.findByNames(names.toList)
-      m <- services.member.findByObjects(p.map(_.identifier))
+      p <- repos.person.findByNames(names.toList)
+      m <- repos.member.findByObjects(p.map(_.identifier))
     } yield (p, m)) flatMap { case (people, members) =>
-      services.person.collection.addresses(people) flatMap { _ =>
+      repos.person.collection.addresses(people) flatMap { _ =>
         val filteredMembers = members.filter(_.person)
         val views = filteredMembers.map { member =>
           people.find(_.identifier == member.objectId) map { person =>
@@ -205,12 +205,12 @@ class MembersApi @Inject() (val services: Repositories,
       findMemberByIdentifier(identifier, isPerson) flatMap {
         case None => jsonNotFound("Member not found")
         case Some(member) =>
-          services.experiment.findByMember(member.identifier) flatMap { experiments =>
+          repos.experiment.findByMember(member.identifier) flatMap { experiments =>
             if (member.person) {
               (for {
-                p <- services.person.findComplete(member.objectId)
-                o <- services.person.memberships(member.objectId)
-                c <- services.contribution.contributions(member.objectId, isPerson = true)
+                p <- repos.person.findComplete(member.objectId)
+                o <- repos.person.memberships(member.objectId)
+                c <- repos.contribution.contributions(member.objectId, isPerson = true)
               } yield (p, o, c)) flatMap {
                 case (None, _, _) => jsonNotFound("Person not found")
                 case (Some(person), organisations, contributions) =>
@@ -219,10 +219,10 @@ class MembersApi @Inject() (val services: Repositories,
               }
             } else {
               (for {
-                o <- services.org.findWithProfile(member.objectId)
-                m <- services.org.people(member.objectId)
-                c <- services.contribution.contributions(member.objectId, isPerson = false)
-                _ <- services.person.collection.addresses(m)
+                o <- repos.org.findWithProfile(member.objectId)
+                m <- repos.org.people(member.objectId)
+                c <- repos.contribution.contributions(member.objectId, isPerson = false)
+                _ <- repos.person.collection.addresses(m)
               } yield (o, m, c)) flatMap {
                 case (None, _, _) => jsonNotFound("Organisation not found")
                 case (Some(view), members, contributions) =>
@@ -245,14 +245,14 @@ class MembersApi @Inject() (val services: Repositories,
   protected def findMemberByIdentifier(identifier: String, person: Boolean): Future[Option[Member]] = {
     try {
       val id = identifier.toLong
-      services.member.find(id)
+      repos.member.find(id)
     } catch {
       case e: NumberFormatException ⇒ {
         if (person)
-          services.person.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
+          repos.person.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
             case None => Future.successful(None)
             case Some(value) =>
-              services.member.findByObject(value.identifier, person = true) flatMap {
+              repos.member.findByObject(value.identifier, person = true) flatMap {
                 case None => Future.successful(None)
                 case Some(member) =>
                   member.memberObj_=(value)
@@ -260,10 +260,10 @@ class MembersApi @Inject() (val services: Repositories,
               }
           }
         else
-          services.org.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
+          repos.org.find(URLDecoder.decode(identifier, "ASCII")) flatMap {
             case None => Future.successful(None)
             case Some(org) =>
-              services.member.findByObject(org.identifier, person = false) flatMap {
+              repos.member.findByObject(org.identifier, person = false) flatMap {
                 case None => Future.successful(None)
                 case Some(member) =>
                   member.memberObj_=(org)
@@ -282,10 +282,8 @@ class MembersApi @Inject() (val services: Repositories,
   protected def memberImageUrl(member: Member): Option[String] = {
     if (member.person)
       member.image
-    else if (member.memberObj._2.get.logo)
-      Organisations.logoUrl(member.objectId)
     else
-      None
+      member.memberObj._2.get.logoId.map(x => Organisations.logoUrl(x)).getOrElse(None)
   }
 
   /**
@@ -293,12 +291,8 @@ class MembersApi @Inject() (val services: Repositories,
    *
    * @param org Organisation
    */
-  protected def orgImageUrl(org: Organisation): Option[String] = {
-    if (org.logo)
-      Organisations.logoUrl(org.identifier)
-    else
-      None
-  }
+  protected def orgImageUrl(org: Organisation): Option[String] =
+    org.logoId.map(x => Organisations.logoUrl(x)).getOrElse(None)
 
   /**
    * Returns 'person' if the given member is a person, otherwise - 'org'

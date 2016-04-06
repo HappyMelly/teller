@@ -29,6 +29,7 @@ import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.concurrent.Future
+import scala.util.Random
 
 case class OrgView(org: Organisation, profile: SocialProfile,
                    members: List[Person] = List(),
@@ -52,7 +53,7 @@ case class Organisation(
     blog: Option[String],
     contactEmail: Option[String],
     about: Option[String] = None,
-    logo: Boolean = false,
+    logoId: Option[String] = None,
     active: Boolean = true,
     dateStamp: DateStamp) extends ActivityRecorder {
 
@@ -96,9 +97,9 @@ object Organisation {
   /**
    * Returns logo for the given organisation
    *
-   * @param id Organisation identifier
+   * @param id Organisation logo identifier
    */
-  def logo(id: Long): File = File.image(s"organisations/$id", s"organisations.$id")
+  def logo(id: String): File = File.image(s"organisations/$id", s"organisations.$id")
 
   /**
    * Returns an organisation with only two required fields filled
@@ -109,7 +110,7 @@ object Organisation {
   def apply(name: String, countryCode: String): Organisation = {
     val date = DateStamp(createdBy = "", updated = DateTime.now(), updatedBy = "")
     Organisation(None, name, None, None, None, None, None, countryCode,
-      None, None, None, None, None, None, logo = false, active = false, date)
+      None, None, None, None, None, None, None, active = false, date)
   }
 }
 

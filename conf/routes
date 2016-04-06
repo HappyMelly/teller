@@ -195,11 +195,11 @@ POST          /organization/:id/cancel                                       con
 POST          /organizations                                                 controllers.core.Organisations.create
 POST          /organizer                                                     controllers.core.Organisations.createOrganizer
 POST          /organization/:id/delete                                       controllers.core.Organisations.delete(id: Long)
-DELETE        /organization/:id/logo/delete                                  controllers.core.Organisations.deleteLogo(id: Long)
+DELETE        /organization/:id/logo/delete                                  controllers.core.Organisations.deleteLogo(id: Long, logoId: String)
 GET           /organization/:id                                              controllers.core.Organisations.details(id: Long)
 GET           /organization/:id/edit                                         controllers.core.Organisations.edit(id: Long)
 GET           /organizations                                                 controllers.core.Organisations.index
-GET           /organization/:id/logo                                         controllers.core.Organisations.logo(id: Long)
+GET           /organization/:id/logo                                         controllers.core.Organisations.logo(id: String)
 GET           /organization/:id/name                                         controllers.core.Organisations.name(id: Long)
 POST          /organization/:id                                              controllers.core.Organisations.update(id: Long)
 GET           /organizations/search                                          controllers.core.Organisations.search(query: Option[String])
@@ -229,7 +229,7 @@ POST          /person/:id/cancel                                             con
 GET           /person/:id/tabs                                               controllers.core.People.renderTabs(id: Long, tab: String)
 
 POST          /person/:id/photo/upload                                       controllers.core.ProfilePhotos.upload(id: Long)
-GET           /person/:id/photo                                              controllers.core.ProfilePhotos.photo(id: Long)
+GET           /person/photo/:photoId                                         controllers.core.ProfilePhotos.photo(photoId: String)
 DELETE        /person/:id/photo/delete                                       controllers.core.ProfilePhotos.delete(id: Long)
 POST          /person/:id/photo                                              controllers.core.ProfilePhotos.update(id: Long)
 GET           /person/:id/photo/choose                                       controllers.core.ProfilePhotos.choose(id: Long)
@@ -272,7 +272,7 @@ POST          /registration/authenticate                                     con
 GET           /registration/congratulations                                  controllers.Registration.congratulations(orgId: Option[Long] ?= None)
 
 POST          /person/:personId/signature                                    controllers.Signatures.upload(personId: Long)
-GET           /person/:personId/signature                                    controllers.Signatures.signature(personId: Long)
+GET           /person/:signatureId/signature                                 controllers.Signatures.signature(signatureId: String)
 POST          /person/:personId/signature/delete                             controllers.Signatures.delete(personId: Long)
 
 GET           /brand/:brandId/statistics                                     controllers.cm.Statistics.index(brandId: Long)

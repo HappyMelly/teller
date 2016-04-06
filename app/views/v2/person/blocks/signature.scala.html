@@ -11,9 +11,11 @@
 <p>Your signature is used during certificate generation. It's important to upload
   one to send participants the certificates signed by you.
 </p>
-<div class="row signature" @if(!person.signature) { style="display: none;" }>
+<div class="row signature" @if(person.signatureId.isEmpty) { style="display: none;" }>
   <div class="col-md-7">
-    <img class="img-thumbnail" src="@routes.Signatures.signature(person.id.getOrElse(0))"/>
+    <img class="img-thumbnail"
+      @person.signatureId.map { signatureId => src="@routes.Signatures.signature(signatureId)" }
+    />
   </div>
   <div class="col-md-5">
   @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
@@ -26,7 +28,7 @@
   </div>
 </div>
 @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
-  <div class="row no-signature" @if(person.signature) { style="display: none;" }>
+  <div class="row no-signature" @if(person.signatureId.nonEmpty) { style="display: none;" }>
     <form action="@CSRF(routes.Signatures.upload(person.id.getOrElse(0)))"
       method="post" enctype="multipart/form-data">
       <div class="col-md-7">

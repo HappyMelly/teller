@@ -53,7 +53,7 @@ private[models] trait OrganisationTable {
     def blog = column[Option[String]]("BLOG")
     def contactEmail = column[Option[String]]("CONTACT_EMAIL")
     def about = column[Option[String]]("ABOUT")
-    def logo = column[Boolean]("LOGO")
+    def logoId = column[Option[String]]("LOGO_ID", O.Length(32))
     def active = column[Boolean]("ACTIVE")
     def created = column[DateTime]("CREATED")
     def createdBy = column[String]("CREATED_BY")
@@ -63,12 +63,12 @@ private[models] trait OrganisationTable {
     type OrganisationsFields = (Option[Long], String, Option[String], Option[String], Option[String], Option[String],
       Option[String], String, Option[String], Option[String],
       Option[String], Option[String], Option[String],
-      Option[String], Boolean,
+      Option[String], Option[String],
       Boolean, DateTime, String, DateTime, String)
 
     def * = (id.?, name, street1, street2, city, province, postCode,
       countryCode, vatNumber, registrationNumber, webSite, blog, contactEmail,
-      about, logo, active, created, createdBy, updated,
+      about, logoId, active, created, createdBy, updated,
       updatedBy) <>(
       (o: OrganisationsFields) ⇒
         Organisation(o._1, o._2, o._3, o._4, o._5, o._6, o._7, o._8, o._9, o._10,
@@ -77,7 +77,7 @@ private[models] trait OrganisationTable {
       (o: Organisation) ⇒
         Some(o.id, o.name, o.street1, o.street2, o.city,
           o.province, o.postCode, o.countryCode, o.vatNumber, o.registrationNumber,
-          o.webSite, o.blog, o.contactEmail, o.about, o.logo, o.active,
+          o.webSite, o.blog, o.contactEmail, o.about, o.logoId, o.active,
           o.dateStamp.created, o.dateStamp.createdBy, o.dateStamp.updated,
           o.dateStamp.updatedBy))
 

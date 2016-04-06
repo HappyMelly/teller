@@ -42,7 +42,7 @@ case class Person(
   override val email: String,
   birthday: Option[LocalDate],
   photo: Photo,
-  signature: Boolean,
+  signatureId: Option[String] = None,
   addressId: Long,
   bio: Option[String],
   interests: Option[String],
@@ -62,7 +62,7 @@ case class Person(
     email: String = email,
     birthday: Option[LocalDate] = birthday,
     photo: Photo = photo,
-    signature: Boolean = signature,
+    signatureId: Option[String] = signatureId,
     addressId: Long = addressId,
     bio: Option[String] = bio,
     interests: Option[String] = interests,
@@ -73,7 +73,7 @@ case class Person(
     dateStamp: DateStamp = dateStamp): Person = {
 
     val person = Person(id, firstName, lastName, email, birthday, photo,
-      signature, addressId, bio, interests, webSite, blog,
+      signatureId, addressId, bio, interests, webSite, blog,
       virtual, active, dateStamp)
 
     this._profile foreach { p ⇒
@@ -199,23 +199,23 @@ object Person {
 
   def apply(firstName: String, lastName: String, email: String): Person = {
     val creator = firstName + " " + lastName
-    Person(None, firstName, lastName, email, None, Photo.empty, signature = false,
+    Person(None, firstName, lastName, email, None, Photo.empty,
       addressId = 0, bio = None, interests = None, webSite = None, blog = None,
       dateStamp = DateStamp(DateTime.now(), creator, DateTime.now(), creator))
   }
 
-  def cacheId(id: Long): String = s"signatures.$id"
+  def cacheId(id: String): String = s"signatures.$id"
 
-  def deletable(id: Long, services: Repositories): Future[Boolean] = for {
-    c <- services.contribution.contributions(id, isPerson = true)
-    l <- services.cm.license.licensesWithBrands(id)
-    o <- services.person.memberships(id)
+  def deletable(id: Long, repos: Repositories): Future[Boolean] = for {
+    c <- repos.contribution.contributions(id, isPerson = true)
+    l <- repos.cm.license.licensesWithBrands(id)
+    o <- repos.person.memberships(id)
   } yield c.isEmpty && l.isEmpty && o.isEmpty
 
 
-  def fullFileName(id: Long): String = s"signatures/$id"
+  def fullFileName(id: String): String = s"signatures/$id"
 
-  def signature(id: Long): File = File.image(Person.fullFileName(id), Person.cacheId(id))
+  def signature(signatureId: String): File = File.image(Person.fullFileName(signatureId), Person.cacheId(signatureId))
 
-  def photo(id: Long): File = File.image(s"photos/$id", s"photos.$id")
+  def photo(id: String): File = File.image(s"photos/$id", s"photos.$id")
 }

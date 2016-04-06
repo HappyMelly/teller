@@ -222,9 +222,8 @@ class OrganisationRepository(app: Application, repos: Repositories) extends HasD
    * Updates if the given organisation has or doesn't have a logo
    *
    * @param id Organisation identifier
-   * @param logo Activate/deactivate flag
    */
-  def updateLogo(id: Long, logo: Boolean): Unit =
-    db.run(orgs.filter(_.id === id).map(_.logo).update(logo))
+  def updateLogo(id: Long, logoId: Option[String]): Unit =
+    db.run(orgs.filter(_.id === id).map(_.logoId).update(logoId))
 
 }

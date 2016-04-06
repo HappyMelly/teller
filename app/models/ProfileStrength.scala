@@ -102,6 +102,11 @@ case class ProfileStrength(id: Option[Long],
 
 object ProfileStrength {
 
+  object Steps {
+    val PHOTO = "photo"
+    val SIGNATURE = "signature"
+  }
+
   def apply(id: Option[Long],
     objectId: Long,
     org: Boolean,
@@ -136,10 +141,10 @@ object ProfileStrength {
    * @return Updated profile strength with added steps
    */
   def forFacilitator(strength: ProfileStrength): ProfileStrength = {
-    val withSignature = if (strength.steps.exists(_.name == "signature"))
+    val withSignature = if (strength.steps.exists(_.name == Steps.SIGNATURE))
       strength.steps
     else
-      strength.steps :+ CompletionStep("signature", 1)
+      strength.steps :+ CompletionStep(Steps.SIGNATURE, 1)
     val withLanguage = if (withSignature.exists(_.name == "language"))
       withSignature
     else
@@ -178,14 +183,14 @@ object ProfileStrength {
       strengthWithDesc.markComplete("social")
     else
       strengthWithDesc.markIncomplete("social")
-    val strengthWithPhoto = if (person.photo.id.isDefined)
-      strengthWithSocial.markComplete("photo")
+    val strengthWithPhoto = if (person.photo.typ.isDefined)
+      strengthWithSocial.markComplete(Steps.PHOTO)
     else
-      strengthWithSocial.markIncomplete("photo")
-    if (person.signature)
-      strengthWithPhoto.markComplete("signature")
+      strengthWithSocial.markIncomplete(Steps.PHOTO)
+    if (person.signatureId.nonEmpty)
+      strengthWithPhoto.markComplete(Steps.SIGNATURE)
     else
-      strengthWithPhoto.markIncomplete("signature")
+      strengthWithPhoto.markIncomplete(Steps.SIGNATURE)
   }
 
   /**

@@ -371,8 +371,7 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
     db.run(addressQuery.update(person.address.copy(id = Some(person.addressId))))
 
     val personUpdateTuple = (person.firstName, person.lastName, person.email, person.birthday,
-      person.photo.url, person.signature, person.bio, person.interests,
-      person.webSite, person.blog, person.virtual,
+      person.bio, person.interests, person.webSite, person.blog, person.virtual,
       person.active, person.dateStamp.updated, person.dateStamp.updatedBy)
     val updateQuery = people.filter(_.id === person.id).map(_.forUpdate)
     db.run(updateQuery.update(personUpdateTuple))
@@ -406,6 +405,12 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
     val query = TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).map(_.position)
     db.run(query.update(position))
   }
+
+  def updatePhoto(personId: Long, photoId: Option[String], url: Option[String]) =
+    db.run(people.filter(_.id === personId).map(x => (x.photoId, x.photo)).update((photoId, url)))
+
+  def updateSignature(personId: Long, signatureId: Option[String]) =
+    db.run(people.filter(_.id === personId).map(_.signatureId).update(signatureId))
 
   object collection {
     /**
