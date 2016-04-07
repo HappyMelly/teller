@@ -29,9 +29,9 @@ import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.Messages.Message
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import play.api.libs.ws.WS
 import play.api.mvc.Action
 import templates.Formatters._
@@ -68,6 +68,62 @@ class Utilities @Inject()(override val messagesApi: MessagesApi) extends AsyncCo
       Ok(Json.prettyPrint(Json.obj("result" -> "invalid")))
     }
   }
+
+  case class VATSuccessResponse(country: String, vat: String, valid: String, name: String, address: String) {
+    val isValid: Boolean = valid == "true"
+  }
+
+  case class VATErrorResponse(code: String, text: String) {
+    val isServerError: Boolean = code == "vies-unavailable" || code == "member-state-unavailable"
+  }
+
+  implicit val vatSuccessResponseReads: Reads[VATSuccessResponse] = (
+        (JsPath \ "country_code").read[String] and
+        (JsPath \ "vat_number").read[String] and
+        (JsPath \ "valid").read[String] and
+        (JsPath \ "name").read[String] and
+        (JsPath \ "address").read[String]
+    )(VATSuccessResponse.apply _)
+
+  implicit val vatErrorResponseReads: Reads[VATErrorResponse] = (
+      (JsPath \ "code").read[String] and
+      (JsPath \ "text").read[String]
+    )(VATErrorResponse.apply _)
+
+  def validateVAT(vatNumber: String) = Action.async { implicit request =>
+    val url = makeVATUrl(vatNumber)
+    WS.url(url).withHeaders("Accept" -> "application/json").get().flatMap { response =>
+      val responseResult = (response.json \ "response").validate[VATSuccessResponse]
+      responseResult match {
+        case s: JsSuccess[VATSuccessResponse] => handleSuccessResponse(s.get)
+        case e: JsError =>
+          val errorResult = (response.json \ "error").validate[VATErrorResponse]
+          handleErrorResponse(errorResult)
+      }
+    }.recover { case _ =>
+      Ok(Json.obj("message" -> "VAT check is not possible at this time"))
+    }
+  }
+
+  protected def handleSuccessResponse(response: VATSuccessResponse) = if (response.isValid)
+    jsonSuccess(response.name)
+  else
+    jsonBadRequest("Invalid VAT number")
+
+  protected def handleErrorResponse(response: JsResult[VATErrorResponse]) = response match {
+    case s: JsSuccess[VATErrorResponse] =>
+      if (s.get.isServerError)
+        jsonSuccess("VAT check service is unavailable right now")
+      else
+        jsonBadRequest("Invalid VAT number")
+    case e: JsError => jsonBadRequest("Internal error. Please contact a support team")
+  }
+
+  protected def makeVATUrl(vatNumber: String): String = {
+    val countryCode = vatNumber.trim.substring(0, 2)
+    val number = vatNumber.trim.substring(2, vatNumber.length)
+    s"http://vatid.eu/check/$countryCode/$number"
+  }
 }
 
 object Utilities {
@@ -83,6 +139,7 @@ object Utilities {
 
   /**
     * Converts form errors to a format readable by frontend
+ *
     * @param form Form
     */
   def errorsToJson[U](form: Form[U])(implicit messages: Messages): JsValue = {

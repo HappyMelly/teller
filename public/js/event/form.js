@@ -156,7 +156,7 @@ function checkUrl(url, element) {
         });
     } else {
         var fullUrl = jsRoutes.controllers.Utilities.validate(url).url;
-        $.post(fullUrl, {}, null, "json").done(function(data) {
+        $.getJSON(fullUrl, {}).done(function(data) {
             if (data.result == "invalid") {
                 $(field).addClass('has-error');
                 $(element).siblings('span').each(function() {

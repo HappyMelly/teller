@@ -284,8 +284,9 @@ GET           /brand/:brandId/statistics/type/participants/                  con
 GET           /template/:id                                                  controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET           /template/:brandId/:id/delete                                  controllers.CertificateTemplates.delete(brandId: Long, id: Long)
 
-POST          /markdown                                                      controllers.Utilities.markdown()
-POST          /url/:url/validate                                             controllers.Utilities.validate(url)
+POST          /utilities/markdown                                            controllers.Utilities.markdown()
+POST          /utilities/url/:url                                            controllers.Utilities.validate(url)
+GET           /utilities/vat/:number                                         controllers.Utilities.validateVAT(number)
 
 GET           /usage                                                         controllers.admin.Usage.index
 
