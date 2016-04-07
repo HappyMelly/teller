@@ -285,7 +285,7 @@ GET           /template/:id                                                  con
 GET           /template/:brandId/:id/delete                                  controllers.CertificateTemplates.delete(brandId: Long, id: Long)
 
 POST          /utilities/markdown                                            controllers.Utilities.markdown()
-POST          /utilities/url/:url                                            controllers.Utilities.validate(url)
+GET           /utilities/url/:url                                            controllers.Utilities.validate(url)
 GET           /utilities/vat/:number                                         controllers.Utilities.validateVAT(number)
 
 GET           /usage                                                         controllers.admin.Usage.index
