@@ -48,10 +48,13 @@
 
         this._sendFeeData(feeAmount)
             .done(function (data) {
-                success(data);
+                if (data.hasOwnProperty("message")) {
+                    success(data.message);
+                }
             })
             .fail(function(data){
-                error('Something wrong just happened');
+                var errorMsg = JSON.parse(jqXHR.responseText);
+                error(errorMsg.message);
             })
     };
 
@@ -111,9 +114,12 @@
      * @private
      */
     FeeForm.prototype._sendFeeData = function(feeAmount){
-        var url = this.$root.attr('action');
-        
-        return $.post(url, {fee: feeAmount})
+        return $.ajax({
+            type: "POST",
+            url: this.$root.attr("action"),
+            data: {fee: feeAmount},
+            dataType: "json"
+        })
     };
 
     App.widgets.FeeForm = FeeForm;

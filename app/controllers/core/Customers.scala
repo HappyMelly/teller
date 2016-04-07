@@ -56,17 +56,17 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
   def changeContributionLevel(customerId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler =>
     implicit user =>
       repos.core.customer.find(customerId) flatMap {
-        case None => notFound("Customer not found")
+        case None => jsonNotFound("Customer not found")
         case Some(customer) =>
           isAllowed(user.person, customer) flatMap { allowed =>
             if (allowed) {
               val form = Form(single("fee" -> bigDecimal))
               form.bindFromRequest().fold(
-                error => badRequest("Amount parameter is empty or doesn't exist"),
+                error => jsonBadRequest("Amount parameter is empty or doesn't exist"),
                 amount => updateContributionLevel(customer, amount)
               )
             } else {
-              badRequest("You are not allowed to update card details")
+              jsonForbidden("You are not allowed to update card details")
             }
           }
       }
@@ -79,17 +79,17 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
     */
   def updateCard(customerId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler => implicit user =>
     repos.core.customer.find(customerId) flatMap {
-      case None => notFound("Customer not found")
+      case None => jsonNotFound("Customer not found")
       case Some(customer) =>
         isAllowed(user.person, customer) flatMap { allowed =>
           if (allowed) {
             val form = Form(single("token" -> nonEmptyText))
             form.bindFromRequest().fold(
-              error => badRequest("Token parameter is empty or doesn't exist"),
+              error => jsonBadRequest("Token parameter is empty or doesn't exist"),
               token => replaceCard(customer, token)
             )
           } else {
-            badRequest("You are not allowed to update card details")
+            jsonForbidden("You are not allowed to update card details")
           }
         }
     }
@@ -126,18 +126,18 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
       case None => badRequest("Member not found")
       case Some(member) =>
         if (isSameAmount(member, amount)) {
-          ok("Your contribution level was changed")
+          jsonSuccess("Your contribution level was changed")
         } else {
           if (member.newFee.nonEmpty) {
             repos.member.update(member.copy(newFee = Some(amount))) flatMap { _ =>
-              ok("Your contribution level was changed")
+              jsonSuccess("Your contribution level was changed")
             }
           } else {
             val gateway = new GatewayWrapper(apiSecretKey)
             try {
               gateway.cancel(customer.remoteId)
               repos.member.update(member.copy(newFee = Some(amount))) flatMap { _ =>
-                ok("Your contribution level was changed")
+                jsonSuccess("Your contribution level was changed")
               }
             } catch {
               case e: PaymentException ⇒
