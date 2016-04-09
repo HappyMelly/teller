@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>Happy Mellly</title>
+    <link rel="stylesheet" href="assets/reset.css"/>
+    <link rel="stylesheet" href="assets/styles.css"/>
+    <script type="text/javascript" src="assets/jquery.min.js"></script>
+    <script type="text/javascript" src="assets/video.min.js"></script>
+    <script type="text/javascript" src="assets/bigvideo.js"></script>
+
+    <script type="text/javascript">
+        $(function() {
+            var BV = new $.BigVideo({
+                doLoop:true,
+                useFlashForFirefox:false
+            });
+            BV.init();
+            BV.show([
+                { type: "video/mp4",  src: "./assets/video.mp4" },
+                { type: "video/webm", src: "./assets/video.webm" },
+                { type: "video/ogg",  src: "./assets/video.ogv" }
+            ]);
+        });
+    </script>
+</head>
+<body class="p-container__body">
+    <div class="p-container__bg"></div>
+    <div class="p-container">
+        <div class="p-container__inner">
+            <div class="p-container__content">
+                <h1 class="p-container__title">
+                    Sorry!
+                </h1>
+                <div class="p-container__text">
+                    Seems that something went wrong. <br/>
+                    Let’s try from the beginning:
+                </div>
+
+                <a class="p-container__btn" href="#">Visit home page</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
