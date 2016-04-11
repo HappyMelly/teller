@@ -144,6 +144,8 @@ POST          /event/:id/template                                          contr
 
 GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 
+GET           /mailchimp/authenticate                                      controllers.cm.facilitator.Mailchimp.authenticate()
+
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)
 DELETE        /member/:id/experiment/:experimentId                         controllers.hm.Experiments.delete(id: Long, experimentId: Long)
@@ -227,6 +229,7 @@ POST          /person/:id/activation                                         con
 POST          /person/:id/delete                                             controllers.core.People.delete(id: Long)
 POST          /person/:id/cancel                                             controllers.core.People.cancel(id: Long)
 GET           /person/:id/tabs                                               controllers.core.People.renderTabs(id: Long, tab: String)
+GET           /person/:id/mailchimp                                          controllers.cm.facilitator.Mailchimp.settings(id: Long)
 
 POST          /person/:id/photo/upload                                       controllers.core.ProfilePhotos.upload(id: Long)
 GET           /person/photo/:photoId                                         controllers.core.ProfilePhotos.photo(photoId: String)

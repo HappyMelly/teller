@@ -1,0 +1,42 @@
+@(brandId: Long, active: Boolean)
+
+<div class="b-setcredit js-set-credits @if(active) {b-setcredit_state_active}" data-brand-id="@brandId">
+    <h4 class="b-setcredit__title">MailChimp</h4>
+    <p>
+        Connect a MailChimp account and automatically subscribe your attendees to MailChimp lists.
+    </p>
+
+    <div class="b-setcredit__deactive">
+        <a href="@controllers.cm.facilitator.routes.Mailchimp.authenticate()" class="btn btn-primary b-setcredit__btn"
+            data-setcredit-activate>
+            Activate
+        </a>
+    </div>
+
+    <div class="b-setcredit__active">
+        <a href="#" class="btn btn-default"
+            data-setcredit-deactivate>
+            Deactivate
+        </a>
+
+        <form action="@controllers.cm.brand.routes.Credits.update(brandId)" class="b-setcredit__form" data-setcredit-form>
+            <div class="b-setcredit__inner">
+                Spending limit for person is
+                <input type="text" name="limit" class="b-setcredit__input form-control type-numeric" data-setcredit-input />
+                 credits per month.
+                <button type="submit" class="b-setcredit__submit btn btn-primary">Save</button>
+            </div>
+
+            <div class="b-setcredit__error" data-setcredit-errors></div>
+        </form>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+

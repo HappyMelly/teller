@@ -29,6 +29,7 @@ import models.{Person, UserAccount}
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import securesocial.core.providers.{LinkedInProvider, GoogleProvider, TwitterProvider, FacebookProvider}
+import security.MailChimpProvider
 import slick.driver.JdbcProfile
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -48,6 +49,7 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
 
   /**
     * Returns user account for the given remote user id and profile if exists
+ *
     * @param remoteUserId Remote user id
     * @param profileId Profile identifier e.g. facebook, google, etc
     */
@@ -57,6 +59,7 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
       case TwitterProvider.Twitter => accounts.filter(_.twitter === remoteUserId)
       case GoogleProvider.Google => accounts.filter(_.google === remoteUserId)
       case LinkedInProvider.LinkedIn => accounts.filter(_.linkedin === remoteUserId)
+      case MailChimpProvider.MailChimp => accounts.filter(_.mailchimp === remoteUserId)
     }
     db.run(query.result).map(_.headOption)
   }
@@ -92,6 +95,7 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
 
   /**
     * Updates peer credit parameter for the given accounts
+ *
     * @param people People identifiers
     * @param on Credits on/off
     */

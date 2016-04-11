@@ -31,6 +31,7 @@ import models.repository.IRepositories
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.mvc.{Request, Result}
 import securesocial.core.SecureSocial
+import securesocial.core.SecureSocial.SecuredRequest
 import services.TellerRuntimeEnvironment
 
 import scala.concurrent.Future
@@ -61,7 +62,7 @@ class AuthorisationHandler @javax.inject.Inject() (override implicit val env: Te
    */
   override def getSubject[A](request: Request[A]): Future[Option[Subject]] = {
     try {
-      val securedRequest = request.asInstanceOf[SecuredRequest[A]]
+      val securedRequest = request.asInstanceOf[SecuredRequest[A, ActiveUser]]
       securedRequest.user match {
         case user: ActiveUser ⇒ Future.successful(Some(user.account))
         case _ => Future.successful(None)
@@ -78,7 +79,7 @@ class AuthorisationHandler @javax.inject.Inject() (override implicit val env: Te
    */
   override def getDynamicResourceHandler[A](request: Request[A]): Future[Option[DynamicResourceHandler]] = {
     try {
-      val securedRequest = request.asInstanceOf[SecuredRequest[A]]
+      val securedRequest = request.asInstanceOf[SecuredRequest[A, ActiveUser]]
       securedRequest.user match {
         case user: ActiveUser ⇒ Future.successful(Some(new ResourceHandler(user, services)))
         case _ => Future.successful(None)
@@ -97,3 +98,4 @@ class AuthorisationHandler @javax.inject.Inject() (override implicit val env: Te
     Redirect(controllers.core.routes.Dashboard.index()).flashing("error" -> Messages("error.authorisation"))
   }
 }
+

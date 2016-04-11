@@ -53,8 +53,9 @@ private[models] trait UserAccountTable extends PersonTable {
     def byEmail = column[Boolean]("BY_EMAIL")
     def twitter = column[Option[String]]("TWITTER")
     def facebook = column[Option[String]]("FACEBOOK")
-    def google = column[Option[String]]("GOOGLE")
     def linkedin = column[Option[String]]("LINKEDIN")
+    def google = column[Option[String]]("GOOGLE")
+    def mailchimp = column[Option[String]]("MAILCHIMP")
     def coordinator = column[Boolean]("COORDINATOR")
     def facilitator = column[Boolean]("FACILITATOR")
     def admin = column[Boolean]("ADMIN")
@@ -65,7 +66,7 @@ private[models] trait UserAccountTable extends PersonTable {
     def person = foreignKey("PERSON_FK", personId, TableQuery[People])(_.id)
 
     def * = (id.?, personId, byEmail, twitter, facebook, linkedin,
-      google, coordinator, facilitator, admin, member, registered,
+      google, mailchimp, coordinator, facilitator, admin, member, registered,
       activeRole, credits) <>((UserAccount.apply _).tupled, UserAccount.unapply)
 
     def uniquePerson = index("IDX_PERSON_ID", personId, unique = true)
@@ -74,6 +75,7 @@ private[models] trait UserAccountTable extends PersonTable {
     def uniqueFacebook = index("IDX_FACEBOOK", facebook, unique = true)
     def uniqueGooglePlus = index("IDX_GOOGLE", google, unique = true)
     def uniqueLinkedIn = index("IDX_LINKEDIN", linkedin, unique = true)
+    def uniqueMailChimp = index("IDX_MAILCHIMP", mailchimp, unique = true)
   }
 
 }

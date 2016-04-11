@@ -32,7 +32,6 @@ libraryDependencies ++= Seq(
     "org.planet42" %% "laika-core" % "0.5.1",
     "org.scalamock" %% "scalamock-specs2-support" % "3.2.2" % Test,
     "org.twitter4j" % "twitter4j-core" % "4.0.4",
-    "ws.securesocial" %% "securesocial" % "3.0-M4",
     "net.kaliber" %% "play-s3" % "7.0.2" //s3 amazon support
   )
 

@@ -32,11 +32,11 @@ import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
 import play.twirl.api.{Html, Txt}
 import securesocial.controllers.ViewTemplates
-import securesocial.core.RuntimeEnvironment
+import securesocial.core.{OAuth2Settings, OAuth2Client, RuntimeEnvironment}
 import securesocial.core.providers.{FacebookProvider, GoogleProvider, LinkedInProvider, UsernamePasswordProvider}
 import securesocial.core.providers.utils.Mailer
 import securesocial.core.services.RoutesService
-import security.TwitterProvider
+import security.{MailChimpClient, MailChimpProvider, TwitterProvider}
 import services.integrations.EmailComponent
 import templates.{MailTemplates, SecureSocialTemplates}
 
@@ -61,6 +61,8 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
     include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),
     include(new GoogleProvider(routes, cacheService, oauth2ClientFor(GoogleProvider.Google))),
     include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
+    include(new MailChimpProvider(routes, cacheService,
+      new MailChimpClient(httpService, OAuth2Settings.forProvider(MailChimpProvider.MailChimp)))),
     include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
   )
 }

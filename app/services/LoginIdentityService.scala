@@ -33,6 +33,7 @@ import play.api.libs.json.JsObject
 import securesocial.core._
 import securesocial.core.providers._
 import securesocial.core.services._
+import security.MailChimpProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -73,6 +74,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
    * @param mode a mode that tells you why the save method was called
    */
   def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
+    println(profile)
+    println(mode)
     try {
       val user = mode match {
         case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
@@ -220,6 +223,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
         (acc.copy(linkedin = Some(to.userId)), profil.copy(linkedInUrl = withLink.linkedInUrl))
       case TwitterProvider.Twitter ⇒
         (acc.copy(twitter = Some(to.userId)), profil.copy(twitterHandle = withLink.twitterHandle))
+      case MailChimpProvider.MailChimp ⇒
+        (acc.copy(mailchimp = Some(to.userId)), profil)
     }
   }
 
@@ -330,6 +335,7 @@ object LoginIdentityService {
     case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(profile)))
     case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(profile)))
     case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(profile)))
+    case MailChimpProvider.MailChimp ⇒ SocialProfile()
   }
 
   /**

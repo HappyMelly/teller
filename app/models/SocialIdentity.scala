@@ -87,7 +87,7 @@ object SocialIdentity {
 
   def apply(i: GenericProfile): SocialIdentity = SocialIdentity(None,
     BasicProfile(i.providerId, i.userId, i.firstName, i.lastName, i.fullName, i.email, i.avatarUrl,
-      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo),
+      i.authMethod, i.oAuth1Info, i.oAuth2Info, i.passwordInfo, i.extraInfo),
     generateApiToken(i.userId))
 
   private def generateApiToken(userId: String) = {
