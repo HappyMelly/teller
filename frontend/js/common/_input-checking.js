@@ -3,7 +3,7 @@
 
 export default class InputChecking {
     /**
-     * Validate form through inputs
+     * Validate input through backend url
      */
     constructor(data) {
         this.$root = data.$root;
@@ -21,7 +21,7 @@ export default class InputChecking {
             $content: $root.find('[data-inputcheck-block]'),
             $input: $root.find('input'),
             $error: $root.find('[data-inputcheck-error]'),
-            $text: $root.find('[data-inputcheck-text]')
+            $successText: $root.find('[data-inputcheck-text]')
         };
     }
 
@@ -44,10 +44,10 @@ export default class InputChecking {
             .removeClass('b-inputcheck_state_complete b-inputcheck_state_error')
             .addClass('b-inputcheck_state_checking');
 
-        self._sendCheckVat(valueInput)
+        self._sendCheck(valueInput)
             .done(function(response){
-                const vatText = $.parseJSON(response).message;
-                self._completeChecking(vatText);
+                const successText = $.parseJSON(response).message;
+                self._completeChecking(successText);
             })
             .fail(function(response){
                 const error = $.parseJSON(response.responseText).message;
@@ -74,10 +74,10 @@ export default class InputChecking {
 
     /**
      * Show success text after checking
-     * @param {String} vatText
+     * @param {String} success
      * @private
      */
-    _completeChecking(vatText){
+    _completeChecking(success){
         const locals = this.locals;
         this.valid = true;
 
@@ -86,7 +86,7 @@ export default class InputChecking {
             .addClass('b-inputcheck_state_complete');
         
         this.$root.trigger('input_checking.change');
-        locals.$text.text(vatText);
+        locals.$successText.text(success);
     }
 
     _hideCheckingError(){
@@ -99,7 +99,7 @@ export default class InputChecking {
     }
 
     //transport
-    _sendCheckVat(value){
+    _sendCheck(value){
         return $.get(this.url(value).url)
     }
 }
