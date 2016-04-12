@@ -11,13 +11,15 @@ export default class Widget {
         this.locals = this._getDom();
 
         this.inputOrg = new InputChecking({
-            $root: this.$root.find('.js-formgroup-org input').first(),
+            $root: this.$root.find('.js-formgroup-org').first(),
             url: jsRoutes.controllers.Utilities.validate
         });
         this.inputReg = new InputChecking({
-            $root: this.$root.find('.js-formgroup-reg input').first(),
+            $root: this.$root.find('.js-formgroup-reg').first(),
             url: jsRoutes.controllers.Utilities.validate
         });
+
+        debugger;
 
         this._assignEvents();
     }
