@@ -1,6 +1,7 @@
 'use strict';
 
 import FormHelper from './../../common/_form-helper';
+import InputChecking from './../../common/_input-checking';
 
 export default class Widget {
     /**
@@ -9,12 +10,20 @@ export default class Widget {
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
+        this._correctOldVatInput();
+
         this.formHelper = new FormHelper(this.locals.$vatInput);
+        this.inputVAT = new InputChecking({
+            $root: this.$root.find('.b-inputcheck'),
+            url: jsRoutes.controllers.Utilities.validateVAT
+        });
 
         this._assignEvents();
+    }
 
-        this._correctOldVatInput();
-        this._checkVat();
+    _correctOldVatInput(){
+        const $vatInput = this.locals.$vatInput;
+        $vatInput.val($vatInput.val().replace(/\s/g, ''));
     }
 
     _getDom() {
@@ -23,100 +32,29 @@ export default class Widget {
         return {
             $cancel: $root.find('[data-form-cancel]'),
             $submit: $root.find('[data-form-submit]'),
-            $vat: $root.find('[data-vat-block]'),
-            $vatInput: $root.find('[data-vat-input]'),
-            $vatError: $root.find('[data-vat-error]'),
-            $vatText: $root.find('[data-vat-text]')
+            $vatInput: $root.find('[data-inputcheck-input]')
         };
     }
 
     _assignEvents() {
-        this.locals.$vatInput
-            .on('blur', this._checkVat.bind(this))
-            .on('focus', this._hideVatError.bind(this))
+        this.$root
+            .on('change.inpuchecking', this._onBlurCheckInput.bind(this));
     }
 
-    _correctOldVatInput(){
-        const $vatInput = this.locals.$vatInput;
-
-        $vatInput.val($vatInput.val().replace(/\s/g, ''));
-    }
-
-    _checkVat() {
-        const self = this;
-        const locals = self.locals;
-        const valueVat = locals.$vatInput.val();
-
-        if (!locals.$vatInput.val()){
-            self._showVatError('Empty vat value');
-            return;
+    _onBlurCheckInput(){
+        if (this.inputVAT.isValid()){
+            this._enabledForm();
+        } else {
+            this._disabledForm();
         }
-
-        locals.$vat
-            .removeClass('b-vat_state_complete b-vat_state_error')
-            .addClass('b-vat_state_checking');
-
-        self._sendCheckVat(valueVat)
-            .done(function(response){
-                const vatText = $.parseJSON(response).message;
-                self._completeVat(vatText);
-            })
-            .fail(function(response){
-                const error = $.parseJSON(response.responseText).message;
-                self._showVatError(error);
-            })
-    }
-
-    /**
-     *
-     * @param {String} error
-     * @private
-     */
-    _showVatError(error){
-        const locals = this.locals;
-
-        this._disabledForm();
-        locals.$vat
-            .removeClass('b-vat_state_checking')
-            .addClass('b-vat_state_error');
-
-        locals.$vatError.text(error);
-    }
-
-    _hideVatError(){
-        const locals = this.locals;
-
-        locals.$vat.removeClass('b-vat_state_error');
-    }
-
-    /**
-     * Show vat text
-     * @param {String} vatText
-     * @private
-     */
-    _completeVat(vatText){
-        const locals = this.locals;
-
-        this._enabledForm();
-        locals.$vat
-            .removeClass('b-vat_state_checking')
-            .addClass('b-vat_state_complete');
-
-        locals.$vatText.text(vatText);
     }
 
     _disabledForm(){
-        locals.$submit.prop('disabled', true);
+        this.locals.$submit.prop('disabled', true);
     }
 
     _enabledForm(){
-        locals.$submit.prop('disabled', false);
-    }
-
-    //transport
-    _sendCheckVat(value){
-        const url = jsRoutes.controllers.Utilities.validateVAT(value).url;
-        return $.get(url)
+        this.locals.$submit.prop('disabled', false);
     }
 
     // static

@@ -1,0 +1,46 @@
+
+
+.b-inputcheck__content{
+  font-size: 14px;
+  line-height: 46px;
+  color: #777777;
+  white-space: nowrap;
+}
+
+.b-inputcheck__error{
+  position: relative;
+  display: none;
+}
+
+.b-inputcheck__checking{
+  display: none;
+
+  .fa-circle-o-notch{
+    font-size: 18px;
+    vertical-align: middle;
+  }
+}
+
+.b-inputcheck__complete{
+  text-transform: uppercase;
+  display: none;
+}
+
+/*== States ==*/
+.b-inputcheck_state_error{
+  .b-inputcheck__error{
+    display: block;
+  }
+}
+
+.b-inputcheck_state_checking{
+  .b-inputcheck__checking{
+    display: block;
+  }
+}
+
+.b-inputcheck_state_complete{
+  .b-inputcheck__complete{
+    display: block;
+  }
+}

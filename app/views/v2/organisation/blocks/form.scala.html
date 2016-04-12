@@ -6,30 +6,19 @@
 @v2.html.formBlock("Information") {
   @v2.html.text(form("name"), '_label -> "Name", 'class -> "mail", '_required -> true, '_help -> "")
   @defining(form("vatNumber")) { field =>
-    <div class="form-group b-vat @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
+    <div class="form-group b-inputcheck @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
       <label for="vatNumber" class="control-label col-md-2">
         VAT number
       </label>
-      <div class="col-md-7 h-rel">
+      <div class="col-md-7">
         <input id="@field.id"
-          data-vat-input
+          data-inputcheck-input
           name="@field.name"
           value="@field.value.getOrElse("")"
           class="form-control type-nospace">
       </div>
-      <div class="col-md-2 b-vat__content" data-vat-block>
-        <div class="b-vat__error">
-          <div class="w-error" data-vat-error>
-            There’s no company with <br> such VAT number.
-          </div>
-        </div>
-        <div class="b-vat__checking">
-          <i class="fa fa-circle-o-notch fa-spin" aria-hidden="true"></i>
-          Checking
-        </div>
-        <div class="b-vat__complete" data-vat-text>
-
-        </div>
+      <div class="col-md-2">
+        @v2.html.inputCheck()
       </div>
     </div>
   }
