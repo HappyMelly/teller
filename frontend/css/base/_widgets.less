@@ -49,6 +49,27 @@
   visibility: hidden;
 }
 
+.w-error{
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 14px;
+  text-align: left;
+  line-height: 20px;
+  border-radius: 4px;
+  padding: 12px 20px 13px 10px;
+  color: #ffffff;
+  background-color: #D64456;
+
+  &:before{
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 10px;
+    .triangle(8px, 20px, #D64456, 'left');
+  }
+}
+
 .b-error_show{
   .b-error{
     opacity: 1;
