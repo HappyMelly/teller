@@ -89,12 +89,12 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       country ⇒
         (for {
           person <- repos.person.find(id)
-          countries <- repos.cm.facilitator.countries(id)
+          countries <- repos.cm.facilitatorSettings.countries(id)
         } yield (person, countries)) flatMap {
           case (None, _) => notFound("Person not found")
           case (Some(person), countries) =>
             if (!countries.exists(_.country == country)) {
-              repos.cm.facilitator.insertCountry(FacilitatorCountry(id, country))
+              repos.cm.facilitatorSettings.insertCountry(FacilitatorCountry(id, country))
             }
             val msg ="New country for facilitator was added"
             val url: String = core.routes.People.details(id).url + "#facilitation"
@@ -116,12 +116,12 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
       language ⇒
         (for {
           person <- repos.person.find(id)
-          languages <- repos.cm.facilitator.languages(id)
+          languages <- repos.cm.facilitatorSettings.languages(id)
         } yield (person, languages)) flatMap {
           case (None, _) => notFound("Person not found")
           case (Some(person), languages) ⇒
             if (!languages.exists(_.language == language)) {
-              repos.cm.facilitator.insertLanguage(FacilitatorLanguage(id, language))
+              repos.cm.facilitatorSettings.insertLanguage(FacilitatorLanguage(id, language))
               val query = for {
                 profile <- repos.profileStrength.find(id, false) if profile.isDefined
               } yield profile.get
@@ -163,7 +163,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
     */
   def deleteCountry(id: Long, country: String) = ProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      repos.cm.facilitator.deleteCountry(id, country) flatMap { _ =>
+      repos.cm.facilitatorSettings.deleteCountry(id, country) flatMap { _ =>
         val url: String = core.routes.People.details(id).url + "#facilitation"
         redirect(url, "success" -> "Country was deleted from facilitator")
       }
@@ -177,7 +177,7 @@ class Facilitators @Inject() (override implicit val env: TellerRuntimeEnvironmen
    */
   def deleteLanguage(id: Long, language: String) = ProfileAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
-      repos.cm.facilitator.deleteLanguage(id, language) flatMap { _ =>
+      repos.cm.facilitatorSettings.deleteLanguage(id, language) flatMap { _ =>
         repos.profileStrength.find(id, org = false) map {
           case None => Future.successful(None)
           case Some(profile) =>

@@ -22,27 +22,11 @@
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
 
-package models.repository.cm
-
-import models.repository.cm.brand.CertificateTemplateRepository
-import play.api.Application
+package models.cm.facilitator
 
 /**
-  * Contains references to all repositories in this package
+  * Represents MailChimp's list integration for brand facilitators
+  *
+  * All valid attendees from the given brand will be subscribed to the given list
   */
-class Repositories(app: Application, root: models.repository.Repositories) {
-
-  lazy val brand: BrandRepository = new BrandRepository(app, root)
-  lazy val certificate: CertificateTemplateRepository = new CertificateTemplateRepository(app)
-  lazy val evaluation: EvaluationRepository = new EvaluationRepository(app, root)
-  lazy val event: EventRepository = new EventRepository(app, root)
-  lazy val facilitator: FacilitatorRepository = new FacilitatorRepository(app)
-  lazy val facilitatorSettings: FacilitatorSettingsRepository = new FacilitatorSettingsRepository(app)
-  lazy val license: LicenseRepository = new LicenseRepository(app)
-
-  object rep {
-    lazy val brand: models.repository.cm.brand.Repositories = new models.repository.cm.brand.Repositories(app)
-    lazy val event: models.repository.cm.event.Repositories = new models.repository.cm.event.Repositories(app)
-  }
-
-}
+case class MailChimpList(id: Option[Long], listName: String, listId: String, brandId: Long, personId: Long)

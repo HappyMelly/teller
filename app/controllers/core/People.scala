@@ -306,8 +306,8 @@ class People @javax.inject.Inject()(override implicit val env: TellerRuntimeEnvi
             p <- repos.person.find(id)
             l <- repos.cm.license.licensesWithBrands(id)
             f <- repos.cm.facilitator.findByPerson(id)
-            langs <- repos.cm.facilitator.languages(id)
-            c <- repos.cm.facilitator.countries(id)
+            langs <- repos.cm.facilitatorSettings.languages(id)
+            c <- repos.cm.facilitatorSettings.countries(id)
           } yield (p, l, f, langs, c)) flatMap {
             case (None, _, _, _, _) => notFound("Person not found")
             case (Some(person), licenses, facilitation, languages, countries) =>

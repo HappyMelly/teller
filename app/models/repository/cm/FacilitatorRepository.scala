@@ -38,46 +38,11 @@ import scala.concurrent.Future
  * Contains all database-related operations
  */
 class FacilitatorRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
-  with FacilitatorTable
-  with FacilitatorCountryTable
-  with FacilitatorLanguageTable
-  with ProfileStrengthTable {
+  with FacilitatorTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
-  private val countries = TableQuery[FacilitatorCountries]
   private val facilitators = TableQuery[Facilitators]
-  private val languages = TableQuery[FacilitatorLanguages]
-
-  /**
-    * Finds all countries for a particular facilitator
-    */
-  def countries(personId: Long): Future[List[FacilitatorCountry]] =
-    db.run(countries.filter(_.personId === personId).result).map(_.toList)
-
-  /**
-    * Finds all countries for the set of facilitators
-    */
-  def countries(ids: List[Long]): Future[List[FacilitatorCountry]] =
-    db.run(countries.filter(_.personId inSet ids).result).map(_.toList)
-
-  /**
-    * Deletes the given country from the given person
-    *
-    * @param personId Person identifier
-    * @param country Country
-    */
-  def deleteCountry(personId: Long, country: String): Future[Int] =
-    db.run(countries.filter(_.personId === personId).filter(_.country === country).delete)
-
-  /**
-    * Deletes the given language from the given person
-    *
-    * @param personId Person identifier
-    * @param language Language
-    */
-  def deleteLanguage(personId: Long, language: String): Future[Int] =
-    db.run(languages.filter(_.personId === personId).filter(_.language === language).delete)
 
   /**
    * Inserts the given facilitator to database
@@ -89,18 +54,6 @@ class FacilitatorRepository(app: Application) extends HasDatabaseConfig[JdbcProf
     val query = facilitators returning facilitators.map(_.id) into ((value, id) => value.copy(id = id))
     db.run(query += facilitator)
   }
-
-  /**
-    * Inserts the given country to DB
-    */
-  def insertCountry(country: FacilitatorCountry): Future[FacilitatorCountry] =
-    db.run(countries += country).map(_ => country)
-
-  /**
-    * Inserts the given language to DB
-    */
-  def insertLanguage(language: FacilitatorLanguage): Future[FacilitatorLanguage] =
-    db.run(languages += language).map(_ => language)
 
   /**
    * Returns facilitator if it exists, otherwise - None
@@ -142,22 +95,6 @@ class FacilitatorRepository(app: Application) extends HasDatabaseConfig[JdbcProf
    */
   def findByBrand(brandId: Long): Future[List[Facilitator]] =
     db.run(facilitators.filter(_.brandId === brandId).result).map(_.toList)
-
-  /**
-    * Returns list of languages the given facilitator talks
-    *
-    * @param personId Person identifier
-    */
-  def languages(personId: Long): Future[List[FacilitatorLanguage]] =
-    db.run(languages.filter(_.personId === personId).result).map(_.toList)
-
-  /**
-    * Returns list of languages for the set of facilitators
-    *
-    * @param ids Facilitator identifiers
-    */
-  def languages(ids: List[Long]): Future[List[FacilitatorLanguage]] =
-    db.run(languages.filter(_.personId inSet ids).result).map(_.toList)
 
   /**
    * Updates the given facilitator in database

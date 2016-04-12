@@ -28,15 +28,20 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.Security
+import controllers.{Utilities, Security}
 import libs.mailchimp.Client
 import models.UserRole.Role._
+import models.cm.facilitator.MailChimpList
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
+import play.api.data.Form
+import play.api.data.Forms._
 import securesocial.core.SecureSocial
 import security.MailChimpProvider
 import services.TellerRuntimeEnvironment
+
+import scala.concurrent.Future
 
 /**
   * Contains methods for managing MailChimp integrations for facilitators
@@ -46,6 +51,7 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
                            val repos: Repositories,
                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
+
 
   /**
     * Authenticates current user through MailChimp and links MailChimp to his account
@@ -57,6 +63,60 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
       (SecureSocial.OriginalUrlKey -> url)
     val route = env.routes.authenticationUrl(MailChimpProvider.MailChimp)
     redirect(route, session)
+  }
+
+  /**
+    * Connects MailChimp list with a set of given brands
+    */
+  def connect = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+    case class FormData(id: String, name: String, brands: List[Long])
+    val form = Form(mapping(
+      "list_id" -> nonEmptyText,
+      "list_name" -> nonEmptyText,
+      "brands" -> list(longNumber)
+    )(FormData.apply)(FormData.unapply))
+
+    form.bindFromRequest().fold(
+      errors => jsonFormError(Utilities.errorsToJson(errors)),
+      data => {
+        repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
+          val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
+          val results = validBrands.map { brandId =>
+            val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier)
+            repos.cm.facilitatorSettings.insertList(list)
+          }
+          Future.sequence(results).flatMap { list =>
+            jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)")
+          }
+        }
+      }
+    )
+  }
+
+  /**
+    * Disconnects MailChimp list with a set of given brands
+    */
+  def disconnect = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+    case class FormData(id: String, brands: List[Long])
+    val form = Form(mapping(
+      "list_id" -> nonEmptyText,
+      "brands" -> list(longNumber)
+    )(FormData.apply)(FormData.unapply))
+
+    form.bindFromRequest().fold(
+      errors => jsonFormError(Utilities.errorsToJson(errors)),
+      data => {
+        repos.cm.facilitatorSettings.lists(user.person.identifier) flatMap { lists =>
+          val validLists = lists.filter(_.listId == data.id).filter(x => data.brands.contains(x.brandId))
+          val result = validLists.map { list =>
+            repos.cm.facilitatorSettings.deleteList(list.personId, list.id.get)
+          }
+          Future.sequence(result) flatMap { _ =>
+            jsonSuccess("MailChimp list was successfully disconnected from selected brands")
+          }
+        }
+      }
+    )
   }
 
   /**

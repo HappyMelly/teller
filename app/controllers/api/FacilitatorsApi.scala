@@ -94,8 +94,8 @@ class FacilitatorsApi @Inject() (val repos: Repositories,
         (for {
           f <- repos.cm.license.licensees(brand.identifier, LocalDate.now())
           data <- repos.cm.facilitator.findByBrand(brand.identifier)
-          c <- repos.cm.facilitator.countries(f.map(_.identifier))
-          l <- repos.cm.facilitator.languages(f.map(_.identifier))
+          c <- repos.cm.facilitatorSettings.countries(f.map(_.identifier))
+          l <- repos.cm.facilitatorSettings.languages(f.map(_.identifier))
           a <- repos.address.find(f.map(_.addressId))
           b <- repos.cm.rep.brand.badge.findByBrand(brand.identifier)
         } yield facilitatorsSummary(f, c, l, a, data, b)) flatMap { summaries =>
