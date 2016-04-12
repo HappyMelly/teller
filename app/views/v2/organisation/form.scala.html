@@ -20,7 +20,7 @@
         @v2.organisation.blocks.form(form)
 
         @if(form.hasErrors) {
-          @v2.html.block("") {
+          @v2.html.formBlock("") {
             <div class="b-form__errors">
               @for(error <- form.errors) {
                 @Messages(error.message)<br/>

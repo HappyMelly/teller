@@ -4,24 +4,8 @@
 @import views.ViewHelpersV2._
 
 @v2.html.formBlock("Information") {
-  @v2.html.text(form("name"), '_label -> "Name", 'class -> "mail", '_required -> true, '_help -> "")
-  @defining(form("vatNumber")) { field =>
-    <div class="form-group b-inputcheck @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
-      <label for="vatNumber" class="control-label col-md-2">
-        VAT number
-      </label>
-      <div class="col-md-7">
-        <input id="@field.id"
-          data-inputcheck-input
-          name="@field.name"
-          value="@field.value.getOrElse("")"
-          class="form-control type-nospace">
-      </div>
-      <div class="col-md-2">
-        @v2.html.inputCheck()
-      </div>
-    </div>
-  }
+  @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
+  @v2.html.text(form("vatNumber"), '_label -> "VAT number", '_class -> "b-inputcheck", '_checking -> true)
 
   @v2.html.text(form("registrationNumber"), '_label -> "Registration number")
 }

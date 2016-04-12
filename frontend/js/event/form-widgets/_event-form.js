@@ -9,19 +9,17 @@ export default class Widget {
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
-        this._correctOldVatInput();
 
-        this.inputVAT = new InputChecking({
-            $root: this.$root.find('.b-inputcheck'),
-            url: jsRoutes.controllers.Utilities.validateVAT
+        this.inputOrg = new InputChecking({
+            $root: this.$root.find('.js-formgroup-org input').first(),
+            url: jsRoutes.controllers.Utilities.validate
+        });
+        this.inputReg = new InputChecking({
+            $root: this.$root.find('.js-formgroup-reg input').first(),
+            url: jsRoutes.controllers.Utilities.validate
         });
 
         this._assignEvents();
-    }
-
-    _correctOldVatInput(){
-        const $vatInput = this.locals.$vatInput;
-        $vatInput.val($vatInput.val().replace(/\s/g, ''));
     }
 
     _getDom() {
@@ -29,8 +27,7 @@ export default class Widget {
 
         return {
             $cancel: $root.find('[data-form-cancel]'),
-            $submit: $root.find('[data-form-submit]'),
-            $vatInput: $root.find('.b-inputcheck input').first()
+            $submit: $root.find('[data-form-submit]')
         };
     }
 
@@ -40,7 +37,7 @@ export default class Widget {
     }
 
     _onBlurVatInput(){
-        if (this.inputVAT.isValid()){
+        if (this.inputReg.isValid() && this.inputOrg.isValid()){
             this._enabledForm();
         } else {
             this._disabledForm();

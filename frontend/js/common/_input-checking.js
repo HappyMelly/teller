@@ -9,7 +9,6 @@ export default class InputChecking {
         this.$root = data.$root;
         this.url = data.url;
         this.locals = this._getDom();
-        this.valid = true;
 
         this._checkValue();
         this._assignEvents();
@@ -20,7 +19,7 @@ export default class InputChecking {
 
         return {
             $content: $root.find('[data-inputcheck-block]'),
-            $input: $root.find('[data-inputcheck-input]'),
+            $input: $root.find('input'),
             $error: $root.find('[data-inputcheck-error]'),
             $text: $root.find('[data-inputcheck-text]')
         };
@@ -38,7 +37,6 @@ export default class InputChecking {
         const valueInput = locals.$input.val();
 
         if (!locals.$input.val()){
-            self._showCheckingError('Empty vat value');
             return;
         }
 
@@ -70,7 +68,7 @@ export default class InputChecking {
             .removeClass('b-inputcheck_state_checking')
             .addClass('b-inputcheck_state_error');
 
-        this.$root.trigger('change.inpuchecking');
+        this.$root.trigger('input_checking.change');
         locals.$error.text(error);
     }
 
@@ -87,7 +85,7 @@ export default class InputChecking {
             .removeClass('b-inputcheck_state_checking')
             .addClass('b-inputcheck_state_complete');
         
-        this.$root.trigger('change.inpuchecking');
+        this.$root.trigger('input_checking.change');
         locals.$text.text(vatText);
     }
 

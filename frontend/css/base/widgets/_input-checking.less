@@ -1,6 +1,7 @@
 
 
 .b-inputcheck__content{
+  margin-top: -15px;
   font-size: 14px;
   line-height: 46px;
   color: #777777;
@@ -27,6 +28,15 @@
 }
 
 /*== States ==*/
+.b-inputcheck_state_error,
+.b-inputcheck_state_checking,
+.b-inputcheck_state_complete{
+  .field-type__text,
+  .field-type__error{
+    display: none;
+  }
+}
+
 .b-inputcheck_state_error{
   .b-inputcheck__error{
     display: block;
