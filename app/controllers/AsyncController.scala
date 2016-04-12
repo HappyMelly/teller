@@ -45,6 +45,8 @@ trait AsyncController extends Controller with I18nSupport {
 
   protected def jsonFormError(errors: JsValue) = Future.successful(BadRequest(Json.obj("data" -> errors)))
 
+  protected def jsonInternalError(msg: String) = Future.successful(InternalServerError(Json.obj("message" -> msg)))
+
   protected def jsonNotFound(msg: String) = Future.successful(NotFound(Json.obj("message" -> msg)))
 
   protected def jsonOk(data: JsValue) = Future.successful(Ok(Json.prettyPrint(data)))

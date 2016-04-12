@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2016, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -21,28 +21,25 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package stubs
+package libs.mailchimp
 
-import securesocial.core.{AuthenticationMethod, BasicProfile}
+import play.api.Play.current
+import play.api.libs.ws.WS
 
-class FakeSocialIdentity(
-  override val uid: Option[Long],
-  identity: (String, String),
-  firstName: String,
-  lastName: String,
-  fullName: String,
-  email: Option[String]) extends models.SocialIdentity(uid,
-  BasicProfile(identity._2, identity._1, Some(firstName), Some(lastName),
-    Some(fullName), email, None, AuthenticationMethod.OAuth2, None,
-    None, None), "api_token", None) {
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-}
+/**
+  * MailChimp client
+  */
+class Client(endPoint: String, token: String) {
 
-object FakeSocialIdentity {
-  val unregistered: (String, String) = ("unregistered", "twitter")
-  val viewer: (String, String) = ("viewer", "twitter")
-  val coordinator: (String, String) = ("coordinator", "twitter")
-  val facilitator: (String, String) = ("facilitator", "twitter")
-  val editor: (String, String) = ("viewer", "twitter")
-  val admin: (String, String) = ("admin", "twitter")
+  def lists(): Future[Seq[List]] = {
+    val url = endPoint + "/3.0/lists"
+    implicit val listReads = Reads.list
+    WS.url(url).withHeaders("Authorization" -> s"OAuth $token").get().map { response =>
+      val value = (response.json \ "lists")
+      (response.json \ "lists").as[Seq[List]]
+    }
+  }
 }

@@ -145,6 +145,7 @@ POST          /event/:id/template                                          contr
 GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 
 GET           /mailchimp/authenticate                                      controllers.cm.facilitator.Mailchimp.authenticate()
+GET           /mailchimp/lists                                             controllers.cm.facilitator.Mailchimp.lists()
 
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)
