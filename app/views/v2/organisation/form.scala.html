@@ -10,32 +10,35 @@
 
 @defining(form.value.map(view => view.org.name).getOrElse("Add organization")) { name =>
   @v2.main("Organizations", "orgs", user, withMelly = true) {
-    <div class="form">
-      @v2.html.block("") { <h1>@name</h1> }
+    <div class="b-form">
+      <div class="container">
+        <h1 class="b-form__title">@name</h1>
+      </div>
+
       @html.form(action = CSRF(id.map(id => controllers.core.routes.Organisations.update(id)
       ).getOrElse(controllers.core.routes.Organisations.create()))) {
         @v2.organisation.blocks.form(form)
 
         @if(form.hasErrors) {
           @v2.html.block("") {
-            <div class="errors">
+            <div class="b-form__errors">
               @for(error <- form.errors) {
                 @Messages(error.message)<br/>
               }
             </div>
           }
         }
-        @v2.html.block("") {
-          <div class="row">
-            <div class="col-md-5">
-              <button class="btn btn-primary btn-block btn-lg" type="submit">
-                Save</button>
-            </div>
-            <div class="col-md-3 cancel">
-              <a href="javascript:history.back()">Cancel changes</a></div>
+        @v2.html.formBlock("") {
+          <div class="b-form__buttons">
+            <button class="btn btn-primary b-form__btn-submit" type="submit">
+              Save
+            </button>
+            <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
           </div>
         }
       }
     </div>
+
+    <link rel="stylesheet" href="@routes.Assets.at("css/organization/organization-form.css")">
   }
 }
