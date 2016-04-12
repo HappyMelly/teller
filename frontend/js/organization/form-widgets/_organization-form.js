@@ -9,11 +9,12 @@ export default class Widget {
     constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
-
         this.formHelper = new FormHelper(this.locals.$vatInput);
-        
-        this._checkVat();
+
         this._assignEvents();
+
+        this._correctOldVatInput();
+        this._checkVat();
     }
 
     _getDom() {
@@ -24,6 +25,7 @@ export default class Widget {
             $submit: $root.find('[data-form-submit]'),
             $vat: $root.find('[data-vat-block]'),
             $vatInput: $root.find('[data-vat-input]'),
+            $vatError: $root.find('[data-vat-error]'),
             $vatText: $root.find('[data-vat-text]')
         };
     }
@@ -34,30 +36,51 @@ export default class Widget {
             .on('focus', this._hideVatError.bind(this))
     }
 
+    _correctOldVatInput(){
+        const $vatInput = this.locals.$vatInput;
+
+        $vatInput.val($vatInput.val().replace(/\s/g, ''));
+    }
+
     _checkVat() {
         const self = this;
         const locals = self.locals;
         const valueVat = locals.$vatInput.val();
 
-        locals.$vat.addClass('b-vat_state_checking');
+        if (!locals.$vatInput.val()){
+            self._showVatError('Empty vat value');
+            return;
+        }
+
+        locals.$vat
+            .removeClass('b-vat_state_complete b-vat_state_error')
+            .addClass('b-vat_state_checking');
+
         self._sendCheckVat(valueVat)
             .done(function(response){
-                console.log(response);
-                self._completeVat();
+                const vatText = $.parseJSON(response).message;
+                self._completeVat(vatText);
             })
             .fail(function(response){
-                console.log(response);
-                self._showVatError();
+                const error = $.parseJSON(response.responseText).message;
+                self._showVatError(error);
             })
     }
 
-    _showVatError(){
+    /**
+     *
+     * @param {String} error
+     * @private
+     */
+    _showVatError(error){
         const locals = this.locals;
 
-        locals.$submit.prop('disabled', true);
+        this._disabledForm();
         locals.$vat
             .removeClass('b-vat_state_checking')
             .addClass('b-vat_state_error');
+
+        locals.$vatError.text(error);
     }
 
     _hideVatError(){
@@ -66,21 +89,34 @@ export default class Widget {
         locals.$vat.removeClass('b-vat_state_error');
     }
 
-    _completeVat(){
+    /**
+     * Show vat text
+     * @param {String} vatText
+     * @private
+     */
+    _completeVat(vatText){
         const locals = this.locals;
 
-        locals.$submit.prop('disabled', false);
+        this._enabledForm();
         locals.$vat
             .removeClass('b-vat_state_checking')
             .addClass('b-vat_state_complete');
 
-        locals.$vatText.text('text');
+        locals.$vatText.text(vatText);
+    }
+
+    _disabledForm(){
+        locals.$submit.prop('disabled', true);
+    }
+
+    _enabledForm(){
+        locals.$submit.prop('disabled', false);
     }
 
     //transport
     _sendCheckVat(value){
         const url = jsRoutes.controllers.Utilities.validateVAT(value).url;
-        return $.post(url)
+        return $.get(url)
     }
 
     // static

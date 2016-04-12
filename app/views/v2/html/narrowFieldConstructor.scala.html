@@ -11,7 +11,7 @@ id="@elements.args.getOrElse('_id, elements.id + "_field")">
     </div>
     <div class="col-md-2 field-type">
         @if(elements.args.contains('_required)) {
-            <span>required</span>
+            <span class="field-type__error">required</span>
             @if(elements.args.contains('_type)){,}
         }
         @elements.args.get('_type)
