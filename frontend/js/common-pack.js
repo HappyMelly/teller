@@ -3,7 +3,7 @@
 import NotifCommercial from "./layout/_notification-commercial";
 import ScrollToElement from "./layout/_scroll-to";
 import NotificationList from "./layout/_notifation-list";
-import PreviewMarkdown from "./layout/_preview-markdown";
+import PreviewMarkdown from "./plugins/markdown/_plugin";
 
 $(function(){
     ScrollToElement.plugin('.js-link-target');
