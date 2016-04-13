@@ -30,7 +30,8 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.{Utilities, Security}
 import libs.mailchimp.Client
-import models.Brand
+import models.core.integration.MailChimp
+import models.{SocialIdentity, ActiveUser, Brand}
 import models.UserRole.Role._
 import models.cm.facilitator.MailChimpList
 import models.repository.Repositories
@@ -38,6 +39,7 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json._
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.mvc.{Request, AnyContent, Result}
 import securesocial.core.SecureSocial
 import security.MailChimpProvider
 import services.TellerRuntimeEnvironment
@@ -69,42 +71,41 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * Connects MailChimp list with a set of given brands
     */
   def connect = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
-    case class FormData(id: String, name: String, brands: List[Long])
-    val form = Form(mapping(
-      "list_id" -> nonEmptyText,
-      "list_name" -> nonEmptyText,
-      "brands" -> list(longNumber)
-    )(FormData.apply)(FormData.unapply))
-
-    form.bindFromRequest().fold(
-      errors => jsonFormError(Utilities.errorsToJson(errors)),
-      data => {
-        repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
-          val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
-          val results = validBrands.map { brandId =>
-            val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier)
-            repos.cm.facilitatorSettings.insertList(list)
-          }
-          Future.sequence(results).flatMap { list =>
-            jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)")
+    checkMailChimpIntegration { mailChimpId =>
+      Mailchimp.connectForm.bindFromRequest().fold(
+        errors => jsonFormError(Utilities.errorsToJson(errors)),
+        data => {
+          checkMailChimpDataCoherence(mailChimpId) { case (identity, info) =>
+            repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
+              checkMergeFields(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken, data.id) flatMap {
+                case Left(msg) => jsonBadRequest(msg)
+                case Right(msg) =>
+                  val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
+                  val results = validBrands.map { brandId =>
+                    val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier)
+                    repos.cm.facilitatorSettings.insertList(list)
+                  }
+                  Future.sequence(results).flatMap { list =>
+                    jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)")
+                  }
+              }
+            }
           }
         }
-      }
-    )
+      )
+    }
   }
 
   /**
     * Breaks MailChimp connection for current user
     */
   def deactivate = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
-    if (user.account.isMailChimpActive) {
+    checkMailChimpIntegration { _ =>
       val account = user.account.copy(mailchimp = None)
       repos.userAccount.update(account) flatMap { _ =>
         env.updateCurrentUser(user.copy(account = account))
         jsonSuccess("MailChimp integration was successfully deactivated")
       }
-    } else {
-      jsonBadRequest("You cannot deactivate MailChimp integration as it is not active")
     }
   }
 
@@ -144,24 +145,14 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
         "name" -> list.name
       )
     }
-
-    user.account.mailchimp match {
-      case None => jsonBadRequest("MailChimp account is not connected")
-      case Some(remoteUserId) =>
-        repos.identity.findByUserId(remoteUserId, MailChimpProvider.MailChimp) flatMap { mayBeIdentity =>
-          val data = for {
-            identity <- mayBeIdentity
-            info <- MailChimpProvider.toExtraInfo(identity.profile.extraInfo)
-          } yield (identity, info)
-          data match {
-            case None => jsonInternalError("Internal error. Please contact the support")
-            case Some((identity, info)) =>
-              val mc = new Client(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken)
-              mc.lists().flatMap { lists =>
-                jsonOk(Json.obj("lists" -> lists.sortBy(_.name)))
-              }
-          }
+    checkMailChimpIntegration { mailChimpId =>
+      checkMailChimpDataCoherence(mailChimpId) { case (identity, info) =>
+        val mc = new Client(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken)
+        checkMergeFields(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken, "0aa4dbfa4a")
+        mc.lists().flatMap { lists =>
+          jsonOk(Json.obj("lists" -> lists.sortBy(_.name)))
         }
+      }
     }
   }
 
@@ -189,8 +180,39 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
+  protected def checkMailChimpDataCoherence(mailChimpId: String)
+                                           (f: (SocialIdentity, MailChimpProvider.ExtraInfo) => Future[Result])(
+    implicit request: Request[AnyContent], user: ActiveUser) = {
+    repos.identity.findByUserId(mailChimpId, MailChimpProvider.MailChimp) flatMap { mayBeIdentity =>
+      val data = for {
+        identity <- mayBeIdentity
+        info <- MailChimpProvider.toExtraInfo(identity.profile.extraInfo)
+      } yield (identity, info)
+      data match {
+        case None => jsonInternalError("Internal error. Please contact the support")
+        case Some((identity, info)) => f(identity, info)
+      }
+    }
+  }
+
+  protected def checkMailChimpIntegration(f: String => Future[Result])(
+    implicit request: Request[AnyContent], user: ActiveUser) = {
+    user.account.mailchimp match {
+      case None => jsonBadRequest("MailChimp integration is not active")
+      case Some(mailChimpId) => f(mailChimpId)
+    }
+  }
+
+  protected def checkMergeFields(apiEndPoint: String,
+                                 accessToken: String,
+                                 listId: String): Future[Either[String, String]] = {
+    val mc = new Client(apiEndPoint, accessToken)
+    mc.mergeFields(listId).map(MailChimp.validateMergeFields)
+  }
+
   /**
     * Returns list name and supportive message about connection type
+    *
     * @param list List of interest
     */
   protected def getOneBrandBlockMessages(list: MailChimpList): (String, String) =
@@ -198,6 +220,7 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   /**
     * Returns list name and supportive message about connection typ
+    *
     * @param list List of interest
     * @param brands Related brands
     * @param numberOfBrands Total number of brands this facilitator works with
@@ -216,4 +239,13 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     "all attendees"
   else
     "only attendees with evaluations"
+}
+
+object Mailchimp {
+  case class ConnectFormData(id: String, name: String, brands: List[Long])
+  val connectForm = Form(mapping(
+    "list_id" -> nonEmptyText,
+    "list_name" -> nonEmptyText,
+    "brands" -> list(longNumber)
+  )(ConnectFormData.apply)(ConnectFormData.unapply))
 }

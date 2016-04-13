@@ -66,6 +66,15 @@ case class List(id: Option[String] = None,
                 beamerAddress: Option[String] = None,
                 visibility: Option[String] = None)
 
+case class MergeField(id: Option[Int] = None,
+                      tag: Option[String] = None,
+                      name: String,
+                      typ: String,
+                      required: Option[Boolean] = None,
+                      defaultValue: Option[String] = None,
+                      public: Option[Boolean] = None,
+                      displayOrder: Option[Int] = None)
+
 object Reads {
 
   implicit val campaignDefaults: Reads[CampaignDefaults] = (
@@ -94,4 +103,15 @@ object Reads {
       (__ \ "beamer_address").readNullable[String] and
       (__ \ "visibility").readNullable[String]
     )(List)
+
+  implicit val mergeField: Reads[MergeField] = (
+    (__ \ "id").readNullable[Int] and
+      (__ \ "tag").readNullable[String] and
+      (__ \ "name").read[String] and
+      (__ \ "type").read[String] and
+      (__ \ "required").readNullable[Boolean] and
+      (__ \ "default_value").readNullable[String] and
+      (__ \ "public").readNullable[Boolean] and
+      (__ \ "display_order").readNullable[Int]
+    )(MergeField)
 }

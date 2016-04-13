@@ -38,8 +38,15 @@ class Client(endPoint: String, token: String) {
     val url = endPoint + "/3.0/lists"
     implicit val listReads = Reads.list
     WS.url(url).withHeaders("Authorization" -> s"OAuth $token").get().map { response =>
-      val value = (response.json \ "lists")
       (response.json \ "lists").as[Seq[List]]
+    }
+  }
+
+  def mergeFields(listId: String): Future[Seq[MergeField]] = {
+    val url = s"$endPoint/3.0/lists/$listId/merge-fields"
+    implicit val mergeFieldReads = Reads.mergeField
+    WS.url(url).withHeaders("Authorization" -> s"OAuth $token").get().map { response =>
+      (response.json \ "merge_fields").as[Seq[MergeField]]
     }
   }
 }
