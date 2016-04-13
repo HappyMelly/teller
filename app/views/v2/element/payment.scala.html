@@ -11,15 +11,8 @@
 @import views.Countries
 
 <script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("js/element/supporters-table.js")" type="text/javascript"></script>
-<script src="@routes.Assets.at("js/element/payment-form.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("js/package/payment-page.js")" type="text/javascript"></script>
 
-<script>
-        $(function(){
-            new App.widgets.CardFeeForm('.js-payment-form');
-            new App.widgets.SupportersTable('.js-support-table');
-        })
-</script>
 
   <div class="b-payment">
     <div class="b-payment__text">
