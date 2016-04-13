@@ -1,7 +1,8 @@
 @(person: Person,
     member: Option[Member],
     conf: controllers.core.PeopleDetailConfig)(implicit request: Request[Any],
-    handler: be.objectify.deadbolt.scala.DeadboltHandler)
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        env: services.TellerRuntimeEnvironment)
 
 
 <div class="b-sidemenu js-person-menu" id="sidemenu">
@@ -40,17 +41,19 @@
                 Experience
             </a>
         </div>
-        <div class="b-sidemenu__group">
-            <div class="b-sidemenu__head">
-                Integration
+        @if(env.isNotProd) {
+            <div class="b-sidemenu__group">
+                <div class="b-sidemenu__head">
+                    Integration
+                </div>
+                <a data-href="@controllers.cm.facilitator.routes.Mailchimp.settings(person.id.get)"
+                href="#mailchimp"
+                class="b-sidemenu__link"
+                data-menuside>
+                    MailChimp
+                </a>
             </div>
-            <a  data-href="@controllers.cm.facilitator.routes.Mailchimp.settings(person.id.get)"
-            href="#mailchimp"
-            class="b-sidemenu__link"
-            data-menuside>
-                MailChimp
-            </a>
-        </div>
+        }
     }
     @if(conf.member) {
         <div class="b-sidemenu__group">

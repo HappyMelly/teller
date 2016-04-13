@@ -31,6 +31,7 @@ import models.repository.IRepositories
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
 import play.api.mvc.RequestHeader
+import play.api.{Environment, Configuration, Mode}
 import play.twirl.api.{Html, Txt}
 import securesocial.controllers.ViewTemplates
 import securesocial.core.providers.utils.Mailer
@@ -47,17 +48,19 @@ import scala.concurrent.Future
 /**
   * Runtime environment for SecureSocial library to work
   */
-class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
-                                          val email: EmailComponent,
-                                          val services: IRepositories,
-                                          val actors: ActorSystem) extends RuntimeEnvironment.Default {
+class TellerRuntimeEnvironment @Inject() (messagesApi: MessagesApi,
+                                          email: EmailComponent,
+                                          repos: IRepositories,
+                                          actors: ActorSystem,
+                                          environment: Environment,
+                                          configuration: Configuration) extends RuntimeEnvironment.Default {
   type U = ActiveUser
 
   override lazy val routes: RoutesService = new TellerRoutesService()
   override lazy val viewTemplates: ViewTemplates = new SecureSocialTemplates(this, messagesApi)
   override lazy val mailTemplates: MailTemplates = new MailTemplates(this)
   override lazy val mailer: Mailer = new MailerTest(mailTemplates, email)
-  override lazy val userService: LoginIdentityService = new LoginIdentityService(services)
+  override lazy val userService: LoginIdentityService = new LoginIdentityService(repos)
   override lazy val providers = ListMap(
     include(new TwitterProvider(routes, cacheService, TwitterProvider.authClient(httpService))),
     include(new FacebookProvider(routes, cacheService, oauth2ClientFor(FacebookProvider.Facebook))),
@@ -67,6 +70,14 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
       new MailChimpClient(httpService, OAuth2Settings.forProvider(MailChimpProvider.MailChimp)))),
     include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
   )
+
+  def isDev: Boolean = environment.mode == Mode.Dev
+
+  def isNotProd: Boolean = isDev || isStage
+
+  def isStage: Boolean = environment.mode == Mode.Prod && configuration.getString("mode").contains("stage")
+
+  def isProd: Boolean = environment.mode == Mode.Prod && !isStage
 
   /**
     * Updates cached object for active user

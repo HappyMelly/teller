@@ -1,4 +1,5 @@
 @import models.cm.brand.Badge
+@import services.TellerRuntimeEnvironment
 @(user: ActiveUser,
     person: Person,
     organisations: List[Organisation],
@@ -9,7 +10,8 @@
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
-        messages: Messages)
+        messages: Messages,
+        env: TellerRuntimeEnvironment)
 
 @import be.objectify.deadbolt.core.utils.TemplateUtils._
 @import be.objectify.deadbolt.scala.views.html._
@@ -119,7 +121,9 @@
         @if(conf.facilitator) {
           <div class="tab-pane" id="facilitation"></div>
           <div class="tab-pane" id="experience"></div>
-          <div class="tab-pane" id="mailchimp"></div>
+          @if(env.isNotProd) {
+              <div class="tab-pane" id="mailchimp"></div>
+          }
         }
         @if(conf.member) {
           <div class="tab-pane" id="experiments"></div>
