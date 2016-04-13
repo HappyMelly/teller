@@ -61,11 +61,11 @@ class Utilities @Inject()(override val messagesApi: MessagesApi) extends AsyncCo
   def validate(url: String) = Action.async { implicit request ⇒
     WS.url(url).head().flatMap { response =>
       if (response.status >= 200 && response.status < 300)
-        jsonOk(Json.obj("result" -> "valid"))
+        jsonSuccess("valid")
       else
-        jsonOk(Json.obj("result" -> "invalid"))
+        jsonBadRequest("Invalid url")
     }.recover { case _ =>
-      Ok(Json.prettyPrint(Json.obj("result" -> "invalid")))
+      BadRequest(Json.obj("message" -> "Invalid url"))
     }
   }
 
