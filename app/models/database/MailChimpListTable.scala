@@ -42,8 +42,10 @@ private[models] trait MailChimpListTable extends EventTable {
     def listId = column[String]("LIST_ID")
     def brandId = column[Long]("BRAND_ID")
     def personId = column[Long]("PERSON_ID")
+    def allAttendees = column[Boolean]("ALL_ATTENDEES")
 
-    def * = (id.?, listName, listId, brandId, personId) <> ((MailChimpList.apply _).tupled, MailChimpList.unapply)
+    def * = (id.?, listName, listId, brandId, personId,
+      allAttendees) <> ((MailChimpList.apply _).tupled, MailChimpList.unapply)
   }
 
 }

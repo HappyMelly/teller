@@ -197,9 +197,7 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
               createPasswordInfo(user, env.currentHasher.hash(password)) flatMap { account =>
                 env.mailer.sendEmail("New password", user.person.email,
                   (None, Some(mail.password.html.createdNotice(user.person.firstName))))
-                env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
-                  _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.member))
-                }).flatMap { _ =>
+                env.updateCurrentUser(user.copy(account = account)) flatMap { _ =>
                   redirect(routes.UserAccounts.account(), "success" -> Messages(OkMessage))
                 }
               }
@@ -268,9 +266,9 @@ class UserAccounts @javax.inject.Inject() (override implicit val env: TellerRunt
     implicit handler ⇒ implicit user ⇒
       val account = user.account.copy(activeRole = !user.account.activeRole)
       repos.userAccount.updateActiveRole(user.account.personId, account.activeRole)
-      env.authenticatorService.fromRequest.map(auth ⇒ auth.map {
-        _.updateUser(ActiveUser(user.id, user.providerId, account, user.person, user.member))
-      }).flatMap(_ => Future.successful(Redirect(request.headers("referer"))) )
+      env.updateCurrentUser(user.copy(account = account)) flatMap {
+        _ => Future.successful(Redirect(request.headers("referer")))
+      }
   }
 
   /**

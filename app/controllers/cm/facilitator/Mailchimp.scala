@@ -30,6 +30,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.{Utilities, Security}
 import libs.mailchimp.Client
+import models.Brand
 import models.UserRole.Role._
 import models.cm.facilitator.MailChimpList
 import models.repository.Repositories
@@ -52,11 +53,10 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
-
   /**
     * Authenticates current user through MailChimp and links MailChimp to his account
     */
-  def authenticate = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+  def activate = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
     val url = controllers.core.routes.People.details(user.person.identifier).url + "#mailchimp"
     val session = request.session -
       SecureSocial.OriginalUrlKey +
@@ -91,6 +91,21 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
         }
       }
     )
+  }
+
+  /**
+    * Breaks MailChimp connection for current user
+    */
+  def deactivate = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+    if (user.account.isMailChimpActive) {
+      val account = user.account.copy(mailchimp = None)
+      repos.userAccount.update(account) flatMap { _ =>
+        env.updateCurrentUser(user.copy(account = account))
+        jsonSuccess("MailChimp integration was successfully deactivated")
+      }
+    } else {
+      jsonBadRequest("You cannot deactivate MailChimp integration as it is not active")
+    }
   }
 
   /**
@@ -153,8 +168,52 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /**
     * Renders settings screen for current user
     */
-  def settings(personId: Long) = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
-    ok(views.html.v2.person.tabs.mailchimp(user.account.mailchimp.nonEmpty))
+  def settings(id: Long) = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+    val personId = user.account.personId
+    val query = for {
+      f <- repos.cm.facilitator.findByPerson(personId)
+      l <- repos.cm.facilitatorSettings.lists(personId)
+      b <- repos.cm.brand.find(f.map(_.brandId))
+    } yield (f, l, b.map(_.brand))
+    query flatMap { case (facilitators, lists, brands) =>
+      val oneBrandFacilitator = facilitators.length == 1
+      val data = lists.groupBy(_.listId).map { case (listId, sublists) =>
+          val currentList = sublists.head
+          val relatedBrands = brands.filter(x => sublists.exists(_.brandId == x.identifier))
+          if (oneBrandFacilitator)
+            getOneBrandBlockMessages(currentList)
+          else
+            getMultipleBrandsBlockMessages(currentList, relatedBrands, facilitators.length)
+      }
+      ok(views.html.v2.person.tabs.mailchimp(user.account.isMailChimpActive, data.toList))
+    }
   }
 
+  /**
+    * Returns list name and supportive message about connection type
+    * @param list List of interest
+    */
+  protected def getOneBrandBlockMessages(list: MailChimpList): (String, String) =
+    (list.listName, importType(list))
+
+  /**
+    * Returns list name and supportive message about connection typ
+    * @param list List of interest
+    * @param brands Related brands
+    * @param numberOfBrands Total number of brands this facilitator works with
+    */
+  protected def getMultipleBrandsBlockMessages(list: MailChimpList,
+                                               brands: Seq[Brand],
+                                               numberOfBrands: Int): (String, String) = {
+    val brandCaption = if (numberOfBrands == brands.length)
+      "all"
+    else
+      brands.map(_.name).mkString(" and ")
+    (list.listName, s"${importType(list)} from $brandCaption brands")
+  }
+
+  protected def importType(list: MailChimpList): String = if (list.allAttendees)
+    "all attendees"
+  else
+    "only attendees with evaluations"
 }

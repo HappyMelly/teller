@@ -30,17 +30,19 @@ import akka.actor.ActorSystem
 import models.repository.IRepositories
 import models.{ActiveUser, Recipient}
 import play.api.i18n.MessagesApi
+import play.api.mvc.RequestHeader
 import play.twirl.api.{Html, Txt}
 import securesocial.controllers.ViewTemplates
-import securesocial.core.{OAuth2Settings, OAuth2Client, RuntimeEnvironment}
-import securesocial.core.providers.{FacebookProvider, GoogleProvider, LinkedInProvider, UsernamePasswordProvider}
 import securesocial.core.providers.utils.Mailer
+import securesocial.core.providers.{FacebookProvider, GoogleProvider, LinkedInProvider, UsernamePasswordProvider}
 import securesocial.core.services.RoutesService
+import securesocial.core.{OAuth2Settings, RuntimeEnvironment}
 import security.{MailChimpClient, MailChimpProvider, TwitterProvider}
 import services.integrations.EmailComponent
 import templates.{MailTemplates, SecureSocialTemplates}
 
 import scala.collection.immutable.ListMap
+import scala.concurrent.Future
 
 /**
   * Runtime environment for SecureSocial library to work
@@ -65,6 +67,17 @@ class TellerRuntimeEnvironment @Inject() (val messagesApi: MessagesApi,
       new MailChimpClient(httpService, OAuth2Settings.forProvider(MailChimpProvider.MailChimp)))),
     include(new UsernamePasswordProvider[ActiveUser](userService, None, viewTemplates, passwordHashers)(executionContext))
   )
+
+  /**
+    * Updates cached object for active user
+    *
+    * @param user Active user
+    */
+  def updateCurrentUser(user: ActiveUser)(implicit request: RequestHeader): Future[Unit] = {
+    this.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
+      _.updateUser(user)
+    })
+  }
 }
 
 class MailerTest(mailTemplates: securesocial.controllers.MailTemplates, email: EmailComponent)

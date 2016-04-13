@@ -29,4 +29,9 @@ package models.cm.facilitator
   *
   * All valid attendees from the given brand will be subscribed to the given list
   */
-case class MailChimpList(id: Option[Long], listName: String, listId: String, brandId: Long, personId: Long)
+case class MailChimpList(id: Option[Long],
+                         listName: String,
+                         listId: String,
+                         brandId: Long,
+                         personId: Long,
+                         allAttendees: Boolean = true)

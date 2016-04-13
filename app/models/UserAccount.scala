@@ -70,6 +70,8 @@ case class UserAccount(id: Option[Long],
 
   def isFacilitatorNow: Boolean = facilitator && !activeRole
 
+  val isMailChimpActive: Boolean = mailchimp.nonEmpty
+
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])
 

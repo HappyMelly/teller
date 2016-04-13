@@ -417,9 +417,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       }
     }
     futureInserted map { inserted =>
-      env.authenticatorService.fromRequest.map(auth ⇒ auth.foreach {
-        _.updateUser(ActiveUser(id, providerId, inserted, person, Some(member)))
-      })
+      env.updateCurrentUser(ActiveUser(id, providerId, inserted, person, Some(member)))
     }
   }
 

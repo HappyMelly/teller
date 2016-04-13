@@ -144,7 +144,7 @@ POST          /event/:id/template                                          contr
 
 GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 
-GET           /mailchimp/authenticate                                      controllers.cm.facilitator.Mailchimp.authenticate()
+GET           /mailchimp/activate                                          controllers.cm.facilitator.Mailchimp.activate()
 POST          /mailchimp/connect                                           controllers.cm.facilitator.Mailchimp.connect()
 POST          /mailchimp/disconnect                                        controllers.cm.facilitator.Mailchimp.disconnect()
 GET           /mailchimp/lists                                             controllers.cm.facilitator.Mailchimp.lists()

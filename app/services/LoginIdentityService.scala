@@ -74,8 +74,6 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
    * @param mode a mode that tells you why the save method was called
    */
   def save(profile: BasicProfile, mode: SaveMode): Future[ActiveUser] = {
-    println(profile)
-    println(mode)
     try {
       val user = mode match {
         case SaveMode.LoggedIn ⇒ retrieveLoggedInUser(profile)
@@ -84,9 +82,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
       }
       user
     } catch {
-      case _: AuthenticationException =>
-        println("Exception got caught")
-        Future.failed(new RuntimeException("Bla-bla-test"))
+      case e: AuthenticationException =>
+        Future.failed(new RuntimeException(e.getMessage))
     }
   }
 
@@ -335,7 +332,7 @@ object LoginIdentityService {
     case GoogleProvider.Google ⇒ SocialProfile(googlePlusUrl = Some(findGooglePlusUrl(profile)))
     case LinkedInProvider.LinkedIn ⇒ SocialProfile(linkedInUrl = Some(findLinkedInUrl(profile)))
     case TwitterProvider.Twitter ⇒ SocialProfile(twitterHandle = Some(findTwitterHandle(profile)))
-    case MailChimpProvider.MailChimp ⇒ SocialProfile()
+    case _ ⇒ SocialProfile()
   }
 
   /**

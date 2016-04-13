@@ -30,8 +30,8 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 import play.api.libs.ws.WS
 import play.api.mvc.Action
 import templates.Formatters._
@@ -157,4 +157,5 @@ object Utilities {
   def fullUrl(url: String): String = {
     Play.configuration.getString("application.baseUrl").getOrElse("") + url
   }
+
 }
