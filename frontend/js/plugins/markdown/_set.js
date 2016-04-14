@@ -10,10 +10,8 @@ const markdownSettings = {
         {name:'Quotes', openWith:'> '},
         {name:'Link', key:"L", openWith:'[', closeWith:']([![Url:!:http://]!] "[![Title]!]")', placeHolder:'Your text to link here...' },
         {separator:'---------------'},
-        {name:'Bulleted List', openWith:'- ' },
-        {name:'Numeric List', openWith:function(markItUp) {
-            return markItUp.line+'. ';
-        }},
+        {name:'Bulleted List', openWith:'\n\n - ' },
+        {name:'Numeric List', openWith: '\n\n 1. '},
     ]
 }
 
