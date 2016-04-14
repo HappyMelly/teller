@@ -1,6 +1,7 @@
 'use strict';
 
 import InputChecking from './../../common/_input-checking';
+import FormHelper from './../../common/_form-helper';
 
 export default class Widget {
     /**
@@ -15,13 +16,17 @@ export default class Widget {
             $root: this.$root.find('.b-inputcheck'),
             url: jsRoutes.controllers.Utilities.validateVAT
         });
+        this.formHelper = new FormHelper(this.locals.$vatInput);
 
         this._assignEvents();
     }
 
     _correctOldVatInput(){
         const $vatInput = this.locals.$vatInput;
-        $vatInput.val($vatInput.val().replace(/\s/g, ''));
+
+        $vatInput
+            .addClass('type-nospace')
+            .val($vatInput.val().replace(/\s/g, ''));
     }
 
     _getDom() {
