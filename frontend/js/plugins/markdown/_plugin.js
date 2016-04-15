@@ -41,7 +41,8 @@ export default class Widget {
 
     _assignEvents() {
         this.locals.$container
-            .on('click', '.markitup__link', this._onClickToggle.bind(this));
+            .on('click', '.markitup__link', this._onClickToggle.bind(this))
+            .on('markdown.render', 'textarea', this._onUpdatePreview.bind(this));
     }
 
     _onClickToggle(e){
@@ -74,6 +75,15 @@ export default class Widget {
                 if (!locals.$container.hasClass(nameClass)){
                     locals.$container.addClass(nameClass)
                 }
+            })
+    }
+
+    _onUpdatePreview() {
+        const locals = this.locals;
+
+        this._compileContent(locals.$textarea.val())
+            .done((data) => {
+                locals.$preview.html(data);
             })
     }
 
