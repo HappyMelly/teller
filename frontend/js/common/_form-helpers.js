@@ -4,15 +4,13 @@
 export default class FormHelper {
     /**
      * Validate given controls
-     * @param {jQuery} $root
      * @param {Object} options
      * @property {jQuery } initialData.$controls        - optional list of validating controls
      * @property { Object } initialData.rules           - optional list of validating controls;
      * @property { jQuery } initialData.$errorUnderSubmit - placeholder for error under submit button
      * @param {Object} messages
      */
-    constructor($root, options, messages) {
-        this.$root = $root;
+    constructor(options, messages) {
         this.$controls = options.$controls;
         this.$errorUnderSubmit = options.$errorUnderSubmit;
 
@@ -63,17 +61,29 @@ export default class FormHelper {
     }
 
     _assignEvents() {
-
+        this.$controls
+            .on('focus', this._onFocusControl.bind(this))
+            .on('blur', this._onBlurControl.bind(this))
+            .on('input change', this._onChangeControl.bind(this))
     }
 
+    _onFocusControl(){
+        
+    }
+
+    _onBlurControl(){
+        
+    }
+
+    _onChangeControl(){
+        
+    }
+
+    // validators
     requiredValidator(value, $el){
         if ($el.is('select')) {
             var val = $el.val();
             return val && val.length > 0;
-        }
-        if ($el.is('radio checkbox')) {
-            let filterSelector = `[name = ${$el.attr('name')}]:checked`;
-            return this.$root.filter(filterSelector).length;
         }
         return value.length > 0;
     }
@@ -94,8 +104,36 @@ export default class FormHelper {
         return /^\d{4}[\/\-](0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])$/.test(value);
     }
 
-    digitsValidator(value, $el) {
-        return /^\d+$/.test(value);
+    // restriction
+    digistsRestrict
+
+
+    // Helper for form
+    removeErrors() {
+        this.$controls.each((index, el) => {
+            const $el = $(el);
+            this._removeError($el)
+        })
+    }
+
+    getFormData(){
+        let formData = {};
+
+        this.$controls.map((index, el) => {
+            const $el = $(el);
+            const name = $el.attr('name');
+
+            name && (formData[name] = $el.val())
+        });
+
+        return formData;
+    }
+
+    clearForm() {
+        this.$controls.each((index, el) => {
+            const $el = $(el);
+            if (!$el.attr("disabled"))  $el.val('');
+        })
     }
 
 }
