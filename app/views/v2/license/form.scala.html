@@ -2,7 +2,7 @@
 
 @import views.ViewHelpersV2._
 
-@v2.html.block("License") {
+@v2.html.formBlock("License") {
     @v2.html.select(form("brandId"), brands.map(x => (x.identifier.toString, x.name)),
         '_label -> "Brand", '_help -> "", '_required -> true)
     @v2.html.text(form("version"), '_label -> "Version", '_help -> "", '_required -> true)
@@ -11,26 +11,24 @@
     @v2.html.date(form("end"), '_label -> "End date", '_required -> true)
 }
 <input type="hidden" name="confirmed" value="true" checked="checked"/>
-@v2.html.block("Fee", Some("yellow")) {
+@v2.html.formBlock("Fee", Some("yellow")) {
     @v2.html.money("fee", form("fee.currency"), form("fee.amount"),
         '_label -> "Fee")
 }
 @if(form.hasErrors) {
-    @v2.html.block("") {
-        <div class="errors">
+    @v2.html.formBlock("") {
+        <div class="b-form__errors">
         @for( error <- form.errors) {
             @Messages(error.message) <br/>
         }
         </div>
     }
 }
-@v2.html.block("") {
-    <div class="row">
-        <div class="col-md-5">
-            <button class="btn btn-primary btn-block btn-lg" type="submit">
-                Save</button>
-        </div>
-        <div class="col-md-3 cancel">
-            <a href="javascript:history.back()">Cancel changes</a></div>
+@v2.html.formBlock("") {
+    <div class="b-form__buttons">
+        <button class="btn btn-primary b-form__btn-submit" type="submit">
+            Save
+        </button>
+        <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
     </div>
 }

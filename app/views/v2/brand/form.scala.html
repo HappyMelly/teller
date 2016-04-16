@@ -13,13 +13,14 @@
 
   @defining(form.value.map(brand => "Edit Brand").getOrElse("Add brand")) { name =>
     @v2.main("Brand", "brands", user, withMelly = true) {
-        <div class="form">
+        <div class="b-form">
             @v2.html.form(action = CSRF(id.map(x => routes.Brands.update(x)).getOrElse(routes.Brands.create())),
                 'enctype -> "multipart/form-data") {
-                @v2.html.block("") {
-                    <h1>@name</h1>
-                }
-                @v2.html.block("General") {
+
+                <div class="container">
+                    <h1 class="b-form__title">@name</h1>
+                </div>
+                @v2.html.formBlock("General") {
                     @v2.html.text(form("code"), '_label -> "Code", '_required -> true)
                     @v2.html.text(form("uniqueName"), '_label -> "Unique name", '_required -> true,
                         '_help -> "This name is used on HM website in an address of brand's landing page")
@@ -29,19 +30,19 @@
                         ("", "Choose brand owner") :: people.map(p => (p.id.get.toString, p.fullName)),
                         '_label -> "Owner", '_required -> true, '_help -> "")
                 }
-                @v2.html.block("Description", Some("grey")) {
+                @v2.html.formBlock("Description", Some("grey")) {
                     @v2.html.textarea(form("description"), '_label -> "Description", 'rows -> 5, 'markdownpreview -> "",
                         '_type -> views.html.element.markdownHelp())
                     @v2.html.file(form("picture"), '_label -> "Picture")
                 }
-                @v2.html.block("On the Web", Some("yellow")) {
+                @v2.html.formBlock("On the Web", Some("yellow")) {
                     @v2.html.text(form("webSite"), '_label -> "Web site")
                     @v2.html.text(form("blog"), '_label -> "Blog")
                     <input type="hidden" name="@form("generateCert").name" value="@form("generateCert").value.exists(_.toBoolean)">
                     @v2.html.email(form("email"), '_label -> "E-mail address", '_required -> true,
                         '_help -> "Used in 'from' field in emails to you, facilitators and attendees")
                 }
-                @v2.html.block("Social Profile") {
+                @v2.html.formBlock("Social Profile") {
                     @defining(form("profile.twitterHandle")) { field =>
                         <div class="form-group @if(field.hasErrors) {has-error}" id="@(field.id + "_field")">
                             <label for="@field.id" class="col-sm-2 control-label">
@@ -68,23 +69,23 @@
                     @v2.html.text(form("profile.contactForm"), '_label -> "Link to contact form ", '_help -> "")
                 }
                 @if(form.hasErrors) {
-                    @v2.html.block("") {
-                        <div class="errors">
+                    @v2.html.formBlock("") {
+                        <div class="b-form__errors">
                         @for((error, index) <- form.errors.zipWithIndex) {
                             @{index + 1}. @Messages(error.message)<br/>
                         }
                         </div>
                     }
                 }
-                @v2.html.block("") {
-                    <div class="row">
-                        <div class="col-md-5">
-                            <button class="btn btn-primary btn-block btn-lg" type="submit">
-                                Save</button>
-                        </div>
-                        <div class="col-md-3 cancel">
-                            <a href="javascript:history.back()">Cancel changes</a></div>
+                @v2.html.formBlock("") {
+                    <div class="b-form__buttons">
+                        <button class="btn btn-primary b-form__btn-submit" type="submit">
+                            Save
+                        </button>
+
+                        <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
                     </div>
+
                 }
             }
         </div>

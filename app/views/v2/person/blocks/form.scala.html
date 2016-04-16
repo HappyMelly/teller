@@ -10,7 +10,7 @@
 @import views.Countries
 @import views.ViewHelpersV2._
 
-@v2.html.block("Personal") {
+@v2.html.formBlock("Personal") {
     @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
     @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")
     @if(disabledEmail) {
@@ -20,7 +20,7 @@
     }
     @v2.html.date(form("birthday"), '_label -> "Birthday")
 }
-@v2.html.block("Address", Some("grey")) {
+@v2.html.formBlock("Address", Some("grey")) {
   @v2.html.text(form("address.street1"), '_label -> "Address line 1")
   @v2.html.text(form("address.street2"), '_label -> "Address line 2")
   @v2.html.text(form("address.postCode"), '_label -> "Post code")
@@ -29,10 +29,10 @@
   @v2.html.select(form("address.country"), ("", "Choose a country") :: Countries.all,
     '_label -> "Country", '_required -> true, '_help -> "")
 }
-@v2.html.block("Bio", Some("yellow")) {
+@v2.html.formBlock("Bio", Some("yellow")) {
   @v2.html.textarea(form("bio"), '_label -> "Bio", 'rows -> "5", 'markdownpreview -> "", '_type -> views.html.v2.element.markdownHelp())
 }
-@v2.html.block("Interests") {
+@v2.html.formBlock("Interests") {
   @v2.html.textarea(form("interests"), '_label -> "Interests", 'rows -> "5", 'markdownpreview -> "", '_type -> views.html.v2.element.markdownHelp())
 }
 
@@ -40,7 +40,7 @@
 <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
 
-@v2.html.block("On The Web", Some("yellow")) {
+@v2.html.formBlock("On The Web", Some("yellow")) {
   @v2.html.text(form("webSite"), '_label -> "Web site",
     'placeholder -> "http://", '_help -> "")
   @v2.html.text(form("blog"), '_label -> "Blog",

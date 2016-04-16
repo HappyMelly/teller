@@ -12,9 +12,9 @@
 
 @v2.main("Endorsement", "person", user, withMelly = true) {
   <input type="hidden" disabled id="personId" value="@personId"/>
-  <div class="form endorsement-form tabs-bl">
-    @v2.html.block("") {
-      <h1>Add Endorsement</h1>
+  <div class="b-form endorsement-form tabs-bl">
+    @v2.html.formBlock("") {
+      <h1 class="b-form__title">Add Endorsement</h1>
       <ul class="tabs-bl__nav" role="tablist" id="switcher">
         <li role="presentation" >
           <a class="tabs-bl__link" href="#addForm" aria-controls="addForm" role="tab">Create new</a>
@@ -27,7 +27,7 @@
       @html.form(action = CSRF(routes.Endorsements.create(personId))) {
         <div class="tabs-bl__content">
           <div id="addForm" role="tabpanel" class="tabs-bl__pane">
-            @v2.html.block("") {
+            @v2.html.formBlock("") {
               @v2.html.textarea(form("content"), '_label -> "Endorsement", '_help -> "", '_required -> true)
               @v2.html.text(form("name"), '_label -> "Name", '_help -> "", '_required -> true)
               @v2.html.select(form("brandId"),
@@ -36,8 +36,8 @@
               @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
             }
             @if(form.hasErrors) {
-              @v2.html.block("") {
-                <div class="errors">
+              @v2.html.formBlock("") {
+                <div class="b-form__errors">
                 @for(error <- form.errors) {
                   @Messages(error.message)<br/>
                 }
@@ -45,8 +45,7 @@
               }
             }
           </div>
-          <div id="selectForm" role="tabpanel" class="tabs-bl__pane active" data-url="@routes.Endorsements.renderSelectForm(personId).url">
-          </div>
+          <div id="selectForm" role="tabpanel" class="tabs-bl__pane active" data-url="@routes.Endorsements.renderSelectForm(personId).url">          </div>
         </div>
 
         <div class="p-endors__buttons-con">

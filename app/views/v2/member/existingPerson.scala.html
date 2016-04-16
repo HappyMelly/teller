@@ -10,33 +10,31 @@
 @import views.ViewHelpersV2._
 
 @v2.main("People", "members", user) {
-    <div class="form">
-        @v2.html.block("") {
-            <h1>Add Funder</h1>
+    <div class="b-form">
+        <div class="container">
+            <h1 class="b-form__title">Add Funder</h1>
             <h3>Step 2: Select person</h3>
-        }
+        </div>
+
         @v2.html.form(action = CSRF(controllers.hm.routes.Members.updateExistingPerson())) {
-            @v2.html.block("") {
+            @v2.html.formBlock("") {
                 @v2.html.select(form("id"), ("", "Select person") +: people, '_label -> "Person", '_help -> "")
             }
             @if(form.hasErrors) {
-                @v2.html.block("") {
-                    <div class="errors">
+                @v2.html.formBlock("") {
+                    <div class="b-form__errors">
                     @for((error, index) <- form.errors.zipWithIndex) {
                         @{index + 1}. @Messages(error.message)<br/>
                     }
                     </div>
                 }
             }
-            @v2.html.block("") {
-                <div class="row">
-                    <div class="col-md-5">
-                        <button class="btn btn-primary btn-block btn-lg" type="submit">
-                            Save
-                        </button>
-                    </div>
-                    <div class="col-md-3 cancel">
-                        <a href="javascript:history.back()">Cancel changes</a></div>
+            @v2.html.formBlock("") {
+                <div class="b-form__buttons">
+                    <button class="btn btn-primary b-form__btn-submit" type="submit">
+                        Save
+                    </button>
+                    <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
                 </div>
             }
         }
