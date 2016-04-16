@@ -22,8 +22,8 @@
       CSRF(controllers.cm.brand.routes.Badges.create(brandId))
     }, 'enctype -> "multipart/form-data") {
       @v2.html.block("") {
-        @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
-        @v2.html.file(form("file"), '_label -> "Picture", '_required -> true, '_help -> "")
+        @v2.html.text(form("name"), true, "Name")
+        @v2.html.file(form("file"), '_label -> "Picture", '_required -> true)
       }
       @if(form.hasErrors) {
         @v2.html.block("") {

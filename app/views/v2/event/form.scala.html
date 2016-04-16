@@ -28,8 +28,7 @@
         <div id="currentEventTypeId" value="@form("eventTypeId").value"></div>
         <div id="currentInvoiceToId" value="@form("invoice").value"></div>
         @v2.html.formBlock("General") {
-          @v2.html.select(form("brandId"), brands.map(v => v.id.get.toString -> v.name),
-            '_label -> "Brand", '_help -> "", '_required -> true)
+          @v2.html.select(form("brandId"), true, "Brand", brands.map(v => v.id.get.toString -> v.name))
           @v2.html.twoInRow(form("eventTypeId"),
             html.select(form("eventTypeId"), Seq(("", "Choose event type")))(asIs, messages),
             form("title"),
@@ -60,8 +59,8 @@
             html.select(form("language.secondSpoken"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))(asIs, messages),
             "Event in", help = "First language is required, second one is optional. Ex: English / Norwegian"
           )
-          @v2.html.select(form("language.materials"), ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
-            '_label -> "Materials in", '_help -> "")
+          @v2.html.select(form("language.materials"), false, "Materials in",
+            ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))
           @v2.html.twoInRow(form("location.country"),
             views.html.v2.event.countries(form("location.country"), Countries.all)(asIs, messages),
             form("location.city"),
@@ -70,10 +69,9 @@
           )
         }
         @v2.html.formBlock("Description", Some("yellow")) {
-          @v2.html.textarea(form("details.description"), '_label -> "Description",
-            'rows -> 3,'markdownpreview -> "", '_type -> views.html.element.markdownHelp())
-          @v2.html.textarea(form("details.specialAttention"), '_label -> "Special attention",
-            'rows -> 3, 'markdownpreview -> "", '_type -> views.html.element.markdownHelp())
+          @v2.html.textarea(form("details.description"), false, "Description", 'rows -> 3,'markdownpreview -> "")
+          @v2.html.textarea(form("details.specialAttention"), false, "Special attention",
+            'rows -> 3, 'markdownpreview -> "")
         }
         @v2.html.formBlock("Schedule") {
           @v2.html.twoInRow(form("schedule.start"),
@@ -109,10 +107,10 @@
             <div class="col-md-7" id="addOrgBlock"></div>
           </div>
 
-          @v2.html.text(form("organizer.webSite"), '_label -> "Organizer website",
+          @v2.html.text(form("organizer.webSite"), false, "Organizer website",
             '_class -> "js-formgroup-org",
-            'placeholder -> "http://", '_type -> "Web site URL", '_checking -> true, '_help -> "")
-          @v2.html.text(form("organizer.registrationPage"), '_label -> "Registration page",
+            'placeholder -> "http://", '_type -> "Web site URL", '_checking -> true)
+          @v2.html.text(form("organizer.registrationPage"), false, "Registration page",
             '_class -> "js-formgroup-reg",
             'placeholder -> "http:// or mailto:", '_type -> "Web site URL or email address", '_checking -> true)
           @v2.html.checkboxWithDescription(form("pageType"),
@@ -148,7 +146,7 @@
             '_help -> "")
         }
         @v2.html.formBlock("Invoice") {
-          @v2.html.select(form("invoice"), Nil, '_label -> "Invoice To", '_required -> true, '_help -> "")
+          @v2.html.select(form("invoice"), true, "Invoice To", Nil)
         }
         @if(form.hasErrors) {
           @v2.html.formBlock("") {

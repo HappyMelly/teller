@@ -7,21 +7,27 @@
  * }}}
  *
  * @param field The form field.
+ * @param required If the field is required
+ * @param label Field label
  * @param args Set of extra attributes.
  * @param handler The field constructor.
  *@
-@(field: play.api.data.Field,
-  args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor,
+@(field: Field, required: Boolean, label: String, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor,
         messages: Messages)
 
-<div class="form-group @args.toMap.get('_class) @if(field.hasErrors) {has-error}"
-  id="@args.toMap.getOrElse('_id, field.id + "_field")">
-  <label for="@field.id" class="control-label col-md-2">
-    @args.toMap.getOrElse('_label, play.api.i18n.Messages(field.name))</label>
-  <div class="col-md-2">
-    <input id="@field.id" value="@field.value" class="form-control"
-      name="@field.name" data-type="date"
-        data-date-format="YYYY-MM-DD" @toHtmlArgs(args.toMap)/>
-  </div>
-  <div class="col-md-2 help">yyyy-mm-dd</div>
-</div>
+
+@views.html.v2.html.helpers.label(label, args:_*) { withLabel =>
+    @views.html.v2.html.helpers.required(required, withLabel: _*) { withRequired =>
+        <div class="form-group @withRequired.toMap.get('_class) @if(field.hasErrors) {has-error}"
+        id="@withRequired.toMap.getOrElse('_id, field.id + "_field")">
+            <label for="@field.id" class="control-label col-md-2">
+            @withRequired.toMap.getOrElse('_label, play.api.i18n.Messages(field.name))</label>
+            <div class="col-md-2">
+                <input id="@field.id" value="@field.value" class="form-control"
+                name="@field.name" data-type="date"
+                data-date-format="YYYY-MM-DD" @toHtmlArgs(withRequired.toMap)/>
+            </div>
+            <div class="col-md-2 help">yyyy-mm-dd</div>
+        </div>
+    }
+}

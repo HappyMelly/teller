@@ -1,0 +1,14 @@
+@**
+ * Adds '_required parameter
+ *
+ * @param args Set of attributes
+ *@
+@(required: Boolean, args: (Symbol, Any)*)(f: Seq[(Symbol, Any)] => Html)
+
+@defining(args.filterNot(_._1 == '_required)) { withoutRequired =>
+    @if(required) {
+        @f(withoutRequired.+:(('_required, required)))
+    } else {
+        @f(withoutRequired)
+    }
+}

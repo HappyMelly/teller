@@ -17,8 +17,8 @@
         }
         @v2.html.form(action = CSRF(routes.CertificateTemplates.create(brand.id.get)), 'enctype -> "multipart/form-data") {
             @v2.html.block("") {
-                @v2.html.select(form("language"), ("", "Choose a language") +: languages.toList.sortBy(_._2),
-                    '_label -> "Language", '_required -> true, '_help -> "")
+                @v2.html.select(form("language"), true, "Language",
+                    ("", "Choose a language") +: languages.toList.sortBy(_._2))
                 @v2.html.file(form("oneFacilitator"), '_label -> "One Facilitator", '_required -> true,
                     'accept -> "image/jpeg, image/pjpeg, image/gif, image/png", '_help -> "")
                 @v2.html.file(form("twoFacilitators"), '_label -> "Two Facilitators", '_required -> true,

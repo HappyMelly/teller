@@ -19,12 +19,10 @@
       CSRF(hm.routes.Experiments.create(memberId))
     }, 'enctype -> "multipart/form-data") {
       @v2.html.block("") {
-        @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
-        @v2.html.textarea(form("description"), '_label -> "Description",
-          'rows -> "5",'markdownpreview -> "", '_type -> views.html.v2.element.markdownHelp())
+        @v2.html.text(form("name"), true, "Name")
+        @v2.html.textarea(form("description"), true, "Description", 'rows -> "5",'markdownpreview -> "")
         @v2.html.file(form("file"), '_label -> "Picture")
-        @v2.html.text(form("url"), '_label -> "URL",
-          'placeholder -> "http://experiment.com", '_showConstraints -> false)
+        @v2.html.text(form("url"), false, "URL", 'placeholder -> "http://experiment.com", '_showConstraints -> false)
       }
       @if(form.hasErrors) {
         @v2.html.block("") {

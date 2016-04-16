@@ -17,7 +17,7 @@
         }
         @v2.html.form(action = CSRF(controllers.hm.routes.Members.updateExistingPerson())) {
             @v2.html.block("") {
-                @v2.html.select(form("id"), ("", "Select person") +: people, '_label -> "Person", '_help -> "")
+                @v2.html.select(form("id"), false, "Person", ("", "Select person") +: people)
             }
             @if(form.hasErrors) {
                 @v2.html.block("") {

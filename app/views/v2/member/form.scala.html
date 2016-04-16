@@ -24,8 +24,8 @@
                 <input type="hidden" value="@form("objectId").value.getOrElse(0)" id="objectId" name="objectId"/>
                 <input type="hidden" value="@form("person").value.getOrElse(1)" id="person" name="person"/>
                 @v2.html.block("") {
-                    @v2.html.number(form("fee"), '_step -> "any", '_label -> "Fee")
-                    @v2.html.date(form("since"), '_label -> "Member since")
+                    @v2.html.number(form("fee"), false, "Fee", '_step -> "any")
+                    @v2.html.date(form("since"), false, "Member since")
                     @if(edit) {
                         <input type="hidden" name="object" value="0"/>
                     } else {

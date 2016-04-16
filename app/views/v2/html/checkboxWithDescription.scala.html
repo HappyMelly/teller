@@ -12,7 +12,7 @@
 *@
 @(field: Field, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
-@boxValue = @{ args.toMap.get('value).getOrElse("true") }
+@boxValue = @{ args.toMap.getOrElse('value, "true") }
 
 <div class="form-group @if(field.hasErrors) {has-error}"
 id="@(field.id + "_field")">

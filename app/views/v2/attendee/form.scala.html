@@ -27,23 +27,21 @@
             controllers.cm.event.routes.Attendees.create(eventId)
         })) {
             @v2.html.block("Personal") {
-                @v2.html.text(form("firstName"), '_label -> "First name", '_required -> true, '_help -> "")
-                @v2.html.text(form("lastName"), '_label -> "Last name", '_required -> true, '_help -> "")
-                @v2.html.email(form("email"), '_label -> "E-mail address", '_required -> true, '_help -> "")
-                @v2.html.date(form("birthday"), '_label -> "Date of birth")
+                @v2.html.text(form("firstName"), true, "First name")
+                @v2.html.text(form("lastName"), true, "Last name")
+                @v2.html.email(form("email"), true, "E-mail address")
+                @v2.html.date(form("birthday"), false, "Date of birth")
             }
             @v2.html.block("Address", Some("grey")) {
-                @v2.html.text(form("street1"), '_label -> "Address line 1")
-                @v2.html.text(form("street2"), '_label -> "Address line 2")
-                @v2.html.text(form("postCode"), '_label -> "Post code")
-                @v2.html.text(form("city"), '_label -> "City")
-                @v2.html.text(form("province"), '_label -> "Province or state")
-                @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all,
-                    '_label -> "Country", '_help -> "")
+                @v2.html.text(form("street1"), false, "Address line 1")
+                @v2.html.text(form("street2"), false, "Address line 2")
+                @v2.html.text(form("postCode"), false, "Post code")
+                @v2.html.text(form("city"), false, "City")
+                @v2.html.text(form("province"), false, "Province or state")
+                @v2.html.select(form("country"), false, "Country", ("", "Choose a country") :: Countries.all)
             }
             @v2.html.block("Role", Some("yellow")) {
-                @v2.html.select(form("role"),
-                    ("", "I don't know") :: Attendees.roles.map(x => (x, x)), '_label -> "Role", '_help -> "")
+                @v2.html.select(form("role"), false, "Role", ("", "I don't know") :: Attendees.roles.map(x => (x, x)))
             }
             @if(attendeeId.isEmpty) {
                 @v2.html.block("OptOut") {

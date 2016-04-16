@@ -7,12 +7,16 @@
  * }}}
  *
  * @param field The form field.
+ * @param required Required flag
+ * @param label Label name
  * @param args Set of extra attributes.
  * @param handler The field constructor.
  *@
-@(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
+@(field: Field, required: Boolean, label: String, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor,
+    messages: Messages)
 
-@helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
-    <input type="number" id="@id" value="@value"
-      class="form-control" name="@name" @toHtmlArgs(htmlArgs)/>
-}(handler, messages)
+@views.html.v2.html.helpers.default(required, label, args:_*) { withDefaultArgs =>
+    @helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
+        <input type="number" id="@id" value="@value" class="form-control" name="@name" @toHtmlArgs(htmlArgs)/>
+    }(handler, messages)
+}

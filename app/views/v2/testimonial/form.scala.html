@@ -19,9 +19,9 @@
             CSRF(routes.BrandTestimonials.create(brandId))
         }) {
             @v2.html.block("") {
-                @v2.html.textarea(form("content"), '_label -> "Testimonial", '_required -> true, '_help -> "")
-                @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
-                @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
+                @v2.html.textarea(form("content"), true, "Testimonial")
+                @v2.html.text(form("name"), true, "Name")
+                @v2.html.text(form("company"), false, "Company / Job role")
             }
             @if(form.hasErrors) {
                 @v2.html.block("") {

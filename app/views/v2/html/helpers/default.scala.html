@@ -1,0 +1,16 @@
+@**
+ * Applies default helpers to the given arguments
+ *
+ * @param required Required flag
+ * @param label Label name
+ * @param args Set of attributes
+ *@
+@(required: Boolean, label: String, args: (Symbol, Any)*)(f: Seq[(Symbol, Any)] => Html)
+
+@views.html.v2.html.helpers.noDefaultHelp(args:_*) { withHelp =>
+    @views.html.v2.html.helpers.required(required, withHelp: _*) { withRequired =>
+        @views.html.v2.html.helpers.label(label, withRequired: _*) { withLabel =>
+          @f(withLabel)
+        }
+    }
+}

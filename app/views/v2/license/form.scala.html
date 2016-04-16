@@ -3,12 +3,11 @@
 @import views.ViewHelpersV2._
 
 @v2.html.block("License") {
-    @v2.html.select(form("brandId"), brands.map(x => (x.identifier.toString, x.name)),
-        '_label -> "Brand", '_help -> "", '_required -> true)
-    @v2.html.text(form("version"), '_label -> "Version", '_help -> "", '_required -> true)
-    @v2.html.date(form("signed"), '_label -> "Date signed", '_required -> true)
-    @v2.html.date(form("start"), '_label -> "Start date", '_required -> true)
-    @v2.html.date(form("end"), '_label -> "End date", '_required -> true)
+    @v2.html.select(form("brandId"), true, "Brand", brands.map(x => (x.identifier.toString, x.name)))
+    @v2.html.text(form("version"), true, "Version")
+    @v2.html.date(form("signed"), true, "Date signed")
+    @v2.html.date(form("start"), true, "Start date")
+    @v2.html.date(form("end"), true, "End date")
 }
 <input type="hidden" name="confirmed" value="true" checked="checked"/>
 @v2.html.block("Fee", Some("yellow")) {

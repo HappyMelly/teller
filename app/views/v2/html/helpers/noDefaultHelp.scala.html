@@ -4,7 +4,7 @@
  *
  * @param args Set of attributes
  *@
-@(args: (Symbol, Any)*)(f: Seq[(Symbol, Any)] => Html)(implicit handler: helper.FieldConstructor, messages: Messages)
+@(args: (Symbol, Any)*)(f: Seq[(Symbol, Any)] => Html)
 
 @defining(args.find(_._1 == '_help).getOrElse(('_help, ""))) { help: (Symbol, Any) =>
     @defining(args.filterNot(_._1 == '_help).+:(help)) { withHelp =>

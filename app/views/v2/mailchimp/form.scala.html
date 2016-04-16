@@ -14,31 +14,27 @@
         @v2.html.block("") { <h1>Create new list and set exporting</h1> }
         @html.form(action = CSRF(controllers.cm.facilitator.routes.Mailchimp.create())) {
             @v2.html.block("General") {
-                @v2.html.text(form("name"), true, '_label -> "List name")
-                @v2.html.email(form("defaults.fromEmail"), '_label -> "Default 'From email'", '_required -> true)
-                @v2.html.text(form("defaults.fromName"), true, '_label -> "Default 'From name'")
+                @v2.html.text(form("name"), true, "List name")
+                @v2.html.email(form("defaults.fromEmail"), true, "Default 'From email'")
+                @v2.html.text(form("defaults.fromName"), true, "Default 'From name'")
                 @v2.html.text(form("defaults.subject"), true,
-                    '_label -> "Default subject line for campaigns sent to this list")
-                @v2.html.select(form("defaults.language"),
-                    ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
-                    '_label -> "Language", '_required -> true)
-                @v2.html.textarea(form("reminder"), '_label -> "Remind people how they signed to thes list",
-                    '_required -> true, 'rows -> 3)
+                    "Default subject line for campaigns sent to this list")
+                @v2.html.select(form("defaults.language"), true, "Language",
+                    ("", "Choose a language") +: Languages.all.toList.sortBy(_._2))
+                @v2.html.textarea(form("reminder"), true, "Remind people how they signed to thes list", 'rows -> 3)
             }
             @v2.html.block("Company and address", Some("grey")) {
-                @v2.html.text(form("company.name"), true, '_label -> "Company")
-                @v2.html.text(form("company.address1"), true, '_label -> "Address line 1")
-                @v2.html.text(form("company.address2"), false, '_label -> "Address line 2")
-                @v2.html.text(form("company.zip"), true, '_label -> "Post code")
-                @v2.html.text(form("company.city"), true, '_label -> "City")
-                @v2.html.text(form("company.state"), true, '_label -> "Province or state")
-                @v2.html.select(form("company.countryCode"), ("", "Choose a country") :: Countries.all,
-                    '_label -> "Country", '_required -> true)
+                @v2.html.text(form("company.name"), true, "Company")
+                @v2.html.text(form("company.address1"), true, "Address line 1")
+                @v2.html.text(form("company.address2"), false, "Address line 2")
+                @v2.html.text(form("company.zip"), true, "Post code")
+                @v2.html.text(form("company.city"), true, "City")
+                @v2.html.text(form("company.state"), true, "Province or state")
+                @v2.html.select(form("company.countryCode"), true, "Country", ("", "Choose a country") :: Countries.all)
             }
             @v2.html.block("Export settings") {
-                @v2.html.select(form("allAttendees"),
-                    List(("true", "All including attendees added manually"), ("false", "Only attendees with evaluations")),
-                    '_label -> "Select attendees to export", '_required -> true)
+                @v2.html.select(form("allAttendees"), true, "Select attendees to export",
+                    List(("true", "All including attendees added manually"), ("false", "Only attendees with evaluations")))
                 @v2.html.checkbox(form("includePreviousEvents"), '_label -> "Include attendees from previous events")
                 <input name="brands[0]" value="1" type="hidden"/>
             }
