@@ -59,13 +59,17 @@ class Utilities @Inject()(override val messagesApi: MessagesApi) extends AsyncCo
    * @param url Url to check
    */
   def validate(url: String) = Action.async { implicit request ⇒
-    WS.url(url).head().flatMap { response =>
-      if (response.status >= 200 && response.status < 300)
-        jsonSuccess("valid")
-      else
-        jsonBadRequest("Invalid url")
-    }.recover { case _ =>
-      BadRequest(Json.obj("message" -> "Invalid url"))
+    try {
+      WS.url(url).head().flatMap { response =>
+        if (response.status >= 200 && response.status < 300)
+          jsonSuccess("Valid")
+        else
+          jsonBadRequest("Invalid url")
+      }.recover { case _ =>
+        BadRequest(Json.obj("message" -> "Invalid url"))
+      }
+    } catch {
+      case e: java.lang.NullPointerException => jsonBadRequest("Invalid url")
     }
   }
 
