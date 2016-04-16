@@ -1,0 +1,13 @@
+@**
+ * Removes rendering of default help provided by the framework. As a result, removes the need to add
+ *  '_help -> "" for a field without help message
+ *
+ * @param args Set of attributes
+ *@
+@(args: (Symbol, Any)*)(f: Seq[(Symbol, Any)] => Html)(implicit handler: helper.FieldConstructor, messages: Messages)
+
+@defining(args.find(_._1 == '_help).getOrElse(('_help, ""))) { help: (Symbol, Any) =>
+    @defining(args.filterNot(_._1 == '_help).+:(help)) { withHelp =>
+      @f(withHelp)
+    }
+}

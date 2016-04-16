@@ -1,0 +1,68 @@
+@import controllers.cm.facilitator.Mailchimp
+@(user: ActiveUser, form: Form[Mailchimp.NewListData], brands: List[Brand])(implicit flash: Flash,
+    request: Request[Any],
+    handler: be.objectify.deadbolt.scala.DeadboltHandler,
+    messages: Messages)
+
+@import helper.CSRF
+@import views.Countries
+@import views.Languages
+@import views.ViewHelpersV2._
+
+@v2.main("Person", "people", user, withMelly = true) {
+    <div class="form">
+        @v2.html.block("") { <h1>Create new list and set exporting</h1> }
+        @html.form(action = CSRF(controllers.cm.facilitator.routes.Mailchimp.create())) {
+            @v2.html.block("General") {
+                @v2.html.text(form("name"), true, '_label -> "List name")
+                @v2.html.email(form("defaults.fromEmail"), '_label -> "Default 'From email'", '_required -> true)
+                @v2.html.text(form("defaults.fromName"), true, '_label -> "Default 'From name'")
+                @v2.html.text(form("defaults.subject"), true,
+                    '_label -> "Default subject line for campaigns sent to this list")
+                @v2.html.select(form("defaults.language"),
+                    ("", "Choose a language") +: Languages.all.toList.sortBy(_._2),
+                    '_label -> "Language", '_required -> true)
+                @v2.html.textarea(form("reminder"), '_label -> "Remind people how they signed to thes list",
+                    '_required -> true, 'rows -> 3)
+            }
+            @v2.html.block("Company and address", Some("grey")) {
+                @v2.html.text(form("company.name"), true, '_label -> "Company")
+                @v2.html.text(form("company.address1"), true, '_label -> "Address line 1")
+                @v2.html.text(form("company.address2"), false, '_label -> "Address line 2")
+                @v2.html.text(form("company.zip"), true, '_label -> "Post code")
+                @v2.html.text(form("company.city"), true, '_label -> "City")
+                @v2.html.text(form("company.state"), true, '_label -> "Province or state")
+                @v2.html.select(form("company.countryCode"), ("", "Choose a country") :: Countries.all,
+                    '_label -> "Country", '_required -> true)
+            }
+            @v2.html.block("Export settings") {
+                @v2.html.select(form("allAttendees"),
+                    List(("true", "All including attendees added manually"), ("false", "Only attendees with evaluations")),
+                    '_label -> "Select attendees to export", '_required -> true)
+                @v2.html.checkbox(form("includePreviousEvents"), '_label -> "Include attendees from previous events")
+                <input name="brands[0]" value="1" type="hidden"/>
+            }
+
+            @v2.html.block("") {
+              <div class="row">
+                <div class="col-md-5">
+                  <button class="btn btn-primary btn-block btn-lg" type="submit">
+                    Create and export</button>
+                </div>
+                <div class="col-md-3 cancel">
+                  <a href="javascript:history.back()">Cancel</a></div>
+              </div>
+            }
+
+            @if(form.hasErrors) {
+                @v2.html.block("") {
+                    <div class="errors">
+                    @for(error <- form.errors) {
+                        @Messages(error.message)<br/>
+                    }
+                    </div>
+                }
+            }
+        }
+    </div>
+}

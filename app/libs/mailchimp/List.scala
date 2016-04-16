@@ -75,18 +75,26 @@ case class MergeField(id: Option[Int] = None,
                       public: Option[Boolean] = None,
                       displayOrder: Option[Int] = None)
 
-object Reads {
+object Convertions {
 
-  implicit val campaignDefaults: Reads[CampaignDefaults] = (
+  implicit val campaignDefaultsReads: Reads[CampaignDefaults] = (
     (__ \ "from_name").read[String] and
       (__ \ "from_email").read[String] and
       (__ \ "subject").read[String] and
       (__ \ "language").read[String]
     )(CampaignDefaults)
 
-  implicit val contact: Reads[ListContact] = Json.reads[ListContact]
+  implicit val campaignDefaultsWrites: Writes[CampaignDefaults] = (
+    (__ \ "from_name").write[String] and
+      (__ \ "from_email").write[String] and
+      (__ \ "subject").write[String] and
+      (__ \ "language").write[String]
+    )(unlift(CampaignDefaults.unapply))
 
-  implicit val list: Reads[List] = (
+  implicit val contactReads: Reads[ListContact] = Json.reads[ListContact]
+  implicit val contactWrites: Writes[ListContact] = Json.writes[ListContact]
+
+  implicit val listReads: Reads[List] = (
     (__ \ "id").readNullable[String] and
       (__ \ "name").read[String] and
       (__ \ "contact").read[ListContact] and
@@ -103,6 +111,26 @@ object Reads {
       (__ \ "beamer_address").readNullable[String] and
       (__ \ "visibility").readNullable[String]
     )(List)
+
+  implicit val listWrites: Writes[List] = (
+    (__ \ "id").writeNullable[String] and
+      (__ \ "name").write[String] and
+      (__ \ "contact").write[ListContact] and
+      (__ \ "permission_reminder").write[String] and
+      (__ \ "use_archive_bar").writeNullable[Boolean] and
+      (__ \ "campaign_defaults").write[CampaignDefaults] and
+      (__ \ "notify_on_subscribe").writeNullable[String] and
+      (__ \ "notify_on_unsubscribe").writeNullable[String] and
+      (__ \ "date_created").writeNullable[String] and
+      (__ \ "list_rating").writeNullable[Int] and
+      (__ \ "email_type_option").write[Boolean] and
+      (__ \ "subscribe_url_short").writeNullable[String] and
+      (__ \ "subscribe_url_long").writeNullable[String] and
+      (__ \ "beamer_address").writeNullable[String] and
+      (__ \ "visibility").writeNullable[String]
+    )(unlift(List.unapply))
+
+  val listFormats: Format[List] = Format(listReads, listWrites)
 
   implicit val mergeField: Reads[MergeField] = (
     (__ \ "id").readNullable[Int] and

@@ -28,8 +28,10 @@ import javax.inject.Inject
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import controllers.Forms._
+import controllers.cm.facilitator.Mailchimp.NewListData
 import controllers.{Utilities, Security}
-import libs.mailchimp.Client
+import libs.mailchimp.{CampaignDefaults, ListContact, Client}
 import models.core.integration.MailChimp
 import models.{SocialIdentity, ActiveUser, Brand}
 import models.UserRole.Role._
@@ -67,45 +69,85 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     redirect(route, session)
   }
 
+  def add = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
+    (for {
+      r <- repos.cm.facilitator.findByPerson(user.person.identifier)
+      o <- repos.person.memberships(user.person.identifier)
+      b <- repos.cm.brand.find(r.map(_.brandId))
+    } yield (r, o, b.map(_.brand))) flatMap { case (records, organisations, brands) =>
+      val defaults = CampaignDefaults(user.person.fullName, user.person.email, "", "")
+      val contact = if (organisations.nonEmpty) {
+        val org = organisations.head
+        ListContact(org.name, org.street1.getOrElse(""), org.street2, org.postCode.getOrElse(""),
+          org.city.getOrElse(""), org.province.getOrElse(""), org.countryCode)
+      } else {
+        ListContact("", "", None, "", "", "", "")
+      }
+      val formData = NewListData("", defaults, "", contact, allAttendees = true, includePreviousEvents = true, List())
+      ok(views.html.v2.mailchimp.form(user, Mailchimp.newListForm.fill(formData), brands))
+    }
+  }
+
   /**
     * Connects MailChimp list with a set of given brands
     */
-  def connect = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
-    checkMailChimpIntegration { mailChimpId =>
-      Mailchimp.connectForm.bindFromRequest().fold(
-        errors => jsonFormError(Utilities.errorsToJson(errors)),
-        data => {
-          checkMailChimpDataCoherence(mailChimpId) { case (identity, info) =>
-            repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
-              checkMergeFields(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken, data.id) flatMap {
-                case Left(msg) => jsonBadRequest(msg)
-                case Right(msg) =>
-                  val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
-                  val results = validBrands.map { brandId =>
-                    val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier)
-                    repos.cm.facilitatorSettings.insertList(list)
-                  }
-                  Future.sequence(results).flatMap { list =>
-                    jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)")
-                  }
-              }
+  def connect = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
+    Mailchimp.connectForm.bindFromRequest().fold(
+      errors => jsonFormError(Utilities.errorsToJson(errors)),
+      data => {
+        withMailChimpClient(mailChimpId) { client =>
+          repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
+            client.mergeFields(data.id).map(MailChimp.validateMergeFields) flatMap {
+              case Left(msg) => jsonBadRequest(msg)
+              case Right(msg) =>
+                val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
+                val results = validBrands.map { brandId =>
+                  val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier)
+                  repos.cm.facilitatorSettings.insertList(list)
+                }
+                Future.sequence(results).flatMap { list =>
+                  jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)")
+                }
             }
           }
         }
-      )
-    }
+      }
+    )
+  }
+
+  def create = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
+    Mailchimp.newListForm.bindFromRequest().fold(
+      errors => jsonFormError(Utilities.errorsToJson(errors)),
+      data => {
+        withMailChimpClient(mailChimpId) { client =>
+          val list = libs.mailchimp.List(None, data.name, data.contact, data.reminder,
+            campaignDefaults = data.defaults, emailTypeOption = false)
+          (for {
+            l <- client.createList(list)
+            r <- repos.cm.facilitator.findByPerson(user.person.identifier)
+          } yield (l, r)) flatMap { case (remoteList, records) =>
+            val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
+            val results = validBrands.map { brandId =>
+              val list = MailChimpList(None, remoteList.name, remoteList.id.get, brandId, user.person.identifier)
+              repos.cm.facilitatorSettings.insertList(list)
+            }
+            Future.sequence(results).flatMap { _ =>
+              jsonSuccess(s"MailChimp list was successfully created and connected to selected brand(s)")
+            }
+          }
+        }
+      }
+    )
   }
 
   /**
     * Breaks MailChimp connection for current user
     */
-  def deactivate = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
-    checkMailChimpIntegration { _ =>
-      val account = user.account.copy(mailchimp = None)
-      repos.userAccount.update(account) flatMap { _ =>
-        env.updateCurrentUser(user.copy(account = account))
-        jsonSuccess("MailChimp integration was successfully deactivated")
-      }
+  def deactivate = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
+    val account = user.account.copy(mailchimp = None)
+    repos.userAccount.update(account) flatMap { _ =>
+      env.updateCurrentUser(user.copy(account = account))
+      jsonSuccess("MailChimp integration was successfully deactivated")
     }
   }
 
@@ -138,20 +180,16 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
   /**
     * Returns list of MailChimp lists for current user
     */
-  def lists = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+  def lists = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
     implicit val listWrites = new Writes[libs.mailchimp.List] {
       def writes(list: libs.mailchimp.List): JsValue = Json.obj(
         "id" -> list.id,
         "name" -> list.name
       )
     }
-    checkMailChimpIntegration { mailChimpId =>
-      checkMailChimpDataCoherence(mailChimpId) { case (identity, info) =>
-        val mc = new Client(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken)
-        checkMergeFields(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken, "0aa4dbfa4a")
-        mc.lists().flatMap { lists =>
-          jsonOk(Json.obj("lists" -> lists.sortBy(_.name)))
-        }
+    withMailChimpClient(mailChimpId) { client =>
+      client.lists().flatMap { lists =>
+        jsonOk(Json.obj("lists" -> lists.sortBy(_.name)))
       }
     }
   }
@@ -180,8 +218,8 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
-  protected def checkMailChimpDataCoherence(mailChimpId: String)
-                                           (f: (SocialIdentity, MailChimpProvider.ExtraInfo) => Future[Result])(
+  protected def withMailChimpClient(mailChimpId: String)
+                                   (f: libs.mailchimp.Client => Future[Result])(
     implicit request: Request[AnyContent], user: ActiveUser) = {
     repos.identity.findByUserId(mailChimpId, MailChimpProvider.MailChimp) flatMap { mayBeIdentity =>
       val data = for {
@@ -190,24 +228,21 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
       } yield (identity, info)
       data match {
         case None => jsonInternalError("Internal error. Please contact the support")
-        case Some((identity, info)) => f(identity, info)
+        case Some((identity, info)) =>
+          val mc = new Client(info.apiEndPoint, identity.profile.oAuth2Info.get.accessToken)
+          f(mc)
       }
     }
   }
 
-  protected def checkMailChimpIntegration(f: String => Future[Result])(
-    implicit request: Request[AnyContent], user: ActiveUser) = {
-    user.account.mailchimp match {
-      case None => jsonBadRequest("MailChimp integration is not active")
-      case Some(mailChimpId) => f(mailChimpId)
-    }
-  }
-
-  protected def checkMergeFields(apiEndPoint: String,
-                                 accessToken: String,
-                                 listId: String): Future[Either[String, String]] = {
-    val mc = new Client(apiEndPoint, accessToken)
-    mc.mergeFields(listId).map(MailChimp.validateMergeFields)
+  protected def withMailChimpIntegration(f: String => Request[AnyContent] =>
+    be.objectify.deadbolt.scala.DeadboltHandler => ActiveUser => Future[Result]) =
+  
+    RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
+      user.account.mailchimp match {
+        case None => jsonBadRequest("MailChimp integration is not active")
+        case Some(mailChimpId) => f(mailChimpId)(request)(handler)(user)
+      }
   }
 
   /**
@@ -242,10 +277,41 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
 }
 
 object Mailchimp {
+
   case class ConnectFormData(id: String, name: String, brands: List[Long])
   val connectForm = Form(mapping(
     "list_id" -> nonEmptyText,
     "list_name" -> nonEmptyText,
     "brands" -> list(longNumber)
   )(ConnectFormData.apply)(ConnectFormData.unapply))
+
+  case class NewListData(name: String,
+                         defaults: CampaignDefaults,
+                         reminder: String,
+                         contact: ListContact,
+                         allAttendees: Boolean,
+                         includePreviousEvents: Boolean,
+                         brands: List[Long])
+
+  val newListForm = Form(mapping(
+    "name" -> nonEmptyText,
+    "defaults" -> mapping(
+      "fromName" -> nonEmptyText,
+      "fromEmail" -> email,
+      "subject" -> nonEmptyText,
+      "language" -> language)(CampaignDefaults.apply)(CampaignDefaults.unapply),
+    "reminder" -> nonEmptyText,
+    "company" -> mapping(
+      "name" -> nonEmptyText,
+      "address1" -> nonEmptyText,
+      "address2" -> optional(nonEmptyText),
+      "zip" -> nonEmptyText,
+      "city" -> nonEmptyText,
+      "state" -> nonEmptyText,
+      "countryCode" -> country,
+      "phone" -> ignored(None.asInstanceOf[Option[String]]))(ListContact.apply)(ListContact.unapply),
+    "allAttendees" -> boolean,
+    "includePreviousEvents" -> boolean,
+    "brands" -> list(longNumber(min = 1))
+  )(NewListData.apply)(NewListData.unapply))
 }

@@ -15,19 +15,21 @@
   options: Seq[(String,String)],
   args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
-@helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
-    @defining( if( htmlArgs.contains('multiple) ) "%s[]".format(name) else name ) { selectName =>
-    @defining( ( !field.indexes.isEmpty && htmlArgs.contains('multiple) ) match {
-            case true => field.indexes.map( i => field("[%s]".format(i)).value ).flatten.toSet
-            case _ => field.value.toSet
-    }){ values =>
-        <select id="@id" name="@selectName" class="form-control" @toHtmlArgs(htmlArgs)>
-            @args.toMap.get('_default).map { defaultValue =>
-                <option class="blank" value="">@defaultValue</option>
-            }
-            @options.map { v =>
-                <option value="@v._1" @if(values.contains(v._1)){selected="selected"}>@v._2</option>
-            }
-        </select>
-    }}
-}(handler, messages)
+@views.html.v2.html.noDefaultHelp(args:_*) { withHelp =>
+    @helper.input.f(field, withHelp.toArray) { (id, name, value, htmlArgs) =>
+        @defining( if( htmlArgs.contains('multiple) ) "%s[]".format(name) else name ) { selectName =>
+        @defining( ( !field.indexes.isEmpty && htmlArgs.contains('multiple) ) match {
+                case true => field.indexes.map( i => field("[%s]".format(i)).value ).flatten.toSet
+                case _ => field.value.toSet
+        }){ values =>
+            <select id="@id" name="@selectName" class="form-control" @toHtmlArgs(htmlArgs)>
+                @args.toMap.get('_default).map { defaultValue =>
+                    <option class="blank" value="">@defaultValue</option>
+                }
+                @options.map { v =>
+                    <option value="@v._1" @if(values.contains(v._1)){selected="selected"}>@v._2</option>
+                }
+            </select>
+        }}
+    }(handler, messages)
+}

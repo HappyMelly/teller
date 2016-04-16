@@ -10,9 +10,10 @@
  * @param args Set of extra attributes.
  * @param handler The field constructor.
  *@
-@(field: Field, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
+@(field: Field, required: Boolean, args: (Symbol, Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
-@helper.input.f(field,
-  args.filter{ _._1 != 'type }.toArray) { (id, name, value, args) =>
-    <input id="@id" name="@name" value="@value" class="form-control" @toHtmlArgs(args) />
-}(handler, messages)
+@views.html.v2.html.noDefaultHelp(args:_*) { withHelp =>
+    @helper.input.f(field, withHelp.filter(_._1 != 'type).toArray) { (id, name, value, args) =>
+        <input id="@id" name="@name" value="@value" class="form-control" @toHtmlArgs(args) />
+    }(handler, messages)
+}

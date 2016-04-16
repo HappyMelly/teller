@@ -12,6 +12,8 @@
  *@
 @(field: play.api.data.Field, args: (Symbol,Any)*)(implicit handler: helper.FieldConstructor, messages: Messages)
 
-@helper.input.f(field, args.toArray) { (id, name, value, htmlArgs) =>
-    <textarea id="@id" name="@name" class="form-control" @toHtmlArgs(htmlArgs)>@value</textarea>
-}(handler, messages)
+@views.html.v2.html.noDefaultHelp(args:_*) { withHelp =>
+    @helper.input.f(field, withHelp.toArray) { (id, name, value, htmlArgs) =>
+        <textarea id="@id" name="@name" class="form-control" @toHtmlArgs(htmlArgs)>@value</textarea>
+    }(handler, messages)
+}
