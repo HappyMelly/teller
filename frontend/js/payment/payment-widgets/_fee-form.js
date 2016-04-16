@@ -1,12 +1,13 @@
-(function ($, App) {
-    'use strict';
+'use strict';
 
-    /**
-     * Form for updating contribution level
-     * @param selector
-     * @constructor
-     */
-    function FeeForm(selector) {
+/**
+ * Form for updating contribution level
+ * @param selector
+ * @constructor
+ */
+
+export default class Widget {
+    constructor(selector) {
         this.$root = $(selector);
         this.locals = this._getDom();
 
@@ -14,8 +15,8 @@
         this._updateAmount(this.locals.$inputFee);
     }
 
-    FeeForm.prototype._getDom = function () {
-        var $root = this.$root;
+    _getDom() {
+        const $root = this.$root;
 
         return {
             $inputFee: $root.find('.b-feestrip__input').first(),
@@ -23,28 +24,28 @@
             $amountPlace: $root.find('[data-fee-amount]'),
             $payPlace: $root.find('[data-fee-pay]')
         }
-    };
+    }
 
-    FeeForm.prototype._assignEvents = function () {
-        var self = this;
+    _assignEvents() {
+        const self = this;
 
         self.$root
             .on('change paste keyup', '.b-feestrip__input', function (e) {
-                var $this = $(this);
-                
+                let $this = $(this);
+
                 self._removeError($this);
                 self._updateAmount($this);
             })
             .on('submit', self._onSubmitForm.bind(self));
-    };
+    }
 
-    FeeForm.prototype._onSubmitForm = function(e){
-        var self = this;
+    _onSubmitForm(e) {
+        const self = this;
         e.preventDefault();
-        
+
         if (!this.isValidForm()) return;
 
-        var feeAmount = this.locals.$inputFee.val();
+        let feeAmount = this.locals.$inputFee.val();
 
         this._sendFeeData(feeAmount)
             .done(function (data) {
@@ -52,75 +53,94 @@
                     success(data.message);
                 }
             })
-            .fail(function(data){
-                var errorMsg = JSON.parse(jqXHR.responseText);
+            .fail(function (data) {
+                const errorMsg = JSON.parse(jqXHR.responseText);
                 error(errorMsg.message);
             })
-    };
+    }
 
-    FeeForm.prototype._setError = function($el){
-        var $parent = $el.parent();
+    _setError($el) {
+        const $parent = $el.parent();
 
-        if (!$parent.hasClass('has-error')){
+        if (!$parent.hasClass('has-error')) {
             $parent.addClass('has-error');
         }
-    };
+    }
 
-    FeeForm.prototype._removeError = function($el){
+    _removeError($el) {
         $el.parent().removeClass('has-error');
-    };
+    }
 
     /**
      * Update tax and pay price on the from, based on input value $el
      * @param {jQuery} $el - $(input)
      * @private
      */
-    FeeForm.prototype._updateAmount = function($el){
-        var locals = this.locals,
-            amount = $el.val() < 1? 0.00: parseInt($el.val()),            
+    _updateAmount($el) {
+        let locals = this.locals,
+            amount = $el.val() < 1 ? 0.00 : parseInt($el.val()),
             taxPercent = parseFloat($el.data('tax')),
             tax, amountWithTax;
-    
+
         tax = (amount * taxPercent) / 100;
         amountWithTax = amount + tax;
-        
+
         locals.$amountPlace.text(amount);
         locals.$taxPlace.text(tax);
         locals.$payPlace.text(amountWithTax);
-    };
+    }
 
     /**
      * Check, is Form valid?
-     * @returns {boolean}
+     * @returns {Boolean}
      */
-    FeeForm.prototype.isValidForm = function () {
-        var valid = true,
+    isValidForm() {
+        let valid = true,
             $inputFee = this.locals.$inputFee,
             isValidAmount = ($inputFee.val().length > 0) && (!isNaN($inputFee.val()));
 
-        if (!isValidAmount){
+        if (!isValidAmount) {
             valid = false;
             this._setError($inputFee);
         }
 
         return valid;
-    };    
-    
-    //transport 
+    }
+
+    //transport
     /**
-     * 
      * @param {Number} feeAmount
      * @returns {$.Deffered} - promise
      * @private
      */
-    FeeForm.prototype._sendFeeData = function(feeAmount){
+    _sendFeeData(feeAmount) {
         return $.ajax({
             type: "POST",
             url: this.$root.attr("action"),
             data: {fee: feeAmount},
             dataType: "json"
         })
-    };
+    }
 
-    App.widgets.FeeForm = FeeForm;
-})(jQuery, App);
+    // static
+    static plugin(selector, options) {
+        const $elems = $(selector);
+        if (!$elems.length) return;
+
+        return $elems.each(function (index, el) {
+            let $element = $(el);
+            let data = $element.data('widget.scrollto');
+
+            if (!data) {
+                data = new Widget(el, options);
+                $element.data('widget', data);
+            }
+        })
+    }
+}
+
+
+
+
+
+
