@@ -1,0 +1,245 @@
+.markitup__con{
+  position: relative;
+}
+
+.markitup__link{
+  position: absolute;
+  top: 14px;
+  display: inline-block;
+  line-height: 1.1;
+  font-size: 13px;
+  border-bottom: 1px dotted #79ade5;
+  text-transform: uppercase;
+  color: #79ade5;
+  cursor: pointer;
+
+  &.type-write{
+    left: 19px;
+  }
+
+  &.type-preview{
+    left: 82px;
+  }
+
+  &.state_active{
+    border-bottom-color: transparent;
+    color: #4c4c4c !important;
+    cursor: default;
+  }
+}
+
+.markitup__preview{
+  display: none;
+  position: absolute;
+  top: 41px;
+  right: 1px;
+  left: 1px;
+  bottom: 7px;
+  background: #ffffff;
+  font: 14px 'Helvetica Neue', Helvetica, monospace;
+  border: none;
+  padding: 5px 10px;
+  line-height: 24px;
+  overflow: auto;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.markItUp {
+  position: relative;
+  width: 100%;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  overflow: hidden;
+
+  * {
+    margin: 0;
+    padding: 0;
+    outline: none;
+  }
+}
+
+.markItUpContainer {
+  font: 12px 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+.markItUpHeader{
+  height: 40px;
+  background-color: #e7e7e7;
+  border-bottom:1px solid #aaa;
+
+  ul{
+    display: block;
+    float: right;
+    margin: 10px 14px 0;
+  }
+
+  li {
+    list-style: none;
+    float: left;
+    position: relative;
+    display: block;
+    margin-left: 10px;
+  }
+
+  a {
+    position: relative;
+    display: block;
+    width: 21px;
+    height: 20px;
+    text-indent: -10000px;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    text-decoration: none;
+    color: #333333 !important;
+
+    &:before{
+      position: absolute;
+      right: 0;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      text-indent: 0;
+    }
+
+    &:hover{
+      color: #666666;
+    }
+  }
+
+  .markItUpSeparator {
+    margin: 0 7px;
+    width: 1px;
+    height: 16px;
+    overflow: hidden;
+  }
+}
+
+.markItUpEditor {
+  font: 14px 'Helvetica Neue', Helvetica, monospace;
+  border: none;
+  width: 100%;
+  padding: 5px 10px;
+  height: 320px;
+  min-height: 240px !important;
+  background: #FFF ;
+  clear: both;
+  line-height: 24px;
+  overflow: auto;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+
+  &:focus{
+    box-shadow: none !important;
+  }
+}
+
+.markItUpPreviewFrame {
+  display: none;
+}
+
+.markItUpFooter {
+  width: 100%;
+  cursor: n-resize;
+  background-color: #eaeaea;
+}
+
+.markItUpResizeHandle {
+  overflow: hidden;
+  width: 22px;
+  height: 5px;
+  margin-left: auto;
+  margin-right: auto;
+  background-image: url(/assets/images/handle.png);
+  cursor: n-resize;
+}
+
+.markItUpButton1 a:before {
+  content: 'B';
+  text-transform: uppercase;
+  font-size: 17px;
+  font-family: serif;
+  line-height: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.markItUpButton2{
+  margin-left: 0 !important;
+
+  a:before {
+    content: 'I';
+    text-transform: uppercase;
+    font-style: italic;
+    font-size: 17px;
+    font-family: serif;
+    line-height: 18px;
+    font-weight: bold;
+    text-align: center;
+  }
+}
+
+.markItUpButton3{
+  margin-left: 0 !important;
+
+  a:before {
+    content: "\f10d";
+    font: normal normal normal 14px/1 FontAwesome;
+    padding-left: 5px;
+    padding-top: 2px;
+  }
+}
+
+.markItUpButton4{
+  margin-left: 1px !important;
+
+  a:before {
+    content: "\f0c1";
+    font: normal normal normal 14px/1 FontAwesome;
+    padding-top: 2px;
+    padding-left: 5px;
+  }
+}
+
+.markItUpButton5 a:before {
+  content: "\f0ca";
+  font: normal normal normal 16px/1 FontAwesome;
+  padding-top: 1px;
+}
+
+.markItUpButton6 a:before {
+  content: "\f0cb";
+  font: normal normal normal 16px/1 FontAwesome;
+  padding-top: 1px;
+}
+
+.markItUpEditor,
+.markitup__preview{
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #fff;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: #aaa;
+  }
+}
+
+/*==states ==*/
+.markitup_state_preview{
+  .markitup__preview{
+    display: block;
+  }
+
+  .markItUpButton{
+    display: none !important;
+  }
+}
