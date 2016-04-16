@@ -28,6 +28,8 @@ libraryDependencies ++= Seq(
     "org.apache.poi" % "poi-ooxml" % "3.14",
     "org.joda" % "joda-money" % "0.11",
     "org.jsoup" % "jsoup" % "1.7.3",
+    // as we use a customized SecureSocial module
+    "org.mindrot" % "jbcrypt" % "0.3m",
     "org.pegdown" % "pegdown" % "1.6.0",
     "org.planet42" %% "laika-core" % "0.5.1",
     "org.scalamock" %% "scalamock-specs2-support" % "3.2.2" % Test,
