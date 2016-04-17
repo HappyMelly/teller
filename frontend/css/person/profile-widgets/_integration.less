@@ -1,0 +1,120 @@
+
+.b-integr{
+  margin-top: 15px;
+  margin-bottom: 50px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.b-integr__title-main{
+  margin: 0 0 17px 0;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.b-integr__deactive{
+  margin-top: -1px;
+}
+
+.b-integr__btn-activate{
+  min-width: 123px;
+}
+
+
+//active tab
+.b-integr__active{
+  display: none;
+  margin-top: -1px;
+}
+
+.b-integr__btn-activate{
+  min-width: 123px;
+}
+
+.b-integr__title{
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: 35px;
+  margin-bottom: 10px;
+}
+
+// list
+.b-integr__list{
+  display: none;
+}
+
+.b-integr__buttons{
+  margin-bottom: 40px;
+}
+
+.b-integr__btn-import{
+  margin-right: 17px;
+  vertical-align: top;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.b-integr__btn-new{
+  vertical-align: top;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.b-integrlist{
+  padding: 19px 20px 25px;
+  background-color: rgba(255, 197, 90, 0.1);
+  margin-bottom: 11px;
+}
+
+.b-integrlist__buttons{
+  margin-top: 13px;
+}
+
+.b-integrlist__btn{
+  margin-right: 6px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px 14px 6px;
+  min-width: 101px;
+}
+
+// new list
+.b-integr__nolist{
+  display: none;
+}
+
+// loading
+.b-integr__loading{
+  display: none;
+}
+
+/*== States ==*/
+.b-integr_state_active{
+  .b-integr__deactive{
+    display: none;
+  }
+
+  .b-integr__active{
+    display: block;
+  }
+}
+
+.b-integr_state_import{
+  .b-integr__list{
+    display: block;
+  }
+}
+
+.b-integr_state_nolist{
+  .b-integr__nolist{
+    display: block;
+  }
+}
+
+.b-integr_state_loading{
+  .b-integr__loading{
+    display: block;
+  }
+}

@@ -158,6 +158,8 @@ textarea.form-control{
 }
 
 .b-radio__text{
+  margin-top: 14px;
+  margin-bottom: 13px;
   margin-left: 25px;
   padding-top: 1px;
   font-weight: 400;
@@ -167,3 +169,63 @@ textarea.form-control{
   display: none;
   margin-top: 8px;
 }
+
+// checkbox
+.b-checkbox{
+  display: block;
+  position: relative;
+  padding-left: 23px;
+  margin-bottom: 5px;
+  font-weight: 400;
+
+  &.type_inline{
+    display: inline-block;
+    vertical-align: top;
+  }
+}
+
+.b-checkbox__real{
+  position: absolute;
+  left: -20px;
+  top: 0;
+  visibility: hidden;
+
+  &:checked ~ .b-checkbox__img{
+
+    &:after{
+      display: block;
+    }
+  }
+}
+
+.b-checkbox__img{
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid #BBBBBB;
+  box-shadow: 0 1px 3px rgba(0,0,0, .5) inset;
+  cursor: pointer;
+  @include transition(all .15s ease);
+  cursor: pointer;
+
+  &:after{
+    content: '';
+    position: absolute;
+    display: none;
+    left: 2px;
+    top: -1px;
+    width: 15px;
+    height: 12px;
+    background: url(/assets/images/common/icon-check.png) no-repeat;
+    -webkit-background-size: cover;
+    background-size: cover;
+  }
+
+  &:hover{
+    border-color: #aaa;
+  }
+}
+
