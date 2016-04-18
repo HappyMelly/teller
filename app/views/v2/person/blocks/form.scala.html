@@ -9,7 +9,7 @@
 @import views.Countries
 @import views.ViewHelpersV2._
 
-@v2.html.block("Personal") {
+@v2.html.formBlock("Personal") {
     @v2.html.text(form("firstName"), true, "First name")
     @v2.html.text(form("lastName"), true, "Last name")
     @if(disabledEmail) {
@@ -19,7 +19,7 @@
     }
     @v2.html.date(form("birthday"), false, "Birthday")
 }
-@v2.html.block("Address", Some("grey")) {
+@v2.html.formBlock("Address", Some("grey")) {
   @v2.html.text(form("address.street1"), false, "Address line 1")
   @v2.html.text(form("address.street2"), false, "Address line 2")
   @v2.html.text(form("address.postCode"), false, "Post code")
@@ -27,10 +27,10 @@
   @v2.html.text(form("address.province"), false, "Province or state")
   @v2.html.select(form("address.country"), true, "Country", ("", "Choose a country") :: Countries.all)
 }
-@v2.html.block("Bio", Some("yellow")) {
+@v2.html.formBlock("Bio", Some("yellow")) {
   @v2.html.textarea(form("bio"), false, "Bio", 'rows -> "5", 'markdownpreview -> "")
 }
-@v2.html.block("Interests") {
+@v2.html.formBlock("Interests") {
   @v2.html.textarea(form("interests"), false, "Interests", 'rows -> "5", 'markdownpreview -> "")
 }
 
@@ -38,7 +38,7 @@
 <input type="hidden" value="@form("signature").value.getOrElse(false)" id="signature" name="signature"/>
 
 
-@v2.html.block("On The Web", Some("yellow")) {
+@v2.html.formBlock("On The Web", Some("yellow")) {
   @v2.html.text(form("webSite"), false, "Web site", 'placeholder -> "http://")
   @v2.html.text(form("blog"), false, "Blog", 'placeholder -> "http://")
 }

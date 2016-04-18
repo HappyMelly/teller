@@ -11,9 +11,9 @@
 @import helper.CSRF
 
 @v2.main("Add content license", "people", user, withMelly = true) {
-    <div class="form">
-        @v2.html.block("") {
-            <h1>Edit content license
+    <div class="b-form">
+        @v2.html.formBlock("") {
+            <h1 class="b-form__title">Edit content license
 
                 <div class="actions pull-right">
                     <form class="delete" method="post" action="@CSRF(routes.Licenses.delete(brandId, id))">

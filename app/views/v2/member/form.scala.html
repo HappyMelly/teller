@@ -9,21 +9,22 @@
 
 @defining(if (form.value.nonEmpty && member.nonEmpty) { true } else { false }) { edit: Boolean =>
     @v2.main("Member", "members", user, withMelly = true) {
-        <div class="form">
-            @v2.html.block("") {
+        <div class="b-form">
+            <div class="container">
                 @if(edit) {
-                    <h1>Edit member @member.get.name</h1>
+                    <h1 class="b-form__title">Edit member @member.get.name</h1>
 
                 } else {
-                    <h1>Add Funder</h1>
+                    <h1 class="b-form__title">Add Funder</h1>
                     <h3>Step 1: Fee</h3>
                 }
-            }
+            </div>
+
             @v2.html.form(action = CSRF(if(edit) { controllers.hm.routes.Members.update(member.get.id.get)
             } else { controllers.hm.routes.Members.create() } )) {
                 <input type="hidden" value="@form("objectId").value.getOrElse(0)" id="objectId" name="objectId"/>
                 <input type="hidden" value="@form("person").value.getOrElse(1)" id="person" name="person"/>
-                @v2.html.block("") {
+                @v2.html.formBlock("") {
                     @v2.html.number(form("fee"), false, "Fee", '_step -> "any")
                     @v2.html.date(form("since"), false, "Member since")
                     @if(edit) {
@@ -45,23 +46,20 @@
                     }
                 }
                 @if(form.hasErrors) {
-                    @v2.html.block("") {
-                        <div class="errors">
+                    @v2.html.formBlock("") {
+                        <div class="b-form__errors">
                         @for((error, index) <- form.errors.zipWithIndex) {
                             @{index + 1}. @Messages(error.message)<br/>
                         }
                         </div>
                     }
                 }
-                @v2.html.block("") {
-                    <div class="row">
-                        <div class="col-md-5">
-                            <button class="btn btn-primary btn-block btn-lg" type="submit">
-                                @if(edit) { Save } else { Choose Person }
-                            </button>
-                        </div>
-                        <div class="col-md-3 cancel">
-                            <a href="javascript:history.back()">Cancel changes</a></div>
+                @v2.html.formBlock("") {
+                    <div class="b-form__buttons">
+                        <button class="btn btn-primary b-form__btn-submit" type="submit">
+                            @if(edit) { Save } else { Choose Person }
+                        </button>
+                        <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
                     </div>
                 }
             }

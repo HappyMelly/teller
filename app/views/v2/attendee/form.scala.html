@@ -13,26 +13,29 @@
 @import views.ViewHelpersV2._
 
 @v2.main("Person", "people", user, withMelly = true) {
-    <div class="form">
-        @v2.html.block("") {
-            @if(attendeeId.isEmpty) {
-                <h1>Add Attendee</h1>
-            } else {
-                <h1>Edit Attendee</h1>
-            }
-        }
+    <div class="b-form">
+        <div class="container">
+            <h1 class="b-form__title">
+                @if(attendeeId.isEmpty) {
+                    Add Attendee
+                } else {
+                    Edit Attendee
+                }
+            </h1>
+        </div>
+
         @html.form(action = CSRF(attendeeId.map { value =>
             controllers.cm.event.routes.Attendees.update(eventId, value)
         }.getOrElse {
             controllers.cm.event.routes.Attendees.create(eventId)
         })) {
-            @v2.html.block("Personal") {
+            @v2.html.formBlock("Personal") {
                 @v2.html.text(form("firstName"), true, "First name")
                 @v2.html.text(form("lastName"), true, "Last name")
                 @v2.html.email(form("email"), true, "E-mail address")
                 @v2.html.date(form("birthday"), false, "Date of birth")
             }
-            @v2.html.block("Address", Some("grey")) {
+            @v2.html.formBlock("Address", Some("grey")) {
                 @v2.html.text(form("street1"), false, "Address line 1")
                 @v2.html.text(form("street2"), false, "Address line 2")
                 @v2.html.text(form("postCode"), false, "Post code")
@@ -40,11 +43,11 @@
                 @v2.html.text(form("province"), false, "Province or state")
                 @v2.html.select(form("country"), false, "Country", ("", "Choose a country") :: Countries.all)
             }
-            @v2.html.block("Role", Some("yellow")) {
+            @v2.html.formBlock("Role", Some("yellow")) {
                 @v2.html.select(form("role"), false, "Role", ("", "I don't know") :: Attendees.roles.map(x => (x, x)))
             }
             @if(attendeeId.isEmpty) {
-                @v2.html.block("OptOut") {
+                @v2.html.formBlock("OptOut") {
                     @v2.html.checkboxWithDescription(form("optOut"), '_label -> "OptOut",
                         '_desc -> "I don't want to use this attendee in any marketing campaign")
                 }
@@ -53,22 +56,20 @@
             }
 
             @if(form.hasErrors) {
-                @v2.html.block("") {
-                    <div class="errors">
+                @v2.html.formBlock("") {
+                    <div class="b-form__errors">
                     @for( error <- form.errors) {
                         @Messages(error.message) <br/>
                     }
                     </div>
                 }
             }
-            @v2.html.block("") {
-                <div class="row">
-                    <div class="col-md-5">
-                        <button class="btn btn-primary btn-block btn-lg" type="submit">
-                            Save</button>
-                    </div>
-                    <div class="col-md-3 cancel">
-                        <a href="javascript:history.back()">Cancel changes</a></div>
+            @v2.html.formBlock("") {
+                <div class="b-form__buttons">
+                    <button class="btn btn-primary b-form__btn-submit" type="submit">
+                        Save
+                    </button>
+                    <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
                 </div>
             }
         }

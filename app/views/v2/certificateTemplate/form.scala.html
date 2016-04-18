@@ -11,12 +11,13 @@
 @import views.ViewHelpersV2._
 
 @v2.main("Certificate Template", "brand", user) {
-    <div class="form">
-        @v2.html.block("") {
-            <h1>Add Template</h1>
-        }
+    <div class="b-form">
+        <div class="container">
+            <h1 class="b-form__title">Add Template</h1>
+        </div>
+
         @v2.html.form(action = CSRF(routes.CertificateTemplates.create(brand.id.get)), 'enctype -> "multipart/form-data") {
-            @v2.html.block("") {
+            @v2.html.formBlock("") {
                 @v2.html.select(form("language"), true, "Language",
                     ("", "Choose a language") +: languages.toList.sortBy(_._2))
                 @v2.html.file(form("oneFacilitator"), '_label -> "One Facilitator", '_required -> true,
@@ -25,22 +26,20 @@
                     'accept -> "image/jpeg, image/pjpeg, image/gif, image/png", '_help -> "")
             }
             @if(form.hasErrors) {
-                @v2.html.block("") {
-                    <div class="errors">
+                @v2.html.formBlock("") {
+                    <div class="b-form__errors">
                     @for((error, index) <- form.errors.zipWithIndex) {
                         @{index + 1}. @Messages(error.message)<br/>
                     }
                     </div>
                 }
             }
-            @v2.html.block("") {
-                <div class="row">
-                    <div class="col-md-5">
-                        <button class="btn btn-primary btn-block btn-lg" id="submit" type="submit">
-                            Save</button>
-                    </div>
-                    <div class="col-md-3 cancel">
-                        <a href="javascript:history.back()">Cancel changes</a></div>
+            @v2.html.formBlock("") {
+                <div class="b-form__buttons">
+                    <button class="btn btn-primary b-form__btn-submit" id="submit" type="submit">
+                        Save
+                    </button>
+                    <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
                 </div>
             }
         }

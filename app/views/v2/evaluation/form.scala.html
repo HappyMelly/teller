@@ -12,12 +12,13 @@
 @import views.ViewHelpersV2._
 
 @v2.main("Evaluation", "attendees", user) {
-    <div class="form">
+    <div class="b-form">
     @v2.html.form(action = CSRF(controllers.cm.routes.Evaluations.create(attendee.eventId, attendee.identifier))) {
-        @v2.html.block("") {
-            <h1>Add evaluation for @attendee.fullName</h1>
-        }
-        @v2.html.block("") {
+        <div class="container">
+            <h1 class="b-form__title">Add evaluation for @attendee.fullName</h1>
+        </div>
+
+        @v2.html.formBlock("") {
             @v2.html.textarea(form("reasonToRegister"), false, Evaluations.Questions.reasonToRegister)
             @v2.html.select(form("facilitatorImpression"), false, Evaluations.Questions.facilitatorImpression,
                 Evaluations.impressions)
@@ -33,22 +34,20 @@
             <input type="hidden" id="certificate" name="certificate" readonly="readonly" value="@form("certificate").value"/>
         }
         @if(form.hasErrors) {
-            @v2.html.block("") {
-                <div class="errors">
+            @v2.html.formBlock("") {
+                <div class="b-form__errors">
                 @for((error, index) <- form.errors.zipWithIndex) {
                     @{index + 1}. @Messages(error.message)<br/>
                 }
                 </div>
             }
         }
-        @v2.html.block("") {
+        @v2.html.formBlock("") {
             <div class="row">
-                <div class="col-md-5">
-                    <button class="btn btn-primary btn-block btn-lg" type="submit">
-                        Save</button>
-                </div>
-                <div class="col-md-3 cancel">
-                    <a href="javascript:history.back()">Cancel changes</a></div>
+                <button class="btn btn-primary b-form__btn-submit" type="submit">
+                    Save
+                </button>
+                <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
             </div>
         }
     }
