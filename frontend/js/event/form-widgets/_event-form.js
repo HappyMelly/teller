@@ -39,11 +39,7 @@ export default class Widget {
     }
 
     _onBlurVatInput(){
-        if (this.inputReg.isValid() && this.inputOrg.isValid()){
-            this._enabledForm();
-        } else {
-            this._disabledForm();
-        }
+        this._enabledForm();
     }
 
     _disabledForm(){
