@@ -35,6 +35,7 @@ import models._
 import models.cm._
 import models.cm.facilitator.Endorsement
 import models.repository.Repositories
+import modules.Actors
 import org.joda.time._
 import play.api.data.Forms._
 import play.api.data._

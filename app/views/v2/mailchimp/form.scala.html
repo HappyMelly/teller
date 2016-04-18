@@ -1,5 +1,5 @@
-@import controllers.cm.facilitator.Mailchimp
-@(user: ActiveUser, form: Form[Mailchimp.NewListData], brands: List[Brand])(implicit flash: Flash,
+@import controllers.cm.facilitator.MailChimp
+@(user: ActiveUser, form: Form[MailChimp.NewListData], brands: List[Brand])(implicit flash: Flash,
     request: Request[Any],
     handler: be.objectify.deadbolt.scala.DeadboltHandler,
     messages: Messages)
@@ -12,7 +12,7 @@
 @v2.main("Person", "people", user, withMelly = true) {
     <div class="form">
         @v2.html.block("") { <h1>Create new list and set exporting</h1> }
-        @html.form(action = CSRF(controllers.cm.facilitator.routes.Mailchimp.create())) {
+        @html.form(action = CSRF(controllers.cm.facilitator.routes.MailChimp.create())) {
             @v2.html.block("General") {
                 @v2.html.text(form("name"), true, "List name")
                 @v2.html.email(form("defaults.fromEmail"), true, "Default 'From email'")

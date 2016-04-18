@@ -26,13 +26,14 @@ package modules
 import com.google.inject.AbstractModule
 import models.actors._
 import models.cm.evaluation.Mailer
+import models.cm.facilitator.MailChimpSubscriber
 import play.api.libs.concurrent.AkkaGuiceSupport
 import services.integrations.EmailActor
 
 /**
-  * Created by sery0ga on 06/02/16.
+  * Initialises all actors
   */
-class ActorModule extends AbstractModule with AkkaGuiceSupport {
+class Actors extends AbstractModule with AkkaGuiceSupport {
   override def configure(): Unit = {
     bindActor[EmailActor]("email")
     bindActor[Mailer]("evaluation-mailer")
@@ -41,5 +42,7 @@ class ActorModule extends AbstractModule with AkkaGuiceSupport {
     bindActor[NotificationDispatcher]("notification")
     bindActor[PeerCreditsConfigurator]("peer-credits")
     bindActor[ProfileStrengthRecalculator]("profile-strength")
+    bindActor[MailChimpSubscriber]("mailchimp-subscriber")
   }
 }
+

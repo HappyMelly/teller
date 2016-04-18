@@ -35,6 +35,16 @@ import scala.concurrent.Future
   */
 class Client(endPoint: String, token: String) {
 
+  def createList(list: List): Future[List] = {
+    val url = endPoint + "/3.0/lists"
+    implicit val listFormats = Convertions.listFormats
+
+    request(url).post(Json.toJson(list)).map { response =>
+      response.json.as[List]
+    }
+  }
+
+
   def lists(): Future[Seq[List]] = {
     val url = endPoint + "/3.0/lists"
     implicit val listReads = Convertions.listReads
@@ -51,12 +61,13 @@ class Client(endPoint: String, token: String) {
     }
   }
 
-  def createList(list: List): Future[List] = {
-    val url = endPoint + "/3.0/lists"
-    implicit val listFormats = Convertions.listFormats
-
-    request(url).post(Json.toJson(list)).map { response =>
-      response.json.as[List]
+  def subscribe(listId: String, email: String, firstName: String, lastName: String): Future[Unit] = {
+    val url = s"$endPoint/3.0/lists/$listId/members"
+    val params = Json.obj("status" -> "subscribed",
+      "email_address" -> email,
+      "merge_fields" -> Json.obj("FNAME" -> firstName, "LNAME" -> lastName))
+    request(url).post(params).map { response =>
+      Nil
     }
   }
 

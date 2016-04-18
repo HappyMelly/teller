@@ -25,12 +25,14 @@ package controllers.cm
 
 import javax.inject.{Inject, Named}
 
-import akka.actor.ActorRef
+import akka.actor.{Actor, ActorRef}
 import controllers.{Activities, AsyncController, Utilities}
 import models.cm.event.Attendee
+import models.cm.facilitator.MailChimpSubscriber
 import models.cm.{Evaluation, EvaluationStatus}
 import models.repository.Repositories
 import models.{Address, DateStamp}
+import modules.Actors
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
@@ -47,6 +49,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
                                    override val messagesApi: MessagesApi,
                                    @Named("evaluation-mailer") mailer: ActorRef,
+                                   @Named("mailchimp-subscriber") subscriber: ActorRef,
                                    val repos: Repositories)
   extends AsyncController
     with I18nSupport
@@ -98,7 +101,7 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
     */
   def create(eventId: String) = Action.async { implicit request =>
     repos.cm.event.find(eventId) flatMap {
-      case None => jsonNotFound("You try to evaluation an event which doesn't exist")
+      case None => jsonNotFound("You try to evaluate an event which doesn't exist")
       case Some(event) =>
         if (!event.past)
           jsonConflict("The event is not ended yet. Please come back later")
@@ -112,7 +115,10 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
                 a <- repos.cm.rep.event.attendee.insert(attendee)
                 e <- evaluation.copy(attendeeId = a.identifier).add(withConfirmation = true, repos, mailer)
                 _ <- repos.cm.rep.event.attendee.update(attendee.copy(evaluationId = e.id))
-              } yield ()) flatMap { _ =>
+              } yield a) flatMap { attendee: Attendee =>
+                if (env.isDev) {
+                  (subscriber ! (attendee.identifier, attendee.eventId, true))(Actor.noSender)
+                }
                 jsonSuccess("")
               }
             }

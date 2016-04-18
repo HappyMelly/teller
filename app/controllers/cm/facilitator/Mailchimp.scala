@@ -24,24 +24,24 @@
 
 package controllers.cm.facilitator
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
-import controllers.cm.facilitator.Mailchimp.NewListData
-import controllers.{Utilities, Security}
-import libs.mailchimp.{CampaignDefaults, ListContact, Client}
-import models.core.integration.MailChimp
-import models.{SocialIdentity, ActiveUser, Brand}
+import controllers.cm.facilitator.MailChimp.NewListData
+import controllers.{Security, Utilities}
+import libs.mailchimp.{CampaignDefaults, Client, ListContact}
 import models.UserRole.Role._
 import models.cm.facilitator.MailChimpList
 import models.repository.Repositories
-import play.api.i18n.MessagesApi
-import play.api.libs.json._
+import models.{ActiveUser, Brand}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.mvc.{Request, AnyContent, Result}
+import play.api.i18n.MessagesApi
+import play.api.libs.json._
+import play.api.mvc.{AnyContent, Request, Result}
 import securesocial.core.SecureSocial
 import security.MailChimpProvider
 import services.TellerRuntimeEnvironment
@@ -51,10 +51,11 @@ import scala.concurrent.Future
 /**
   * Contains methods for managing MailChimp integrations for facilitators
   */
-class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
-                           override val messagesApi: MessagesApi,
-                           val repos: Repositories,
-                           deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
+class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
+                          override val messagesApi: MessagesApi,
+                          val repos: Repositories,
+                          @Named("mailchimp-subscriber") subscriber: ActorRef,
+                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
 
   /**
@@ -84,7 +85,7 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
         ListContact("", "", None, "", "", "", "")
       }
       val formData = NewListData("", defaults, "", contact, allAttendees = true, includePreviousEvents = true, List())
-      ok(views.html.v2.mailchimp.form(user, Mailchimp.newListForm.fill(formData), brands))
+      ok(views.html.v2.mailchimp.form(user, MailChimp.newListForm.fill(formData), brands))
     }
   }
 
@@ -92,17 +93,17 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     * Connects MailChimp list with a set of given brands
     */
   def connect = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
-    Mailchimp.connectForm.bindFromRequest().fold(
+    MailChimp.connectForm.bindFromRequest().fold(
       errors => jsonFormError(Utilities.errorsToJson(errors)),
       data => {
         withMailChimpClient(mailChimpId) { client =>
           repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
-            client.mergeFields(data.id).map(MailChimp.validateMergeFields) flatMap {
+            client.mergeFields(data.id).map(models.core.integration.MailChimp.validateMergeFields) flatMap {
               case Left(msg) => jsonBadRequest(msg)
               case Right(msg) =>
                 val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
                 val results = validBrands.map { brandId =>
-                  val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier)
+                  val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier, data.allAttendees)
                   repos.cm.facilitatorSettings.insertList(list)
                 }
                 Future.sequence(results).flatMap { list =>
@@ -113,10 +114,10 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
         }
       }
     )
-  }
+}
 
   def create = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
-    Mailchimp.newListForm.bindFromRequest().fold(
+    MailChimp.newListForm.bindFromRequest().fold(
       errors => jsonFormError(Utilities.errorsToJson(errors)),
       data => {
         withMailChimpClient(mailChimpId) { client =>
@@ -128,10 +129,12 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
           } yield (l, r)) flatMap { case (remoteList, records) =>
             val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
             val results = validBrands.map { brandId =>
-              val list = MailChimpList(None, remoteList.name, remoteList.id.get, brandId, user.person.identifier)
+              val list = MailChimpList(None, remoteList.name, remoteList.id.get, brandId,
+                user.person.identifier, data.allAttendees)
               repos.cm.facilitatorSettings.insertList(list)
             }
             Future.sequence(results).flatMap { _ =>
+              subscriber ! (user.person.identifier, remoteList.id.get)
               jsonSuccess(s"MailChimp list was successfully created and connected to selected brand(s)")
             }
           }
@@ -276,13 +279,18 @@ class Mailchimp @Inject() (override implicit val env: TellerRuntimeEnvironment,
     "only attendees with evaluations"
 }
 
-object Mailchimp {
+object MailChimp {
 
-  case class ConnectFormData(id: String, name: String, brands: List[Long])
+  case class ConnectFormData(id: String, name: String,
+                             brands: List[Long],
+                             allAttendees: Boolean,
+                             includePreviousEvents: Boolean)
   val connectForm = Form(mapping(
     "list_id" -> nonEmptyText,
     "list_name" -> nonEmptyText,
-    "brands" -> list(longNumber)
+    "brands" -> list(longNumber),
+    "allAttendees" -> boolean,
+    "includePreviousEvents" -> boolean
   )(ConnectFormData.apply)(ConnectFormData.unapply))
 
   case class NewListData(name: String,

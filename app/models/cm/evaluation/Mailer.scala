@@ -37,7 +37,6 @@ import templates.Formatters._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 /**
   * Responsible for sending all evaluation-related emails
   */

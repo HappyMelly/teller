@@ -23,16 +23,19 @@
  */
 package controllers.api
 
-import javax.inject.Inject
+import javax.inject.{Named, Inject}
 
+import akka.actor.ActorRef
 import models._
 import models.cm.event.Attendee
 import models.repository.Repositories
+import modules.Actors
 import org.joda.time.DateTime
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
+import services.TellerRuntimeEnvironment
 import views.Countries
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,8 +43,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Participants API
  */
-class ParticipantsApi @Inject() (val repos: Repositories,
-                                 override val messagesApi: MessagesApi)
+class ParticipantsApi @Inject() (env: TellerRuntimeEnvironment,
+                                  val repos: Repositories,
+                                 override val messagesApi: MessagesApi,
+                                 @Named("mailchimp-subscriber") subscriber: ActorRef)
   extends ApiAuthentication(repos, messagesApi) {
 
   def attendeeForm(appName: String) = Form(mapping(
@@ -89,6 +94,9 @@ class ParticipantsApi @Inject() (val repos: Repositories,
       },
       data ⇒ {
         repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
+          if (env.isDev) {
+            subscriber ! (attendee.identifier, attendee.eventId, false)
+          }
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
         }
       })

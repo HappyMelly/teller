@@ -38,6 +38,7 @@ import models.cm.Facilitator
 import models.cm.facilitator.{FacilitatorCountry, FacilitatorLanguage}
 import models.core.notification.{NewBadge, NewPersonalBadge}
 import models.repository.Repositories
+import modules.Actors
 import org.joda.time.LocalDate
 import play.api.data.Form
 import play.api.data.Forms._
