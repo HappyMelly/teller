@@ -27,7 +27,7 @@ package models.core.integration
 import libs.mailchimp.MergeField
 
 /**
-  * Created by sery0ga on 13/04/16.
+  * Contains a set of helper methods for working with MailChimp
   */
 object MailChimp {
   val EMAIL = "EMAIL"
@@ -54,11 +54,11 @@ object MailChimp {
       val lnameExists = withValidTags.exists(_.tag.contains(LNAME))
       (fnameExists, lnameExists) match {
         case (false, false) =>
-          Right(s"Fields with $FNAME and $LNAME are not found. Only email will be exported for attendee.")
+          Right(s"Fields with $FNAME and $LNAME tags are not found. Only email will be exported for attendee.")
         case (false, true) =>
-          Right(s"Field with $FNAME is not found. Attendee's first name won't be exported.")
+          Right(s"Field with $FNAME tag is not found. Attendee's first name won't be exported.")
         case (true, false) =>
-          Right(s"Field with $LNAME is not found. Attendee's last name won't be exported.")
+          Right(s"Field with $LNAME tag is not found. Attendee's last name won't be exported.")
         case _ =>
           Right("")
       }

@@ -26,9 +26,8 @@ package controllers
 
 import play.api.http.Writeable
 import play.api.i18n.I18nSupport
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
-import play.twirl.api.Html
 
 import scala.concurrent.Future
 
