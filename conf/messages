@@ -138,6 +138,7 @@ error.eventType.notFound = Event type is not found
 error.eventType.wrongParameters = Some parameters for the event type are wrong
 error.eventType.wrongBrand = Event type doesn't belong to the selected brand
 error.language.unknown = Unknown language
+error.country.unknown = Unknown country
 
 error.membership.tooEarly = Membership date cannot be earlier than 2015-01-01
 error.membership.tooLate = Membership date cannot be later than the first day of the next month

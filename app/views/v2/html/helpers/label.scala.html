@@ -1,0 +1,13 @@
+@**
+ * Adds '_label parameter
+ *
+ * @param label Label name
+ * @param args Set of attributes
+ *@
+@(label: String, args: (Symbol, Any)*)(f: Seq[(Symbol, Any)] => Html)
+
+@defining(args.find(_._1 == '_label).getOrElse(('_label, label))) { label: (Symbol, Any) =>
+    @defining(args.filterNot(_._1 == '_label).+:(label)) { withLabel =>
+        @f(withLabel)
+    }
+}

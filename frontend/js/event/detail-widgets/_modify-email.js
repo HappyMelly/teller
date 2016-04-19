@@ -48,7 +48,9 @@ export default class Widget {
         e.preventDefault();
         const locals = this.locals;
 
-        locals.$textarea.val(locals.$defaultTemplate.text());
+        locals.$textarea
+            .val(locals.$defaultTemplate.text())
+            .trigger('markdown.render')
     }
 
     _onCloseModal(){

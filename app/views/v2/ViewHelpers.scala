@@ -29,9 +29,9 @@ import views.html.helper.FieldConstructor
 
 object ViewHelpersV2 {
 
-  implicit val fields = FieldConstructor(views.html.v2.html.fieldConstructor.f)
-  val asIs = FieldConstructor(views.html.v2.html.asIsConstructor.f)
-  val narrow = FieldConstructor(views.html.v2.html.narrowFieldConstructor.f)
+  implicit val fields = FieldConstructor(views.html.v2.html.helpers.fieldConstructor.f)
+  val asIs = FieldConstructor(views.html.v2.html.helpers.asIsConstructor.f)
+  val narrow = FieldConstructor(views.html.v2.html.helpers.narrowFieldConstructor.f)
 
   /**
    * Returns well-formatted date interval

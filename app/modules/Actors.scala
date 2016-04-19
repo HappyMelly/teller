@@ -21,58 +21,28 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
+package modules
 
-@import "../../settings";
+import com.google.inject.AbstractModule
+import models.actors._
+import models.cm.evaluation.Mailer
+import models.cm.facilitator.MailChimpSubscriber
+import play.api.libs.concurrent.AkkaGuiceSupport
+import services.integrations.EmailActor
 
-/*== Popover for Markdown preview ==*/
-.popover-bl{
-  position: absolute;
-  opacity: 0;
-  visibility: hidden;
-  width: 450px;
-  min-height: 112px;
-  margin-left: 30px;
-  padding: 10px 15px;
-  z-index: 10000;
-  border-radius: 5px;
-  background-color: #ffffff;
-  .transition(all .15s ease);
-  box-shadow: 0 2px 6px rgba(0,0,0, .3);
-  .transform(translate(15px,0));
-
-  &:after{
-    content: '';
-    position: absolute;
-    top: 44px;
-    left: -10px;
-    .triangle(10px, 20px, #fff, 'left');
-  }
-
-  &:before{
-    content: '';
-    position: absolute;
-    top: 42px;
-    left: -12px;
-    .triangle(12px, 24px, #ddd, 'left');
-  }
-
-  .fa-spinner{
-    position: absolute;
-    left: 2px;
-    top: 2px;
-    line-height: 1;
-    display: none;
+/**
+  * Initialises all actors
+  */
+class Actors extends AbstractModule with AkkaGuiceSupport {
+  override def configure(): Unit = {
+    bindActor[EmailActor]("email")
+    bindActor[Mailer]("evaluation-mailer")
+    bindActor[EventRatingCalculator]("event-rating")
+    bindActor[FacilitatorRatingCalculator]("facilitator-rating")
+    bindActor[NotificationDispatcher]("notification")
+    bindActor[PeerCreditsConfigurator]("peer-credits")
+    bindActor[ProfileStrengthRecalculator]("profile-strength")
+    bindActor[MailChimpSubscriber]("mailchimp-subscriber")
   }
 }
 
-.popover-bl_show{
-  opacity: 1;
-  visibility: visible;
-  .transform(translate(0,0));
-}
-
-.popover-bl_loading{
-  .fa-spinner{
-    display: inline-block;
-  }
-}

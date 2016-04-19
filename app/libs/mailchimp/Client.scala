@@ -24,7 +24,8 @@
 package libs.mailchimp
 
 import play.api.Play.current
-import play.api.libs.ws.WS
+import play.api.libs.json.Json
+import play.api.libs.ws.{WSRequest, WS}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -34,19 +35,41 @@ import scala.concurrent.Future
   */
 class Client(endPoint: String, token: String) {
 
+  def createList(list: List): Future[List] = {
+    val url = endPoint + "/3.0/lists"
+    implicit val listFormats = Convertions.listFormats
+
+    request(url).post(Json.toJson(list)).map { response =>
+      response.json.as[List]
+    }
+  }
+
+
   def lists(): Future[Seq[List]] = {
     val url = endPoint + "/3.0/lists"
-    implicit val listReads = Reads.list
-    WS.url(url).withHeaders("Authorization" -> s"OAuth $token").get().map { response =>
+    implicit val listReads = Convertions.listReads
+    request(url).get().map { response =>
       (response.json \ "lists").as[Seq[List]]
     }
   }
 
   def mergeFields(listId: String): Future[Seq[MergeField]] = {
     val url = s"$endPoint/3.0/lists/$listId/merge-fields"
-    implicit val mergeFieldReads = Reads.mergeField
-    WS.url(url).withHeaders("Authorization" -> s"OAuth $token").get().map { response =>
+    implicit val mergeFieldReads = Convertions.mergeField
+    request(url).get().map { response =>
       (response.json \ "merge_fields").as[Seq[MergeField]]
     }
   }
+
+  def subscribe(listId: String, email: String, firstName: String, lastName: String): Future[Unit] = {
+    val url = s"$endPoint/3.0/lists/$listId/members"
+    val params = Json.obj("status" -> "subscribed",
+      "email_address" -> email,
+      "merge_fields" -> Json.obj("FNAME" -> firstName, "LNAME" -> lastName))
+    request(url).post(params).map { response =>
+      Nil
+    }
+  }
+
+  protected def request(url: String): WSRequest = WS.url(url).withHeaders("Authorization" -> s"OAuth $token")
 }

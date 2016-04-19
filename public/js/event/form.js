@@ -139,39 +139,7 @@ function checkTotalHours(hours) {
     }
 }
 
-/**
- * Checks if the given url points to an existing page and notifies a user about
- *  the results of the check
- *
- * @param url {string} The url of interest
- * @param element {string} jQuery selector
- */
-function checkUrl(url, element) {
-    var field = element + '_field';
-    if ($.trim(url).length == 0 || (url.substring(0, 6) == "mailto")) {
-        $(field).removeClass('has-error');
-        $(field).removeClass('has-success');
-        $(element).siblings('span').each(function() {
-            $(this).text("Web site URL");
-        });
-    } else {
-        var fullUrl = jsRoutes.controllers.Utilities.validate(url).url;
-        $.getJSON(fullUrl, {}).done(function(data) {
-            if (data.result == "invalid") {
-                $(field).addClass('has-error');
-                $(element).siblings('span').each(function() {
-                    $(this).text("URL is not correct");
-                });
-            } else {
-                $(field).removeClass('has-error');
-                $(field).addClass('has-success');
-                $(element).siblings('span').each(function() {
-                    $(this).text("URL is correct");
-                });
-            }
-        });
-    }
-}
+
 
 /**
  * Shows/hides free checkbox depending on if event type allows free events
@@ -290,12 +258,7 @@ $(document).ready( function() {
     $('#schedule_totalHours').on('change', function(e) {
         checkTotalHours($(this).val());
     });
-    $('#organizer_webSite').on('change', function(e) {
-        checkUrl($(this).val(), '#organizer_webSite');
-    });
-    $('#organizer_registrationPage').on('change', function(e) {
-        checkUrl($(this).val(), '#organizer_registrationPage');
-    });
+
     var brandId = $('#brandId').find(':selected').val();
     getEventTypes(brandId, $('#currentEventTypeId').attr('value'));
     facilitators.initialize(brandId);

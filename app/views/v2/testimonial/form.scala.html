@@ -11,35 +11,35 @@
 @import views.ViewHelpersV2._
 
 @v2.main("Testimonial", "brand", user, withMelly = true) {
-    <div class="form">
-        @v2.html.block("") { <h1>Add Testimonial</h1> }
+    <div class="b-form">
+        <div class="container">
+            <h1 class="b-form__title">Add Testimonial</h1>
+        </div>
         @v2.html.form(action = testimonialId.map { id =>
             CSRF(routes.BrandTestimonials.update(brandId, id))
         }.getOrElse {
             CSRF(routes.BrandTestimonials.create(brandId))
         }) {
-            @v2.html.block("") {
-                @v2.html.textarea(form("content"), '_label -> "Testimonial", '_required -> true, '_help -> "")
-                @v2.html.text(form("name"), '_label -> "Name", '_required -> true, '_help -> "")
-                @v2.html.text(form("company"), '_label -> "Company / Job role", '_help -> "")
+            @v2.html.formBlock("") {
+                @v2.html.textarea(form("content"), true, "Testimonial")
+                @v2.html.text(form("name"), true, "Name")
+                @v2.html.text(form("company"), false, "Company / Job role")
             }
             @if(form.hasErrors) {
-                @v2.html.block("") {
-                    <div class="errors">
+                @v2.html.formBlock("") {
+                    <div class="b-form__errors">
                     @for(error <- form.errors) {
                         @Messages(error.message)<br/>
                     }
                     </div>
                 }
             }
-            @v2.html.block("") {
+            @v2.html.formBlock("") {
                 <div class="row">
-                    <div class="col-md-5">
-                        <button class="btn btn-primary btn-block btn-lg" type="submit">
-                            Save</button>
-                    </div>
-                    <div class="col-md-3 cancel">
-                        <a href="javascript:history.back()">Cancel changes</a></div>
+                    <button class="btn btn-primary b-form__btn-submit" type="submit">
+                        Save
+                    </button>
+                    <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel changes</a>
                 </div>
             }
         }

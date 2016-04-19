@@ -1,23 +1,312 @@
 @(active: Boolean, lists: Seq[(String, String)])
 
-<div class="b-setcredit js-set-credits @if(active) {b-setcredit_state_active}" >
-    <h4 class="b-setcredit__title">MailChimp</h4>
+<div class="b-integr @if(active) {b-integr_state_active} b-integr_state_import b-integr_state_active">
+    <h4 class="b-integr__title-main">MailChimp</h4>
     <p>
-        Connect a MailChimp account and automatically subscribe your attendees to MailChimp lists.
+        Connect a MailChimp account and automatically
+        subscribe your attendees to MailChimp lists.
     </p>
 
-    <div class="b-setcredit__deactive">
-        <a href="@controllers.cm.facilitator.routes.Mailchimp.activate()" class="btn btn-primary b-setcredit__btn"
-            data-setcredit-activate>
-            Activate
+    <div class="b-integr__deactive">
+        <a href="javascript: void(0)"
+            data-href="@controllers.cm.facilitator.routes.MailChimp.activate()"
+            class="btn btn-primary b-integr__btn-deactivate">
+            Connect
         </a>
     </div>
 
-    <div class="b-setcredit__active">
-        <a href="#" class="btn btn-default"
-            data-setcredit-deactivate>
-            Deactivate
+    <div class="b-integr__active">
+        <a href="javascript: void(0)"
+            class="btn btn-default b-integr__btn-activate">
+            Disconnect
         </a>
+
+        <h4 class="b-integr__title">
+            Set auto-importing to lists
+        </h4>
+        <p>
+            Set connection between MailChimp lists and attendees of your events.
+            Existing and new attendees will be automaticaly added to the lists.
+            You can create new list right here and then import attendees in it.
+        </p>
+
+        <!-- list -->
+        <div class="b-integr__list">
+            <div class="b-integr__buttons">
+                <a href="javascript: void(0)"
+                    class="btn btn-primary b-integr__btn-import"
+                    data-toggle="modal"
+                    data-target="#dlg-importlist">
+                    Set importing to the list
+                </a>
+                <a href="javascript: void(0)"
+                    class="btn btn-default b-integr__btn-new"
+                    data-toggle="modal"
+                    data-target="#dlg-newlist">
+                    Create new list and set importing
+                </a>
+            </div>
+            <div>
+                <div class="b-integrlist">
+                    <p>
+                        <b>“Evening letters”</b> list is set to import attendees only with evaluations from Managment 3.0 brand.
+                    </p>
+                    <div class="b-integrlist__buttons">
+                        <a href="javascript: void(0)"
+                            class="btn btn-default b-integrlist__btn">
+                            Edit
+                        </a>
+                        <a href="javascript: void(0)"
+                            data-toggle="modal"
+                            data-target="#dlg-integration-set"
+                            class="btn btn-default b-integrlist__btn">
+                            Disable importing
+                        </a>
+                    </div>
+                </div>
+                <div class="b-integrlist">
+                    <p>
+                        <b>“Newsletter every week”</b> list is set to import all attendees from all brands.
+                    </p>
+                    <div class="b-integrlist__buttons">
+                        <a href="javascript: void(0)"
+                            class="btn btn-default b-integrlist__btn">
+                            Edit
+                        </a>
+                        <a href="javascript: void(0)"
+                            class="btn btn-default b-integrlist__btn">
+                            Disable importing
+                        </a>
+                    </div>
+                </div>
+                <div class="b-integrlist">
+                    <p>
+                        <b>“Hello everyone and welcome”</b> list is set to import attendees
+                        only with evaluations from Managment 3.0 and Kudobox brands.
+                    </p>
+                    <div class="b-integrlist__buttons">
+                        <a href="javascript: void(0)"
+                            class="btn btn-default b-integrlist__btn">
+                            Edit
+                        </a>
+                        <a href="javascript: void(0)"
+                            class="btn btn-default b-integrlist__btn">
+                            Disable importing
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- new list -->
+        <div class="b-integr__nolist">
+            <p>
+                There’re no existing lists in your MailChimp account:
+            </p>
+            <a href="javascript: void(0)"
+                class="btn btn-primary b-integr__btn-new">
+                Create new list and set importing
+            </a>
+        </div>
+
+        <!-- loading -->
+        <div class="b-integr__loading">
+            <p>
+                <b>Please wait, we are importing your lists…</b>
+            </p>
+        </div>
+    </div>
+
+    <div id="dlg-importlist" class="modal fade b-modal dlg-interg-con" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+    @v2.html.modal("", "Set importing to the list") {
+        <form class="dlg-interg" action="#">
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select list
+                </div>
+                <select name="" class="dlg-interg__select form-control">
+                    <option value="1">Newsletter every week</option>
+                    <option value="2">Newsletter every 2</option>
+                    <option value="3">Newsletter every 3</option>
+                </select>
+            </div>
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select attendees to import
+                </div>
+                <select name="" class="dlg-interg__select form-control">
+                    <option value="1">Only with evaluations</option>
+                    <option value="2">Only with evaluations 2</option>
+                    <option value="3">Only with evaluations 3</option>
+                </select>
+            </div>
+            <div class="dlg-interg__i dlg-interg__include">
+                <label class="b-checkbox">
+                    <input type="checkbox" checked class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Include attendees from previouse events
+                    </div>
+                </label>
+            </div>
+
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select brand
+                </div>
+                <label class="b-checkbox">
+                    <input type="checkbox" class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Managment 3.0
+                    </div>
+                </label>
+                <label class="b-checkbox">
+                    <input type="checkbox" class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Learning 3.0
+                    </div>
+                </label>
+                <label class="b-checkbox">
+                    <input type="checkbox" class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Kudobox
+                    </div>
+                </label>
+            </div>
+            <div class="dlg-interg__text">
+                Attendees won’t be imported to the list if: <br>
+                - attendee doesn’t have email or first or last name, <br>
+                - selected list has requied fields other then first name, last name and email.
+                    You can change it in your MailChimp account.
+            </div>
+            <div class="dlg-interg__buttons">
+                <a href="javascript: void(0)"
+                    class="btn btn-default dlg-interg__cancel">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="btn btn-primary dlg-interg__submit">
+                    Import
+                </button>
+            </div>
+        </form>
+    }
+    </div>
+
+
+    <div id="dlg-newlist" class="modal fade b-modal dlg-interg-con" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+    @v2.html.modal("", "Create new list") {
+        <form class="dlg-interg" action="#">
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    List name
+                </div>
+                <input type="text" class="dlg-interg__input form-control" name="" />
+            </div>
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Default ‘From email’
+                </div>
+                <input type="text" class="dlg-interg__input form-control"
+                    placeholder="This is the address people will reply to."
+                    name="" />
+            </div>
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Default ‘From name’
+                </div>
+                <input type="text" class="dlg-interg__input form-control"
+                    placeholder="This is who your emails will come from."
+                    name="" />
+            </div>
+            <div class="dlg-interg__devider"></div>
+
+            <div class="dlg-interg__subtitle">
+                ... and set importing
+            </div>
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select attendees to import
+                </div>
+                <select name="" class="dlg-interg__select form-control">
+                    <option value="1">Only with evaluations</option>
+                    <option value="2">Only with evaluations 2</option>
+                    <option value="3">Only with evaluations 3</option>
+                </select>
+            </div>
+            <div class="dlg-interg__i dlg-interg__include">
+                <label class="b-checkbox">
+                    <input type="checkbox" checked class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Include attendees from previouse events
+                    </div>
+                </label>
+            </div>
+
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select brand
+                </div>
+                <label class="b-checkbox">
+                    <input type="checkbox" class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Managment 3.0
+                    </div>
+                </label>
+                <label class="b-checkbox">
+                    <input type="checkbox" class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Learning 3.0
+                    </div>
+                </label>
+                <label class="b-checkbox">
+                    <input type="checkbox" class="b-checkbox__real">
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                        Kudobox
+                    </div>
+                </label>
+            </div>
+            <div class="dlg-interg__buttons">
+                <a href="javascript: void(0)"
+                    class="btn btn-default dlg-interg__cancel">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="btn btn-primary dlg-interg__submit">
+                    Create and import
+                </button>
+            </div>
+        </form>
+    }
+    </div>
+
+    <div id="dlg-integration-set" class="modal fade b-prompt " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-setapi-modal>
+    @v2.html.prompt("") {
+        <h3 class="b-prompt__title">
+            Are you sure you want to disable importing attendees for “Newsletter every week” list?
+        </h3>
+        <div class="b-prompt__text">
+            Disabling importing will stop adding new attendees to this list.
+        </div>
+        <div class="b-prompt__buttons">
+            <a href="#" class="btn btn-primary b-prompt__btn-accept"
+                data-dismiss="modal"
+                data-setapi-deacticate>
+                Yes, disable
+            </a>
+            <a href="#" class="btn btn-default b-prompt__btn-cancel"
+                data-dismiss="modal">
+                No
+            </a>
+        </div>
+    }
     </div>
 
 </div>

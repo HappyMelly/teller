@@ -237,7 +237,7 @@ class Experiments @Inject() (override implicit val env: TellerRuntimeEnvironment
 
 Check it here %s. You may find it useful :wink:
       """.format(who, experiment.name, experiment.description, url, hmUrl)
-    Play.configuration.getString("slack.channel") map { name ⇒
+    Play.configuration.getString("slack.feedback") map { name ⇒
       slack.send(msg, Some(name))
     }
   }

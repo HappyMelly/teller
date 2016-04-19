@@ -23,6 +23,9 @@
  */
 package controllers.cm.event
 
+import javax.inject.Named
+
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
@@ -33,6 +36,7 @@ import models.cm.brand.Settings
 import models.cm.event.{AttendeeView, Attendee}
 import models.cm.{EvaluationStatus, Evaluation, Event}
 import models.repository.Repositories
+import modules.Actors
 import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
@@ -50,6 +54,7 @@ import scala.concurrent.Future
 class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
                                         val repos: Repositories,
+                                        @Named("mailchimp-subscriber") subscriber: ActorRef,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
@@ -106,8 +111,12 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
       form(eventId, user.name).bindFromRequest.fold(
         errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
         data => {
-          repos.cm.rep.event.attendee.insert(data)
-          redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
+          repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
+            if (env.isDev) {
+              subscriber ! (attendee.identifier, attendee.eventId, false)
+            }
+            redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
+          }
         }
       )
   }

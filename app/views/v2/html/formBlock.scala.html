@@ -1,0 +1,15 @@
+@**
+ * Generates a logical block of a form
+ *@
+@(name: String, color: Option[String] = None)(body: => Html)
+
+<div class="b-form__block @color.getOrElse("")">
+    <div class="container h-rel">
+        <div class="b-form__controls">
+            @body
+        </div>
+        <div class="b-form__name">
+            @name
+        </div>
+    </div>
+</div>

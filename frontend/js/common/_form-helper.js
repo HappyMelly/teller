@@ -31,6 +31,10 @@ export default class FormHelper {
         if ($control.hasClass('type-numeric')) {
             $control.val($control.val().replace(/[^\d]+/g, ''));
         }
+
+        if ($control.hasClass('type-nospace')) {
+            $control.val($control.val().replace(/\s/g, ''));
+        }
     }
 
     isValidInputs() {

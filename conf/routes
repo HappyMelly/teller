@@ -144,10 +144,12 @@ POST          /event/:id/template                                          contr
 
 GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 
-GET           /mailchimp/activate                                          controllers.cm.facilitator.Mailchimp.activate()
-POST          /mailchimp/connect                                           controllers.cm.facilitator.Mailchimp.connect()
-POST          /mailchimp/disconnect                                        controllers.cm.facilitator.Mailchimp.disconnect()
-GET           /mailchimp/lists                                             controllers.cm.facilitator.Mailchimp.lists()
+GET           /mailchimp/activate                                          controllers.cm.facilitator.MailChimp.activate()
+GET           /mailchimp/add                                               controllers.cm.facilitator.MailChimp.add()
+POST          /mailchimp/connect                                           controllers.cm.facilitator.MailChimp.connect()
+POST          /mailchimp/create                                            controllers.cm.facilitator.MailChimp.create()
+POST          /mailchimp/disconnect                                        controllers.cm.facilitator.MailChimp.disconnect()
+GET           /mailchimp/lists                                             controllers.cm.facilitator.MailChimp.lists()
 
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)
@@ -232,7 +234,7 @@ POST          /person/:id/activation                                         con
 POST          /person/:id/delete                                             controllers.core.People.delete(id: Long)
 POST          /person/:id/cancel                                             controllers.core.People.cancel(id: Long)
 GET           /person/:id/tabs                                               controllers.core.People.renderTabs(id: Long, tab: String)
-GET           /person/:id/mailchimp                                          controllers.cm.facilitator.Mailchimp.settings(id: Long)
+GET           /person/:id/mailchimp                                          controllers.cm.facilitator.MailChimp.settings(id: Long)
 
 POST          /person/:id/photo/upload                                       controllers.core.ProfilePhotos.upload(id: Long)
 GET           /person/photo/:photoId                                         controllers.core.ProfilePhotos.photo(photoId: String)

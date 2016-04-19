@@ -20,11 +20,11 @@
         <h3 class="b-unauth__title">Add Personal Data</h3>
         <div class="col-md-11 col-md-offset-1">
         @v2.html.form(action = CSRF(routes.Registration.savePerson())) {
-            @v2.html.text(form("firstName"), '_label -> "First name", '_help -> "")(narrow, messages)
-            @v2.html.text(form("lastName"), '_label -> "Last name", '_help -> "")(narrow, messages)
-            @v2.html.email(form("email"), '_label -> "Email", '_help -> "")(narrow, messages)
-            @v2.html.select(form("country"), ("", "Choose a country") :: Countries.all, '_label -> "Country",
-                '_help -> "")(narrow, messages)
+            @v2.html.text(form("firstName"), false, "First name")(narrow, messages)
+            @v2.html.text(form("lastName"), false, "Last name")(narrow, messages)
+            @v2.html.email(form("email"), false, "Email")(narrow, messages)
+            @v2.html.select(form("country"), false, "Country",
+                ("", "Choose a country") :: Countries.all)(narrow, messages)
 
             @if(form.hasErrors) {
                 <div class="form-group">

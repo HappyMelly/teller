@@ -23,27 +23,31 @@
  */
 package controllers.api
 
-import javax.inject.{Inject, Named}
+import javax.inject.{Named, Inject}
 
 import akka.actor.ActorRef
 import models._
 import models.cm.{Evaluation, EvaluationStatus}
 import models.repository.Repositories
+import modules.Actors
 import org.joda.time.DateTime
-import play.api.Logger
+import play.api.{Configuration, Logger}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
+import services.TellerRuntimeEnvironment
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Evaluations API
  */
-class EvaluationsApi @Inject() (val repos: Repositories,
+class EvaluationsApi @Inject() (env: TellerRuntimeEnvironment,
+                                val repos: Repositories,
                                 override val messagesApi: MessagesApi,
-                                @Named("evaluation-mailer") mailer: ActorRef)
+                                @Named("evaluation-mailer") mailer: ActorRef,
+                                @Named("mailchimp-subscriber") subscriber: ActorRef)
   extends ApiAuthentication(repos, messagesApi) {
 
   /** HTML form mapping for creating and editing. */
@@ -134,6 +138,9 @@ class EvaluationsApi @Inject() (val repos: Repositories,
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
             evaluation.add(withConfirmation = true, repos, mailer) flatMap { createdEvaluation =>
+              if (env.isDev) {
+                subscriber !(attendee.identifier, attendee.eventId, true)
+              }
               val message = "new evaluation for " + attendee.fullName
               Activity.insert(name, Activity.Predicate.Created, message)(repos)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))

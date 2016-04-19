@@ -10,10 +10,10 @@
 @import helper.CSRF
 
 @v2.main("Add content license", "people", user, withMelly = true) {
-    <div class="form">
-        @v2.html.block("") {
-            <h1>Add content license</h1>
-        }
+    <div class="b-form">
+        <div class="container">
+            <h1 class="b-form__title">Add content license</h1>
+        </div>
         @html.form(action = CSRF(routes.Licenses.create(personId))) {
             @v2.license.form(form, brands)
         }
