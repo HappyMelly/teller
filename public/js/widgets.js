@@ -317,6 +317,7 @@
                 var $this = $(this);
 
                 self._showTabByLink($this);
+                window.location.hash = $this.attr('href') || '';
                 e.preventDefault();
             })
     };
