@@ -1,6 +1,8 @@
 'use strict';
 
 import FormHelper from './../../common/_form-helper';
+import ImportingItem from './_integration-import';
+
 
 export default class Widget {
     constructor(selector, options) {
@@ -16,18 +18,15 @@ export default class Widget {
         const $root = this.$root;
         
         return {
-            $modalDisableInteg: $root.find('[data-integ-disable-dlg]'),
-            $importingList:     $root.find('[data-integ-list]'),
-            $modalDisableImport:$root.find('[data-integimport-dlg]'),
-            $modalCreateImport: $root.find('[data-integcreate-dlg]')
+            $modalDisableInteg: $root.find('[data-integdisable-dlg]'),
+            $editDlg: $root.find('[data-integcreate-dlg]'),
+            $list: $root.find('[data-integ-list]')
         }
     }
     
     _init(){
-        this.$currentImport = null;
-
         if (this.isIntegrationActive) {
-            this._checkImportingList()
+            this._checkAndInitImporting()
         }    
     }
 
@@ -35,21 +34,19 @@ export default class Widget {
         this.$root  
             .on('click', '[data-integ-activate]', this._onClickActivate.bind(this))
             .on('click', '[data-integdisable-yes]', this._ClickDeactivate.bind(this))
-
-            .on('click', '[data-integ-import]', this._onClickDisableImport.bind(this))
-            .on('click', '[data-integimport-disable]', this._onEventDisableList.bind(this))
-
-            .on('click', '[data-integcreate-btn]', this._onClickImportList.bind(this));
+            .on('click', '[data-integ-import-btn]', this._onClickShowImport.bind(this))
+            .on('click', '[data-integcreate-btn]', this._onEventSubmitEdit.bind(this))
     }
 
     _onClickActivate(e){
         e.preventDefault();
-        const $root = this.$root;        
-        
-        this._sendActivate(this.options.activate)
+        const self = this;
+        const $root = self.$root;
+
+        self._sendActivate(this.options.activate)
             .done(()=>{
                 $root.addClass('b-integr_state_active');
-                this._checkImportingList();
+                self._checkAndInitImporting();
                 
                 success('You are successfully activate integration')
             })
@@ -65,54 +62,54 @@ export default class Widget {
             })
     }
 
-    _onClickDisableImport(e){
+    _onClickShowImport(e){
         e.preventDefault();
-        const $currentImport = $(e.currentTarget).closest('.b-integrlist');
-        const title = $currentImport.find('[data-integ-import-name]').text();
-
-        this.$currentImport = $currentImport;
-        this.locals.$modalDisableImport
-            .find('[data-integimport-name]').text(title || '').end()
-            .modal('show');
+        const self = this;
+        
+        self._getAvailableList(this.options.getAvailableLists)
+            .done((data)=>{
+                /** set select data**/
+                
+                self.locals.$editDlg.modal('show')
+            })
     }
 
-    _onEventDisableList(e){
-        const $currentImport = this.$currentImport;
-        const id = $currentImport.data('list-id');
-        const text = $currentImport.find('[data-integ-import-name]').text();
+    _onEventSubmitEdit(e){
+        e.preventDefault();
+        const self = this;
+        const data = {test: 1}  /** get controls inputs**/
 
-        this._sendDisableList(this.options.disableList, id)
-            .done(() => {
-                this.$currentImport = null;
-                success(`You are successfully disable ${text}`);
+        self._createImportList(this.options.createImport, data)
+            .done((data) =>{
+                const html = $.parseJSON(data).body;
 
-                $currentImport.slideUp(function(){
-                    $currentImport.remove();
-                })
+                self.locals.$list.append(html);
+                success('You are succefully import new list from mailchimp')
             })
-            .fail(()=>{
-                this.$currentImport = null;
-
+            .fail(() => {
                 error('Something is going wrong');
             })
     }
 
-    _onClickImportList(){
-        const formData = {};
-        this._sendCreatingImport(this.options.createList, formData)
-            .done(()=>{
-                success('You are successfully import list')
-            })
-    }
-
-    _checkImportingList(){
-        const $listItems = this.locals.$importingList.children();
+    _checkAndInitImporting(){
+        const self = this;
+        const $listItems = self.locals.$list.children();
         
-        if ($listItems.length){
-            this.$root.addClass('b-integr_state_import')
-        } else {
-            this.$root.addClass('b-integr_state_nolist')
+        if (!$listItems.length){
+            this.$root.addClass('b-integr_state_nolist');
+            return;
         }
+
+        this.$root.addClass('b-integr_state_import');
+        $listItems.each((index, item) => {
+            const $item = $(item);
+            let data;
+
+            if (!$item.data('importing')){
+                data = new ImportingItem(item, self.options);
+                $item.data('widget.importing', data);
+            }
+        })
     }
     
     isIntegrationActive(){
@@ -128,13 +125,14 @@ export default class Widget {
         return $.post(url, {});
     }
 
-    _sendDisableList(url, id){
-        return $.post(url, {});
+    _getAvailableList(url){
+        return $.get(url);
     }
 
-    _sendCreatingImport(url, data){
+    _createImportList(url, data){
         return $.post(url, data);
     }
+
 
     // static
     static plugin(selector, options) {

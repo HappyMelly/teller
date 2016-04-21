@@ -37,8 +37,7 @@
             <div class="b-integr__buttons">
                 <a href="javascript: void(0)"
                     class="btn btn-primary b-integr__btn-import"
-                    data-toggle="modal"
-                    data-target="#dlg-importlist">
+                    data-integ-import-btn>
                     Set importing to the list
                 </a>
                 <a href="#"
@@ -47,55 +46,7 @@
                 </a>
             </div>
             <div data-integ-list>
-                <div class="b-integrlist" data-list-id="1">
-                    <p>
-                        <b data-integ-import-name>“Evening letters”</b> list is set to import attendees only with evaluations from Managment 3.0 brand.
-                    </p>
-                    <div class="b-integrlist__buttons">
-                        <a href="javascript: void(0)"
-                            class="btn btn-default b-integrlist__btn">
-                            Edit
-                        </a>
-                        <a href="javascript: void(0)"
-                            data-integ-import
-                            class="btn btn-default b-integrlist__btn">
-                            Disable importing
-                        </a>
-                    </div>
-                </div>
-                <div class="b-integrlist" data-list-id="2">
-                    <p>
-                        <b data-integ-import-name>“Newsletter every week”</b> list is set to import all attendees from all brands.
-                    </p>
-                    <div class="b-integrlist__buttons">
-                        <a href="javascript: void(0)"
-                            class="btn btn-default b-integrlist__btn">
-                            Edit
-                        </a>
-                        <a href="javascript: void(0)"
-                            data-integ-import
-                            class="btn btn-default b-integrlist__btn">
-                            Disable importing
-                        </a>
-                    </div>
-                </div>
-                <div class="b-integrlist" data-list-id="3">
-                    <p>
-                        <b data-integ-import-name>“Hello everyone and welcome”</b> list is set to import attendees
-                        only with evaluations from Managment 3.0 and Kudobox brands.
-                    </p>
-                    <div class="b-integrlist__buttons">
-                        <a href="javascript: void(0)"
-                            class="btn btn-default b-integrlist__btn">
-                            Edit
-                        </a>
-                        <a href="javascript: void(0)"
-                            data-integ-import
-                            class="btn btn-default b-integrlist__btn">
-                            Disable importing
-                        </a>
-                    </div>
-                </div>
+                @views.html.v2.person.blocks.importingList()
             </div>
         </div>
 
@@ -196,28 +147,6 @@
                 </button>
             </div>
         </form>
-    }
-    </div>
-
-    <div id="dlg-integration-set" class="modal fade b-prompt " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-integimport-dlg>
-    @v2.html.prompt("") {
-        <h3 class="b-prompt__title">
-            Are you sure you want to disable importing attendees for <span data-integimport-name></span> list?
-        </h3>
-        <div class="b-prompt__text">
-            Disabling importing will stop adding new attendees to this list.
-        </div>
-        <div class="b-prompt__buttons">
-            <a href="#" class="btn btn-primary b-prompt__btn-accept"
-                data-dismiss="modal"
-                data-integimport-disable>
-                Yes, disable
-            </a>
-            <a href="#" class="btn btn-default b-prompt__btn-cancel"
-                data-dismiss="modal">
-                No
-            </a>
-        </div>
     }
     </div>
 
