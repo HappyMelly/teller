@@ -8,9 +8,12 @@ $(function(){
         IntegrationMailchimp.plugin('.js-mailchimp-integration', {
             activate: '/integration/activate',
             deactivate: '/integration/deactivate',
-            getLists: '/lists',
-            createList: '/lists/create',
-            disableList: '/lists/disable/1',           
+
+            getAvailableLists: '/lists/',
+
+            createImport: '/imports/create',
+            updateImport: '/imports/update/1',
+            disableImport: '/imports/disable/1'
         })
     })
 
