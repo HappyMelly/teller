@@ -144,11 +144,12 @@ POST          /event/:id/template                                          contr
 
 GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
 
-GET           /mailchimp/activate                                          controllers.cm.facilitator.MailChimp.activate()
+POST          /mailchimp/activate                                          controllers.cm.facilitator.MailChimp.activate()
 GET           /mailchimp/add                                               controllers.cm.facilitator.MailChimp.add()
 POST          /mailchimp/connect                                           controllers.cm.facilitator.MailChimp.connect()
 POST          /mailchimp/create                                            controllers.cm.facilitator.MailChimp.create()
 POST          /mailchimp/disconnect                                        controllers.cm.facilitator.MailChimp.disconnect()
+POST          /mailchimp/deactivate                                        controllers.cm.facilitator.MailChimp.deactivate()
 GET           /mailchimp/lists                                             controllers.cm.facilitator.MailChimp.lists()
 
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
