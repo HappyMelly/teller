@@ -1,17 +1,19 @@
 'use strict';
 
-import formHelper from "./../../common/_form-helper";
+import FormHelper from './../../common/_form-helper';
+import integrationHelpers from './_intergration-helpers';
 
-export default class Importing {
+
+export default class Widget {
     constructor(selector, options) {
         this.$root = $(selector);
         this.options = $.extend({}, options, {
             id: this.$root.data('import-id')
         });
         this.locals = this._getDom();
-        this.editForm = null;
 
-        debugger;
+        this.editDlgData = null;
+        this.editDlgHelper = new FormHelper(this.locals.$controls);
 
         this._assignEvents();
     }
@@ -21,8 +23,10 @@ export default class Importing {
 
         return {
             $view: $root.find('[data-import-view]'),
+            $controls: $root.find('[data-control]'),
+            $editDlg: $root.find('[data-import-dlg]'),
+            $availableThemes: $root.find('[data-import-select]'),
             $disableDlg: $root.find('[data-import-tooltip]'),
-            $editDlg: $root.find('[data-import-dlg]')
         }
     }
 
@@ -37,15 +41,14 @@ export default class Importing {
 
     _onClickEditImport(e){
         e.preventDefault();
-        
-        this.editForm = {test: 1}; /** save form edit data*/
-        
-        this._getAvailableList(this.options._getAvailableList)
-            .done((data)=>{
-                const select = $.parseJSON(data);
-                /** set availavel list import **/
+        const self = this;
 
-                this.locals.$editDlg.modal('show');
+        self._getAvailableList(self.options.getAvailableLists)
+            .done((list)=>{
+                integrationHelpers._prepareSelectWithThemes(self.locals.$availableThemes, list);
+                this.editDlgData = self.editDlgHelper.getFormData();
+
+                self.locals.$editDlg.modal('show');
             });
     }
 
@@ -59,10 +62,10 @@ export default class Importing {
         
         self._sendDisableList(self.options.disableImport, self.options.id)
             .done(() => {
-                self.$view.slideUp(function(){
+                self.locals.$view.slideUp(400, ()=>{
                     self.$root.remove();
                 });
-                success(`You are successfully disable ${text}`);
+                success(`You are successfully disable list`);
             })
             .fail(()=>{
                 error('Something is going wrong');
@@ -71,33 +74,97 @@ export default class Importing {
 
     _onClickCancelEdit(e){
         e.preventDefault();
-        
-        /** return default values **/
+
+        this._setDefaultValues();
         this.locals.$editDlg.modal('hide');
     }
 
     _onClickSubmitEdit(e){
         e.preventDefault();
+
         const self = this;
-        
-        self.editForm = {test: 2} /** set new data**/
-        this._sendUpdateList(self.options.updateImport, self.options.id, self.editForm)
+        let update = {
+            url: self.options.updateImport,
+            id: self.options.id,
+            formData: self.editDlgHelper.getFormData()
+        };
+        self.editDlgData = update.formData;
+
+        this._sendUpdateList(sendData)
             .done(() =>{
                 self.locals.$editDlg.modal('hide');
                 success('You are successfully update importing list')
             })
+            .fail(() =>{
+                self.locals.$editDlg.modal('hide');
+                error('Something is happened wrong');
+            })
+    }
+
+    _setDefaultValues(){
+        const $controls = this.locals.$controls;
+        const data = this.editDlgData;
+
+        for( let field in data){
+            if (data.hasOwnProperty(field)){
+                let $control = $controls.filter(`[name="${field}"]`).first();
+
+                if (!$control.length) return;
+
+                if ($control.is(':checkbox')){
+                    $control.prop('checked', data[field])
+                } else{
+                    $control.val(data[field]);
+                }
+            }
+        }
     }
 
     //transport
     _getAvailableList(url){
-        return $.get(url)
+        let defer = $.Deferred();
+
+        $.get(url)
+            .done((data) => {
+                const list = $.parseJSON(data).lists;
+                defer.resolve(list);
+            });
+        return defer.promise();
     }
 
     _sendDisableList(url, id){
-        return $.post(url, {});
+        return $.post(url, {
+            list_id: id
+        });
     }
 
-    _sendUpdateList(url, id, data){
-        return $.post(url, {data: id});
+    /**
+     * Update Info about list
+     * @param {Object} data
+     * @param {String} data.url
+     * @param {Number} data.id
+     * @param {Object} data.formData - object with field/value
+     * @returns {Promise}
+     * @private
+     */
+    _sendUpdateList(data){
+        return $.post(data.url, {
+            list_id: data.id,
+            data: data.formData
+        });
+    }
+
+    static plugin($elems, options) {
+        if (!$elems.length) return;
+
+        return $elems.each(function (index, el) {
+            let $element = $(el);
+            let data = $element.data('widget.importing');
+
+            if (!data) {
+                data = new Widget(el, options);
+                $element.data('widget.importing', data);
+            }
+        })
     }
 }

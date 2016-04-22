@@ -180,7 +180,13 @@ export default class FormHelper {
             const $el = $(el);
             const name = $el.attr('name');
 
-            name && (ajaxData[name] = $el.val())
+            if (!name) return;
+
+            if ($el.is(':checkbox')){
+                ajaxData[name] = $el.prop('checked')
+            } else {
+                ajaxData[name] = $el.val()
+            }
         });
 
         return ajaxData;
@@ -194,19 +200,6 @@ export default class FormHelper {
             const $el = $(el);
             this._removeError($el)
         })
-    }
-
-    getFormData(){
-        let ajaxData = {};
-        
-        this.$controls.map((index, el) => {
-            const $el = $(el);
-            const name = $el.attr('name');
-
-            name && (ajaxData[name] = $el.val())
-        });
-        
-        return ajaxData;
     }
 
     clearForm() {

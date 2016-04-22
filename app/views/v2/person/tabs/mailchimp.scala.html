@@ -8,8 +8,7 @@
     </p>
 
     <div class="b-integr__deactive">
-        <a href="javascript: void(0)"
-            data-integ-activate
+        <a href="@controllers.cm.facilitator.routes.MailChimp.activate()"
             class="btn btn-primary b-integr__btn-deactivate">
             Connect
         </a>
@@ -76,25 +75,21 @@
                 <div class="dlg-interg__label">
                     Select list
                 </div>
-                <select name="" class="dlg-interg__select form-control">
-                    <option value="1">Newsletter every week</option>
-                    <option value="2">Newsletter every 2</option>
-                    <option value="3">Newsletter every 3</option>
-                </select>
+                <select name="list_name" class="dlg-interg__select form-control" data-integcreate-list data-control></select>
             </div>
             <div class="dlg-interg__i">
                 <div class="dlg-interg__label">
                     Select attendees to import
                 </div>
-                <select name="" class="dlg-interg__select form-control">
+                <select name="list_evaluations" class="dlg-interg__select form-control" data-control>
                     <option value="1">Only with evaluations</option>
-                    <option value="2">Only with evaluations 2</option>
-                    <option value="3">Only with evaluations 3</option>
+                    <option value="2">Only without evaluations</option>
+                    <option value="3">All</option>
                 </select>
             </div>
             <div class="dlg-interg__i dlg-interg__include">
                 <label class="b-checkbox">
-                    <input type="checkbox" checked class="b-checkbox__real">
+                    <input name="list_include" type="checkbox" checked class="b-checkbox__real" data-control>
                     <i class="b-checkbox__img"></i>
                     <div class="b-checkbox__text">
                         Include attendees from previouse events
@@ -107,21 +102,21 @@
                     Select brand
                 </div>
                 <label class="b-checkbox">
-                    <input type="checkbox" class="b-checkbox__real">
+                    <input type="checkbox" class="b-checkbox__real" name="check1" data-control>
                     <i class="b-checkbox__img"></i>
                     <div class="b-checkbox__text">
                         Managment 3.0
                     </div>
                 </label>
                 <label class="b-checkbox">
-                    <input type="checkbox" class="b-checkbox__real">
+                    <input type="checkbox" class="b-checkbox__real" name="check2" data-control>
                     <i class="b-checkbox__img"></i>
                     <div class="b-checkbox__text">
                         Learning 3.0
                     </div>
                 </label>
                 <label class="b-checkbox">
-                    <input type="checkbox" class="b-checkbox__real">
+                    <input type="checkbox" class="b-checkbox__real" name="check3" data-control>
                     <i class="b-checkbox__img"></i>
                     <div class="b-checkbox__text">
                         Kudobox
@@ -136,7 +131,7 @@
             </div>
             <div class="dlg-interg__buttons">
                 <a href="javascript: void(0)"
-                    data-dismiss="modal"
+                    data-integcreate-cancel
                     class="btn btn-default dlg-interg__cancel">
                     Cancel
                 </a>

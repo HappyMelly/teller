@@ -1,6 +1,7 @@
 'use strict';
 
 import FormHelper from './../../common/_form-helper';
+import integrationHelpers from './_intergration-helpers';
 import ImportingItem from './_integration-import';
 
 
@@ -10,6 +11,8 @@ export default class Widget {
         this.options = options;
         this.locals = this._getDom();
 
+        this.importDlgHelper = new FormHelper(this.locals.$controls);
+
         this._init();
         this._assignEvents();
     }
@@ -18,9 +21,11 @@ export default class Widget {
         const $root = this.$root;
         
         return {
-            $modalDisableInteg: $root.find('[data-integdisable-dlg]'),
+            $list: $root.find('[data-integ-list]'),
+            $controls: $root.find('[data-control]'),
             $editDlg: $root.find('[data-integcreate-dlg]'),
-            $list: $root.find('[data-integ-list]')
+            $availableThemes: $root.find('[data-integcreate-list]'),
+            $modalDisableInteg: $root.find('[data-integdisable-dlg]'),
         }
     }
     
@@ -32,24 +37,10 @@ export default class Widget {
 
     _assignEvents(){
         this.$root  
-            .on('click', '[data-integ-activate]', this._onClickActivate.bind(this))
             .on('click', '[data-integdisable-yes]', this._ClickDeactivate.bind(this))
             .on('click', '[data-integ-import-btn]', this._onClickShowImport.bind(this))
             .on('click', '[data-integcreate-btn]', this._onEventSubmitEdit.bind(this))
-    }
-
-    _onClickActivate(e){
-        e.preventDefault();
-        const self = this;
-        const $root = self.$root;
-
-        self._sendActivate(this.options.activate)
-            .done(()=>{
-                $root.addClass('b-integr_state_active');
-                self._checkAndInitImporting();
-                
-                success('You are successfully activate integration')
-            })
+            .on('click', '[data-integcreate-cancel]', this._onEventCancelEdit.bind(this))
     }
 
     _ClickDeactivate(e){
@@ -67,9 +58,8 @@ export default class Widget {
         const self = this;
         
         self._getAvailableList(this.options.getAvailableLists)
-            .done((data)=>{
-                /** set select data**/
-                
+            .done((list)=>{
+                integrationHelpers._prepareSelectWithThemes(this.locals.$availableThemes, list);
                 self.locals.$editDlg.modal('show')
             })
     }
@@ -77,7 +67,7 @@ export default class Widget {
     _onEventSubmitEdit(e){
         e.preventDefault();
         const self = this;
-        const data = {test: 1}  /** get controls inputs**/
+        const data = self.importDlgHelper.getFormData();
 
         self._createImportList(this.options.createImport, data)
             .done((data) =>{
@@ -91,9 +81,13 @@ export default class Widget {
             })
     }
 
+    _onEventCancelEdit(e){
+        e.preventDefault();
+        this.locals.$editDlg.modal('hide');
+    }
+
     _checkAndInitImporting(){
-        const self = this;
-        const $listItems = self.locals.$list.children();
+        const $listItems = this.locals.$list.children();
         
         if (!$listItems.length){
             this.$root.addClass('b-integr_state_nolist');
@@ -101,38 +95,32 @@ export default class Widget {
         }
 
         this.$root.addClass('b-integr_state_import');
-        $listItems.each((index, item) => {
-            const $item = $(item);
-            let data;
-
-            if (!$item.data('importing')){
-                data = new ImportingItem(item, self.options);
-                $item.data('widget.importing', data);
-            }
-        })
+        ImportingItem.plugin($listItems, this.options);      
     }
     
     isIntegrationActive(){
         return this.$root.hasClass('b-integr_state_active');
-    }
+    }   
     
     //transport
-    _sendActivate(url){
-        return $.post(url, {});
-    }
-
     _sendDeactivate(url){
         return $.post(url, {});
     }
 
     _getAvailableList(url){
-        return $.get(url);
+        let defer = $.Deferred();
+
+        $.get(url)
+            .done((data) => {
+                const list = $.parseJSON(data).lists;
+                defer.resolve(list);
+            });
+        return defer.promise();
     }
 
     _createImportList(url, data){
         return $.post(url, data);
     }
-
 
     // static
     static plugin(selector, options) {
@@ -141,11 +129,11 @@ export default class Widget {
 
         return $elems.each(function (index, el) {
             let $element = $(el);
-            let data     = $element.data('widget.scrollto');
+            let data     = $element.data('widget.integration');
 
             if (!data) {
                 data = new Widget(el, options);
-                $element.data('widget', data);
+                $element.data('widget.integration', data);
             }
         })
     }
