@@ -7,6 +7,7 @@ export default class Widget {
 
     constructor(selector) {
         this.$root = $(selector);
+        this.isEmailPreview = this.$root.data('markdownpreview');
         this.url = jsRoutes.controllers.Utilities.markdown().url;
 
         if (!$.fn.markItUp){
@@ -21,12 +22,14 @@ export default class Widget {
     
     _init(){
         const linksTemplate = '<div class="markitup__link type-write state_active">Write</div><div class="markitup__link type-preview">Preview</div> <div class="markitup__preview"></div>';
+        const $root = this.$root;
 
-        this.$root
-            .wrap('<div class="markitup__con"></div>')
-            .after(linksTemplate);
+        $root.wrap('<div class="markitup__con"></div>')
+            .closest('.markitup__con')
+            .toggleClass('markitup_state_email', this.isEmailPreview)
 
-        this.$root.markItUp(conf);        
+        $root.after(linksTemplate)
+            .markItUp(conf);
     }
 
     _getDom(){
