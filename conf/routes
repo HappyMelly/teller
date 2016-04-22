@@ -151,6 +151,7 @@ POST          /mailchimp/create                                            contr
 POST          /mailchimp/disconnect                                        controllers.cm.facilitator.MailChimp.disconnect()
 POST          /mailchimp/deactivate                                        controllers.cm.facilitator.MailChimp.deactivate()
 GET           /mailchimp/lists                                             controllers.cm.facilitator.MailChimp.lists()
+POST          /mailchimp/update                                            controllers.cm.facilitator.MailChimp.update()
 
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)

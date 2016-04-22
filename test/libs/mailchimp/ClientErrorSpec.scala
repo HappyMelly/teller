@@ -29,8 +29,8 @@ import play.api.libs.ws.{WS, WSRequest}
 
 class TestClient(endPoint: String, token: String, error: String) extends Client(endPoint, token) {
 
-  override protected def request(url: String): WSRequest =
-    WS.url(url).withHeaders("X-Trigger-Error" -> error)
+//  override protected def request(url: String): WSRequest =
+//    WS.url(url).withHeaders("X-Trigger-Error" -> error)
 
 }
 /**

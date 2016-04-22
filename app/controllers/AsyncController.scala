@@ -28,6 +28,7 @@ import play.api.http.Writeable
 import play.api.i18n.I18nSupport
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
+import play.twirl.api.Html
 
 import scala.concurrent.Future
 
@@ -55,8 +56,12 @@ trait AsyncController extends Controller with I18nSupport {
     case CONFLICT ⇒ jsonConflict(msg)
     case _ ⇒ jsonBadRequest(msg)
   }
-  protected def jsonSuccess(msg: String, data: Option[JsValue] = None) = {
-    val reply = data map { x ⇒ Json.obj("message" -> msg, "data" -> x) } getOrElse Json.obj("message" -> msg)
+  protected def jsonSuccess(msg: String, data: Option[JsValue] = None, body: Option[Html] = None) = {
+    val reply = Json.obj(
+      "message" -> msg,
+      "data" -> data,
+      "body" -> body.getOrElse(Html("")).toString()
+    )
     jsonOk(reply)
   }
 

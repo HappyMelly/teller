@@ -30,11 +30,10 @@ import libs.mailchimp.MergeField
   * Contains a set of helper methods for working with MailChimp
   */
 object MailChimp {
-  val EMAIL = "EMAIL"
   val FNAME = "FNAME"
   val LNAME = "LNAME"
 
-  val supportedRequiredFields = Seq(EMAIL, FNAME, LNAME)
+  val supportedRequiredFields = Seq(FNAME, LNAME)
 
   /**
     * Validates the given merge fields and returns description what is wrong with them
@@ -42,11 +41,8 @@ object MailChimp {
     */
   def validateMergeFields(fields: Seq[MergeField]): Either[String, String] = {
     val withValidTags = fields.filter(_.tag.nonEmpty)
-    val emailExists = withValidTags.exists(_.tag.contains(EMAIL))
     val unsupportedFields = unsupportedRequiredFields(withValidTags)
-    if (!emailExists) {
-      Left("Field with EMAIL tag is not found.")
-    } else if (unsupportedFields.nonEmpty) {
+    if (unsupportedFields.nonEmpty) {
       val names = unsupportedFields.map(_.tag.get).mkString(", ")
       Left(s"Fields with $names tags are required. No data is provided for them.")
     } else {
