@@ -34,7 +34,7 @@ import controllers.cm.facilitator.MailChimp.NewListData
 import controllers.{Security, Utilities}
 import libs.mailchimp.{CampaignDefaults, Client, ListContact}
 import models.UserRole.Role._
-import models.cm.facilitator.MailChimpList
+import models.cm.facilitator.{MailChimpListBlock, MailChimpList}
 import models.repository.Repositories
 import models.{ActiveUser, Brand}
 import play.api.data.Form
@@ -97,7 +97,10 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
       errors => jsonFormError(Utilities.errorsToJson(errors)),
       data => {
         withMailChimpClient(mailChimpId) { client =>
-          repos.cm.facilitator.findByPerson(user.person.identifier) flatMap { records =>
+          (for {
+            f <- repos.cm.facilitator.findByPerson(user.person.identifier)
+            b <- repos.cm.brand.find(f.map(_.brandId))
+          } yield (f, b.map(_.brand))) flatMap { case (records, brands) =>
             client.mergeFields(data.id).map(models.core.integration.MailChimp.validateMergeFields) flatMap {
               case Left(msg) => jsonBadRequest(msg)
               case Right(msg) =>
@@ -106,15 +109,18 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
                   val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier, data.allAttendees)
                   repos.cm.facilitatorSettings.insertList(list)
                 }
-                Future.sequence(results).flatMap { list =>
-                  jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)")
+                Future.sequence(results).flatMap { lists =>
+                  val relatedBrands = brands.filter(b => lists.exists(_.brandId == b.identifier))
+                  val block = MailChimpListBlock(lists.head, relatedBrands, records.length)
+                  val body = views.html.v2.person.blocks.mailchimp.list(block, brands)
+                  jsonSuccess(s"MailChimp list was successfully connected to selected brand(s)", body = Some(body))
                 }
             }
           }
         }
       }
     )
-}
+  }
 
   def create = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
     MailChimp.newListForm.bindFromRequest().fold(
@@ -158,17 +164,13 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
     * Disconnects MailChimp list with a set of given brands
     */
   def disconnect = RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
-    case class FormData(id: String, brands: List[Long])
-    val form = Form(mapping(
-      "list_id" -> nonEmptyText,
-      "brands" -> list(longNumber)
-    )(FormData.apply)(FormData.unapply))
+    val form = Form(single("list_id" -> nonEmptyText))
 
     form.bindFromRequest().fold(
       errors => jsonFormError(Utilities.errorsToJson(errors)),
-      data => {
+      listId => {
         repos.cm.facilitatorSettings.lists(user.person.identifier) flatMap { lists =>
-          val validLists = lists.filter(_.listId == data.id).filter(x => data.brands.contains(x.brandId))
+          val validLists = lists.filter(_.listId == listId)
           val result = validLists.map { list =>
             repos.cm.facilitatorSettings.deleteList(list.personId, list.id.get)
           }
@@ -176,6 +178,39 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
             jsonSuccess("MailChimp list was successfully disconnected from selected brands")
           }
         }
+      }
+      )
+    }
+
+    /**
+      * Updates connected MailChimp list with a set of given brands
+      */
+    def update = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
+      MailChimp.connectForm.bindFromRequest().fold(
+        errors => jsonFormError(Utilities.errorsToJson(errors)),
+        data => {
+          (for {
+            f <- repos.cm.facilitator.findByPerson(user.person.identifier)
+            l <- repos.cm.facilitatorSettings.lists(user.person.identifier)
+            b <- repos.cm.brand.find(f.map(_.brandId))
+          } yield (f, l, b.map(_.brand))) flatMap { case (records, lists, brands) =>
+            val removed = lists.filter(_.listId == data.id).map { list =>
+              repos.cm.facilitatorSettings.deleteList(list.personId, list.id.get)
+            }
+            Future.sequence(removed).flatMap { _ =>
+              val validBrands = records.map(_.brandId).filter(x => data.brands.contains(x))
+              val results = validBrands.map { brandId =>
+                val list = MailChimpList(None, data.name, data.id, brandId, user.person.identifier, data.allAttendees)
+                repos.cm.facilitatorSettings.insertList(list)
+              }
+              Future.sequence(results).flatMap { lists =>
+                val relatedBrands = brands.filter(b => lists.exists(_.brandId == b.identifier))
+                val block = MailChimpListBlock(lists.head, relatedBrands, records.length)
+                val body = views.html.v2.person.blocks.mailchimp.list(block, brands)
+                jsonSuccess(s"MailChimp list settings were successfully updated", body = Some(body))
+              }
+            }
+          }
       }
     )
   }
@@ -208,16 +243,11 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
       b <- repos.cm.brand.find(f.map(_.brandId))
     } yield (f, l, b.map(_.brand))
     query flatMap { case (facilitators, lists, brands) =>
-      val oneBrandFacilitator = facilitators.length == 1
-      val data = lists.groupBy(_.listId).map { case (listId, sublists) =>
-          val currentList = sublists.head
+      val blocks = lists.groupBy(_.listId).map { case (listId, sublists) =>
           val relatedBrands = brands.filter(x => sublists.exists(_.brandId == x.identifier))
-          if (oneBrandFacilitator)
-            getOneBrandBlockMessages(currentList)
-          else
-            getMultipleBrandsBlockMessages(currentList, relatedBrands, facilitators.length)
+          MailChimpListBlock(sublists.head, relatedBrands, facilitators.length)
       }
-      ok(views.html.v2.person.tabs.mailchimp(user.account.isMailChimpActive, data.toList))
+      ok(views.html.v2.person.tabs.mailchimp(user.account.isMailChimpActive, blocks.toSeq, brands))
     }
   }
 
@@ -240,7 +270,7 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
 
   protected def withMailChimpIntegration(f: String => Request[AnyContent] =>
     be.objectify.deadbolt.scala.DeadboltHandler => ActiveUser => Future[Result]) =
-  
+
     RestrictedAction(Facilitator) { implicit request => implicit handler => implicit user =>
       user.account.mailchimp match {
         case None => jsonBadRequest("MailChimp integration is not active")
@@ -248,49 +278,28 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
       }
   }
 
-  /**
-    * Returns list name and supportive message about connection type
-    *
-    * @param list List of interest
-    */
-  protected def getOneBrandBlockMessages(list: MailChimpList): (String, String) =
-    (list.listName, importType(list))
-
-  /**
-    * Returns list name and supportive message about connection typ
-    *
-    * @param list List of interest
-    * @param brands Related brands
-    * @param numberOfBrands Total number of brands this facilitator works with
-    */
-  protected def getMultipleBrandsBlockMessages(list: MailChimpList,
-                                               brands: Seq[Brand],
-                                               numberOfBrands: Int): (String, String) = {
-    val brandCaption = if (numberOfBrands == brands.length)
-      "all"
-    else
-      brands.map(_.name).mkString(" and ")
-    (list.listName, s"${importType(list)} from $brandCaption brands")
-  }
-
-  protected def importType(list: MailChimpList): String = if (list.allAttendees)
-    "all attendees"
-  else
-    "only attendees with evaluations"
 }
 
 object MailChimp {
 
-  case class ConnectFormData(id: String, name: String,
-                             brands: List[Long],
+  case class ConnectFormData(id: String,
+                             name: String,
+                             brandIds: List[Long],
+                             activeBrandIds: List[Boolean],
                              allAttendees: Boolean,
-                             includePreviousEvents: Boolean)
+                             includePreviousEvents: Boolean) {
+
+    def brands: List[Long] = brandIds.zip(activeBrandIds).filter(_._2).map(_._1)
+  }
+
+
   val connectForm = Form(mapping(
     "list_id" -> nonEmptyText,
     "list_name" -> nonEmptyText,
     "brands" -> list(longNumber),
-    "allAttendees" -> boolean,
-    "includePreviousEvents" -> boolean
+    "brand_flags" -> list(boolean).verifying("Select at least one brand", l => l.contains(true)),
+    "all_attendees" -> boolean,
+    "include_previous_events" -> boolean
   )(ConnectFormData.apply)(ConnectFormData.unapply))
 
   case class NewListData(name: String,
