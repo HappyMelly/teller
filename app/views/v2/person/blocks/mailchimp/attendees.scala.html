@@ -1,4 +1,4 @@
-@(allAttendees: Boolean = true)
+@(allAttendees: Boolean = true, oldEventAttendees: Boolean = true)
 
 <div class="dlg-interg__i">
     <div class="dlg-interg__label">
@@ -12,10 +12,11 @@
 
 <div class="dlg-interg__i dlg-interg__include">
     <label class="b-checkbox">
-        <input name="include_previous_events" type="checkbox" checked class="b-checkbox__real" data-control>
-        <i class="b-checkbox__img"></i>
-        <div class="b-checkbox__text">
-            Include attendees from previous events
-        </div>
+        <input name="include_previous_events" type="checkbox" @if(oldEventAttendees) {checked}
+        class="b-checkbox__real" data-control>
+            <i class="b-checkbox__img"></i>
+            <div class="b-checkbox__text">
+                Include attendees from previous events
+            </div>
     </label>
 </div>

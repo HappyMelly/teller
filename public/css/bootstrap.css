@@ -1,1 +1,98 @@
-@media (min-width:768px){.form-horizontal .control-label{color:#333;padding-top:13px;text-align:left;font-weight:inherit}}.modal .modal-content{border-radius:0;border:0}.modal .modal-content .modal-header{padding:15px 25px 0;border-bottom:0}.modal .modal-content .modal-header .close{margin-top:-17px;margin-right:-58px;opacity:1}.modal .modal-content .modal-body{padding:0 25px}.modal .modal-content .modal-footer{padding:15px 25px 50px;border-top:0}.modal .modal-content .help-block{text-align:right}.input-group-btn button{height:45px}.nav-tabs li a{border:0}.nav-tabs li.active a,.nav-tabs li.active a:focus,.nav-tabs li.active a:hover{color:#333;cursor:default;background-color:#fff;border:0;font-weight:700}.tab-pane{padding:10px}
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+/*
+ * Happy Melly Teller
+ * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ *
+ * This file is part of the Happy Melly Teller.
+ *
+ * Happy Melly Teller is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Happy Melly Teller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If you have questions concerning this license or the applicable additional terms, you may contact
+ * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ */
+/* colors */
+/* z-indexes */
+/* mixins */
+@media (min-width: 768px) {
+  .form-horizontal .control-label {
+    color: #333333;
+    padding-top: 13px;
+    text-align: left;
+    font-weight: inherit;
+  }
+}
+.modal .modal-content {
+  border-radius: 0;
+  border: 0;
+}
+.modal .modal-content .modal-header {
+  padding: 15px 25px 0;
+  border-bottom: 0;
+}
+.modal .modal-content .modal-header .close {
+  margin-top: -17px;
+  margin-right: -58px;
+  opacity: 1;
+}
+.modal .modal-content .modal-body {
+  padding: 0 25px;
+}
+.modal .modal-content .modal-footer {
+  padding: 15px 25px 50px;
+  border-top: 0;
+}
+.modal .modal-content .help-block {
+  text-align: right;
+}
+.input-group-btn button {
+  height: 45px;
+}
+.nav-tabs li a {
+  border: 0;
+}
+.nav-tabs li.active a,
+.nav-tabs li.active a:hover,
+.nav-tabs li.active a:focus {
+  color: #333333;
+  cursor: default;
+  background-color: #fff;
+  border: 0;
+  font-weight: bold;
+}
+.tab-pane {
+  padding: 10px 10px 10px 10px;
+}

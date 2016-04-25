@@ -67,6 +67,7 @@ class Client(endPoint: String, token: String) {
       "email_address" -> email,
       "merge_fields" -> Json.obj("FNAME" -> firstName, "LNAME" -> lastName))
     request(url).post(params).map { response =>
+      println(response.body)
       Nil
     }
   }

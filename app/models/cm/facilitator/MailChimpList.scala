@@ -36,7 +36,8 @@ case class MailChimpList(id: Option[Long],
                          listId: String,
                          brandId: Long,
                          personId: Long,
-                         allAttendees: Boolean = true)
+                         allAttendees: Boolean = true,
+                         oldEventAttendees: Boolean = true)
 
 case class MailChimpListBlock(list: MailChimpList,
                               brands: Seq[Brand],
