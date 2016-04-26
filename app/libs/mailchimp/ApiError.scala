@@ -24,18 +24,11 @@
 
 package libs.mailchimp
 
-import org.specs2.mutable.Specification
-import play.api.libs.ws.{WS, WSRequest}
-
-class TestClient(endPoint: String, token: String, error: String) extends Client(endPoint, token) {
-
-//  override protected def request(url: String): WSRequest =
-//    WS.url(url).withHeaders("X-Trigger-Error" -> error)
-
-}
 /**
-  * Created by sery0ga on 19/04/16.
+  * Represents MailChimp API error
   */
-class ClientErrorSpec extends Specification {
-
-}
+case class ApiError(typ: String,
+                   title: String,
+                   status: Int,
+                   detail: String,
+                   instance: String)

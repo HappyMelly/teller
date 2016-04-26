@@ -23,9 +23,10 @@
  */
 package libs.mailchimp
 
-import play.api.Play.current
-import play.api.libs.json.Json
-import play.api.libs.ws.{WSRequest, WS}
+import com.fasterxml.jackson.core.JsonProcessingException
+import play.api.libs.json.{JsValue, Json}
+import play.api.libs.ws.{WSResponse, WSRequest}
+import play.api.libs.ws.ning.NingWSClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -34,43 +35,67 @@ import scala.concurrent.Future
   * MailChimp client
   */
 class Client(endPoint: String, token: String) {
+  protected val wsClient = NingWSClient()
 
-  def createList(list: List): Future[List] = {
-    val url = endPoint + "/3.0/lists"
-    implicit val listFormats = Convertions.listFormats
-
-    request(url).post(Json.toJson(list)).map { response =>
-      response.json.as[List]
+  def createList(list: List): Future[Either[ApiError, List]] = {
+    implicit val listFormats = Converter.listFormats
+    post("lists", Json.toJson(list)) { json =>
+      json.as[List]
     }
   }
 
-
-  def lists(): Future[Seq[List]] = {
-    val url = endPoint + "/3.0/lists"
-    implicit val listReads = Convertions.listReads
-    request(url).get().map { response =>
-      (response.json \ "lists").as[Seq[List]]
+  def lists(): Future[Either[ApiError, Seq[List]]] = {
+    get("lists") { json =>
+      implicit val listReads = Converter.listReads
+      (json \ "lists").as[Seq[List]]
     }
   }
 
-  def mergeFields(listId: String): Future[Seq[MergeField]] = {
-    val url = s"$endPoint/3.0/lists/$listId/merge-fields"
-    implicit val mergeFieldReads = Convertions.mergeField
-    request(url).get().map { response =>
-      (response.json \ "merge_fields").as[Seq[MergeField]]
+  def mergeFields(listId: String): Future[Either[ApiError, Seq[MergeField]]] = {
+    val url = s"lists/$listId/merge-fields"
+    get(url) { json =>
+      implicit val mergeFieldReads = Converter.mergeField
+      (json \ "merge_fields").as[Seq[MergeField]]
     }
   }
 
-  def subscribe(listId: String, email: String, firstName: String, lastName: String): Future[Unit] = {
-    val url = s"$endPoint/3.0/lists/$listId/members"
+  def subscribe(listId: String, email: String, firstName: String, lastName: String): Future[Either[ApiError, Unit]] = {
+    val url = s"lists/$listId/members"
     val params = Json.obj("status" -> "subscribed",
       "email_address" -> email,
       "merge_fields" -> Json.obj("FNAME" -> firstName, "LNAME" -> lastName))
-    request(url).post(params).map { response =>
-      println(response.body)
+    post(url, params) { json =>
       Nil
     }
   }
 
-  protected def request(url: String): WSRequest = WS.url(url).withHeaders("Authorization" -> s"OAuth $token")
+  protected def get[T](url: String)(f: JsValue => T) = request(url).get().map { response =>
+    handleResponse(response)(f)
+  }
+
+  protected def post[T](url: String, params: JsValue)(f: JsValue => T) = request(url).post(params).map { response =>
+    handleResponse(response)(f)
+  }
+
+  protected def handleResponse[T](response: WSResponse)(f: JsValue => T) = {
+    implicit val apiErrorReads = Converter.apiErrorReads
+    if (response.status == 200)
+      try {
+        Right(f(response.json))
+      } catch {
+        case e: JsonProcessingException => Left(jsonFormattingError(response.body))
+      }
+    else
+      response.json.asOpt[ApiError] match {
+        case None => Left(jsonFormattingError(response.body))
+        case Some(error) => Left(error)
+      }
+  }
+
+  protected def jsonFormattingError(detail: String): ApiError =
+    ApiError("", "MailChimp Json Formatting Error", 600, detail, "")
+
+
+  protected def request(url: String): WSRequest =
+    wsClient.url(s"$endPoint/3.0/$url").withHeaders("Authorization" -> s"OAuth $token")
 }
