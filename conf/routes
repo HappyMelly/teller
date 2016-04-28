@@ -91,6 +91,12 @@ POST          /commercial-customer/:interested                               con
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
 
+GET           /coupon/new                                                    controllers.core.Coupons.add()
+POST          /coupon/new                                                    controllers.core.Coupons.create()
+GET           /coupons                                                       controllers.core.Coupons.index()
+GET           /coupon/:code/delete                                           controllers.core.Coupons.delete(code: String)
+GET           /coupon/:code                                                  controllers.core.Coupons.get(code: String)
+
 GET           /credits/brand/:id                                             controllers.cm.brand.Credits.credits(id: Long)
 POST          /credits/brand/:id                                             controllers.cm.brand.Credits.give(id: Long)
 GET           /credits                                                       controllers.cm.brand.Credits.index()

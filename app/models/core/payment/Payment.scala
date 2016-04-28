@@ -24,11 +24,7 @@
 
 package models.core.payment
 
-import models.repository.Repositories
 import models.{Organisation, Person}
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
-import play.api.Logger
 import views.Countries
 
 /**
@@ -43,16 +39,19 @@ case class Payment(key: String) {
    * @param org Organisation which wants to be a member
    * @param token Card token
    * @param amount Fee amount
+   * @param coupon Coupon with discount
    * @return Returns remote customer identifier and credit card info
    */
   def subscribe(person: Person,
                 org: Option[Organisation],
-                token: String, amount: Int)(implicit repos: Repositories): (String, CreditCard) = {
+                token: String,
+                amount: Int,
+                coupon: Option[String] = None): (String, CreditCard) = {
     val gateway = new GatewayWrapper(key)
     val plan = gateway.plan(amount)
     val customerName = org map { _.name } getOrElse { person.fullName }
     val customerId = org map { _.id.get } getOrElse { person.id.get }
-    gateway.customer(customerName, customerId, person.email, plan, token)
+    gateway.customer(customerName, customerId, person.email, plan, token, coupon)
   }
 
   /**

@@ -21,43 +21,54 @@
  * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.repository.core.payment
 
-import models.core.payment.Charge
-import models.database.core.payment.ChargeTable
+package models.repository.core
+
+import models.core.Coupon
+import models.database.core.CouponTable
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/** Provides operations with database related to charges */
-class ChargeRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
-  with ChargeTable {
+/**
+  * Contains methods for managing coupon records in database
+  */
+class CouponRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
+  with CouponTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
 
-  private val charges = TableQuery[Charges]
+  private val coupons = TableQuery[Coupons]
 
   /**
-    * Checks if the record with the remote id exists
-    * @param chargeId Remote charge id
+    * Returns all existing coupons
     */
-  def exists(chargeId: String): Future[Boolean] = db.run(charges.filter(_.remoteId === chargeId).exists.result)
-
-  def findByCustomer(customerId: Long): Future[Seq[Charge]] =
-    db.run(charges.filter(_.customerId === customerId).result)
+  def all: Future[Seq[Coupon]] = db.run(coupons.result)
 
   /**
-   * Inserts the given record to database
-   *
-   * @param charge Object to insert
-   * @return Returns charge object with updated id
-   */
-  def insert(charge: Charge): Future[Charge] = {
-    val query = charges returning charges.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += charge)
+    * Deletes a coupon
+    * @param code Coupon code
+    */
+  def delete(code: String): Future[Int] = db.run(coupons.filter(_.code === code).delete)
+
+  /**
+    * Returns coupon with the given code if it exists
+    *
+    * @param code Coupon code
+    */
+  def find(code: String): Future[Option[Coupon]] = db.run(coupons.filter(_.code === code).result.headOption)
+
+  /**
+    * Inserts the given coupon to database
+    *
+    * @param coupon Object to insert
+    * @return Returns coupon object with updated id
+    */
+  def insert(coupon: Coupon): Future[Coupon] = {
+    val query = coupons returning coupons.map(_.id) into ((value, id) => value.copy(id = Some(id)))
+    db.run(query += coupon)
   }
 }

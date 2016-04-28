@@ -1,0 +1,53 @@
+@import models.core.Coupon
+@import models.UserRole.Role._
+@import views.ViewHelpersV2._
+
+@(user: ActiveUser, coupons: Seq[Coupon])(implicit request: Request[Any],
+    flash: Flash,
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
+
+
+@v2.main("Coupons", "coupons", user) {
+    <div class="container p-content">
+        @v2.html.indexPageHeader("Coupons") {
+            <a class="btn btn-primary pull-right" href="@controllers.core.routes.Coupons.add()"> Add Coupon</a>
+        }
+        <div id="filter-container">
+            <div class="b-filters">
+                <span class="b-filters__text">Filter by status: </span>
+                <div class="b-filters__link">
+                    <a href="#" data-type="all">All</a>
+                    <span class="b-filters__count">@coupons.length</span>
+                </div>
+                <div class="b-filters__link">
+                    <a href="#" class="active" data-type="active">Active</a>
+                    <span class="b-filters__count">@coupons.count(_.valid)</span>
+                </div>
+            </div>
+        </div>
+        <table id="coupons" class="datatables table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Discount</th>
+                    <th>Valid on</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(coupon <- coupons) {
+                <tr @if(!coupon.valid) { class="inactive" title="Deactivated" }>
+                    <td>@coupon.code</td>
+                    <td>@coupon.discount%</td>
+                    <td>@nonrestrictiveDateInterval(coupon.start, coupon.end)</td>
+                    <td><a href="@controllers.core.routes.Coupons.delete(coupon.code)" class="font-sm"> delete</a></td>
+                    <td>@coupon.valid</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <script src="@routes.Assets.at("js/coupon/index.js")" type="text/javascript"></script>
+}

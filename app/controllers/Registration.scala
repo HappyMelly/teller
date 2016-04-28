@@ -24,14 +24,12 @@
 package controllers
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
-import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
+import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import controllers.hm.Enrollment
 import models.UserRole.Role._
 import models._
 import models.core.payment._
 import models.repository.Repositories
-import org.joda.money.CurrencyUnit._
-import org.joda.money.Money
 import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.cache.Cache
@@ -48,10 +46,11 @@ import securesocial.core.providers.utils.PasswordValidator
 import securesocial.core.services.SaveMode
 import securesocial.core.utils._
 import securesocial.core.{AuthenticationMethod, BasicProfile, SecureSocial}
-import services.{LoginIdentityService, TellerRuntimeEnvironment}
+import services.TellerRuntimeEnvironment
 import services.integrations.Email
 import views.Countries
 
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
@@ -68,7 +67,13 @@ case class UserData(firstName: String,
   email: String,
   country: String,
   org: Boolean = false,
-  orgData: OrgData = OrgData("", ""))
+  orgData: OrgData = OrgData("", "")) {
+
+  def feeCountry: String = if (org)
+    orgData.country
+  else
+    country
+}
 
 /**
  * Contains registration data required to create an organization
@@ -95,8 +100,6 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   with Activities {
 
   val REGISTRATION_COOKIE = "registration"
-
-  class ValidationException(msg: String) extends RuntimeException(msg) {}
 
   private def userForm = Form(mapping(
     "firstName" -> nonEmptyText,
@@ -200,145 +203,109 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     *
     * @return
    */
-  def step2 = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    redirectViewer {
-      val form = userForm.bind(Map(("firstName", user.person.firstName),
-        ("lastName", user.person.lastName),
-        ("email", user.person.email)))
-      ok(views.html.v2.registration.step2(user, form))
-    }
+  def step2 = redirectViewer { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val orgData = OrgData("", "")
+    val data = UserData(user.person.firstName, user.person.lastName, user.person.email, "", false, orgData)
+    val form = userForm.fill(data)
+    ok(views.html.v2.registration.step2(user, form))
   }
 
   /**
    * Renders step 3 page of the registration process
    */
-  def step3 = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    redirectViewer {
-      ok(views.html.v2.registration.step3(user, orgForm))
-    }
+  def step3 = redirectViewer { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    ok(views.html.v2.registration.step3(user, orgForm))
   }
 
   /**
    * Saves new person to cache
    */
-  def savePerson = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    redirectViewer {
-      userForm.bindFromRequest.fold(
-        errForm ⇒ badRequest(views.html.v2.registration.step2(user, errForm)),
-        data ⇒ {
-          val id = personCacheId(user.id)
-          Cache.set(id, data, 900)
-          val paymentUrl = routes.Registration.payment().url
-          val url: String = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
-            if (x.value == "org")
-              routes.Registration.step3().url
-            else
-              paymentUrl
-          } getOrElse paymentUrl
-          redirect(url)
-        })
-    }
+  def savePerson = redirectViewer { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    userForm.bindFromRequest.fold(
+      errForm ⇒ badRequest(views.html.v2.registration.step2(user, errForm)),
+      data ⇒ {
+        val id = personCacheId(user.id)
+        Cache.set(id, data, 900)
+        val paymentUrl = routes.Registration.payment().url
+        val url: String = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
+          if (x.value == "org")
+            routes.Registration.step3().url
+          else
+            paymentUrl
+        } getOrElse paymentUrl
+        redirect(url)
+      })
   }
 
   /**
    * Saves new org to cache
    */
-  def saveOrg = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    redirectViewer {
-      checkPersonData { implicit userData ⇒
-        orgForm.bindFromRequest.fold(
-          errForm ⇒ badRequest(views.html.v2.registration.step3(user, errForm)),
-          data ⇒ {
-            val id = personCacheId(user.id)
-            Cache.set(id, userData.copy(org = true, orgData = data), 900)
-            redirect(routes.Registration.payment())
-          })
-      }
+  def saveOrg = redirectViewer { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    isCachedDataAvailable { implicit userData ⇒
+      orgForm.bindFromRequest.fold(
+        errForm ⇒ badRequest(views.html.v2.registration.step3(user, errForm)),
+        data ⇒ {
+          val id = personCacheId(user.id)
+          Cache.set(id, userData.copy(org = true, orgData = data), 900)
+          redirect(routes.Registration.payment())
+        })
     }
   }
 
   /**
    * Renders Payment page of the registration process
    */
-  def payment = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    redirectViewer {
-      checkPersonData { implicit userData ⇒
-        val publicKey = Play.configuration.getString("stripe.public_key").get
-        val person = unregisteredPerson(userData, user)
-        val country = if (userData.org) userData.orgData.country else userData.country
-        val org = if (userData.org)
-          Some(Organisation(userData.orgData.name, userData.orgData.country))
-        else
-          None
-        val fee = Payment.countryBasedFees(country)
-        ok(views.html.v2.registration.payment(paymentForm, person, publicKey, fee, org))
-      }
+  def payment = redirectViewer { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    isCachedDataAvailable { implicit userData ⇒
+      val publicKey = Play.configuration.getString("stripe.public_key").get
+      val person = unregisteredPerson(userData, user)
+      val org = if (userData.org)
+        Some(Organisation(userData.orgData.name, userData.orgData.country))
+      else
+        None
+      val fee = Payment.countryBasedFees(userData.feeCountry)
+      ok(views.html.v2.registration.payment(paymentForm, person, publicKey, fee, org))
     }
   }
 
   /**
    * Makes a transaction and creates all objects
    */
-  def charge = RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
-    redirectViewer {
-      Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
-        repos.person.insert(unregisteredPerson(userData, user)) flatMap { person =>
-          val futureOrg = if (userData.org) {
-            val profile = SocialProfile(0, ProfileType.Organisation)
-            repos.org.insert(OrgView(unregisteredOrg(userData), profile)).map(x => Some(x.org))
-          } else {
-            Future.successful(None)
-          }
-          futureOrg flatMap { org =>
-            paymentForm.bindFromRequest.fold(
-              hasError ⇒ badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error"))),
-              data ⇒ {
-                try {
-                  if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
-                    throw new ValidationException("error.payment.minimum_fee")
-                  }
-                  val (customerId, card) = subscribe(person, org, data)
-                  addCustomerRecord(customerId, card, person, org)
-                  activateRecords(person, org)
-                  val futureMember = org map { x ⇒
-                    x.becomeMember(funder = false, data.fee, person.id.get, repos)
-                  } getOrElse {
-                    person.becomeMember(funder = false, data.fee, repos)
-                  }
-                  futureMember flatMap { member =>
-                    createUserAccount(user.id, user.providerId, person, member)
-                    notify(person, org, member)
-                    subscribe(person, member)
+  def charge = redirectViewer { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    isCachedDataAvailable { implicit userData ⇒
+      validatePaymentForm(userData.feeCountry) match {
+        case Left(result) => result
+        case Right(data) =>
+          val addRequest = addPersonWithOrg(userData, user)
+          addRequest flatMap { case (person, org) =>
+            try {
+              payMembership(person, org, data)
+              activateRecords(person, org)
+              val futureMember = org map { x ⇒
+                x.becomeMember(funder = false, data.fee, person.id.get, repos)
+              } getOrElse {
+                person.becomeMember(funder = false, data.fee, repos)
+              }
+              futureMember flatMap { member =>
+                createUserAccount(user.id, user.providerId, person, member)
+                notify(person, org, member)
+                subscribe(person, member)
 
-                    activity(member, person).becameSupporter.insert(repos)
+                activity(member, person).becameSupporter.insert(repos)
 
-                    val orgId = org map (_.id) getOrElse None
-                    ok(Json.obj("redirect" -> routes.Registration.congratulations(orgId).url))
-                  }
-                } catch {
-                  case e: PaymentException ⇒
-                    val error = e.code match {
-                      case "card_declined" ⇒ "error.payment.card_declined"
-                      case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
-                      case "expired_card" ⇒ "error.payment.expired_card"
-                      case "processing_error" ⇒ "error.payment.processing_error"
-                      case _ ⇒ "error.payment.unexpected_error"
-                    }
-                    clean(person, org)
-                    badRequest(Json.obj("message" -> Messages(error)))
-                  case e: RequestException ⇒
-                    clean(person, org)
-                    e.log.foreach(Logger.error(_))
-                    badRequest(Json.obj("message" -> Messages(e.getMessage)))
-                  case e: ValidationException ⇒
-                    clean(person, org)
-                    badRequest(Json.obj("message" -> Messages(e.getMessage)))
-                }
-              })
+                val orgId = org map (_.id) getOrElse None
+                ok(Json.obj("redirect" -> routes.Registration.congratulations(orgId).url))
+              }
+            } catch {
+              case e: PaymentException ⇒
+                clean(person, org)
+                badRequest(Json.obj("message" -> Messages(e.getMessage)))
+              case e: RequestException ⇒
+                clean(person, org)
+                e.log.foreach(Logger.error(_))
+                badRequest(Json.obj("message" -> Messages(e.getMessage)))
+            }
           }
-        }
-      } getOrElse {
-        ok(Json.obj("redirect" -> routes.Registration.step2().url))
       }
     }
   }
@@ -349,10 +316,9 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    * @param orgId Organisation identifier
    */
   def congratulations(orgId: Option[Long] = None) = Action { implicit request ⇒
-    orgId map { id ⇒
-      Ok(views.html.v2.registration.congratulations(core.routes.Organisations.details(id).url, true))
-    } getOrElse {
-      Ok(views.html.v2.registration.congratulations(core.routes.Dashboard.profile().url, false))
+    orgId match {
+      case None => Ok(views.html.v2.registration.congratulations(core.routes.Dashboard.profile().url, false))
+      case Some(id) => Ok(views.html.v2.registration.congratulations(core.routes.Organisations.details(id).url, true))
     }
   }
 
@@ -371,7 +337,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
 
   /**
     * Activates temporary records making them valid ones
- *
+    *
     * @param person Person
     * @param org Organisation
     */
@@ -383,6 +349,19 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       person.addRelation(value.identifier, repos)
     }
   }
+
+  protected def addPersonWithOrg(registrationData: UserData, user: ActiveUser) = for {
+    p <- repos.person.insert(unregisteredPerson(registrationData, user))
+    o <- addOrganisation(registrationData)
+  } yield (p, o)
+
+  protected def addOrganisation(registrationData: UserData): Future[Option[Organisation]] =
+    if (registrationData.org) {
+      val profile = SocialProfile(0, ProfileType.Organisation)
+      repos.org.insert(OrgView(unregisteredOrg(registrationData), profile)).map(x => Some(x.org))
+    } else {
+      Future.successful(None)
+    }
 
   /**
     * Adds new person as a member and updates cached object
@@ -426,26 +405,25 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     *
     * @param userId User identifier from a social network
    */
-  protected def personCacheId(userId: String): String = {
-    "user_" + userId
-  }
+  protected def personCacheId(userId: String): String = "user_" + userId
 
   /**
    * Redirects Viewer to an index page. Otherwise - run action
    */
-  protected def redirectViewer(f: Future[Result])(implicit request: Request[Any],
-    handler: be.objectify.deadbolt.scala.DeadboltHandler,
-    user: ActiveUser): Future[Result] = if (user.account.viewer)
-    redirect(core.routes.Dashboard.index())
-  else
-    f
+  protected def redirectViewer(f: Request[Any] => DeadboltHandler => ActiveUser => Future[Result]) =
+    RestrictedAction(Unregistered) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+      if (user.account.viewer)
+        redirect(core.routes.Dashboard.index())
+      else
+        f(request)(handler)(user)
+  }
 
   /**
    * Checks if person data are in cache and redirects to a person data form if not
    */
-  protected def checkPersonData(f: UserData ⇒ Future[Result])(implicit request: Request[Any],
-    handler: be.objectify.deadbolt.scala.DeadboltHandler,
-    user: ActiveUser): Future[Result] = {
+  protected def isCachedDataAvailable(f: UserData ⇒ Future[Result])(implicit request: Request[Any],
+                                                                    handler: DeadboltHandler,
+                                                                    user: ActiveUser): Future[Result] = {
     Cache.getAs[UserData](personCacheId(user.id)) map { userData ⇒
       f(userData)
     } getOrElse {
@@ -483,6 +461,30 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     person.address_=(address)
     person.profile_=(user.person.profile)
     person
+  }
+
+  protected def validatePaymentForm(country: String)(implicit request: Request[Any], user: ActiveUser) = {
+    paymentForm.bindFromRequest.fold(
+      hasError ⇒ Left(badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error")))),
+      data ⇒ {
+        if (data.fee < Payment.countryBasedFees(country)._1) {
+          Left(badRequest(Json.obj("message" -> Messages("error.payment.minimum_fee"))))
+        } else {
+          data.coupon match {
+            case None => Right(data)
+            case Some(couponCode) =>
+              val couponCheck = repos.core.coupon.find(couponCode) map {
+                case None => Left(badRequest(Json.obj("message" -> "Invalid coupon")))
+                case Some(coupon) =>
+                  if (coupon.valid)
+                    Right(data)
+                  else
+                    Left(badRequest(Json.obj("message" -> "Invalid coupon")))
+              }
+              Await.result(couponCheck, 5.seconds)
+          }
+        }
+      })
   }
 
   /**

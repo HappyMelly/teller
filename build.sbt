@@ -32,6 +32,7 @@ libraryDependencies ++= Seq(
     "org.mindrot" % "jbcrypt" % "0.3m",
     "org.pegdown" % "pegdown" % "1.6.0",
     "org.planet42" %% "laika-core" % "0.5.1",
+    "org.specs2" %% "specs2" % "3.7" % Test,
     "org.scalamock" %% "scalamock-specs2-support" % "3.2.2" % Test,
     "org.twitter4j" % "twitter4j-core" % "4.0.4",
     "net.kaliber" %% "play-s3" % "7.0.2" //s3 amazon support

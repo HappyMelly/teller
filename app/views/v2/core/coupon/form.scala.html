@@ -1,0 +1,43 @@
+@import models.core.Coupon
+@(user: ActiveUser,
+    form: Form[Coupon])(implicit flash: Flash,
+        request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("Coupon", "admin", user, withMelly = true) {
+  <div class="b-form">
+    <div class="container">
+        <h1 class="b-form__title">Add Coupon</h1>
+    </div>
+    @v2.html.form(CSRF(controllers.core.routes.Coupons.create())) {
+      @v2.html.formBlock("") {
+          @v2.html.text(form("code"), true, "Code")
+          @v2.html.number(form("discount"), true, "Discount")
+          @v2.html.date(form("start"), false, "Start")
+          @v2.html.date(form("end"), false, "End")
+      }
+      @if(form.hasErrors) {
+        @v2.html.formBlock("") {
+          <div class="b-form__errors">
+            @for(error <- form.errors) {
+              @Messages(error.message)<br/>
+            }
+          </div>
+        }
+      }
+      @v2.html.formBlock("") {
+        <div class="b-form__buttons">
+          <button class="btn btn-primary b-form__btn-submit" type="submit">
+            Save
+          </button>
+          <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel</a>
+        </div>
+      }
+    }
+  </div>
+}

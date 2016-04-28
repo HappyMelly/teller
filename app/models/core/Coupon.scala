@@ -18,21 +18,31 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.repository.core
 
-import models.repository.core.payment.{CreditCardRepository, ChargeRepository, CustomerRepository}
-import play.api.Application
+package models.core
+
+import org.joda.time.LocalDate
 
 /**
-  * Contains repositories of 'core' package
+  * Coupon with discounts
   */
-class Repositories(app: Application) {
-  lazy val card: CreditCardRepository = new CreditCardRepository(app)
-  lazy val charge: ChargeRepository = new ChargeRepository(app)
-  lazy val coupon: CouponRepository= new CouponRepository(app)
-  lazy val customer: CustomerRepository = new CustomerRepository(app)
+case class Coupon(id: Option[Long],
+                  code: String,
+                  discount: Int,
+                  start: Option[LocalDate] = None,
+                  end: Option[LocalDate] = None) {
+
+  val valid: Boolean = {
+    val now = LocalDate.now.toString
+    (start, end) match {
+      case (None, None) => true
+      case (Some(startDate), None) => startDate.toString <= now
+      case (None, Some(endDate)) => now <= endDate.toString
+      case (Some(startDate), Some(endDate)) => startDate.toString <= now && now <= endDate.toString
+    }
+  }
 }
+

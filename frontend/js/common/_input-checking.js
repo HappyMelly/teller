@@ -9,9 +9,16 @@ export default class InputChecking {
         this.$root = data.$root;
         this.url = data.url;
         this.locals = this._getDom();
+        this.data = {};
 
         this._checkValue();
         this._assignEvents();
+    }
+
+    _reset() {
+        this.data = {};
+        this.locals.$successText.text("");
+        App.events.pub('hmt.inputcheck.complete');
     }
 
     _getDom() {
@@ -37,6 +44,7 @@ export default class InputChecking {
         const valueInput = locals.$input.val();
 
         if (!locals.$input.val()){
+            self._reset();
             return;
         }
 
@@ -46,11 +54,15 @@ export default class InputChecking {
 
         self._sendCheck(valueInput)
             .done(function(response){
-                const successText = $.parseJSON(response).message;
+                var json = $.parseJSON(response);
+                const successText = json.message;
+                self.data = json.data;
                 self._completeChecking(successText);
+                App.events.pub('hmt.inputcheck.complete');
             })
             .fail(function(response){
                 const error = $.parseJSON(response.responseText).message;
+                self._reset();
                 self._showCheckingError(error);
             })
     }
