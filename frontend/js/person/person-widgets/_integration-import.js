@@ -27,6 +27,7 @@ export default class Widget {
             $editDlg: $root.find('[data-import-dlg]'),
             $availableThemes: $root.find('[data-import-select]'),
             $disableDlg: $root.find('[data-import-tooltip]'),
+            $listName: $root.find('[data-list-name]')
         }
     }
 
@@ -45,7 +46,7 @@ export default class Widget {
 
         self._getAvailableList(self.options.getAvailableLists)
             .done((list)=>{
-                integrationHelpers._prepareSelectWithThemes(self.locals.$availableThemes, list);
+                integrationHelpers._prepareSelectWithLists(self.locals.$availableThemes, list, self.locals.$listName);
                 this.editDlgData = self.editDlgHelper.getFormData();
 
                 self.locals.$editDlg.modal('show');
@@ -61,14 +62,15 @@ export default class Widget {
         const self = this;
         
         self._sendDisableList(self.options.disableImport, self.options.id)
-            .done(() => {
+            .done((data) => {
                 self.locals.$view.slideUp(400, ()=>{
                     self.$root.remove();
                 });
-                success(`You are successfully disable list`);
+                success(data.message);
             })
-            .fail(()=>{
-                error('Something is going wrong');
+            .fail((jqXHR, textStatus, errorThrown) => {
+                var msg = JSON.parse(jqXHR.responseText);
+                error(msg.message);
             })
     }
 
@@ -95,9 +97,10 @@ export default class Widget {
                 self.locals.$editDlg.modal('hide');
                 success('You are successfully update importing list')
             })
-            .fail(() =>{
+            .fail((jqXHR, textStatus, errorThrown) => {
+                var msg = JSON.parse(jqXHR.responseText);
                 self.locals.$editDlg.modal('hide');
-                error('Something is happened wrong');
+                error(msg.message);
             })
     }
 
@@ -133,8 +136,13 @@ export default class Widget {
     }
 
     _sendDisableList(url, id){
-        return $.post(url, {
-            list_id: id
+        return $.ajax({
+            type: "POST",
+            url: url,
+            data: {
+                list_id: id
+            },
+            dataType: "json"
         });
     }
 

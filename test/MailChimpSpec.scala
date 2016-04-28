@@ -33,54 +33,37 @@ import org.specs2.mutable.Specification
 class MailChimpSpec extends Specification {
 
   "List merge fields should" >> {
-    "contain EMAIL tag (-)" >> {
-      val fields = Seq(
-        MergeField(None, Some("MAIL"), "email", "email_address"),
-        MergeField(None, Some("NAME"), "name", "name"))
-      MailChimp.validateMergeFields(fields) must beLeft
-    }
-    "contain EMAIL tag (+)" >> {
-      val fields = Seq(
-        MergeField(None, Some("EMAIL"), "email", "email_address"),
-        MergeField(None, Some("NAME"), "name", "name"))
-      MailChimp.validateMergeFields(fields) must beRight
-    }
     "NOT contain any required tags except supported one (-)" >> {
       val fields = Seq(
-        MergeField(None, Some("EMAIL"), "email", "email_address"),
         MergeField(None, Some("NAME"), "name", "name", required = Some(true)))
       val err = "Fields with NAME tags are required. No data is provided for them."
       MailChimp.validateMergeFields(fields) must beLeft(BeEqualValueCheck(err))
     }
     "NOT contain any required tags except supported one (+)" >> {
       val fields = Seq(
-        MergeField(None, Some("EMAIL"), "email", "email_address", required = Some(true)),
         MergeField(None, Some("FNAME"), "email", "email_address", required = Some(true)),
         MergeField(None, Some("LNAME"), "name", "name", required = Some(true)))
       MailChimp.validateMergeFields(fields) must beRight
     }
     "notify when FNAME and LNAME fields are not found" >> {
-      val fields = Seq(MergeField(None, Some("EMAIL"), "email", "email_address"))
+      val fields = Seq()
       val msg = "Fields with FNAME and LNAME tags are not found. Only email will be exported for attendee."
       MailChimp.validateMergeFields(fields) must beRight(BeEqualValueCheck(msg))
     }
     "notify when FNAME field is not found" >> {
       val fields = Seq(
-        MergeField(None, Some("EMAIL"), "email", "email_address"),
         MergeField(None, Some("LNAME"), "email", "email_address"))
       val msg = "Field with FNAME tag is not found. Attendee's first name won't be exported."
       MailChimp.validateMergeFields(fields) must beRight(BeEqualValueCheck(msg))
     }
     "notify when LNAME field is not found" >> {
       val fields = Seq(
-        MergeField(None, Some("EMAIL"), "email", "email_address"),
         MergeField(None, Some("FNAME"), "email", "email_address"))
       val msg = "Field with LNAME tag is not found. Attendee's last name won't be exported."
       MailChimp.validateMergeFields(fields) must beRight(BeEqualValueCheck(msg))
     }
     "pass validation with empty message when everything is okay" >> {
       val fields = Seq(
-        MergeField(None, Some("EMAIL"), "email", "email_address"),
         MergeField(None, Some("FNAME"), "email", "email_address"),
         MergeField(None, Some("LNAME"), "name", "name"))
       MailChimp.validateMergeFields(fields) must beRight(BeEqualValueCheck(""))

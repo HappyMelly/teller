@@ -31,8 +31,7 @@ import models.Person
 
 import scala.collection.JavaConversions._
 
-class RequestException(msg: String, logMsg: Option[String] = None)
-    extends RuntimeException(msg) {
+class RequestException(msg: String, logMsg: Option[String] = None) extends RuntimeException(msg) {
 
   def log: Option[String] = logMsg
 }
@@ -44,8 +43,7 @@ class RequestException(msg: String, logMsg: Option[String] = None)
  * @param code Unique error code
  * @param param Optional parameter
  */
-case class PaymentException(msg: String, code: String, param: String)
-  extends RuntimeException(msg)
+case class PaymentException(msg: String, code: String, param: String) extends RuntimeException(msg)
 
 /**
  * Contains the logic required for working with payment gateway
@@ -53,10 +51,22 @@ case class PaymentException(msg: String, code: String, param: String)
 class GatewayWrapper(apiKey: String) {
 
   /**
+    * Creates new coupon
+    * @param coupon Coupon
+    */
+  def createCoupon(coupon: models.core.Coupon) = stripeCall {
+    val params = Map(
+      "id" -> coupon.code,
+      "duration" -> "once",
+      "percent_off" -> Int.box(coupon.discount)
+    )
+    com.stripe.model.Coupon.create(params)
+  }
+
+  /**
    * Cancels subscriptions
     *
     * @param customerId Customer
-   * @return
    */
   def cancel(customerId: String) = stripeCall {
     val subscriptions = com.stripe.model.Customer.retrieve(customerId).getSubscriptions.getData
@@ -88,26 +98,42 @@ class GatewayWrapper(apiKey: String) {
     * @param payerEmail Email of the person who pays
     * @param plan Plan identifier
     * @param token Card token
+    * @param coupon Coupon with discount
     * @return Returns customer identifier and credit card info
     */
   def customer(customerName: String,
                customerId: Long,
                payerEmail: String,
                plan: String,
-               token: String): (String, CreditCard) = stripeCall {
+               token: String,
+               coupon: Option[String] = None): (String, CreditCard) = stripeCall {
     val params = Map(
       "description" -> "Customer %s (id = %s) ".format(customerName, customerId),
       "email" -> payerEmail,
       "source" -> token)
     val customer = com.stripe.model.Customer.create(params)
     try {
-      customer.createSubscription(Map("plan" -> plan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+      val subscriptionParams = Map("plan" -> plan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString)
+      val withCoupon = coupon match {
+        case None => subscriptionParams
+        case Some(value) => subscriptionParams + ("coupon" -> value)
+      }
+      customer.createSubscription(withCoupon)
       (customer.getId, creditCard(customer))
     } catch {
       case e: StripeException =>
         customer.delete()
         throw e
     }
+  }
+
+  /**
+    * Deletes a coupon
+    * @param couponId Coupon id
+    */
+  def deleteCoupon(couponId: String) = stripeCall {
+    val coupon = com.stripe.model.Coupon.retrieve(couponId)
+    coupon.delete()
   }
 
   /**
@@ -179,7 +205,7 @@ class GatewayWrapper(apiKey: String) {
       f
     } catch {
       case e: CardException ⇒
-        throw new PaymentException(e.getMessage, e.getCode, e.getParam)
+        throw new PaymentException(codeToMsg(e.getCode), e.getCode, e.getParam)
       case e: InvalidRequestException ⇒
         throw new RequestException("error.payment.invalid_request", Some(e.toString))
       case e: AuthenticationException ⇒
@@ -189,6 +215,14 @@ class GatewayWrapper(apiKey: String) {
       case e: APIException ⇒
         throw new RequestException("error.payment.api", Some(e.toString))
     }
+  }
+
+  protected def codeToMsg(code: String): String = code match {
+    case "card_declined" ⇒ "error.payment.card_declined"
+    case "incorrect_cvc" ⇒ "error.payment.incorrect_cvc"
+    case "expired_card" ⇒ "error.payment.expired_card"
+    case "processing_error" ⇒ "error.payment.processing_error"
+    case _ ⇒ "error.payment.unexpected_error"
   }
 
   /**

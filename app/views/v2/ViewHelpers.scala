@@ -50,6 +50,18 @@ object ViewHelpersV2 {
       start.toString("d MMM yyyy — ") + end.toString("d MMM yyyy")
   }
 
+  /**
+    * Returns well-formatted nonrestrictive date interval
+    * @param start Optional start date
+    * @param end Optional end date
+    */
+  def nonrestrictiveDateInterval(start: Option[LocalDate], end: Option[LocalDate]): String = (start, end) match {
+    case (None, None) => "always"
+    case (Some(startDate), None) => s"after ${startDate.toString("d MMM yyyy")}"
+    case (None, Some(endDate)) => s"before ${endDate.toString("d MMM yyyy")}"
+    case (Some(startDate), Some(endDate)) => dateInterval(startDate, endDate)
+  }
+
   def date(value: LocalDate): String = value.toString("d MMM yyyy")
 
   def timePassed(from: DateTime): String = timePassed(from, DateTime.now())

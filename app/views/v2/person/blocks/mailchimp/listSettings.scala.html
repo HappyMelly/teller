@@ -1,0 +1,27 @@
+@import models.cm.facilitator.MailChimpListBlock
+
+@(block: MailChimpListBlock, brands: Seq[Brand], dlgName: String)
+
+<div id="dlg-importlist" class="modal fade b-modal dlg-interg-con" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-import-dlg>
+@v2.html.modal("", s"Update settings for list '${block.list.listName}' ") {
+    <form class="dlg-interg">
+        <input type="hidden" name="list_id" value="@block.list.listId" data-control>
+        <input type="hidden" name="list_name" value="@block.list.listName" data-list-name data-control>
+        @v2.person.blocks.mailchimp.attendees(block.list.allAttendees, block.list.oldEventAttendees)
+        @v2.person.blocks.mailchimp.brandSelector(brands, block.brands)
+
+        <div class="dlg-interg__buttons">
+            <a href="javascript: void(0)"
+            data-import-cancel
+            class="btn btn-default dlg-interg__cancel">
+                Cancel
+            </a>
+            <button type="submit"
+            data-import-submit
+            class="btn btn-primary dlg-interg__submit">
+                Update
+            </button>
+        </div>
+    </form>
+}
+</div>

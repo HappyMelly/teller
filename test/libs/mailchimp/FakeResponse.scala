@@ -18,21 +18,39 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.repository.core
 
-import models.repository.core.payment.{CreditCardRepository, ChargeRepository, CustomerRepository}
-import play.api.Application
+package libs.mailchimp
+
+import play.api.libs.json.{Json, JsValue}
+import play.api.libs.ws.{WSCookie, WSResponse}
+
+import scala.xml.Elem
+import scala.xml.factory.XMLLoader
 
 /**
-  * Contains repositories of 'core' package
+  * Represents fake http response
   */
-class Repositories(app: Application) {
-  lazy val card: CreditCardRepository = new CreditCardRepository(app)
-  lazy val charge: ChargeRepository = new ChargeRepository(app)
-  lazy val coupon: CouponRepository= new CouponRepository(app)
-  lazy val customer: CustomerRepository = new CustomerRepository(app)
+case class FakeResponse(status: Int, body: String) extends WSResponse with XMLLoader[Elem] {
+
+  def allHeaders: Map[String, Seq[String]] = Map()
+
+  def underlying[T]: T = 1.asInstanceOf[T]
+
+  def statusText: String = ""
+
+  def header(key: String): Option[String] = None
+
+  def cookies: Seq[WSCookie] = Seq()
+
+  def cookie(name: String): Option[WSCookie] = None
+
+  lazy val xml: Elem = loadString(body)
+
+  lazy val json: JsValue = Json.parse(body)
+
+  def bodyAsBytes: Array[Byte] = Array[Byte]()
+
 }

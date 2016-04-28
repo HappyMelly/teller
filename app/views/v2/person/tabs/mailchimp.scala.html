@@ -1,4 +1,6 @@
-@(active: Boolean, lists: Seq[(String, String)])
+@import models.cm.facilitator.MailChimpListBlock
+
+@(active: Boolean, blocks: Seq[MailChimpListBlock], brands: Seq[Brand])
 
 <div class="b-integr @if(active) {b-integr_state_active} js-mailchimp-integration">
     <h4 class="b-integr__title-main">MailChimp</h4>
@@ -23,11 +25,11 @@
         </a>
 
         <h4 class="b-integr__title">
-            Set auto-importing to lists
+            Set auto-exporting to lists
         </h4>
         <p>
             Set connection between MailChimp lists and attendees of your events.
-            Existing and new attendees will be automaticaly added to the lists.
+            Existing and new attendees will be automatically added to the lists.
             You can create new list right here and then import attendees in it.
         </p>
 
@@ -37,15 +39,17 @@
                 <a href="javascript: void(0)"
                     class="btn btn-primary b-integr__btn-import"
                     data-integ-import-btn>
-                    Set importing to the list
+                    Set exporting to existing list
                 </a>
-                <a href="#"
+                <a href="@controllers.cm.facilitator.routes.MailChimp.add()"
                     class="btn btn-default b-integr__btn-new">
-                    Create new list and set importing
+                    Create new list and set exporting
                 </a>
             </div>
             <div data-integ-list>
-                @views.html.v2.person.blocks.importingList()
+                @for(listBlock <- blocks) {
+                    @views.html.v2.person.blocks.mailchimp.list(listBlock, brands)
+                }
             </div>
         </div>
 
@@ -54,7 +58,7 @@
             <p>
                 There’re no existing lists in your MailChimp account:
             </p>
-            <a href="javascript: void(0)"
+            <a href="@controllers.cm.facilitator.routes.MailChimp.add()"
                 class="btn btn-primary b-integr__btn-new">
                 Create new list and set importing
             </a>
@@ -63,70 +67,28 @@
         <!-- loading -->
         <div class="b-integr__loading">
             <p>
-                <b>Please wait, we are importing your lists…</b>
+                <b>Please wait. We are loading your lists from MailChimp...</b>
             </p>
         </div>
     </div>
 
     <div id="dlg-importlist" class="modal fade b-modal dlg-interg-con" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-integcreate-dlg>
-    @v2.html.modal("", "Set importing to the list") {
+    @v2.html.modal("", "Set exporting to list") {
         <form class="dlg-interg" action="#">
             <div class="dlg-interg__i">
                 <div class="dlg-interg__label">
                     Select list
                 </div>
-                <select name="list_name" class="dlg-interg__select form-control" data-integcreate-list data-control></select>
+                <select name="list_id" class="dlg-interg__select form-control" data-integcreate-list data-control></select>
             </div>
-            <div class="dlg-interg__i">
-                <div class="dlg-interg__label">
-                    Select attendees to import
-                </div>
-                <select name="list_evaluations" class="dlg-interg__select form-control" data-control>
-                    <option value="1">Only with evaluations</option>
-                    <option value="2">Only without evaluations</option>
-                    <option value="3">All</option>
-                </select>
-            </div>
-            <div class="dlg-interg__i dlg-interg__include">
-                <label class="b-checkbox">
-                    <input name="list_include" type="checkbox" checked class="b-checkbox__real" data-control>
-                    <i class="b-checkbox__img"></i>
-                    <div class="b-checkbox__text">
-                        Include attendees from previouse events
-                    </div>
-                </label>
-            </div>
+            <input type="hidden" name="list_name" value="" data-list-name data-control>
+            @v2.person.blocks.mailchimp.attendees()
+            @v2.person.blocks.mailchimp.brandSelector(brands)
 
-            <div class="dlg-interg__i">
-                <div class="dlg-interg__label">
-                    Select brand
-                </div>
-                <label class="b-checkbox">
-                    <input type="checkbox" class="b-checkbox__real" name="check1" data-control>
-                    <i class="b-checkbox__img"></i>
-                    <div class="b-checkbox__text">
-                        Managment 3.0
-                    </div>
-                </label>
-                <label class="b-checkbox">
-                    <input type="checkbox" class="b-checkbox__real" name="check2" data-control>
-                    <i class="b-checkbox__img"></i>
-                    <div class="b-checkbox__text">
-                        Learning 3.0
-                    </div>
-                </label>
-                <label class="b-checkbox">
-                    <input type="checkbox" class="b-checkbox__real" name="check3" data-control>
-                    <i class="b-checkbox__img"></i>
-                    <div class="b-checkbox__text">
-                        Kudobox
-                    </div>
-                </label>
-            </div>
             <div class="dlg-interg__text">
-                Attendees won’t be imported to the list if: <br>
+                Attendees won’t be exported to the list if: <br>
                 - attendee doesn’t have email or first or last name, <br>
-                - selected list has requied fields other then first name, last name and email.
+                - selected list has required fields other then first name, last name and email.
                     You can change it in your MailChimp account.
             </div>
             <div class="dlg-interg__buttons">
@@ -138,7 +100,7 @@
                 <button type="submit"
                     data-integcreate-btn
                     class="btn btn-primary dlg-interg__submit">
-                    Import
+                    Connect
                 </button>
             </div>
         </form>
@@ -149,10 +111,10 @@
     <div id="dlg-integration-disable" class="modal fade b-prompt " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-integdisable-dlg>
     @v2.html.prompt("") {
         <h3 class="b-prompt__title">
-            Are you sure you want to deactivate integration
+            Are you sure you want to deactivate integration?
         </h3>
         <div class="b-prompt__text">
-            Disabling importing will stop adding new attendees to this list.
+            Disabling integration will stop subscription of new attendees to your MailChimp lists
         </div>
         <div class="b-prompt__buttons">
             <a href="#" class="btn btn-primary b-prompt__btn-accept"
@@ -163,7 +125,7 @@
             <a href="#" class="btn btn-default b-prompt__btn-cancel"
                 data-dismiss="modal"
                 data-integdisable-yes>
-                Yes, deactivate Integration
+                Yes, deactivate integration
             </a>
         </div>
     }

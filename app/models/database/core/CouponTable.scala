@@ -18,21 +18,33 @@
  * along with Happy Melly Teller.  If not, see <http://www.gnu.org/licenses/>.
  *
  * If you have questions concerning this license or the applicable additional
- * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com
- * or in writing
- * Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
+ * terms, you may contact by email Sergey Kotlov, sergey.kotlov@happymelly.com or
+ * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package models.repository.core
 
-import models.repository.core.payment.{CreditCardRepository, ChargeRepository, CustomerRepository}
-import play.api.Application
+package models.database.core
+
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import models.core.Coupon
+import org.joda.time.LocalDate
+import slick.driver.JdbcProfile
 
 /**
-  * Contains repositories of 'core' package
+  * Represents coupon table
   */
-class Repositories(app: Application) {
-  lazy val card: CreditCardRepository = new CreditCardRepository(app)
-  lazy val charge: ChargeRepository = new ChargeRepository(app)
-  lazy val coupon: CouponRepository= new CouponRepository(app)
-  lazy val customer: CustomerRepository = new CustomerRepository(app)
+private[models] trait CouponTable {
+
+  protected val driver: JdbcProfile
+  import driver.api._
+
+  class Coupons(tag: Tag) extends Table[Coupon](tag, "COUPON") {
+
+    def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+    def code = column[String]("CODE", O.Length(15, varying = true))
+    def discount = column[Int]("DISCOUNT")
+    def start = column[Option[LocalDate]]("START")
+    def end = column[Option[LocalDate]]("END")
+
+    def * = (id.?, code, discount, start, end) <> ((Coupon.apply _).tupled, Coupon.unapply)
+  }
 }

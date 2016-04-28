@@ -24,14 +24,15 @@ export default class Widget {
             $list: $root.find('[data-integ-list]'),
             $controls: $root.find('[data-control]'),
             $editDlg: $root.find('[data-integcreate-dlg]'),
-            $availableThemes: $root.find('[data-integcreate-list]'),
+            $availableLists: $root.find('[data-integcreate-list]'),
             $modalDisableInteg: $root.find('[data-integdisable-dlg]'),
+            $listName: $root.find('[data-list-name]')
         }
     }
     
     _init(){
         if (this.isIntegrationActive) {
-            this._checkAndInitImporting()
+            this._checkAndInitExporting()
         }    
     }
 
@@ -47,37 +48,32 @@ export default class Widget {
         const $root = this.$root;
 
         this._sendDeactivate(this.options.deactivate)
-            .done(()=>{
+            .done((data)=>{
                 $root.removeClass('b-integr_state_active b-integr_state_import b-integr_state_nolist');
-                success('You are successfully deactivate integration')
+                success(data.message);
             })
     }
 
     _onClickShowImport(e){
         e.preventDefault();
         const self = this;
-        
-        self._getAvailableList(this.options.getAvailableLists)
-            .done((list)=>{
-                integrationHelpers._prepareSelectWithThemes(this.locals.$availableThemes, list);
-                self.locals.$editDlg.modal('show')
-            })
+
+        self.locals.$editDlg.modal('show');
     }
 
     _onEventSubmitEdit(e){
         e.preventDefault();
         const self = this;
         const data = self.importDlgHelper.getFormData();
-
         self._createImportList(this.options.createImport, data)
-            .done((data) =>{
-                const html = $.parseJSON(data).body;
-
-                self.locals.$list.append(html);
-                success('You are succefully import new list from mailchimp')
+            .done((data) => {
+                self.locals.$list.append(data.body);
+                self.locals.$editDlg.modal('hide');
+                success(data.message)
             })
-            .fail(() => {
-                error('Something is going wrong');
+            .fail((jqXHR, textStatus, errorThrown) => {
+                var msg = JSON.parse(jqXHR.responseText);
+                error(msg.message);
             })
     }
 
@@ -86,12 +82,28 @@ export default class Widget {
         this.locals.$editDlg.modal('hide');
     }
 
-    _checkAndInitImporting(){
+    _checkAndInitExporting(){
         const $listItems = this.locals.$list.children();
-        
+        const self = this;
+
         if (!$listItems.length){
-            this.$root.addClass('b-integr_state_nolist');
+            this.$root.addClass('b-integr_state_loading');
+            self._getAvailableList(this.options.getAvailableLists)
+                .done((list)=>{
+                    integrationHelpers._prepareSelectWithLists(self.locals.$availableLists, list, self.locals.$listName);
+                    self.$root.removeClass('b-integr_state_loading');
+                    if (list.length) {
+                        self.$root.addClass('b-integr_state_import');
+                    } else {
+                        self.$root.addClass('b-integr_state_nolist');
+                    }
+                });
             return;
+        } else {
+            self._getAvailableList(this.options.getAvailableLists)
+                .done((list)=> {
+                    integrationHelpers._prepareSelectWithLists(self.locals.$availableLists, list, self.locals.$listName);
+                });
         }
 
         this.$root.addClass('b-integr_state_import');
@@ -104,7 +116,12 @@ export default class Widget {
     
     //transport
     _sendDeactivate(url){
-        return $.post(url, {});
+        return $.ajax({
+            type: "POST",
+            url: url,
+            data: {},
+            dataType: "json"
+        });
     }
 
     _getAvailableList(url){
@@ -119,7 +136,12 @@ export default class Widget {
     }
 
     _createImportList(url, data){
-        return $.post(url, data);
+        return $.ajax({
+            type: "POST",
+            url: url,
+            data: data,
+            dataType: "json"
+        });
     }
 
     // static

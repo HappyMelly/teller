@@ -1,5 +1,7 @@
 'use strict';
 
+import InputChecking from './../../common/_input-checking';
+
 /**
  * Form for payment with fee
  * @param selector
@@ -12,6 +14,11 @@ export default class Widget {
         self.$root = $(selector);
         self.locals = self._getDom();
         self.apikey = self.$root.data('apikey');
+
+        self.coupon = new InputChecking({
+            $root: this.$root.find('.b-inputcheck'),
+            url: jsRoutes.controllers.core.Coupons.get
+        });
 
         self._getStripeScript()
             .done(function () {
@@ -39,11 +46,14 @@ export default class Widget {
             $inputMonth: $root.find('[data-card-month]'),
             $inputYear: $root.find('[data-card-year]'),
             $inputCVC: $root.find('[data-card-cvc]'),
+            $inputCoupon: $root.find('[data-payment-coupon]'),
             $submit: $root.find('[data-payment-submit]'),
             $inputFee: $root.find('[data-payment-fee]'),
             $taxPlace: $root.find('[data-payment-tax]'),
             $amountPlace: $root.find('[data-payment-amount]'),
-            $payPlace: $root.find('[data-payment-price]')
+            $payPlace: $root.find('[data-payment-price]'),
+            $discountCaption: $root.find('[data-payment-discount]'),
+            $discountPlace: $root.find('[data-payment-discount-amount]')
         }
     }
 
@@ -55,6 +65,7 @@ export default class Widget {
 
         this.locals.$inputNumber.payment('formatCardNumber');
         this.locals.$inputCVC.payment('formatCardCVC');
+        this.locals.$discountCaption.hide();
     }
 
     _assignEvents() {
@@ -67,6 +78,9 @@ export default class Widget {
                 self._removeError($this);
                 self._updateAmount($this);
             })
+            .on('change paste keyup', '[data-payment-coupon]', function (e) {
+                self._updateAmount(self.locals.$inputFee);
+            })
             .on('keyup', 'input', function () {
                 self._removeError($(this));
             })
@@ -75,20 +89,41 @@ export default class Widget {
                 $this.val($this.val().toUpperCase())
             })
             .on('submit', self._onSubmitHandler.bind(self));
+
+        App.events
+            .sub('hmt.inputcheck.complete', ()=> {
+                self._updateAmount(self.locals.$inputFee);
+            });
     }
 
     _updateAmount($el) {
         let locals = this.locals,
             amount = $el.val() < 1 ? 0.00 : parseInt($el.val()),
             taxPercent = parseFloat($el.data('tax')),
+            discount = this._getDiscount(),
+            revertDiscount = 1 - discount / 100,
             tax, amountWithTax;
 
-        tax = (amount * taxPercent) / 100;
-        amountWithTax = amount + tax;
+        tax = ((amount * taxPercent) / 100) * revertDiscount;
+        amountWithTax = amount * revertDiscount + tax;
 
         locals.$amountPlace.text(amount);
         locals.$taxPlace.text(tax);
         locals.$payPlace.text(amountWithTax);
+        locals.$discountPlace.text(discount);
+        if (discount > 0) {
+            locals.$discountCaption.show();
+        } else {
+            locals.$discountCaption.hide();
+        }
+    }
+
+    _getDiscount() {
+        if (this.coupon.data.hasOwnProperty("discount")) {
+            return this.coupon.data.discount;
+        } else {
+            return 0;
+        }
     }
 
     _setError($el) {
@@ -113,7 +148,7 @@ export default class Widget {
         let $root = this.$root,
             template = '<input type="hidden" value="' + token + '" name="token" />';
 
-        $root.find('input[name="token"]').remove()
+        $root.find('input[name="token"]').remove();
         $root.append(template);
     };
 

@@ -1,0 +1,22 @@
+@(allAttendees: Boolean = true, oldEventAttendees: Boolean = true)
+
+<div class="dlg-interg__i">
+    <div class="dlg-interg__label">
+                Select attendees to export
+    </div>
+    <select name="all_attendees" class="dlg-interg__select form-control" data-control>
+        <option value="true" >All including attendees added manually</option>
+        <option value="false" @if(!allAttendees){selected}>Only with evaluations</option>
+    </select>
+</div>
+
+<div class="dlg-interg__i dlg-interg__include">
+    <label class="b-checkbox">
+        <input name="include_previous_events" type="checkbox" @if(oldEventAttendees) {checked}
+        class="b-checkbox__real" data-control>
+            <i class="b-checkbox__img"></i>
+            <div class="b-checkbox__text">
+                Include attendees from previous events
+            </div>
+    </label>
+</div>

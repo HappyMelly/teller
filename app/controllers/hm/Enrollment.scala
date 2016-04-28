@@ -37,7 +37,7 @@ import services.integrations.Integrations
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class PaymentData(token: String, fee: Int, orgId: Option[Long] = None) {}
+case class PaymentData(token: String, fee: Int, coupon: Option[String] = None, orgId: Option[Long] = None) {}
 
 /**
  * Defines an interface for enrollment classes
@@ -49,6 +49,7 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
     "fee" -> number,
+    "coupon" -> optional(nonEmptyText),
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
 
   /**
@@ -100,10 +101,12 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
    * @param data Payment data
    * @return Returns customer identifier in the payment system and credit card info
    */
-  protected def subscribe(person: Person, org: Option[Organisation], data: PaymentData): (String, CreditCard) = {
+  protected def payMembership(person: Person, org: Option[Organisation], data: PaymentData): (String, CreditCard) = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
-    payment.subscribe(person, org, data.token, data.fee)(repos)
+    val (customerId, card) = payment.subscribe(person, org, data.token, data.fee, data.coupon)
+    addCustomerRecord(customerId, card, person, org)
+    (customerId, card)
   }
 
   private def notifyAboutPerson(person: Person, member: Member) = {

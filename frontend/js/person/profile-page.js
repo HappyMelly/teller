@@ -12,7 +12,7 @@ $(function(){
             getAvailableLists: jsRoutes.controllers.cm.facilitator.MailChimp.lists().url,
 
             createImport: jsRoutes.controllers.cm.facilitator.MailChimp.connect().url,
-            updateImport: '/imports/update/1',
+            updateImport: jsRoutes.controllers.cm.facilitator.MailChimp.update().url,
             disableImport: jsRoutes.controllers.cm.facilitator.MailChimp.disconnect().url
         })
     })

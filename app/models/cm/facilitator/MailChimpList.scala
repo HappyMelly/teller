@@ -24,6 +24,8 @@
 
 package models.cm.facilitator
 
+import models.Brand
+
 /**
   * Represents MailChimp's list integration for brand facilitators
   *
@@ -34,4 +36,30 @@ case class MailChimpList(id: Option[Long],
                          listId: String,
                          brandId: Long,
                          personId: Long,
-                         allAttendees: Boolean = true)
+                         allAttendees: Boolean = true,
+                         oldEventAttendees: Boolean = true)
+
+case class MailChimpListBlock(list: MailChimpList,
+                              brands: Seq[Brand],
+                              totalBrandsNumber: Int) {
+
+  val caption: String = if (totalBrandsNumber == 1)
+    getOneBrandCaption
+  else
+    getMultipleBrandsCaption
+
+  protected def getOneBrandCaption: String = importType(list)
+
+  protected def getMultipleBrandsCaption: String = {
+    val brandCaption = if (totalBrandsNumber == brands.length)
+      "all"
+    else
+      brands.map(_.name).mkString(" and ")
+    s"${importType(list)} from $brandCaption brands"
+  }
+
+  protected def importType(list: MailChimpList): String = if (list.allAttendees)
+    "all attendees"
+  else
+    "only attendees with evaluations"
+}
