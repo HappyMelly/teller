@@ -19,8 +19,6 @@ export default class Widget {
             url: jsRoutes.controllers.Utilities.validate
         });
 
-        debugger;
-
         this._assignEvents();
     }
 

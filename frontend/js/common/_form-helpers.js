@@ -9,13 +9,13 @@ export default class FormHelper {
      * @property { Object } initialData.rules           - optional list of validating controls;
      * @param {Object} messages
      */
-    constructor(options, messages) {
+    constructor(options, messages = null) {
         this.$controls = options.$controls;
         this.$errorUnderSubmit = options.$errorUnderSubmit;
 
+        this.messages = messages || this._getDefaultMessages();
         this.rules = $.extend({}, options.rules, this._getRulesFromHtml(this.$controls));
         this.restriction = $.extend({}, options.restriction, this._getRestrictionFromHtml(this.$controls))
-        this.messages = messages || this._getDefaultMessages();
         this.errors = [];
 
         this._assignEvents();
@@ -96,45 +96,31 @@ export default class FormHelper {
             .on('input', this._onInputControl.bind(this))
     }
 
-    _onFocusControl(){
+    _onFocusControl(e){
         const $el = $(e.currentTarget);
-        this.$currentInput = $el;
-
     }
 
-    _onBlurControl(){
+    _onBlurControl(e){
         const $el = $(e.currentTarget);
-        this._checkControl($el);
+        this._isValidControl($el);
     }
 
-    _onInputControl(){
+    _onInputControl(e){
         const $control = $(e.currentTarget);
         this._removeError($control);
         this._restrictInput($control);
     }
 
-    _checkControl($control){
-        const validation = this._validationControl($control);
+    _isValidControl($control){
+        const validation = this._validateControl($control);
 
         if (validation.isValid) {
             this._removeError($control);
-            return;
+            return true;
         }
 
         this._setError($control, validation.message);
-    }
-
-    _restrictInput($control){
-        const name = $control.attr('name');
-        const restriction = this.restriction[name];
-        let value = this._getValue($control);
-
-        if (!restriction.length) return;
-
-        for (let restict in restriction){
-            value = this[`${restict}Restrict`](value);
-        }
-        this._setValue($control, value);
+        return false;
     }
 
     /**
@@ -143,15 +129,11 @@ export default class FormHelper {
      * @returns {Object} = isValid(Boolean), message(String)
      * @private
      */
-    _validationControl($control){
+    _validateControl($control){
         const name = $control.attr('name');
         const rules = this.rules[name];
-        const valueControl = this._getValue($control);
+        const valueControl = this.getControlValue($control);
         let valid;
-
-        if (!rules.length) return {
-            isValid: false
-        };
 
         for (let rule in rules){
             valid = this[`${rule}Validator`](valueControl, $control);
@@ -167,16 +149,46 @@ export default class FormHelper {
         };
     }
 
-    _getValue($control){
-        return $control.val();
+    isValidFormData(){
+        const self = this;
+        let valid = true;
+
+        this.removeErrors();
+        this.$controls.each((index, control) => {
+            let isValidControl  = self._isValidControl($(control));
+            valid = valid && isValidControl;
+        });
+        
+        return valid;
     }
 
-    _setValue($control, value){
-        $control.val(value);
+    _restrictInput($control){
+        const name = $control.attr('name');
+        const restriction = this.restriction[name];
+        let value = this.getControlValue($control);
+
+        if (!restriction) return;
+
+        for (let restict in restriction){
+            value = this[`${restict}Restrict`](value);
+        }
+        this.setControlValue($control, value);
     }
 
-    isValidControls(){
-        return !Boolean(this.errors.length);
+    /**
+     * Show or hide last error
+     * @param {Boolean} condition
+     * @param {jQuery} $control
+     * @private
+     */
+    _showPreviousError(condition, $control = null){
+        if (this.$inputWithError) {
+            this.$inputWithError
+                .parent()
+                .toggleClass('b-error_state_high', !condition)
+                .toggleClass('b-error_state_error', condition)
+        }
+        this.$inputWithError = $control;
     }
 
     /**
@@ -199,7 +211,7 @@ export default class FormHelper {
 
         $parent.addClass(showBubble?'b-error_state_error': 'b-error_state_high');
 
-        this.arrErrors.push({
+        this.errors.push({
             name: $control.attr('name'),
             error: errorText
         })
@@ -208,40 +220,20 @@ export default class FormHelper {
     _removeError($control){
         const $parent = $control.parent();
 
-        $parent.removeClass('b-error_state_error');
-        setTimeout(() =>{
-            $parent.find('b-error').remove();
-        }, 300);
+        $parent.removeClass('b-error_state_error b-error_state_high')
 
         this.errors = this.errors.filter(function (item) {
             return item.name !== $control.attr('name')
         })
-    }
-
-    /**
-     * Show or hide last error
-     * @param {Boolean} condition - true/show, false/hide
-     * @private
-     */
-    _toggleLastError(condition){
-        if (!this.errors.length) return;
-
-        const lastError = this.errors[this.errors.length - 1];
-        const $lastControl = $(`[name="${lastError.name}"]`).first().parent();
-
-        if (!$lastControl.length) return;
-
-        $lastControl
-            .toggleClass('b-error_state_high', !condition)
-            .toggleClass('b-error_state_error', condition)
-    }
+    }    
 
     /**
      * Set errors
      * @param {Array} errors - [{name: "email", error: "empty"}, {name: "password", error: "empty"}]
      */
     setErrors(errors) {
-        let index;
+        this.$inputWithError = null;
+        let index = 0;
 
         errors.forEach((item) => {
             const $currentControl = this.$controls.filter('[name="' + item.name + '"]').first();
@@ -259,6 +251,13 @@ export default class FormHelper {
         })
     }
 
+    removeErrors() {
+        this.$controls.each((index, el) => {
+            const $el = $(el);
+            this._removeError($el)
+        })
+    }
+    
     // validators
     requiredValidator(value, $el){
         if ($el.is('select')) {
@@ -293,25 +292,34 @@ export default class FormHelper {
         return value.replace(/\s/g, '');
     }
 
-    // Helper for form
-    removeErrors() {
-        this.$controls.each((index, el) => {
-            const $el = $(el);
-            this._removeError($el)
-        })
-    }
-
+    // Helper for form 
     getFormData(){
         let formData = {};
 
-        this.$controls.map((index, el) => {
+        this.$controls.each((index, el) => {
             const $el = $(el);
             const name = $el.attr('name');
 
-            name && (formData[name] = $el.val())
+            if (name) {
+                formData[name] = this.getControlValue($el)
+            }
         });
 
         return formData;
+    }
+
+    setFormData(formData){
+        const $controls = this.$controls;
+
+        for( let field in formData){
+            if (formData.hasOwnProperty(field)){
+                let $control = $controls.filter(`[name="${field}"]`).first();
+
+                if (!$control.length) return;
+
+                this.setControlValue($control, data[field]);
+            }
+        }
     }
 
     clearForm() {
@@ -321,4 +329,33 @@ export default class FormHelper {
         })
     }
 
+    /**
+     * Universal assign value
+     * @param {jQuery} $control
+     * @param {String|Number|Boolean} value
+     */
+    setControlValue($control, value){
+        if ($control.is(':checkbox')){
+            $control.prop('checked', value)
+        } else{
+            $control.val(value);
+        }
+    }
+
+    /**
+     * Universal get value helper
+     * @param {jQuery} $control
+     * @returns {String|Boolean}
+     */
+    getControlValue($control){
+        let value = null;
+
+        if ($control.is(':checkbox')) {
+            value = $control.prop('checked');
+        } else {
+            value = $control.val();
+        }
+
+        return value;
+    }
 }

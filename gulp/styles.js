@@ -9,7 +9,6 @@ module.exports = function (options) {
     return gulp.src(options.target)
         .pipe($.plumber({errorHandler: utils.errorHandler}))
         .pipe($.less())
-        .pipe($.cached('styles'))
         .pipe($.if(config.isBuild, $.cssnano()))
         .pipe(gulp.dest(options.dst));
 };

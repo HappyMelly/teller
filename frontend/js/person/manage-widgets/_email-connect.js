@@ -63,7 +63,7 @@ export default class Widget {
 
         return $elems.each(function (index, el) {
             let $element = $(el);
-            let data     = $element.data('widget.scrollto');
+            let data     = $element.data('widget.email_connect');
 
             if (!data) {
                 data = new Widget(el, options);

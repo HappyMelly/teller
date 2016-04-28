@@ -1,7 +1,5 @@
 'use strict';
 
-import FormHelper from "./../../common/_form-helper";
-
 export default class Widget {
     constructor(selector, options) {
         this.$root = $(selector);
