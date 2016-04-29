@@ -1,6 +1,6 @@
 'use strict';
 
-import IntegrationMailchimp from "./person-widgets/_integration";
+import IntegrationMailchimp from "./intergration-widgets/_integration";
 
 
 $(function(){

@@ -8,11 +8,11 @@
         @for((brand, index) <- brands.zipWithIndex) {
             <label class="b-checkbox">
                 <input type="checkbox" class="b-checkbox__real" name="brand_flags[@index]"
-                @if(listBrands.exists(_.identifier == brand.identifier)) {checked} data-control>
-                <i class="b-checkbox__img"></i>
-                <div class="b-checkbox__text">
-                @brand.name
-                </div>
+                    @if(listBrands.exists(_.identifier == brand.identifier)) {checked} data-control>
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                    @brand.name
+                    </div>
             </label>
             <input type="hidden" name="brands[@index]" value="@brand.identifier" data-control/>
         }

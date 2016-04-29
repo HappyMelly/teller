@@ -5,13 +5,13 @@ export default class FormHelper {
     /**
      * Validate given controls
      * @param {Object} options
-     * @property {jQuery } initialData.$controls        - optional list of validating controls
-     * @property { Object } initialData.rules           - optional list of validating controls;
+     * @param {jQuery} options.$controls       - optional list of validating controls
+     * @param {Object} options.rules           - list of rule 
+     * @param {Object} [options.restriction]   - list of restriction
      * @param {Object} messages
      */
     constructor(options, messages = null) {
         this.$controls = options.$controls;
-        this.$errorUnderSubmit = options.$errorUnderSubmit;
 
         this.messages = messages || this._getDefaultMessages();
         this.rules = $.extend({}, options.rules, this._getRulesFromHtml(this.$controls));
@@ -47,7 +47,9 @@ export default class FormHelper {
             const nameField = $item.attr('name');
             const possibleRules = self.messages;
 
+            if (!$item.attr('class')) return;
             if (!$item.attr('class').match(/_validate-/i)) return;
+
             if (!rules[nameField]) rules[nameField] = {};
 
             for(let rule in possibleRules){
@@ -75,7 +77,9 @@ export default class FormHelper {
             const nameField = $item.attr('name');
             const possibleRestrict = self.messages;
 
+            if (!$item.attr('class')) return;
             if (!$item.attr('class').match(/_restrict-/i)) return;
+
             if (!restriction[nameField]) restriction[nameField] = {};
 
             for(let restrict in possibleRestrict){
@@ -209,7 +213,7 @@ export default class FormHelper {
                 .appendTo($parent);
         }
 
-        $parent.addClass(showBubble?'b-error_state_error': 'b-error_state_high');
+        $parent.addClass('b-error_show');
 
         this.errors.push({
             name: $control.attr('name'),
@@ -220,7 +224,7 @@ export default class FormHelper {
     _removeError($control){
         const $parent = $control.parent();
 
-        $parent.removeClass('b-error_state_error b-error_state_high')
+        $parent.removeClass('b-error_show')
 
         this.errors = this.errors.filter(function (item) {
             return item.name !== $control.attr('name')

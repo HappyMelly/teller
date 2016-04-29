@@ -1,8 +1,6 @@
 'use strict';
 
 import FormHelper from './../../common/_form-helper';
-import integrationHelpers from './_intergration-helpers';
-
 
 export default class Widget {
     constructor(selector, options) {
@@ -35,22 +33,16 @@ export default class Widget {
         this.$root
             .on('click', '[data-import-btn-edit]', this._onClickEditImport.bind(this))
             .on('click', '[data-import-btn-disable]', this._onClickShowTooltip.bind(this))
-            .on('click', '[data-import-disable]', this._onEventDisableImport.bind(this))
+            .on('click', '[data-import-disable]', this._onEventSubmitDisable.bind(this))
             .on('click', '[data-import-cancel]', this._onClickCancelEdit.bind(this))
             .on('click', '[data-import-submit]', this._onClickSubmitEdit.bind(this))
     }
 
     _onClickEditImport(e){
         e.preventDefault();
-        const self = this;
 
-        self._getAvailableList(self.options.getAvailableLists)
-            .done((list)=>{
-                integrationHelpers._prepareSelectWithLists(self.locals.$availableThemes, list, self.locals.$listName);
-                this.editDlgData = self.editDlgHelper.getFormData();
-
-                self.locals.$editDlg.modal('show');
-            });
+        this.editDlgData = this.editDlgHelper.getFormData();
+        this.locals.$editDlg.modal('show');
     }
 
     _onClickShowTooltip(e){
@@ -58,7 +50,7 @@ export default class Widget {
         this.locals.$disableDlg.modal('show');
     }
 
-    _onEventDisableImport(e){
+    _onEventSubmitDisable(){
         const self = this;
         
         self._sendDisableList(self.options.disableImport, self.options.id)
@@ -66,10 +58,12 @@ export default class Widget {
                 self.locals.$view.slideUp(400, ()=>{
                     self.$root.remove();
                 });
+                self.$root.trigger('availableList.update');
+                
                 success(data.message);
             })
             .fail((jqXHR, textStatus, errorThrown) => {
-                var msg = JSON.parse(jqXHR.responseText);
+                const msg = JSON.parse(jqXHR.responseText);
                 error(msg.message);
             })
     }
@@ -92,13 +86,14 @@ export default class Widget {
         };
         self.editDlgData = update.formData;
 
-        this._sendUpdateList(sendData)
+        this._sendUpdateList(self.editDlgData)
             .done(() =>{
                 self.locals.$editDlg.modal('hide');
                 success('You are successfully update importing list')
             })
             .fail((jqXHR, textStatus, errorThrown) => {
-                var msg = JSON.parse(jqXHR.responseText);
+                const msg = JSON.parse(jqXHR.responseText);
+                
                 self.locals.$editDlg.modal('hide');
                 error(msg.message);
             })
