@@ -17,7 +17,7 @@ function lazyLoad(name, path, options){
 
 lazyLoad('styles', './gulp/styles.js', {
     target: ['frontend/css/**/*.less', '!frontend/css/**/_*.less'],
-    dst: 'public/css'
+    dst: 'public/stylesheets'
 });
 
 lazyLoad('scripts', './gulp/scripts.js', {
