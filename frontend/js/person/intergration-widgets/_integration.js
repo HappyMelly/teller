@@ -36,13 +36,19 @@ export default class Widget {
     }
 
     _assignEvents(){
-        this.$root  
+        const self = this;
+        this.$root
             .on('click', '[data-integdisable-yes]', this._ClickDeactivate.bind(this))
             .on('click', '[data-integ-import-btn]', this._onClickShowImport.bind(this))
             .on('click', '[data-integcreate-btn]', this._onEventSubmitEdit.bind(this))
             .on('click', '[data-integcreate-cancel]', this._onEventCancelEdit.bind(this))
             .on('change','[data-integcreate-list]', this._onChangeSelectList.bind(this))
             .on('availableList.update', this._onEventUpdateAvailableList.bind(this))
+
+        App.events.sub('hmt.mailchimp.renderblock', function(){
+            ImportingItem.plugin(self.locals.$list.children(), self.options);
+            self.$root.trigger('availableList.update');
+        })
     }
 
     _ClickDeactivate(e){
@@ -71,10 +77,8 @@ export default class Widget {
         self._createImportList(this.options.createImport, formData)
             .done((data) => {
                 locals.$list.append(data.body);
+                App.events.pub('hmt.mailchimp.renderblock');
                 locals.$editDlg.modal('hide');
-
-                ImportingItem.plugin(self.locals.$list.children(), this.options);
-                self.$root.trigger('availableList.update');
 
                 success(data.message)
             })

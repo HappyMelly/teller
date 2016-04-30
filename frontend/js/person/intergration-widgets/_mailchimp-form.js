@@ -3,9 +3,10 @@
 import FormHelper from './../../common/_form-helpers';
 
 export default class Widget {
-    constructor(selector) {
+    constructor(selector, options) {
         this.$root = $(selector);
         this.locals = this._getDom();
+        this.options = options;
 
         this.formHelper = new FormHelper({
             $controls: this.locals.$controls,
@@ -47,10 +48,26 @@ export default class Widget {
     }
 
     _onSubmitForm(e){
+        const self = this;
+
+        e.preventDefault();
         if (!this.formHelper.isValidFormData()){
-            e.preventDefault();
             return false;
         }
+
+        const formData = self.formHelper.getFormData();
+        self._createMailChimpList(this.options.url, formData)
+            .done((data) => {
+                window.location = data.redirect;
+                success(data.message)
+            })
+            .fail((response) => {
+                const jsonResponse = JSON.parse(response.responseText);
+                const data = jsonResponse.data;
+
+                if (!data.errors) return;
+                self.formHelper.setErrors(data.errors);
+            })
     }
 
     // static
@@ -67,6 +84,15 @@ export default class Widget {
                 $element.data('widget.integration.mailchimp', data);
             }
         })
+    }
+
+    _createMailChimpList(url, data){
+        return $.ajax({
+            type: "POST",
+            url: url,
+            data: data,
+            dataType: "json"
+        });
     }
 }
 

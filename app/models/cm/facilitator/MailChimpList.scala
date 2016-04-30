@@ -55,7 +55,11 @@ case class MailChimpListBlock(list: MailChimpList,
       "all"
     else
       brands.map(_.name).mkString(" and ")
-    s"${importType(list)} from $brandCaption brands"
+    val suffix = if (brands.length == 1)
+      "brand"
+    else
+      "brands"
+    s"${importType(list)} from $brandCaption $suffix"
   }
 
   protected def importType(list: MailChimpList): String = if (list.allAttendees)

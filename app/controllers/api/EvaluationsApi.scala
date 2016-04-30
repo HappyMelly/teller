@@ -138,7 +138,7 @@ class EvaluationsApi @Inject() (env: TellerRuntimeEnvironment,
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
             evaluation.add(withConfirmation = true, repos, mailer) flatMap { createdEvaluation =>
-              if (env.isDev) {
+              if (env.isNotProd) {
                 subscriber !(attendee.identifier, attendee.eventId, true)
               }
               val message = "new evaluation for " + attendee.fullName

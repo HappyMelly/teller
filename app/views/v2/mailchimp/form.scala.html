@@ -35,10 +35,29 @@
                 @v2.html.select(form("company.countryCode"), false, "Country", ("", "Choose a country") :: Countries.all)
             }
             @v2.html.formBlock("Export settings") {
-                @v2.html.select(form("allAttendees"), false, "Select attendees to export",
+                @v2.html.select(form("all_attendees"), false, "Select attendees to export",
                     List(("true", "All including attendees added manually"), ("false", "Only attendees with evaluations")))
-                @v2.html.checkbox(form("includePreviousEvents"), '_label -> "Include attendees from previous events")
-                <input name="brands[0]" value="1" type="hidden"/>
+                @v2.html.checkbox(form("include_previous_events"), '_label -> "Include attendees from previous events")
+            }
+            @if(brands.length == 1) {
+                <input type="hidden" name="brand_flags[0]" value="true" data-control>
+                <input name="brands[0]" value="@brands.head.identifier" type="hidden"/>
+            } else {
+                @v2.html.formBlock("Brands", Some("grey")) {
+                    <div class="form-group b-brand-checkbox-block">
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-10 checkbox">
+                            <input type="hidden" name="brand_flags" disabled/>
+                        @for((brand, index) <- brands.zipWithIndex) {
+                            <label class="control-label">
+                                <input type="checkbox" name="brand_flags[@index]" checked data-control>
+                                @brand.name
+                            </label>
+                            <input type="hidden" name="brands[@index]" value="@brand.identifier" data-control/><br/>
+                        }
+                        </div>
+                    </div>
+                }
             }
 
             @v2.html.formBlock("") {
@@ -66,6 +85,12 @@
     <style>
         .b-form-edit-mailchimp .b-error {
             right: 20px;
+        }
+        .b-form-edit-mailchimp .b-brand-checkbox-block .b-error {
+            position: relative;
+            padding-top: 10px;
+            font-size: 14px;
+            right: 0;
         }
     </style>
 

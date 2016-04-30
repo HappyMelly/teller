@@ -79,22 +79,24 @@ export default class Widget {
         e.preventDefault();
 
         const self = this;
-        let update = {
+        self.editDlgData = {
             url: self.options.updateImport,
             id: self.options.id,
             formData: self.editDlgHelper.getFormData()
         };
-        self.editDlgData = update.formData;
 
         this._sendUpdateList(self.editDlgData)
-            .done(() =>{
+            .done((data) =>{
+                self.locals.$editDlg.on('hidden.bs.modal', function (e) {
+                    self.$root.replaceWith(data.body);
+                    App.events.pub('hmt.mailchimp.renderblock');
+                });
                 self.locals.$editDlg.modal('hide');
-                success('You are successfully update importing list')
+                success(data.message);
+
             })
             .fail((jqXHR, textStatus, errorThrown) => {
                 const msg = JSON.parse(jqXHR.responseText);
-                
-                self.locals.$editDlg.modal('hide');
                 error(msg.message);
             })
     }
@@ -145,15 +147,16 @@ export default class Widget {
      * Update Info about list
      * @param {Object} data
      * @param {String} data.url
-     * @param {Number} data.id
      * @param {Object} data.formData - object with field/value
      * @returns {Promise}
      * @private
      */
     _sendUpdateList(data){
-        return $.post(data.url, {
-            list_id: data.id,
-            data: data.formData
+        return $.ajax({
+            type: "POST",
+            url: data.url,
+            data: data.formData,
+            dataType: "json"
         });
     }
 

@@ -85,7 +85,7 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
       } else {
         ListContact("", "", None, "", "", "", "")
       }
-      val formData = NewListData("", defaults, "", contact, allAttendees = true, includePreviousEvents = true, List())
+      val formData = NewListData("", defaults, "", contact, allAttendees = true, oldEventAttendees = true, List(), List())
       ok(views.html.v2.mailchimp.form(user, MailChimp.newListForm.fill(formData), brands))
     }
   }
@@ -141,7 +141,12 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
               }
               Future.sequence(results).flatMap { _ =>
                 subscriber ! (user.person.identifier, remoteList.id.get)
-                jsonSuccess(s"MailChimp list was successfully created and connected to selected brand(s)")
+                val url: String = controllers.core.routes.People.details(user.person.identifier).url + "#mailchimp"
+                val response = Json.obj(
+                  "message" -> "MailChimp list was successfully created and connected to selected brand(s)",
+                  "redirect" -> url
+                )
+                jsonOk(response)
               }
           }
         }
@@ -185,7 +190,7 @@ class MailChimp @Inject()(override implicit val env: TellerRuntimeEnvironment,
     */
   def update = withMailChimpIntegration { mailChimpId => implicit request => implicit handler => implicit user =>
     MailChimp.connectForm.bindFromRequest().fold(
-      errors => jsonFormError(Utilities.errorsToJson(errors)),
+      errors => jsonBadRequest(errors.errors.map(_.message).mkString(",")),
       data => {
         settingsQuery(user.person.identifier) flatMap { case (records, lists, brands) =>
           val removed = lists.filter(_.listId == data.id).map { list =>
@@ -325,8 +330,12 @@ object MailChimp {
                          reminder: String,
                          contact: ListContact,
                          allAttendees: Boolean,
-                         includePreviousEvents: Boolean,
-                         brands: List[Long])
+                         oldEventAttendees: Boolean,
+                         brandIds: List[Long],
+                         activeBrandIds: List[Boolean]) {
+
+    def brands: List[Long] = brandIds.zip(activeBrandIds).filter(_._2).map(_._1)
+  }
 
   val newListForm = Form(mapping(
     "name" -> nonEmptyText,
@@ -345,8 +354,9 @@ object MailChimp {
       "state" -> nonEmptyText,
       "countryCode" -> country,
       "phone" -> ignored(None.asInstanceOf[Option[String]]))(ListContact.apply)(ListContact.unapply),
-    "allAttendees" -> boolean,
-    "includePreviousEvents" -> boolean,
-    "brands" -> list(longNumber(min = 1))
+    "all_attendees" -> boolean,
+    "include_previous_events" -> boolean,
+    "brands" -> list(longNumber(min = 1)),
+    "brand_flags" -> list(boolean).verifying("Select at least one brand", l => l.contains(true))
   )(NewListData.apply)(NewListData.unapply))
 }

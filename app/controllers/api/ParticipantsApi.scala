@@ -94,7 +94,7 @@ class ParticipantsApi @Inject() (env: TellerRuntimeEnvironment,
       },
       data ⇒ {
         repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
-          if (env.isDev) {
+          if (env.isNotProd) {
             subscriber ! (attendee.identifier, attendee.eventId, false)
           }
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
