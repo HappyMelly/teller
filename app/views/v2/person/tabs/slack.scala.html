@@ -1,0 +1,166 @@
+@import models.cm.facilitator.SlackChannelBlock
+
+@(active: Boolean, blocks: Seq[SlackChannelBlock], brands: Seq[Brand])
+
+<div class="b-integr @if(active) {b-integr_state_active} js-slack-integration">
+    <h4 class="b-integr__title-main">Slack</h4>
+    <p>
+        Connect a Slack account and automatically
+        invite your attendees to Slack and its channels.
+    </p>
+
+    <div class="b-integr__deactive">
+        <a href="@controllers.cm.facilitator.routes.Slack.activate()"
+            class="btn btn-primary b-integr__btn-deactivate">
+            Connect
+        </a>
+    </div>
+
+    <div class="b-integr__active">
+        <a href="javascript: void(0)"
+            data-toggle="modal"
+            data-target="#dlg-integration-disable"
+            class="btn btn-default b-integr__btn-activate">
+            Disconnect
+        </a>
+
+        <h4 class="b-integr__title">
+            Configure automatic invitations to channels
+        </h4>
+        <p>
+            Setup connection between Slack channels and your events.
+            Existing and new attendees will be automatically invited and added to the channels.
+            You can create new channel right here and then invite attendees to it.
+        </p>
+
+        <!-- channel -->
+        <div class="b-integr__list">
+            <div class="b-integr__buttons">
+                <a href="javascript: void(0)"
+                    class="btn btn-primary b-integr__btn-import"
+                    data-integ-import-btn>
+                    Add invitations to existing channel
+                </a>
+                <a href="" class="btn btn-default b-integr__btn-new" data-integ-create-btn>
+                    Create new list and add invitations
+                </a>
+            </div>
+            <div data-integ-list>
+                @for(listBlock <- blocks) {
+                    @views.html.v2.person.blocks.slack.channel(listBlock, brands)
+                }
+            </div>
+        </div>
+
+        <!-- new channel -->
+        <div class="b-integr__nolist">
+        </div>
+
+        <!-- loading -->
+        <div class="b-integr__loading">
+            <p>
+                <b>Please wait. We are loading your channels from Slack...</b>
+            </p>
+        </div>
+    </div>
+
+    <div id="dlg-create-channel" class="modal fade b-modal dlg-interg-con" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-create-dlg>
+    @v2.html.modal("", "Create new channel...") {
+        <form class="dlg-interg" action="#">
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Channel name
+                </div>
+                <input type="text" name="name" class="form-control" data-control/>
+            </div>
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select type
+                </div>
+                <input type="radio" name="type_value" checked value="true" data-type-value> Public <br>
+                <input type="radio" name="type_value" value="false" data-type-value> Private <br>
+                <input type="hidden" name="type" value="true" data-control data-type-control>
+            </div>
+
+            <div class="b-modal__title">... and configure automatic invitations</div>
+            @v2.person.blocks.slack.attendees()
+            @v2.person.blocks.slack.brandSelector(brands)
+
+            <div class="dlg-interg__buttons">
+                <a href="javascript: void(0)"
+                data-create-cancel
+                class="btn btn-default dlg-interg__cancel">
+                    Cancel
+                </a>
+                <button type="submit"
+                data-create-btn
+                class="btn btn-primary dlg-interg__submit">
+                    Create
+                </button>
+            </div>
+        </form>
+    }
+    </div>
+
+    <div id="dlg-importlist" class="modal fade b-modal dlg-interg-con" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-integcreate-dlg>
+    @v2.html.modal("", "Automatically invite attendees to channel") {
+        <form class="dlg-interg" action="#">
+            <div class="dlg-interg__i">
+                <div class="dlg-interg__label">
+                    Select channel
+                </div>
+                <select name="list_id" class="dlg-interg__select form-control" data-integcreate-list data-control></select>
+            </div>
+            <input type="hidden" name="list_name" value="" data-list-name data-control>
+            @v2.person.blocks.slack.attendees()
+            @v2.person.blocks.slack.brandSelector(brands)
+
+            <div class="dlg-interg__buttons">
+                <a href="javascript: void(0)"
+                    data-integcreate-cancel
+                    class="btn btn-default dlg-interg__cancel">
+                    Cancel
+                </a>
+                <button type="submit"
+                    data-integcreate-btn
+                    class="btn btn-primary dlg-interg__submit">
+                    Connect
+                </button>
+            </div>
+        </form>
+    }
+    </div>
+
+
+    <div id="dlg-integration-disable" class="modal fade b-prompt " tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true" data-integdisable-dlg>
+    @v2.html.prompt("") {
+        <h3 class="b-prompt__title">
+            Are you sure you want to deactivate integration?
+        </h3>
+        <div class="b-prompt__text">
+            Disabling integration will stop automatic invitation of new attendees to your Slack channels
+        </div>
+        <div class="b-prompt__buttons">
+            <a href="#" class="btn btn-primary b-prompt__btn-accept"
+                data-dismiss="modal"
+                data-integdisable-no>
+                No, stay active
+            </a>
+            <a href="#" class="btn btn-default b-prompt__btn-cancel"
+                data-dismiss="modal"
+                data-integdisable-yes>
+                Yes, deactivate integration
+            </a>
+        </div>
+    }
+    </div>
+
+</div>
+
+
+
+
+
+
+
+

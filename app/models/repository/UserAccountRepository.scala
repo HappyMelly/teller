@@ -28,7 +28,7 @@ import models.database.UserAccountTable
 import models.{Person, UserAccount}
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
-import securesocial.core.providers.{LinkedInProvider, GoogleProvider, TwitterProvider, FacebookProvider}
+import securesocial.core.providers._
 import security.MailChimpProvider
 import slick.driver.JdbcProfile
 
@@ -60,6 +60,7 @@ class UserAccountRepository(app: Application) extends HasDatabaseConfig[JdbcProf
       case GoogleProvider.Google => accounts.filter(_.google === remoteUserId)
       case LinkedInProvider.LinkedIn => accounts.filter(_.linkedin === remoteUserId)
       case MailChimpProvider.MailChimp => accounts.filter(_.mailchimp === remoteUserId)
+      case SlackProvider.Slack => accounts.filter(_.slack === remoteUserId)
     }
     db.run(query.result).map(_.headOption)
   }

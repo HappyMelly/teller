@@ -243,6 +243,7 @@ POST          /person/:id/delete                                             con
 POST          /person/:id/cancel                                             controllers.core.People.cancel(id: Long)
 GET           /person/:id/tabs                                               controllers.core.People.renderTabs(id: Long, tab: String)
 GET           /person/:id/mailchimp                                          controllers.cm.facilitator.MailChimp.settings(id: Long)
+GET           /person/:id/slack                                              controllers.cm.facilitator.Slack.settings(id: Long)
 
 POST          /person/:id/photo/upload                                       controllers.core.ProfilePhotos.upload(id: Long)
 GET           /person/photo/:photoId                                         controllers.core.ProfilePhotos.photo(photoId: String)
@@ -296,6 +297,14 @@ GET           /brand/:brandId/statistics/type/facilitators/                  con
 GET           /brand/:brandId/statistics/type/events/                        controllers.cm.Statistics.byEvents(brandId: Long)
 GET           /brand/:brandId/statistics/type/countries/                     controllers.cm.Statistics.byCountries(brandId: Long)
 GET           /brand/:brandId/statistics/type/participants/                  controllers.cm.Statistics.byParticipants(brandId: Long)
+
+GET           /slack/activate                                                controllers.cm.facilitator.Slack.activate()
+GET           /slack/channels                                                controllers.cm.facilitator.Slack.channels()
+POST          /slack/connect                                                 controllers.cm.facilitator.Slack.connect()
+POST          /slack/create                                                  controllers.cm.facilitator.Slack.create()
+POST          /slack/disconnect                                              controllers.cm.facilitator.Slack.disconnect()
+POST          /slack/deactivate                                              controllers.cm.facilitator.Slack.deactivate()
+POST          /slack/update                                                  controllers.cm.facilitator.Slack.update()
 
 GET           /template/:id                                                  controllers.CertificateTemplates.template(id: Long, single: Boolean)
 GET           /template/:brandId/:id/delete                                  controllers.CertificateTemplates.delete(brandId: Long, id: Long)

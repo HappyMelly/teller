@@ -51,6 +51,14 @@
                 data-menuside>
                 MailChimp
             </a>
+            @if(env.isDev) {
+                <a data-href="@controllers.cm.facilitator.routes.Slack.settings(person.id.get)"
+                    href="#slack"
+                    class="b-sidemenu__link"
+                    data-menuside>
+                    Slack
+                </a>
+            }
         </div>
     }
     @if(conf.member) {

@@ -1,0 +1,23 @@
+@(brands: Seq[Brand], listBrands: Seq[Brand] = Seq())
+
+@if(brands.length > 1) {
+    <div class="dlg-interg__i">
+        <div class="dlg-interg__label">
+            Select brand
+        </div>
+        @for((brand, index) <- brands.zipWithIndex) {
+            <label class="b-checkbox">
+                <input type="checkbox" class="b-checkbox__real" name="brand_flags[@index]"
+                    @if(listBrands.exists(_.identifier == brand.identifier)) {checked} data-control>
+                    <i class="b-checkbox__img"></i>
+                    <div class="b-checkbox__text">
+                    @brand.name
+                    </div>
+            </label>
+            <input type="hidden" name="brands[@index]" value="@brand.identifier" data-control/>
+        }
+    </div>
+} else {
+    <input type="hidden" name="brand_flags[0]" value="true" data-control>
+    <input type="hidden" name="brands[0]" value="@brands.head.identifier" data-control>
+}

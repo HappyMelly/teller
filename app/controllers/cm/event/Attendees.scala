@@ -55,6 +55,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
                                         override val messagesApi: MessagesApi,
                                         val repos: Repositories,
                                         @Named("mailchimp-subscriber") subscriber: ActorRef,
+                                        @Named("slack-servant") slackServant: ActorRef,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
@@ -113,6 +114,9 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         data => {
           repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
             subscriber ! (attendee.identifier, attendee.eventId, false)
+            if (env.isDev) {
+              slackServant !(attendee.identifier, attendee.eventId, false)
+            }
             redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
           }
         }

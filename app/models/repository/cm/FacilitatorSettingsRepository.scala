@@ -25,8 +25,8 @@
 package models.repository.cm
 
 import models.cm.Facilitator
-import models.cm.facilitator.{MailChimpList, FacilitatorCountry, FacilitatorLanguage}
-import models.database.{MailChimpListTable, FacilitatorCountryTable, FacilitatorLanguageTable, FacilitatorTable}
+import models.cm.facilitator.{SlackChannel, MailChimpList, FacilitatorCountry, FacilitatorLanguage}
+import models.database._
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
@@ -40,13 +40,23 @@ import scala.concurrent.Future
 class FacilitatorSettingsRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
   with FacilitatorCountryTable
   with FacilitatorLanguageTable
-  with MailChimpListTable {
+  with MailChimpListTable
+  with SlackChannelTable {
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](app)
   import driver.api._
+  private val channels = TableQuery[SlackChannels]
   private val countries = TableQuery[FacilitatorCountries]
   private val languages = TableQuery[FacilitatorLanguages]
   private val lists = TableQuery[MailChimpLists]
+
+
+  /**
+    * Returns list of Slack channels for the given facilitator
+    *
+    * @param personId Person identifier
+    */
+  def channels(personId: Long): Future[Seq[SlackChannel]] = db.run(channels.filter(_.personId === personId).result)
 
   /**
     * Finds all countries for a particular facilitator
@@ -59,6 +69,15 @@ class FacilitatorSettingsRepository(app: Application) extends HasDatabaseConfig[
     */
   def countries(ids: List[Long]): Future[List[FacilitatorCountry]] =
     db.run(countries.filter(_.personId inSet ids).result).map(_.toList)
+
+  /**
+    * Deletes the given channel from the given person
+    *
+    * @param personId Person identifier
+    * @param channelId Channel identifier
+    */
+  def deleteChannel(personId: Long, channelId: Long): Future[Int] =
+    db.run(channels.filter(_.personId === personId).filter(_.id === channelId).delete)
 
   /**
     * Deletes the given country from the given person
@@ -87,6 +106,11 @@ class FacilitatorSettingsRepository(app: Application) extends HasDatabaseConfig[
   def deleteList(personId: Long, listId: Long): Future[Int] =
     db.run(lists.filter(_.personId === personId).filter(_.id === listId).delete)
 
+  /**
+    * Inserts the given channel to DB
+    */
+  def insertChannel(channel: SlackChannel): Future[SlackChannel] =
+    db.run(channels += channel).map(_ => channel)
 
   /**
     * Inserts the given country to DB

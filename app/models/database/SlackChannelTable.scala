@@ -21,29 +21,33 @@
  * by email Sergey Kotlov, sergey.kotlov@happymelly.com or
  * in writing Happy Melly One, Handelsplein 37, Rotterdam, The Netherlands, 3071 PR
  */
-package modules
 
-import com.google.inject.AbstractModule
-import models.actors._
-import models.cm.evaluation.Mailer
-import models.cm.facilitator.{SlackServant, MailChimpSubscriber}
-import play.api.libs.concurrent.AkkaGuiceSupport
-import services.integrations.EmailActor
+package models.database
 
-/**
-  * Initialises all actors
-  */
-class Actors extends AbstractModule with AkkaGuiceSupport {
-  override def configure(): Unit = {
-    bindActor[EmailActor]("email")
-    bindActor[Mailer]("evaluation-mailer")
-    bindActor[EventRatingCalculator]("event-rating")
-    bindActor[FacilitatorRatingCalculator]("facilitator-rating")
-    bindActor[NotificationDispatcher]("notification")
-    bindActor[PeerCreditsConfigurator]("peer-credits")
-    bindActor[ProfileStrengthRecalculator]("profile-strength")
-    bindActor[MailChimpSubscriber]("mailchimp-subscriber")
-    bindActor[SlackServant]("slack-servant")
+import models.cm.facilitator.SlackChannel
+import slick.driver.JdbcProfile
+
+private[models] trait SlackChannelTable extends EventTable {
+
+  protected val driver: JdbcProfile
+  import driver.api._
+
+  /**
+    * `SlackChannel` database table mapping.
+    */
+  class SlackChannels(tag: Tag) extends Table[SlackChannel](tag, "SLACK_CHANNEL") {
+
+    def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+    def name = column[String]("NAME")
+    def remoteId = column[String]("REMOTE_ID")
+    def public = column[Boolean]("PUBLIC")
+    def brandId = column[Long]("BRAND_ID")
+    def personId = column[Long]("PERSON_ID")
+    def allAttendees = column[Boolean]("ALL_ATTENDEES")
+    def oldEventAttendees = column[Boolean]("OLD_EVENT_ATTENDEES")
+
+    def * = (id.?, name, remoteId, public, brandId, personId, allAttendees,
+      oldEventAttendees) <> ((SlackChannel.apply _).tupled, SlackChannel.unapply)
   }
-}
 
+}

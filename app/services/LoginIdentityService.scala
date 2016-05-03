@@ -220,8 +220,8 @@ class LoginIdentityService(repos: IRepositories) extends UserService[ActiveUser]
         (acc.copy(linkedin = Some(to.userId)), profil.copy(linkedInUrl = withLink.linkedInUrl))
       case TwitterProvider.Twitter ⇒
         (acc.copy(twitter = Some(to.userId)), profil.copy(twitterHandle = withLink.twitterHandle))
-      case MailChimpProvider.MailChimp ⇒
-        (acc.copy(mailchimp = Some(to.userId)), profil)
+      case MailChimpProvider.MailChimp ⇒ (acc.copy(mailchimp = Some(to.userId)), profil)
+      case SlackProvider.Slack ⇒ (acc.copy(slack = Some(to.userId)), profil)
     }
   }
 

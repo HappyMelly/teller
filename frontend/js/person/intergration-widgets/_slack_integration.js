@@ -10,7 +10,8 @@ export default class Widget {
         this.options = options;
         this.locals = this._getDom();
 
-        this.importDlgHelper = new FormHelper(this.locals.$controls);
+        this.createDlgHelper = new FormHelper(this.locals.$createDlgControls);
+        this.editDlgHelper = new FormHelper(this.locals.$editDlgControls);
 
         this._init();
         this._assignEvents();
@@ -21,8 +22,10 @@ export default class Widget {
         
         return {
             $list: $root.find('[data-integ-list]'),
-            $controls: $root.find('[data-control]'),
+            $createDlg: $root.find('[data-create-dlg]'),
+            $createDlgControls: $root.find('[data-create-dlg]').find('[data-control]'),
             $editDlg: $root.find('[data-integcreate-dlg]'),
+            $editDlgControls: $root.find('[data-integcreate-dlg]').find('[data-control]'),
             $availableListSelect: $root.find('[data-integcreate-list]'),
             $availableListInput: $root.find('[data-list-name]'),
             $modalDisableInteg: $root.find('[data-integdisable-dlg]')            
@@ -39,11 +42,18 @@ export default class Widget {
         const self = this;
         this.$root
             .on('click', '[data-integdisable-yes]', this._ClickDeactivate.bind(this))
+            .on('click', '[data-integ-create-btn]', this._onClickShowCreate.bind(this))
             .on('click', '[data-integ-import-btn]', this._onClickShowImport.bind(this))
             .on('click', '[data-integcreate-btn]', this._onEventSubmitEdit.bind(this))
+            .on('click', '[data-create-btn]', this._onEventSubmitCreate.bind(this))
             .on('click', '[data-integcreate-cancel]', this._onEventCancelEdit.bind(this))
+            .on('click', '[data-create-cancel]', this._onEventCancelCreate.bind(this))
             .on('change','[data-integcreate-list]', this._onChangeSelectList.bind(this))
-            .on('availableList.update', this._onEventUpdateAvailableList.bind(this))
+            .on('availableList.update', this._onEventUpdateAvailableList.bind(this));
+
+        this.$root.on('change', '[data-type-value]', function(e) {
+            self.$root.find('[data-type-control]').val($(this).val());
+        });
 
         App.events.sub('hmt.mailchimp.renderblock', function(){
             ImportingItem.plugin(self.locals.$list.children(), self.options);
@@ -62,9 +72,35 @@ export default class Widget {
             })
     }
 
+    _onClickShowCreate(e){
+        e.preventDefault();
+        this.locals.$createDlg.modal('show');
+    }
+
     _onClickShowImport(e){
         e.preventDefault();
         this.locals.$editDlg.modal('show');
+    }
+
+    _onEventSubmitCreate(e){
+        e.preventDefault();
+        const self = this;
+        const locals = self.locals;
+
+        const formData = self.createDlgHelper.getFormData();
+
+        self._createImportList(this.options.create, formData)
+            .done((data) => {
+                locals.$list.append(data.body);
+                App.events.pub('hmt.mailchimp.renderblock');
+                locals.$createDlg.modal('hide');
+
+                success(data.message)
+            })
+            .fail((jqXHR, textStatus, errorThrown) => {
+                const msg = JSON.parse(jqXHR.responseText);
+                error(msg.message);
+            })
     }
 
     _onEventSubmitEdit(e){
@@ -72,7 +108,7 @@ export default class Widget {
         const self = this;
         const locals = self.locals;
 
-        const formData = self.importDlgHelper.getFormData();
+        const formData = self.editDlgHelper.getFormData();
 
         self._createImportList(this.options.createImport, formData)
             .done((data) => {
@@ -86,6 +122,11 @@ export default class Widget {
                 const msg = JSON.parse(jqXHR.responseText);
                 error(msg.message);
             })
+    }
+
+    _onEventCancelCreate(e){
+        e.preventDefault();
+        this.locals.$createDlg.modal('hide');
     }
 
     _onEventCancelEdit(e){
@@ -153,7 +194,11 @@ export default class Widget {
         }
 
         availableList.forEach((item)=>{
-            $select.append(`<option value="${item.id}">${item.name}</option>`)
+            var channelType = 'private';
+            if (item.public) {
+                channelType = 'public';
+            }
+            $select.append(`<option value="${item.id}">${item.name}<span> &mdash; ${channelType}</span></option>`)
         });
 
         $input.val($select.find('option:selected').text());        

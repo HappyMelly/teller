@@ -18,13 +18,6 @@
     <input type="hidden" id="activeUserId" value="@user.person.id.get"/>
     <div class="l-wrapper" >
 
-      @if(user.account.facilitator) {
-          @views.html.v2.element.notifCommercial(){
-            <b>We are working on a commercial version of Teller.</b> <br>
-            Are you interested in using Teller for your other trainings (Scrum, Kanban, etc.)?
-          }
-      }
-
       <div class="b-header">
         <div class="container">
           <div class="h-rel">

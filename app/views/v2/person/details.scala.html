@@ -122,6 +122,9 @@
           <div class="tab-pane" id="facilitation"></div>
           <div class="tab-pane" id="experience"></div>
           <div class="tab-pane" id="mailchimp"></div>
+          @if(env.isDev) {
+            <div class="tab-pane" id="slack"></div>
+          }
         }
         @if(conf.member) {
           <div class="tab-pane" id="experiments"></div>

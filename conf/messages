@@ -93,6 +93,8 @@ activity.reject = {0} rejected {1}
 activity.send = {0} sent a request for evaluation for {1} event
 activity.become.supporter = {0} became a Supporter
 
+api.slack.name_taken = Channel with name "{0}" exists
+
 # Controller error messages
 # {0} Object name
 error.notFound = {0} not found

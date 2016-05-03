@@ -50,6 +50,7 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
                                    override val messagesApi: MessagesApi,
                                    @Named("evaluation-mailer") mailer: ActorRef,
                                    @Named("mailchimp-subscriber") subscriber: ActorRef,
+                                   @Named("slack-servant") slackServant: ActorRef,
                                    val repos: Repositories)
   extends AsyncController
     with I18nSupport
@@ -117,6 +118,9 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
                 _ <- repos.cm.rep.event.attendee.update(attendee.copy(evaluationId = e.id))
               } yield a) flatMap { attendee: Attendee =>
                 (subscriber ! (attendee.identifier, attendee.eventId, true))(Actor.noSender)
+                if (env.isDev) {
+                  (slackServant !(attendee.identifier, attendee.eventId, true)) (Actor.noSender)
+                }
                 jsonSuccess("")
               }
             }

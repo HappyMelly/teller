@@ -40,6 +40,7 @@ case class UserAccount(id: Option[Long],
                        linkedin: Option[String],
                        google: Option[String],
                        mailchimp: Option[String] = None,
+                       slack: Option[String] = None,
                        coordinator: Boolean = false,
                        facilitator: Boolean = false,
                        admin: Boolean = false,
@@ -71,6 +72,8 @@ case class UserAccount(id: Option[Long],
   def isFacilitatorNow: Boolean = facilitator && !activeRole
 
   val isMailChimpActive: Boolean = mailchimp.nonEmpty
+
+  val isSlackActive: Boolean = slack.nonEmpty
 
   def getIdentifier = personId.toString
   def getPermissions: java.util.List[Permission] = Scala.asJava(List.empty[Permission])

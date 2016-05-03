@@ -46,6 +46,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class ParticipantsApi @Inject() (env: TellerRuntimeEnvironment,
                                   val repos: Repositories,
                                  override val messagesApi: MessagesApi,
+                                 @Named("slack-servant") slackServant: ActorRef,
                                  @Named("mailchimp-subscriber") subscriber: ActorRef)
   extends ApiAuthentication(repos, messagesApi) {
 
@@ -95,6 +96,9 @@ class ParticipantsApi @Inject() (env: TellerRuntimeEnvironment,
       data ⇒ {
         repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
           subscriber ! (attendee.identifier, attendee.eventId, false)
+          if (env.isDev) {
+            slackServant !(attendee.identifier, attendee.eventId, false)
+          }
           jsonOk(Json.obj("participant_id" -> attendee.identifier))
         }
       })

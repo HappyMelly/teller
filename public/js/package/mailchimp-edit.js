@@ -434,7 +434,7 @@
 	        this.$root = $(selector);
 	        this.locals = this._getDom();
 	
-	        this.importDlgHelper = new _formHelpers2.default({
+	        this.editDlgHelper = new _formHelpers2.default({
 	            $controls: this.locals.$controls,
 	            rules: this._getRules()
 	        });

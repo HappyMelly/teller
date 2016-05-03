@@ -47,6 +47,7 @@ class EvaluationsApi @Inject() (env: TellerRuntimeEnvironment,
                                 val repos: Repositories,
                                 override val messagesApi: MessagesApi,
                                 @Named("evaluation-mailer") mailer: ActorRef,
+                                @Named("slack-servant") slackServant: ActorRef,
                                 @Named("mailchimp-subscriber") subscriber: ActorRef)
   extends ApiAuthentication(repos, messagesApi) {
 
@@ -139,6 +140,9 @@ class EvaluationsApi @Inject() (env: TellerRuntimeEnvironment,
           case (_, Some(attendee)) =>
             evaluation.add(withConfirmation = true, repos, mailer) flatMap { createdEvaluation =>
               subscriber !(attendee.identifier, attendee.eventId, true)
+              if (env.isDev) {
+                slackServant !(attendee.identifier, attendee.eventId, true)
+              }
               val message = "new evaluation for " + attendee.fullName
               Activity.insert(name, Activity.Predicate.Created, message)(repos)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))
