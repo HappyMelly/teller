@@ -52,14 +52,14 @@ class CouponRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
     * Deletes a coupon
     * @param code Coupon code
     */
-  def delete(code: String): Future[Int] = db.run(coupons.filter(_.code === code).delete)
+  def delete(code: String): Future[Int] = db.run(coupons.filter(_.code === code.toUpperCase).delete)
 
   /**
     * Returns coupon with the given code if it exists
     *
     * @param code Coupon code
     */
-  def find(code: String): Future[Option[Coupon]] = db.run(coupons.filter(_.code === code).result.headOption)
+  def find(code: String): Future[Option[Coupon]] = db.run(coupons.filter(_.code === code.toUpperCase).result.headOption)
 
   /**
     * Inserts the given coupon to database
@@ -68,7 +68,8 @@ class CouponRepository(app: Application) extends HasDatabaseConfig[JdbcProfile]
     * @return Returns coupon object with updated id
     */
   def insert(coupon: Coupon): Future[Coupon] = {
+    val withUpperCaseCode = coupon.copy(code = coupon.code.toUpperCase)
     val query = coupons returning coupons.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += coupon)
+    db.run(query += withUpperCaseCode)
   }
 }

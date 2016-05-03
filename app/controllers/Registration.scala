@@ -100,6 +100,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
   with Activities {
 
   val REGISTRATION_COOKIE = "registration"
+  val SESSION_IN_SECONDS = 1800
 
   private def userForm = Form(mapping(
     "firstName" -> nonEmptyText,
@@ -225,7 +226,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       errForm ⇒ badRequest(views.html.v2.registration.step2(user, errForm)),
       data ⇒ {
         val id = personCacheId(user.id)
-        Cache.set(id, data, 900)
+        Cache.set(id, data, SESSION_IN_SECONDS)
         val paymentUrl = routes.Registration.payment().url
         val url: String = request.cookies.get(REGISTRATION_COOKIE) map { x ⇒
           if (x.value == "org")
@@ -246,7 +247,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
         errForm ⇒ badRequest(views.html.v2.registration.step3(user, errForm)),
         data ⇒ {
           val id = personCacheId(user.id)
-          Cache.set(id, userData.copy(org = true, orgData = data), 900)
+          Cache.set(id, userData.copy(org = true, orgData = data), SESSION_IN_SECONDS)
           redirect(routes.Registration.payment())
         })
     }

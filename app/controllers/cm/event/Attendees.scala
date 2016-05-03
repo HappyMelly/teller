@@ -112,9 +112,7 @@ class Attendees @javax.inject.Inject() (override implicit val env: TellerRuntime
         errors => Future.successful(BadRequest(views.html.v2.attendee.form(user, None, eventId, errors))),
         data => {
           repos.cm.rep.event.attendee.insert(data) flatMap { attendee =>
-            if (env.isNotProd) {
-              subscriber ! (attendee.identifier, attendee.eventId, false)
-            }
+            subscriber ! (attendee.identifier, attendee.eventId, false)
             redirect(controllers.cm.routes.Events.details(eventId), "success" -> "Attendee was added")
           }
         }

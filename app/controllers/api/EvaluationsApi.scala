@@ -138,9 +138,7 @@ class EvaluationsApi @Inject() (env: TellerRuntimeEnvironment,
             badRequest(Json.prettyPrint(json))
           case (_, Some(attendee)) =>
             evaluation.add(withConfirmation = true, repos, mailer) flatMap { createdEvaluation =>
-              if (env.isNotProd) {
-                subscriber !(attendee.identifier, attendee.eventId, true)
-              }
+              subscriber !(attendee.identifier, attendee.eventId, true)
               val message = "new evaluation for " + attendee.fullName
               Activity.insert(name, Activity.Predicate.Created, message)(repos)
               jsonOk(Json.obj("evaluation_id" -> createdEvaluation.id.get))

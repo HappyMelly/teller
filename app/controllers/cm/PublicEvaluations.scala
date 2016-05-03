@@ -116,9 +116,7 @@ class PublicEvaluations @Inject() (implicit val env: TellerRuntimeEnvironment,
                 e <- evaluation.copy(attendeeId = a.identifier).add(withConfirmation = true, repos, mailer)
                 _ <- repos.cm.rep.event.attendee.update(attendee.copy(evaluationId = e.id))
               } yield a) flatMap { attendee: Attendee =>
-                if (env.isNotProd) {
-                  (subscriber ! (attendee.identifier, attendee.eventId, true))(Actor.noSender)
-                }
+                (subscriber ! (attendee.identifier, attendee.eventId, true))(Actor.noSender)
                 jsonSuccess("")
               }
             }
