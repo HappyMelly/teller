@@ -72,11 +72,6 @@ class Scheduler @Inject() (val env: Environment,
 
     val membership = new MembershipReminder(email, repos)
     membership.sendOneMonthExpirationReminder()
-    val event = new EventReminder(email, repos)
-    event.sendPostFactumConfirmation()
-    val evaluation = new EvaluationReminder(repos, mailer)
-    evaluation.sendToAttendees()
-    Facilitator.updateFacilitatorExperience(repos)
     val subscription = new SubscriptionUpdater(repos)
     subscription.update()
     runCleaners()
@@ -88,15 +83,6 @@ class Scheduler @Inject() (val env: Environment,
     * Sends event confirmation alert on the first day of each month
     */
   private def scheduleMonthlyActions = scheduler {
-    if (DateTime.now().getDayOfMonth == 1) {
-      Logger.info("Start of monthly routines")
-
-      (new ProfileStrengthReminder(email, repos)).sendToFacilitators()
-      (new BrandReminder(email, repos)).sendLicenseExpirationReminder()
-
-      Logger.info("End of monthly routines")
-    }
-
     if (DateTime.now().getDayOfMonth == 14) {
       Logger.info("Start of mid-monthly routines")
       (new CardReminder(email, repos)).sendExpirationReminder()
