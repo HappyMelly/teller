@@ -41,14 +41,6 @@
           }
         </div>
 
-        <a class="b-brandhead__img-con" href="@controllers.core.routes.Dashboard.overview(activeBrand.identifier)">
-            @activeBrand.picture.map { picture =>
-              <img class="b-brandhead__img" src="@Brands.pictureUrl(activeBrand)" />
-            }.getOrElse {
-              <img class="b-brandhead__img" src="@routes.Assets.at("images/happymelly-face-white.png")"/>
-            }
-        </a>
-
         <div class="b-brandhead__content">
           <div class="b-brandhead__title">
               @activeBrand.name

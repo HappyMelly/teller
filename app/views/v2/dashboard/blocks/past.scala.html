@@ -17,13 +17,6 @@
     <tbody>
     @for((event, brand) <- events) {
       <tr>
-        @if(withBrand) {
-          <td>
-            @brand.map { value =>
-              <a href="@controllers.core.routes.Dashboard.overview(value.identifier)">@value.name</a>
-            }.getOrElse { No brand }
-          </td>
-        }
         <td>
           <a href="@controllers.cm.routes.Events.details(event.id.get).url">
           @event.title

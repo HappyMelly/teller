@@ -10,7 +10,6 @@ GET           /                                                              con
 GET           /about                                                         controllers.core.Dashboard.about
 GET           /apiv2                                                         controllers.core.Dashboard.apiv2
 GET           /profile                                                       controllers.core.Dashboard.profile
-GET           /overview/:id                                                  controllers.core.Dashboard.overview(id: Long)
 
 GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
 POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)

@@ -14,11 +14,7 @@
         }
       }
       @for(brand <- brands) {
-        @if(activeBrand.exists(_.identifier == brand.identifier)) {
-          <div class="b-brandmenu__i state-selected">@brand.name</div>
-        } else {
-          <a class="b-brandmenu__i" href="@controllers.core.routes.Dashboard.overview(brand.identifier)">@brand.name</a>
-        }
+        <div class="b-brandmenu__i state-selected">@brand.name</div>
       }
     </div>
   </div>

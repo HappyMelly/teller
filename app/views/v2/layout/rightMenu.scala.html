@@ -20,11 +20,6 @@
     <div class="b-headmenu__link">
         @views.html.v2.element.notificationList()
     </div>
-    @user.account.credits.map { value =>
-        <a href="@controllers.cm.brand.routes.Credits.index()" class="b-headmenu__heart @if(value > 0){state_active}">
-            <i class="fa fa-heart"></i>
-        </a>
-    }
     <div class="b-headmenu__divider"></div>
     <a href="@controllers.core.routes.LoginPage.logout()" class="b-headmenu__link">
         Log out

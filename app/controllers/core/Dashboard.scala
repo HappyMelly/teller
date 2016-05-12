@@ -66,26 +66,10 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   def index = RestrictedAction(List(Viewer, Unregistered)) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       if (user.account.registered) {
-        roleDiffirentiator(user.account) { (view, brands) =>
-          (for {
-            l <- repos.cm.license.expiring(List(view.brand.identifier))
-            e <- unbilledEvents(view.brand)
-          } yield (l, e)) flatMap { case (licenses, events) =>
-            ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands, licenses, events))
-          }
-        } { (view, brands) =>
-          (for {
-            events <- repos.cm.event.findByFacilitator(user.account.personId, brandId = None)
-            evals <- unhandledEvaluations(events, brands)
-          } yield (events, evals)) flatMap { case (events, evaluations) =>
-            ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
-              upcomingEvents(events, brands),
-              pastEvents(events, brands),
-              evaluations))
-          }
-        } {
+        if (user.account.member || user.account.admin)
           ok(views.html.v2.dashboard.forMembers(user))
-        }
+        else
+          redirect(routes.LoginPage.logout(Some("error"), Some("We moved to https://workshopbutler.com")))
       } else {
         val url = controllers.security.routes.LoginReminder.page().url
         val (session, (typ, msg)) = LoginReminder.updateCounter(request.session, url)
@@ -94,33 +78,6 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
       }
   }
 
-  /**
-    * Dashboard page for the specific brand
-    *
-    * @param id Brand identifier
-    */
-  def overview(id: Long) = RestrictedAction(Viewer) { implicit request ⇒
-    implicit handler ⇒ implicit user ⇒
-      roleDiffirentiator(user.account, Some(id)) { (view, brands) =>
-        (for {
-          l <- repos.cm.license.expiring(List(view.brand.identifier))
-          e <- unbilledEvents(view.brand)
-        } yield (l, e)) flatMap { case (licenses, events) =>
-          ok(views.html.v2.dashboard.forBrandCoordinators(user, view.brand, brands,
-            licenses, events))
-        }
-      } { (view, brands) =>
-        (for {
-          events <- repos.cm.event.findByFacilitator(user.account.personId, brandId = Some(id))
-          evaluations <- unhandledEvaluations(events, brands)
-        } yield (events, evaluations)) flatMap { case (events, evaluations) =>
-          ok(views.html.v2.dashboard.forFacilitators(user, view, brands,
-            upcomingEvents(events, brands),
-            pastEvents(events, brands),
-            evaluations))
-        }
-      } { ok(views.html.v2.dashboard.index(user)) }
-  }
 
   /**
     * Redirect to the current user’s `Person` details page. This is implemented as a redirect to avoid executing
@@ -129,65 +86,6 @@ class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntime
   def profile = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
     val currentUser = user.person
     redirect(routes.People.details(currentUser.id.getOrElse(0)))
-  }
-
-  /**
-    * Returns 3 past events happened in the last 7 days
-    *
-    * @param events List of all events
-    */
-  protected def pastEvents(events: List[Event], brands: List[Brand]) = {
-    val now = LocalDate.now()
-    val weekBefore = now.minusDays(7)
-    events
-      .filter(_.schedule.end.isBefore(now))
-      .filter(_.schedule.end.isAfter(weekBefore))
-      .sortBy(_.schedule.end.toString)(Ordering[String].reverse).slice(0, 2)
-      .map(event => (event, brands.find(_.identifier == event.brandId)))
-  }
-
-  /**
-    * Returns unhandled evaluations for the given events
-    *
-    * @param events List of events
-    */
-  protected def unhandledEvaluations(events: List[Event], brands: List[Brand]) = {
-    repos.cm.evaluation.findUnhandled(events) map { evaluations =>
-      evaluations.sortBy(_._3.recordInfo.created.toString())(Ordering[String].reverse)
-        .map(value => (value, brands.find(_.identifier == value._1.brandId)))
-
-    }
-  }
-
-  /**
-    * Returns list of upcoming events (not more than 4)
-    *
-    * @param events List of all events
-    * @param brands List of related brands
-    */
-  protected def upcomingEvents(events: List[Event], brands: List[Brand]) = {
-    events
-      .filterNot(_.past)
-      .slice(0, 4).map(event => (event, brands.find(_.identifier == event.brandId)))
-  }
-
-  /**
-    * Returns list of past confirmed events without invoices
-    *
-    * @param brand Brand of interest
-    */
-  protected def unbilledEvents(brand: Brand): Future[List[Event]] = {
-    (for {
-      e <- repos.cm.event.findByParameters(Some(brand.identifier), confirmed = Some(true), future = Some(false))
-      i <- repos.cm.event.withInvoices(e)
-    } yield i) map { withInvoices =>
-      val TELLER_LAUNCHED_DATE = LocalDate.parse("2015-01-01")
-      withInvoices.filter(_.invoice.invoiceBy.isEmpty).
-        map(_.event).filterNot(_.free).
-        filter(_.schedule.start.isAfter(TELLER_LAUNCHED_DATE)).
-        sortBy(_.schedule.start.toString)
-
-    }
   }
 }
 
