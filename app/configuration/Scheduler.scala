@@ -34,6 +34,7 @@ import models.cm.Facilitator
 import models.repository.Repositories
 import org.joda.time._
 import play.api.{Environment, Logger}
+import services.TellerRuntimeEnvironment
 import services.integrations.Email
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -45,7 +46,7 @@ trait IScheduler
   * Schedules a set of actions to run on the application start
   */
 @Singleton
-class Scheduler @Inject() (val env: Environment,
+class Scheduler @Inject() (val env: TellerRuntimeEnvironment,
                            val email: Email,
                            val repos: Repositories,
                            @Named("evaluation-mailer") mailer: ActorRef,
@@ -53,7 +54,7 @@ class Scheduler @Inject() (val env: Environment,
   start
 
   private def start = {
-    if (sys.env.contains("DYNO") && sys.env("DYNO").equals("web.2")) {
+    if (env.isProd) {
       scheduleDailyActions
       scheduleMonthlyActions
     }
