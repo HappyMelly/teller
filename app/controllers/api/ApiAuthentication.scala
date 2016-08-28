@@ -25,14 +25,12 @@
 package controllers.api
 
 import controllers.AsyncController
-import models.cm.brand.ApiConfig
 import models.repository.Repositories
+import play.api.Play
 import play.api.Play.current
-import play.api.cache.Cache
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -49,35 +47,19 @@ class ApiAuthentication(repos: Repositories,
    * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
    * @param f Function to run
    */
-  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ ApiConfig ⇒ Future[Result]) = Action.async {
+  def TokenSecuredAction(readWrite: Boolean)(f: Request[AnyContent] ⇒ Future[Result]) = Action.async {
     implicit request ⇒
-      request.getQueryString(ApiTokenParam) map { value ⇒
-        Cache.getAs[ApiConfig](ApiConfig.cacheId(value)) map { token ⇒
-          authorize(readWrite, token)(f)
-        } getOrElse {
-          repos.cm.rep.brand.config.find(value) flatMap {
-            case None => jsonUnauthorized
-            case Some(token) => authorize(readWrite, token)(f)
-          }
+      val query: Option[Future[Result]] = (for {
+        r <- request.getQueryString(ApiTokenParam)
+        t <- Play.configuration.getString("api.token")
+      } yield (r, t)) map { case (requestedToken, allowedToken) =>
+        if (requestedToken == allowedToken) {
+          f(request)
+        } else {
+          jsonUnauthorized
         }
-      } getOrElse jsonUnauthorized
+      }
+      query getOrElse jsonUnauthorized
   }
 
-  /**
-   * Checks if token is authorized to run the given function and runs it
-   *  if the check is successful
- *
-   * @param readWrite If true, read-write authorization is required; otherwise, read-only authorization
-   * @param token Token of interest
-   * @param f Function to run
-   * @param request Request object
-   * @return Returns the result of function execution or Unauthorized
-   */
-  protected def authorize(readWrite: Boolean, token: ApiConfig)(
-    f: Request[AnyContent] ⇒ ApiConfig ⇒ Future[Result])(implicit request: Request[AnyContent]): Future[Result] = {
-    if (token.authorized(readWrite))
-      f(request)(token)
-    else
-      jsonUnauthorized
-  }
 }

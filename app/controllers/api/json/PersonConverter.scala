@@ -2,7 +2,6 @@ package controllers.api.json
 
 import controllers.api.OrganisationsApi
 import models._
-import models.cm.LicenseView
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json, Writes}
 
@@ -26,15 +25,6 @@ class PersonConverter(implicit val messages: Messages) {
   import OrganisationsApi.organisationWrites
   implicit val contributionWrites = (new ContributionConverter).contributionWrites
 
-  implicit val licenseSummaryWrites = new Writes[LicenseView] {
-    def writes(license: LicenseView) = {
-      Json.obj(
-        "brand" -> license.brand.code,
-        "start" -> license.license.start,
-        "end" -> license.license.end)
-    }
-  }
-
   implicit val addressWrites = new Writes[Address] {
     def writes(address: Address) = Json.obj(
       "street1" -> address.street1,
@@ -45,8 +35,8 @@ class PersonConverter(implicit val messages: Messages) {
       "country" -> address.countryCode)
   }
 
-  val personDetailsWrites = new Writes[(Person, List[LicenseView], List[ContributionView], List[Organisation])] {
-    def writes(view: (Person, List[LicenseView], List[ContributionView], List[Organisation])) = {
+  val personDetailsWrites = new Writes[(Person, List[ContributionView], List[Organisation])] {
+    def writes(view: (Person, List[ContributionView], List[Organisation])) = {
       Json.obj(
         "id" -> view._1.id.get,
         "unique_name" -> view._1.uniqueName,
@@ -64,9 +54,8 @@ class PersonConverter(implicit val messages: Messages) {
         "website" -> view._1.webSite,
         "blog" -> view._1.blog,
         "active" -> view._1.active,
-        "organizations" -> view._4,
-        "licenses" -> view._2,
-        "contributions" -> view._3)
+        "organizations" -> view._3,
+        "contributions" -> view._2)
     }
   }
 }

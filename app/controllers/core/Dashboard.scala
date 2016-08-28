@@ -26,24 +26,18 @@ package controllers.core
 
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.{Security, BrandAware}
+import controllers.Security
 import controllers.security.LoginReminder
 import models.UserRole.Role._
-import models._
-import models.cm.Event
 import models.repository.Repositories
-import org.joda.time.LocalDate
 import play.api.i18n.{I18nSupport, MessagesApi}
 import services.TellerRuntimeEnvironment
-
-import scala.concurrent.Future
 
 class Dashboard @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
                                         override val messagesApi: MessagesApi,
                                         val repos: Repositories,
                                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
-    with BrandAware
     with I18nSupport {
 
   /**

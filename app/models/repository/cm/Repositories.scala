@@ -24,7 +24,6 @@
 
 package models.repository.cm
 
-import models.repository.cm.brand.CertificateTemplateRepository
 import play.api.Application
 
 /**
@@ -33,16 +32,9 @@ import play.api.Application
 class Repositories(app: Application, root: models.repository.Repositories) {
 
   lazy val brand: BrandRepository = new BrandRepository(app, root)
-  lazy val certificate: CertificateTemplateRepository = new CertificateTemplateRepository(app)
-  lazy val evaluation: EvaluationRepository = new EvaluationRepository(app, root)
-  lazy val event: EventRepository = new EventRepository(app, root)
-  lazy val facilitator: FacilitatorRepository = new FacilitatorRepository(app)
-  lazy val facilitatorSettings: FacilitatorSettingsRepository = new FacilitatorSettingsRepository(app)
-  lazy val license: LicenseRepository = new LicenseRepository(app)
 
   object rep {
     lazy val brand: models.repository.cm.brand.Repositories = new models.repository.cm.brand.Repositories(app)
-    lazy val event: models.repository.cm.event.Repositories = new models.repository.cm.event.Repositories(app)
   }
 
 }

@@ -161,13 +161,12 @@ class MembersApi @Inject() (val repos: Repositories,
    * @param funder If true, returns funders; false - supporters; none - all
    */
   def members(funder: Option[Boolean] = None) = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    implicit token ⇒
-      repos.member.findAll flatMap { members =>
-        val activeMembers = members.filter(_.active)
-        val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse activeMembers
-        val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
-        jsonOk(Json.toJson(views.sortBy(_.member.name)))
-      }
+    repos.member.findAll flatMap { members =>
+      val activeMembers = members.filter(_.active)
+      val filteredMembers = funder map { x ⇒ activeMembers.filter(_.funder == x) } getOrElse activeMembers
+      val views = filteredMembers.map(member => MemberView(member, Countries.name(member.countryCode)))
+      jsonOk(Json.toJson(views.sortBy(_.member.name)))
+    }
   }
 
   /**
@@ -175,7 +174,7 @@ class MembersApi @Inject() (val repos: Repositories,
     *
     * @param query List of member names separated by commas
    */
-  def membersByNames(query: String) = TokenSecuredAction(readWrite = false) { implicit request => implicit token =>
+  def membersByNames(query: String) = TokenSecuredAction(readWrite = false) { implicit request =>
     val names = query.split(",").map(name => URLDecoder.decode(name, "ASCII"))
     (for {
       p <- repos.person.findByNames(names.toList)
@@ -201,38 +200,37 @@ class MembersApi @Inject() (val repos: Repositories,
    * @param isPerson Member is a person if true, otherwise - organisation
    */
   def member(identifier: String, isPerson: Boolean = true) = TokenSecuredAction(readWrite = false) { implicit request ⇒
-    implicit token ⇒
-      findMemberByIdentifier(identifier, isPerson) flatMap {
-        case None => jsonNotFound("Member not found")
-        case Some(member) =>
-          repos.experiment.findByMember(member.identifier) flatMap { experiments =>
-            if (member.person) {
-              (for {
-                p <- repos.person.findComplete(member.objectId)
-                o <- repos.person.memberships(member.objectId)
-                c <- repos.contribution.contributions(member.objectId, isPerson = true)
-              } yield (p, o, c)) flatMap {
-                case (None, _, _) => jsonNotFound("Person not found")
-                case (Some(person), organisations, contributions) =>
-                  val view = MemberPersonView(member, experiments, PersonView(person, organisations, contributions))
-                  jsonOk(Json.toJson(view)(personMemberWrites))
-              }
-            } else {
-              (for {
-                o <- repos.org.findWithProfile(member.objectId)
-                m <- repos.org.people(member.objectId)
-                c <- repos.contribution.contributions(member.objectId, isPerson = false)
-                _ <- repos.person.collection.addresses(m)
-              } yield (o, m, c)) flatMap {
-                case (None, _, _) => jsonNotFound("Organisation not found")
-                case (Some(view), members, contributions) =>
-                  val org = view.copy(members = members, contributions = contributions)
-                  jsonOk(Json.toJson(MemberOrgView(member, experiments, org))(orgMemberWrites))
-              }
+    findMemberByIdentifier(identifier, isPerson) flatMap {
+      case None => jsonNotFound("Member not found")
+      case Some(member) =>
+        repos.experiment.findByMember(member.identifier) flatMap { experiments =>
+          if (member.person) {
+            (for {
+              p <- repos.person.findComplete(member.objectId)
+              o <- repos.person.memberships(member.objectId)
+              c <- repos.contribution.contributions(member.objectId, isPerson = true)
+            } yield (p, o, c)) flatMap {
+              case (None, _, _) => jsonNotFound("Person not found")
+              case (Some(person), organisations, contributions) =>
+                val view = MemberPersonView(member, experiments, PersonView(person, organisations, contributions))
+                jsonOk(Json.toJson(view)(personMemberWrites))
             }
-
+          } else {
+            (for {
+              o <- repos.org.findWithProfile(member.objectId)
+              m <- repos.org.people(member.objectId)
+              c <- repos.contribution.contributions(member.objectId, isPerson = false)
+              _ <- repos.person.collection.addresses(m)
+            } yield (o, m, c)) flatMap {
+              case (None, _, _) => jsonNotFound("Organisation not found")
+              case (Some(view), members, contributions) =>
+                val org = view.copy(members = members, contributions = contributions)
+                jsonOk(Json.toJson(MemberOrgView(member, experiments, org))(orgMemberWrites))
+            }
           }
-      }
+
+        }
+    }
   }
 
   /**

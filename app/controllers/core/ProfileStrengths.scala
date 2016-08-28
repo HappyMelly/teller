@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
 import models.UserRole.Role._
 import models.repository.Repositories
-import models.{ProfileType, ActiveUser, ProfileStrength}
+import models.{ActiveUser, ProfileStrength, ProfileType}
 import play.api.i18n.MessagesApi
 import services.TellerRuntimeEnvironment
 
@@ -77,26 +77,9 @@ class ProfileStrengths @Inject()(override implicit val env: TellerRuntimeEnviron
       ProfileStrength.forMember(strength)
     else
       strength
-    val query = for {
-      licenses <- repos.cm.license.activeLicenses(id)
-      languages <- repos.cm.facilitatorSettings.languages(id)
-    } yield (licenses, languages)
-    val strengthWithFacilitator = query map { case (licenses, languages) =>
-      if (licenses.nonEmpty) {
-        val strengthWithLanguages = ProfileStrength.forFacilitator(strengthWithMember)
-        if (languages.nonEmpty)
-          strengthWithLanguages.markComplete("language")
-        else
-          strengthWithLanguages
-      } else {
-        strengthWithMember
-      }
-    }
-    strengthWithFacilitator flatMap { value =>
-      repos.socialProfile.find(user.person.identifier, ProfileType.Person) map { profile =>
-        user.person.profile_=(profile)
-        ProfileStrength.forPerson(value, user.person)
-      }
+    repos.socialProfile.find(user.person.identifier, ProfileType.Person) map { profile =>
+      user.person.profile_=(profile)
+      ProfileStrength.forPerson(strengthWithMember, user.person)
     }
   }
 }

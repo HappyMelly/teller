@@ -24,16 +24,15 @@
 package configuration
 
 import java.util.concurrent.TimeUnit
-import javax.inject.{Named, Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import cron.SubscriptionUpdater
-import cron.cleaners.{ExpiredEventRequestCleaner, TokenCleaner}
+import cron.cleaners.TokenCleaner
 import cron.reminders._
-import models.cm.Facilitator
 import models.repository.Repositories
 import org.joda.time._
-import play.api.{Environment, Logger}
+import play.api.Logger
 import services.TellerRuntimeEnvironment
 import services.integrations.Email
 
@@ -49,7 +48,6 @@ trait IScheduler
 class Scheduler @Inject() (val env: TellerRuntimeEnvironment,
                            val email: Email,
                            val repos: Repositories,
-                           @Named("evaluation-mailer") mailer: ActorRef,
                            val actors: ActorSystem) extends IScheduler {
   start
 
@@ -61,7 +59,6 @@ class Scheduler @Inject() (val env: TellerRuntimeEnvironment,
   }
 
   private def runCleaners() = {
-    (new ExpiredEventRequestCleaner(repos)).clean()
     (new TokenCleaner(repos).clean())
   }
 

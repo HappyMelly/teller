@@ -30,7 +30,7 @@ import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import models.UserRole.Role._
 import models.repository.IRepositories
-import models.{ActiveUser, UserAccount, UserRole}
+import models.{ActiveUser, UserRole}
 import play.api.i18n.MessagesApi
 import play.api.mvc._
 import securesocial.controllers.MailTokenBasedOperations
@@ -70,48 +70,6 @@ class Security(deadbolt: DeadboltActions,
       val restrictedAction = deadbolt.Dynamic(Coordinator.toString, brandId.toString, handler)(
         Action.async(f(_)(handler)(user)))
       restrictedAction(request)
-    }
-  }
-
-  /**
-    * Authenticates using SecureSocial
-    * and uses Deadbolt to restrict access to the given role
-    *
-    * @param roles Allowed roles
-    * @param evaluationId Evaluation identifier
-    */
-  def EvaluationAction(roles: List[UserRole.Role.Role], evaluationId: Long)(
-    f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.cm.Event => Future[Result]): Action[AnyContent] = {
-    asyncSecuredAction() { implicit request => implicit user =>
-      repos.cm.event.findByEvaluation(evaluationId) flatMap {
-        case None => notFound("Evaluation not found")
-        case Some(event) =>
-          eventManager(user.account, roles, event) flatMap {
-            case false => throw new AuthenticationException
-            case true => f(request)(handler)(user)(event)
-          }
-      }
-    }
-  }
-
-  /**
-    * Authenticates using SecureSocial
-    * and uses Deadbolt to restrict access to the given role
-    *
-    * @param roles Allowed roles
-    * @param eventId Event identifier
-    */
-  def EventAction(roles: List[UserRole.Role.Role], eventId: Long)(
-    f: Request[AnyContent] ⇒ DeadboltHandler ⇒ ActiveUser ⇒ models.cm.Event => Future[Result]): Action[AnyContent] = {
-    asyncSecuredAction() { implicit request => implicit user =>
-      repos.cm.event.find(eventId) flatMap {
-        case None => notFound("Event not found")
-        case Some(event) =>
-          eventManager(user.account, roles, event) flatMap {
-            case false => throw new AuthenticationException
-            case true => f(request)(handler)(user)(event)
-          }
-      }
     }
   }
 
@@ -175,16 +133,6 @@ class Security(deadbolt: DeadboltActions,
       val restrictedAction = deadbolt.Dynamic(role.toString, id.toString, handler)(Action.async(f(_)(handler)(user)))
       restrictedAction(request)
     }
-  }
-
-  protected def eventManager(account: UserAccount,
-                             roles: List[UserRole.Role.Role], event: models.cm.Event): Future[Boolean] = {
-    if (account.isCoordinatorNow && roles.contains(UserRole.Role.Coordinator))
-      repos.cm.brand.isCoordinator(event.brandId, account.personId)
-    else if (account.isFacilitatorNow && roles.contains(UserRole.Role.Facilitator))
-      Future.successful(event.isFacilitator(account.personId, repos))
-    else
-      Future.successful(false)
   }
 
   protected def asyncSecuredAction()(f: Request[AnyContent] ⇒ ActiveUser => Future[Result]): Action[AnyContent] = {

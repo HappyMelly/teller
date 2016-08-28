@@ -48,7 +48,7 @@ class PeopleApi @Inject() (val repos: Repositories,
    * @return
    */
   def people(active: Option[Boolean], query: Option[String]) = TokenSecuredAction(readWrite = false) {
-    implicit request ⇒ implicit token ⇒
+    implicit request ⇒
       (for {
         p <- repos.person.findByParameters(active, query)
         _ <- repos.person.collection.addresses(p)
@@ -63,7 +63,7 @@ class PeopleApi @Inject() (val repos: Repositories,
     * @param identifier Person identifier
    * @return
    */
-  def person(identifier: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+  def person(identifier: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒
     val mayBePerson = try {
       val id = identifier.toLong
       repos.person.findComplete(id)
@@ -74,11 +74,10 @@ class PeopleApi @Inject() (val repos: Repositories,
       case None => notFound("Person not found")
       case Some(person) =>
         (for {
-          l <- repos.cm.license.activeLicenses(person.identifier)
           c <- repos.contribution.contributions(person.identifier, isPerson = true)
           o <- repos.person.memberships(person.identifier)
-        } yield (l, c, o)) flatMap { case (licenses, contributions, organisations) =>
-          ok(Json.prettyPrint(Json.toJson((person, licenses, contributions, organisations))(converter.personDetailsWrites)))
+        } yield (c, o)) flatMap { case (contributions, organisations) =>
+          ok(Json.prettyPrint(Json.toJson((person, contributions, organisations))(converter.personDetailsWrites)))
         }
     }
   }

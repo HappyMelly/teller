@@ -23,8 +23,9 @@
  */
 package controllers.hm
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
@@ -51,6 +52,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
                          override val messagesApi: MessagesApi,
                          val repos: Repositories,
                          val email: Email,
+                         @Named("slack-servant") val slackServant: ActorRef,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Enrollment

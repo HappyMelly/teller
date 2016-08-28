@@ -50,7 +50,7 @@ class ProductsApi @Inject() (val services: Repositories,
     *
     * @param id Product id
    */
-  def product(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+  def product(id: Long) = TokenSecuredAction(readWrite = false) { implicit request ⇒
     (for {
       p <- services.product.find(id)
       b <- services.product.brands(id)
@@ -66,7 +66,7 @@ class ProductsApi @Inject() (val services: Repositories,
   /**
    * Returns list of products in JSON format
    */
-  def products = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+  def products = TokenSecuredAction(readWrite = false) { implicit request ⇒
     (for {
       products <- services.product.findAll
       withBrands <- services.product.collection.brands(products)

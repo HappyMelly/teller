@@ -23,6 +23,9 @@
  */
 package controllers
 
+import javax.inject.Named
+
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
 import controllers.hm.Enrollment
@@ -93,6 +96,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
                                            override val messagesApi: MessagesApi,
                                            val repos: Repositories,
                                            val email: Email,
+                                          @Named("slack-servant") val slackServant: ActorRef,
                                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with PasswordIdentities

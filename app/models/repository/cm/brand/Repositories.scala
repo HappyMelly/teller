@@ -31,11 +31,7 @@ import play.api.Application
   */
 class Repositories(app: Application) {
 
-  lazy val badge: BadgeRepository = new BadgeRepository(app)
-  lazy val config: ApiConfigRepository = new ApiConfigRepository(app)
   lazy val coordinator: CoordinatorRepository = new CoordinatorRepository(app)
-  lazy val eventType: EventTypeRepository = new EventTypeRepository(app)
   lazy val link: LinkRepository = new LinkRepository(app)
-  lazy val peerCredit: PeerCreditRepository = new PeerCreditRepository(app)
   lazy val testimonial: TestimonialRepository = new TestimonialRepository(app)
 }

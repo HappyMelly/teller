@@ -31,7 +31,7 @@ class ExperimentsApi @Inject() (val services: Repositories,
   /**
    * Returns list of experiments
    */
-  def experiments() = TokenSecuredAction(readWrite = false) { implicit request =>  implicit token =>
+  def experiments() = TokenSecuredAction(readWrite = false) { implicit request =>
     (for {
       experiments <- services.experiment.findAll()
       members <- services.member.find(experiments.map(_.memberId).distinct)

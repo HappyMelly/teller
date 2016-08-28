@@ -24,14 +24,12 @@
 
 package controllers
 
-import javax.inject.{Inject, Named}
+import javax.inject.Inject
 
-import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Forms._
 import fly.play.s3.{BucketFile, S3Exception}
-import models.cm.Event
 import models.UserRole.Role._
 import models._
 import models.cm.brand.BrandCoordinator
@@ -45,7 +43,6 @@ import play.api.data.validation.Constraints._
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
-import play.twirl.api.Html
 import securesocial.core.providers.MailToken
 import services._
 
@@ -57,7 +54,6 @@ case class BrandProfileView(brand: Brand, profile: SocialProfile)
 class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                         override val messagesApi: MessagesApi,
                         val repos: Repositories,
-                        @Named("peer-credits") creditsConfigurator: ActorRef,
                         deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
   extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
   with Activities
@@ -245,7 +241,7 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
   def renderCoordinatorTabs(id: Long, tab: String)  = BrandAction(id) { implicit request ⇒
     implicit handler ⇒ implicit user ⇒
       tab match {
-        case "team" ⇒
+        case _ ⇒
           (for {
             coordinators <- repos.cm.brand.coordinators(id)
             people <- repos.person.findActive
@@ -253,22 +249,6 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
             val members = coordinators.sortBy(_._1.fullName)
             val filtered = people.filterNot(x ⇒ members.contains(x))
             ok(views.html.v2.brand.tabs.team(id, members, filtered))
-          }
-        case "templates" ⇒
-          repos.cm.certificate.findByBrand(id) flatMap { templates =>
-            ok(views.html.v2.brand.tabs.templates(id, templates))
-          }
-        case "types" ⇒
-          repos.cm.rep.brand.eventType.findByBrand(id) flatMap { eventTypes =>
-            ok(views.html.v2.brand.tabs.eventTypes(id, eventTypes.sortBy(_.name)))
-          }
-        case _ =>
-          repos.cm.brand.findWithSettings(id) flatMap { maybeView =>
-            maybeView map { view =>
-              ok(views.html.v2.brand.tabs.licenseExpiration(view.settings))
-            } getOrElse {
-              ok(Html("Unknown brand"))
-            }
           }
       }
   }
@@ -296,7 +276,6 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
               val coordinator = BrandCoordinator(None, id, personId)
               repos.cm.rep.brand.coordinator.save(coordinator).flatMap { coordinator =>
                 giveCoordinatorAccess(person, brand)
-                creditsConfigurator ! (personId, id, true)
                 val data = Json.obj("personId" -> personId, "brandId" -> id, "name" -> person.fullName)
                 jsonSuccess(Messages("success.brand.newMember"), Some(data))
               }
@@ -329,7 +308,6 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
                     repos.userAccount.update(account.copy(coordinator = false, activeRole = false))
                 }
               }
-              creditsConfigurator ! (personId, id, false)
               jsonSuccess(Messages("success.brand.deleteMember"))
             }
           }
@@ -508,37 +486,6 @@ class Brands @Inject() (override implicit val env: TellerRuntimeEnvironment,
           Ok(value).as(contentType)
       }
     }
-  }
-
-  /**
-    * Returns a list of managed events for the given brand and current user
-    *
-    * @param brandId Brand id
-    * @param future If true, returns only future events; if false, only past
-    */
-  def events(brandId: Long, future: Option[Boolean] = None) = RestrictedAction(Viewer) {
-    implicit request ⇒ implicit handler ⇒ implicit user ⇒
-      implicit val eventWrites = new Writes[Event] {
-        def writes(data: Event): JsValue = {
-          Json.obj(
-            "id" -> data.id.get,
-            "title" -> data.longTitle)
-        }
-      }
-
-      repos.cm.brand.findWithCoordinators(brandId) flatMap {
-        case None => notFound("Brand not found")
-        case Some(x) =>
-          val account = user.account
-          val events = if (x.coordinators.exists(_._1.id == Some(account.personId))) {
-            repos.cm.event.findByParameters(x.brand.id, future, archived = Some(false))
-          } else {
-            repos.cm.event.findByFacilitator(account.personId, x.brand.id, future, archived = Some(false))
-          }
-          events.flatMap { value =>
-            ok(Json.toJson(value))
-          }
-      }
   }
 
   /**

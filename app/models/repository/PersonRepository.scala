@@ -26,10 +26,8 @@ package models.repository
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import models._
-import models.cm.facilitator.{Endorsement, Material}
 import models.core.payment.CustomerType
 import models.database._
-import models.database.event.AttendeeTable
 import play.api.Application
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
 import slick.driver.JdbcProfile
@@ -39,11 +37,6 @@ import scala.concurrent.Future
 
 class PersonRepository(app: Application, repos: Repositories) extends HasDatabaseConfig[JdbcProfile]
   with AddressTable
-  with AttendeeTable
-  with EndorsementTable
-  with FacilitatorLanguageTable
-  with FacilitatorCountryTable
-  with MaterialTable
   with MemberTable
   with OrganisationMembershipTable
   with PasswordIdentityTable
@@ -83,7 +76,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
     repos.userAccount.delete(person.identifier)
     repos.socialProfile.delete(person.identifier, ProfileType.Person)
     val actions = (for {
-      _ <- TableQuery[Attendees].filter(_.personId === person.identifier).delete
       _ <- TableQuery[People].filter(_.id === person.identifier).delete
       _ <- TableQuery[Addresses].filter(_.id === person.addressId).delete
       _ <- TableQuery[ProfileStrengths].filter(_.objectId === person.id.get).filter(_.org === false).delete
@@ -91,33 +83,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
     } yield ()).transactionally
     db.run(actions)
   }
-
-  /**
-   * Deletes material from database
-   *
-   * Person identifier is for security reasons. If a user passes security
-   * check for the person, the user cannot delete materials which aren't belonged to
-   * another person.
-   *
-   * @param personId Person identifier
-   * @param id Material identifier
-   */
-  def deleteMaterial(personId: Long, id: Long): Future[Int] =
-    db.run(TableQuery[Materials].filter(_.id === id).filter(_.personId === personId).delete)
-
-
-  /**
-   * Deletes endorsement from database
-   *
-   * Person identifier is for security reasons. If a user passes security
-   * check for the person, the user cannot delete endorsements which aren't
-   * belonged to another person.
-   *
-   * @param personId Person identifier
-   * @param id Endorsement identifier
-   */
-  def deleteEndorsement(personId: Long, id: Long): Future[Int] =
-    db.run(TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).delete)
 
   /**
    * Deletes a relationship between this person and the given organisation
@@ -129,14 +94,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
       filter(_.personId === personId).filter(_.organisationId === organisationId)
     db.run(query.delete)
   }
-
-  /**
-   * Return list of endorsements for the given person
-   *
-   * @param personId Person identifier
-   */
-  def endorsements(personId: Long): Future[List[Endorsement]] =
-    db.run(TableQuery[Endorsements].filter(_.personId === personId).sortBy(_.position).result).map(_.toList)
 
   /**
    * Inserts new person object into database
@@ -156,28 +113,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
       person.address_=(address)
       person
     }
-  }
-
-  /**
-   * Inserts the given endorsement to database
-   *
-   * @param endorsement Brand endorsement
-   */
-  def insertEndorsement(endorsement: Endorsement): Future[Endorsement] = {
-    val endorsements = TableQuery[Endorsements]
-    val query = endorsements returning endorsements.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += endorsement)
-  }
-
-  /**
-   * Inserts the given material to database
-   *
-   * @param material Brand material
-   */
-  def insertMaterial(material: Material): Future[Material] = {
-    val materials = TableQuery[Materials]
-    val query = materials returning materials.map(_.id) into ((value, id) => value.copy(id = Some(id)))
-    db.run(query += material)
   }
 
   /**
@@ -299,25 +234,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
     })
   }
 
-  /**
-   * Returns endorsement if it exists
-   *
-   * @param endorsementId Endorsement identifier
-   */
-  def findEndorsement(endorsementId: Long): Future[Option[Endorsement]] =
-    db.run(TableQuery[Endorsements].filter(_.id === endorsementId).result).map(_.headOption)
-
-  /**
-   * Returns endorsement if it exists
-    *
-    * @param evaluationId Evaluation identifier
-   * @param personId Person identifier
-   */
-  def findEndorsementByEvaluation(evaluationId: Long, personId: Long): Future[Option[Endorsement]] = {
-    val query = TableQuery[Endorsements].filter(_.evaluationId === evaluationId).filter(_.personId === personId)
-    db.run(query.result).map(_.headOption)
-  }
-
   /** Returns list of people which are not members (yet!) */
   def findNonMembers: Future[List[Person]] = {
     val actions = for {
@@ -341,14 +257,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
    */
   def member(id: Long): Future[Option[Member]] =
     db.run(TableQuery[Members].filter(_.objectId === id).filter(_.person === true).result).map(_.headOption)
-
-  /**
-   * Return list of materials for the given person
-   *
-   * @param personId Person identifier
-   */
-  def materials(personId: Long): Future[List[Material]] =
-    db.run(TableQuery[Materials].filter(_.personId === personId).result).map(_.toList)
 
   /**
    * Returns list of organizations this person is a member of
@@ -379,31 +287,6 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
     updateProfileStrength(person)
 
     Future.successful(person)
-  }
-
-  /**
-   * Updates endorsement in database
-   *
-   * @param endorsement Endorsement to update
-   */
-  def updateEndorsement(endorsement: Endorsement): Future[Int] = {
-    val query = TableQuery[Endorsements].
-        filter(_.id === endorsement.id.get).
-        filter(_.personId === endorsement.personId).map(_.forUpdate).
-        update((endorsement.brandId, endorsement.content, endorsement.name, endorsement.company))
-    db.run(query)
-  }
-
-  /**
-   * Updates position of the given endorsement
-    *
-    * @param personId Person id
-   * @param id Endorsement id
-   * @param position Position
-   */
-  def updateEndorsementPosition(personId: Long, id: Long, position: Int) = {
-    val query = TableQuery[Endorsements].filter(_.id === id).filter(_.personId === personId).map(_.position)
-    db.run(query.update(position))
   }
 
   def updatePhoto(personId: Long, photoId: Option[String], url: Option[String]) =

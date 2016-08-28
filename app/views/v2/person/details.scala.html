@@ -1,4 +1,3 @@
-@import models.cm.brand.Badge
 @import services.TellerRuntimeEnvironment
 @(user: ActiveUser,
     person: Person,
@@ -96,13 +95,6 @@
         @views.html.v2.person.blocks.photo(person, "199")
         @views.html.v2.person.blocks.navigation(person, member, conf)
 
-        @if(!conf.facilitator && user.account.isCoordinatorNow) {
-          <a href="@routes.Licenses.add(person.id.getOrElse(0))"
-            class="btn btn-upload btn-block">
-            Make a Facilitator
-          </a>
-        }
-        <br/>
         <br/>
       </div>
 

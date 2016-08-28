@@ -25,8 +25,6 @@ package modules
 
 import com.google.inject.AbstractModule
 import models.actors._
-import models.cm.evaluation.Mailer
-import models.cm.facilitator.{SlackServant, MailChimpSubscriber}
 import play.api.libs.concurrent.AkkaGuiceSupport
 import services.integrations.EmailActor
 
@@ -36,13 +34,7 @@ import services.integrations.EmailActor
 class Actors extends AbstractModule with AkkaGuiceSupport {
   override def configure(): Unit = {
     bindActor[EmailActor]("email")
-    bindActor[Mailer]("evaluation-mailer")
-    bindActor[EventRatingCalculator]("event-rating")
-    bindActor[FacilitatorRatingCalculator]("facilitator-rating")
-    bindActor[NotificationDispatcher]("notification")
-    bindActor[PeerCreditsConfigurator]("peer-credits")
     bindActor[ProfileStrengthRecalculator]("profile-strength")
-    bindActor[MailChimpSubscriber]("mailchimp-subscriber")
     bindActor[SlackServant]("slack-servant")
   }
 }

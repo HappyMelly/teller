@@ -39,11 +39,8 @@ import scala.concurrent.Future
 case class BrandWithCoordinators(brand: Brand, coordinators: List[(Person, BrandCoordinator)])
 
 class BrandRepository(app: Application, repos: models.repository.Repositories) extends HasDatabaseConfig[JdbcProfile]
-  with ApiConfigTable
   with BrandTable
   with BrandCoordinatorTable
-  with BrandSettingsTable
-  with LicenseTable
   with PersonTable
   with ProductBrandAssociationTable
   with SocialProfileTable {
@@ -52,7 +49,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
   import driver.api._
 
   private val brands = TableQuery[Brands]
-  private val settings = TableQuery[BrandSettings]
 
   /**
    * Activates the given brand
@@ -83,12 +79,9 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
 
   def deletable(id: Long): Future[Boolean] = {
     val actions = for {
-      l <- TableQuery[Licenses].filter(_.brandId === id).exists.result
       p <- TableQuery[ProductBrandAssociations].filter(_.brandId === id).exists.result
-    } yield (l, p)
-    db.run(actions) map { case (hasLicenses, hasProducts) =>
-      !hasLicenses && !hasProducts
-    }
+    } yield p
+    db.run(actions) map { case (hasProducts) => !hasProducts }
   }
 
   /**
@@ -146,19 +139,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
 
 
   /**
-    * Returns list of brands with settings for the given identifiers
-    *
-    * @param ids Brand identifiers
-    */
-  def find(ids: List[Long]): Future[List[BrandWithSettings]] = {
-    val query = for {
-      brand <- brands if brand.id inSet ids
-      settings  <- settings if settings.brandId === brand.id
-    } yield (brand, settings)
-    db.run(query.result).map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
-  }
-
-  /**
    * Returns a list of all brands
    */
   def findAll: Future[List[Brand]] = db.run(brands.sortBy(_.name.toLowerCase).result).map(_.toList)
@@ -166,29 +146,15 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
 
   def findAllWithCoordinator: Future[List[BrandView]] = {
     val query = for {
-      (brand, license) ← brands joinLeft TableQuery[Licenses] on (_.id === _.brandId)
+      brand ← brands
       coordinator ← brand.coordinator
-    } yield (brand, coordinator, license)
+    } yield (brand, coordinator)
 
     db.run(query.result).map { value =>
-      value.toList.groupBy {
-        case (brand, coordinator, _) ⇒ brand -> coordinator
-      }.mapValues(_.flatMap(_._3.toList.map(_.identifier))).map {
-        case ((brand, coordinator), licenseIDs) ⇒
-          BrandView(brand, coordinator, licenseIDs)
-      }.toList.sortBy(_.brand.name)
+      value.toList.map { case (brand, coordinator) =>
+        BrandView(brand, coordinator)
+      }.sortBy(_.brand.name)
     }
-  }
-
-  /**
-    * Returns list of all brands with settings
-    */
-  def findAllWithSettings: Future[List[BrandWithSettings]] = {
-    val query = for {
-      brand <- brands
-      settings <- settings if settings.brandId === brand.id
-    } yield (brand, settings)
-    db.run(query.result)map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
   }
 
   /**
@@ -196,46 +162,12 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
     *
     * @param coordinatorId Coordinator identifier
    */
-  def findByCoordinator(coordinatorId: Long): Future[List[BrandWithSettings]] = {
+  def findByCoordinator(coordinatorId: Long): Future[List[Brand]] = {
     val query = for {
       coordinator ← TableQuery[BrandCoordinators] if coordinator.personId === coordinatorId
       brand ← brands if brand.id === coordinator.brandId
-      settings <- settings if settings.brandId === brand.id
-    } yield (brand, settings)
-    db.run(query.result).map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
-  }
-
-  /**
-    * Returns list of brands with settings belonging to the given license holder
-    *
-    * @param licenseeId License holder identifier
-    */
-  def findByLicense(licenseeId: Long, onlyActive: Boolean = false): Future[List[BrandWithSettings]] = {
-    val query = for {
-      license <- TableQuery[Licenses] if license.licenseeId === licenseeId
-      brand <- brands if brand.id === license.brandId
-      settings <- settings if settings.brandId === brand.id
-    } yield (brand, settings, license)
-    val result = db.run(query.result)
-    val filteredResult = if (onlyActive) result.map(_.filter(_._3.active)) else result
-    filteredResult.map(_.toList.map(view => BrandWithSettings(view._1, view._2)))
-  }
-
-  /**
-    * Returns a list of all brands for a specified user which he could facilitate
-    * Notice: there's a difference between MANAGED BRAND and FACILITATED BRAND. A brand can be managed by
-    *  any person with an Editor role, and a brand can be facilitated ONLY by its coordinator or active content
-    *  license holders.
-    *
-    *  @deprecated
-    */
-  def findByUser(user: UserAccount): Future[List[Brand]] = {
-    (for {
-      l <- repos.cm.license.activeLicenses(user.personId)
-      b <- repos.cm.brand.findByCoordinator(user.personId)
-    } yield (l, b)) map { case (licenses, brands) =>
-      licenses.map(_.brand).union(brands.map(_.brand)).distinct.sortBy(_.name)
-    }
+    } yield brand
+    db.run(query.result).map(_.toList)
   }
 
   /**
@@ -253,32 +185,11 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
     }
 
   /**
-    * Returns brand with settings if exists
-    *
-    * @param id Brand identifier
-    */
-  def findWithSettings(id: Long): Future[Option[BrandWithSettings]] = {
-    val query = for {
-      brand <- brands if brand.id === id
-      settings <- settings if settings.brandId === id
-    } yield (brand, settings)
-    db.run(query.result).map(_.headOption.map(view => BrandWithSettings(view._1, view._2)))
-  }
-
-  /**
     * Returns the given brand
     *
     * @param id Brand identifier
     */
   def get(id: Long): Future[Brand] = db.run(brands.filter(_.id === id).result).map(_.head)
-
-  def getWithApiConfig(id: Long): Future[(BrandWithSettings, Option[ApiConfig])] = {
-    val query = for {
-      (brand, config) <- brands joinLeft TableQuery[ApiConfigs] on (_.id === _.brandId) if brand.id === id
-      settings <- settings if settings.brandId === id
-    } yield (brand, settings, config)
-    db.run(query.result).map(v => (BrandWithSettings(v.head._1, v.head._2), v.head._3))
-  }
 
   /**
    * Adds brand and all related records to database
@@ -292,7 +203,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
       repos.socialProfile.insert(view.profile.copy(objectId = b.identifier))
       val owner = BrandCoordinator(None, b.identifier, view.brand.ownerId, BrandNotifications(true, true, true))
       repos.cm.rep.brand.coordinator.save(owner)
-      db.run(settings += Settings(b.identifier))
       b
     }
   }
@@ -328,15 +238,6 @@ class BrandRepository(app: Application, repos: models.repository.Repositories) e
     */
   def updatePicture(brandId: Long, picture: Option[String]): Future[Int] =
     db.run(brands.filter(_.id === brandId).map(_.picture).update(picture))
-
-  /**
-    * Update brand settings in database
-    *
-    * @param value Brand settings
-    */
-  def updateSettings(value: Settings): Future[Int] =
-    db.run(settings.filter(_.brandId === value.brandId).update(value))
-
 
   /**
     * Returns true if the given person is a coordinator of the given brand

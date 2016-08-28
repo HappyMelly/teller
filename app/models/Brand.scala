@@ -23,15 +23,9 @@
  */
 package models
 
-import models.cm.brand.Settings
-import models.repository._
 import play.api.libs.Crypto
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import scala.util.Random
-
-case class BrandWithSettings(brand: Brand, settings: Settings)
 
 /**
  * A person, such as the owner or employee of an organisation.
@@ -70,7 +64,7 @@ case class Brand(id: Option[Long],
   val sender: String = s"$name <$contactEmail>"
 }
 
-case class BrandView(brand: Brand, coordinator: Person, licenses: Seq[Long])
+case class BrandView(brand: Brand, coordinator: Person)
 
 object Brand {
 

@@ -24,8 +24,10 @@
 
 package controllers.hm
 
+import akka.actor.ActorRef
 import controllers.{AsyncController, Utilities}
 import models._
+import models.actors.SlackServant.InviteMember
 import models.core.payment.{CreditCard, Customer, CustomerType, Payment}
 import models.repository.Repositories
 import org.joda.time.DateTime
@@ -45,6 +47,7 @@ case class PaymentData(token: String, fee: Int, coupon: Option[String] = None, o
 trait Enrollment extends AsyncController with Integrations with MemberNotifications {
 
   val repos: Repositories
+  val slackServant: ActorRef
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
@@ -76,6 +79,8 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
     mailChimp.subscribeToMembershipList(membershipListId, person, member.funder)
     val newsletterListId = Play.configuration.getString("mailchimp.newsletterListId").getOrElse("")
     mailChimp.subscribeToNewsletterList(newsletterListId, person)
+
+    slackServant ! InviteMember(person.identifier)
   }
 
   protected def addCustomerRecord(customerId: String, card: CreditCard, person: Person, org: Option[Organisation]) = {

@@ -208,9 +208,8 @@ object Person {
 
   def deletable(id: Long, repos: Repositories): Future[Boolean] = for {
     c <- repos.contribution.contributions(id, isPerson = true)
-    l <- repos.cm.license.licensesWithBrands(id)
     o <- repos.person.memberships(id)
-  } yield c.isEmpty && l.isEmpty && o.isEmpty
+  } yield c.isEmpty && o.isEmpty
 
 
   def fullFileName(id: String): String = s"signatures/$id"

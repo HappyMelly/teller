@@ -28,7 +28,6 @@ import javax.inject.Inject
 import controllers.Brands
 import controllers.api.json.{PersonConverter, ProductConverter}
 import models._
-import models.cm.Event
 import models.cm.brand.{BrandLink, BrandTestimonial}
 import models.repository.Repositories
 import play.api.i18n.MessagesApi
@@ -75,30 +74,11 @@ class BrandsApi @Inject() (val repos: Repositories,
     }
   }
 
-  implicit val eventWrites = new Writes[Event] {
-    def writes(event: Event): JsValue = {
-      Json.obj(
-        "title" -> event.title,
-        "description" -> event.details.description,
-        "spokenLanguages" -> event.spokenLanguages,
-        "start" -> event.schedule.start,
-        "end" -> event.schedule.end,
-        "hoursPerDay" -> event.schedule.hoursPerDay,
-        "totalHours" -> event.schedule.totalHours,
-        "city" -> event.location.city,
-        "country" -> event.location.countryCode,
-        "website" -> event.organizer.webSite,
-        "registrationPage" -> event.organizer.registrationPage,
-        "free" -> event.free)
-    }
-  }
-
   case class BrandFullView(brand: Brand,
                            profile: SocialProfile,
                           coordinator: Person,
                           links: List[BrandLink],
                           testimonials: List[BrandTestimonial],
-                          events: List[Event],
                            products: List[Product])
 
   val detailsWrites = new Writes[BrandFullView] {
@@ -123,8 +103,7 @@ class BrandsApi @Inject() (val repos: Repositories,
           "linkedin" -> view.profile.linkedInUrl),
         "products" -> view.products,
         "links" -> view.links,
-        "testimonials" -> view.testimonials,
-        "events" -> view.events)
+        "testimonials" -> view.testimonials)
     }
   }
 
@@ -133,7 +112,7 @@ class BrandsApi @Inject() (val repos: Repositories,
     *
     * @param code Brand code
    */
-  def brand(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+  def brand(code: String) = TokenSecuredAction(readWrite = false) { implicit request ⇒
     val view = repos.cm.brand.find(code) flatMap {
       case Some(brand) => fullView(brand)
       case None =>
@@ -151,7 +130,7 @@ class BrandsApi @Inject() (val repos: Repositories,
   /**
    * Returns a list of brands in JSON format
    */
-  def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒ implicit token ⇒
+  def brands = TokenSecuredAction(readWrite = false) { implicit request ⇒
     (for {
       brands <- repos.cm.brand.findAll
       products <- repos.product.findNumberPerBrand
@@ -171,17 +150,16 @@ class BrandsApi @Inject() (val repos: Repositories,
     (for {
       owner <- repos.person.findComplete(brand.ownerId)
       member <- repos.member.findByObject(brand.ownerId, person = true)
-      events <- repos.cm.event.findByParameters(Some(id), future = Some(true), public = Some(true), archived = Some(false))
       links <- repos.cm.rep.brand.link.find(id)
       testimonials <- repos.cm.rep.brand.testimonial.findByBrand(id)
       products <- repos.product.findByBrand(id)
       profile <- repos.socialProfile.find(id, ProfileType.Brand)
-    } yield (owner, member, events, links, testimonials, products, profile)) map {
-      case (None, _, _, _, _, _, _) => None
-      case (Some(owner), None, events, links, testimonials, products, profile) =>
-        Some(BrandFullView(brand, profile, owner.copy(id = None), links, testimonials, events.take(3), products))
-      case (Some(owner), Some(member), events, links, testimonials, products, profile) =>
-        Some(BrandFullView(brand, profile, owner.copy(id = member.id), links, testimonials, events.take(3), products))
+    } yield (owner, member, links, testimonials, products, profile)) map {
+      case (None, _, _, _, _, _) => None
+      case (Some(owner), None, links, testimonials, products, profile) =>
+        Some(BrandFullView(brand, profile, owner.copy(id = None), links, testimonials, products))
+      case (Some(owner), Some(member), links, testimonials, products, profile) =>
+        Some(BrandFullView(brand, profile, owner.copy(id = member.id), links, testimonials, products))
     }
   }
 }
