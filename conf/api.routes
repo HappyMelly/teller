@@ -1,28 +1,12 @@
 # API (v2)
 GET     /brands                           controllers.api.BrandsApi.brands
 GET     /brand/:code                      controllers.api.BrandsApi.brand(code: String)
-GET     /brand/:code/events               controllers.api.EventsApi.events(code: String, future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean], facilitatorId: Option[Long], countryCode: Option[String], eventType: Option[Long])
-GET     /brand/:code/facilitators         controllers.api.FacilitatorsApi.facilitators(code: String)
-GET     /facilitator/:identifier          controllers.api.FacilitatorsApi.facilitator(identifier: String, code: Option[String] ?= None)
-
-GET     /brand/:code/types                controllers.api.EventTypesApi.types(code: String)
-
-POST    /evaluation                       controllers.api.EvaluationsApi.create
-POST    /evaluation/:id/confirm           controllers.api.EvaluationsApi.confirm(id: String)
-
-GET     /event/:id                        controllers.api.EventsApi.event(id: Long)
-GET     /event/:id/participants           controllers.api.ParticipantsApi.attendees(id: Long)
-
-POST    /eventrequest/brand/:code         controllers.api.EventRequestsApi.create(code: String)
 
 GET     /experiments                      controllers.api.ExperimentsApi.experiments()
-GET     /fees/:brand                      controllers.api.BrandFeesApi.fees(brand: String)
 
 GET     /members/bynames                  controllers.api.MembersApi.membersByNames(query: String)
 GET     /members                          controllers.api.MembersApi.members(funder: Option[Boolean] ?= None)
 GET     /member/:identifier               controllers.api.MembersApi.member(identifier: String, person: Boolean ?= true)
-
-POST    /participant                      controllers.api.ParticipantsApi.create
 
 GET     /people                           controllers.api.PeopleApi.people(active: Option[Boolean], q: Option[String])
 GET     /person/:identifier               controllers.api.PeopleApi.person(identifier: String)

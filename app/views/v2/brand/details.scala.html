@@ -94,56 +94,6 @@
                         </a>
                     </div>
 
-                    @dynamic(handler, Role.Coordinator.toString, brand.identifier.toString) {
-                        <div class="b-sidemenu__group">
-                            <div class="b-sidemenu__head">
-                                Settings
-                            </div>
-                            <a data-href="@controllers.cm.brand.routes.API.settings(brand.identifier)"
-                                href="#api"
-                                class="b-sidemenu__link"
-                                data-menuside>
-                                API
-                            </a>
-                            <a data-href="@controllers.cm.brand.routes.Badges.settings(brand.identifier)"
-                                href="#badges"
-                                class="b-sidemenu__link"
-                                data-menuside>
-                                Badges
-                            </a>
-                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "templates")"
-                                href="#templates"
-                                class="b-sidemenu__link"
-                                data-menuside>
-                                Certificate Templates
-                            </a>
-                            <a data-href="@controllers.cm.brand.routes.Credits.settings(brand.identifier)"
-                                href="#credits"
-                                class="b-sidemenu__link"
-                                data-menuside >
-                                Credits
-                            </a>
-                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "types")"
-                                href="#types"
-                                class="b-sidemenu__link"
-                                data-menuside>
-                                Event Types
-                            </a>
-                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "licenseExpiration")"
-                                href="#licenseExpiration"
-                                class="b-sidemenu__link"
-                                data-menuside>
-                                License Expiration Reminder
-                            </a>
-                            <a data-href="@routes.Brands.renderCoordinatorTabs(brand.id.get, "team")"
-                                href="#team"
-                                class="b-sidemenu__link"
-                                data-menuside>
-                                Team
-                            </a>
-
-                        </div>
-                    }
                 </div>
             </div>
             <div class="center tab-content">
@@ -153,12 +103,6 @@
                 <div class="tab-pane" id="testimonials"></div>
                 <div class="tab-pane" id="team"></div>
                 <div class="tab-pane" id="products"></div>
-                <div class="tab-pane" id="types"></div>
-                <div class="tab-pane" id="templates"></div>
-                <div class="tab-pane" id="api"></div>
-                <div class="tab-pane" id="licenseExpiration"></div>
-                <div class="tab-pane" id="badges"></div>
-                <div class="tab-pane" id="credits"></div>
             </div>
             <div class="right pull-right">
                 <div class="js-completion-widget" ></div>

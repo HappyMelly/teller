@@ -1,11 +1,5 @@
 # Application pages
 
-# we put 'public' pages first to reinforce the use of new public links for events and evaluation confirmation
-GET           /public/evaluation/confirm/:confirmationId                     controllers.cm.PublicEvaluations.confirm(confirmationId: String)
-GET           /public/evaluation/:eventId                                    controllers.cm.PublicEvaluations.add(eventId: String)
-POST          /public/evaluation/:eventId                                    controllers.cm.PublicEvaluations.create(eventId: String)
-GET           /public/event/:id                                              controllers.cm.Events.public(id: String)
-
 GET           /                                                              controllers.core.Dashboard.index
 GET           /about                                                         controllers.core.Dashboard.about
 GET           /apiv2                                                         controllers.core.Dashboard.apiv2
@@ -13,8 +7,6 @@ GET           /profile                                                       con
 
 GET           /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.addForAttendee(id: Long, eventId: Long)
 POST          /attendee/:id/event/:eventId/licenses/new                      controllers.Licenses.createFromAttendee(id: Long, eventId: Long)
-
-GET           /badge/:hash/picture                                           controllers.cm.brand.Badges.picture(hash: String, size: String ?= "")
 
 POST          /brand/:id/activation                                          controllers.Brands.activation(id: Long)
 GET           /brands                                                        controllers.Brands.index
@@ -26,49 +18,14 @@ GET           /brand/:id/tabs                                                con
 POST          /brand/:id/member                                              controllers.Brands.addCoordinator(id: Long)
 DELETE        /brand/:id/member/:personId                                    controllers.Brands.removeCoordinator(id: Long, personId: Long)
 POST          /brand/:id                                                     controllers.Brands.update(id: Long)
-GET           /brand/:id/events                                              controllers.Brands.events(id: Long, future: Option[Boolean])
 GET           /brand/:id/edit                                                controllers.Brands.edit(id: Long)
 POST          /brand/:id/delete                                              controllers.Brands.delete(id: Long)
 GET           /brand/:code/picture                                           controllers.Brands.picture(code: String)
 POST          /brand/:id/picture/delete                                      controllers.Brands.deletePicture(id: Long)
 
-POST          /brand/:id/api/activate                                        controllers.cm.brand.API.activate(id: Long)
-POST          /brand/:id/api/deactivate                                      controllers.cm.brand.API.deactivate(id: Long)
-GET           /brand/:id/api                                                 controllers.cm.brand.API.settings(id: Long)
-POST          /brand/:id/api                                                 controllers.cm.brand.API.update(id: Long)
-
-GET           /brand/:id/attendees/list                                      controllers.cm.event.Attendees.list(id: Long)
-GET           /brand/:id/attendees                                           controllers.cm.event.Attendees.index(id: Long)
-
-GET           /brand/:id/badges                                              controllers.cm.brand.Badges.settings(id: Long)
-GET           /brand/:id/badge                                               controllers.cm.brand.Badges.add(id: Long)
-POST          /brand/:id/badge                                               controllers.cm.brand.Badges.create(id: Long)
-DELETE        /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.delete(id: Long, badgeId: Long)
-GET           /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.edit(id: Long, badgeId: Long)
-POST          /brand/:id/badge/:badgeId                                      controllers.cm.brand.Badges.update(id: Long, badgeId: Long)
 
 POST          /brand/:id/coordinator/:personId/type/:notification/off        controllers.Brands.turnNotificationOff(id: Long, personId: Long, notification)
 POST          /brand/:id/coordinator/:personId/type/:notification/on         controllers.Brands.turnNotificationOn(id: Long, personId: Long, notification)
-GET           /brand/:id/eventrequests                                       controllers.cm.EventRequests.index(id: Long)
-GET           /brand/:id/eventrequest/:requestId                             controllers.cm.EventRequests.details(id: Long, requestId: Long)
-
-POST          /brand/:id/credits/activate                                    controllers.cm.brand.Credits.activate(id: Long)
-POST          /brand/:id/credits/deactivate                                  controllers.cm.brand.Credits.deactivate(id: Long)
-GET           /brand/:id/credits/settings                                    controllers.cm.brand.Credits.settings(id: Long)
-POST          /brand/:id/credits/settings                                    controllers.cm.brand.Credits.update(id: Long)
-
-GET           /brand/:brandId/eventtype                                      controllers.EventTypes.add(brandId: Long)
-POST          /brand/:brandId/eventtype                                      controllers.EventTypes.create(brandId: Long)
-POST          /brand/:brandId/eventtype/:id                                  controllers.EventTypes.update(brandId: Long, id: Long)
-GET           /brand/:brandId/eventtype/:id/delete                           controllers.EventTypes.delete(brandId: Long, id: Long)
-GET           /brand/:id/eventtypes                                          controllers.EventTypes.index(id: Long)
-
-GET           /brand/:id/facilitators/list                                   controllers.cm.Facilitators.list(id: Long)
-GET           /brand/:id/facilitators                                        controllers.cm.Facilitators.index(id: Long)
-GET           /brand/:id/facilitators/find                                   controllers.cm.Facilitators.search(id: Long, query: Option[String])
-
-POST          /brand/:id/settings/licensereminder/off                        controllers.cm.brand.Settings.turnLicenseExpirationReminderOff(id: Long)
-POST          /brand/:id/settings/licensereminder/on                         controllers.cm.brand.Settings.turnLicenseExpirationReminderOn(id: Long)
 
 POST          /brand/:brandId/link                                           controllers.BrandLinks.create(brandId: Long)
 DELETE        /brand/:brandId/link/:id                                       controllers.BrandLinks.remove(brandId: Long, id: Long)
@@ -79,14 +36,6 @@ POST          /brand/:brandId/testimonial                                    con
 POST          /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.update(brandId: Long, id: Long)
 DELETE        /brand/:brandId/testimonial/:id                                controllers.BrandTestimonials.remove(brandId: Long, id: Long)
 
-GET           /brand/:id/template                                            controllers.CertificateTemplates.add(id: Long)
-POST          /brand/:id/template                                            controllers.CertificateTemplates.create(id: Long)
-
-GET           /certificate/:id                                               controllers.cm.Certificates.certificate(id: String)
-GET           /certificate/new/:eventId/:personId                            controllers.cm.Certificates.create(eventId: Long, personId: Long)
-
-POST          /commercial-customer/:interested                               controllers.admin.CommercialCustomers.reply(interested: Boolean)
-
 POST          /contribution/new                                              controllers.Contributions.create(page: String)
 GET           /contribution/:id/delete                                       controllers.Contributions.delete(id: Long, page: String)
 
@@ -96,67 +45,11 @@ GET           /coupons                                                       con
 GET           /coupon/:code/delete                                           controllers.core.Coupons.delete(code: String)
 GET           /coupon/:code                                                  controllers.core.Coupons.get(code: String)
 
-GET           /credits/brand/:id                                             controllers.cm.brand.Credits.credits(id: Long)
-POST          /credits/brand/:id                                             controllers.cm.brand.Credits.give(id: Long)
-GET           /credits                                                       controllers.cm.brand.Credits.index()
-
 POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
 POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
 
-POST          /event/:eventId/endorsement/evaluation/:evaluationId           controllers.Endorsements.createFromEvaluation(eventId: Long, evaluationId: Long)
-
-POST          /evaluation/:id/approve                                        controllers.cm.Evaluations.approve(id: Long)
-POST          /evaluation/:id/reject                                         controllers.cm.Evaluations.reject(id: Long)
-POST          /evaluation/:id/confirmrequest                                 controllers.cm.Evaluations.sendConfirmationRequest(id: Long)
-GET           /evaluation/:id                                              controllers.cm.Evaluations.details(id: Long)
-DELETE        /evaluation/:id                                              controllers.cm.Evaluations.delete(id: Long)
-# it's important to keep confirmationId at the end of the link as it's replaced during evaluation creation
-GET           /evaluation/confirm/:confirmationId                          controllers.cm.PublicEvaluations.confirm(confirmationId: String)
-
-POST          /person/:personId/material                                   controllers.cm.Materials.create(personId: Long)
-DELETE        /person/:personId/material/:id                               controllers.cm.Materials.remove(personId: Long, id: Long)
-
-GET           /report/create/:brandId/event/:eventId/status/:status        controllers.cm.Reports.create(brandId: Long, eventId: Long, status: Int)
-
 GET           /reset/:token                                                controllers.PasswordReset.resetPassword(token: String)
 POST          /reset/:token                                                controllers.PasswordReset.handleResetPassword(token: String)
-
-GET           /events                                                      controllers.cm.Events.index(brandId: Long)
-GET           /events/filtered                                             controllers.cm.Events.events(brandId: Long, facilitator: Option[Long], future: Option[Boolean], public: Option[Boolean], archived: Option[Boolean])
-POST          /event                                                       controllers.cm.Events.create
-GET           /events/new/                                                 controllers.cm.Events.add
-GET           /event/:id/duplicate                                         controllers.cm.Events.duplicate(id: Long)
-GET           /event/:id/edit                                              controllers.cm.Events.edit(id: Long)
-GET           /event/:id/reason                                            controllers.cm.Events.reason(id: Long)
-GET           /event/:id/public                                            controllers.cm.Events.public(id: String)
-GET           /event/:id                                                   controllers.cm.Events.details(id: Long)
-GET           /event/:id/detailsButtons                                    controllers.cm.Events.detailsButtons(id: Long)
-POST          /event/:id                                                   controllers.cm.Events.update(id: Long)
-POST          /event/:id/confirm                                           controllers.cm.Events.confirm(id: Long)
-POST          /event/:id/cancel                                            controllers.cm.Events.cancel(id: Long)
-POST          /event/:id/invoice                                           controllers.cm.event.Invoices.update(id: Long)
-POST          /event/:id/send                                              controllers.cm.event.Requests.send(id: Long)
-GET           /event/:id/attendee                                          controllers.cm.event.Attendees.add(id: Long)
-POST          /event/:id/attendee                                          controllers.cm.event.Attendees.create(id: Long)
-GET           /event/:id/attendee/:attendeeId/evaluation/new               controllers.cm.Evaluations.add(id: Long, attendeeId: Long)
-POST          /event/:id/attendee/:attendeeId/evaluation/new               controllers.cm.Evaluations.create(id: Long, attendeeId: Long)
-GET           /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.details(id: Long, attendeeId: Long)
-GET           /event/:id/attendee/:attendeeId/edit                         controllers.cm.event.Attendees.edit(id: Long, attendeeId: Long)
-POST          /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.update(id: Long, attendeeId: Long)
-DELETE        /event/:id/attendee/:attendeeId                              controllers.cm.event.Attendees.delete(id: Long, attendeeId: Long)
-GET           /event/:id/attendees                                         controllers.cm.event.Attendees.listByEvent(id: Long)
-POST          /event/:id/template                                          controllers.cm.Events.updatePostEventTemplate(id: Long)
-
-GET           /eventrequest/:id/unsubscribe                                controllers.cm.EventRequests.unsubscribe(id: String)
-
-GET           /mailchimp/activate                                          controllers.cm.facilitator.MailChimp.activate()
-GET           /mailchimp/add                                               controllers.cm.facilitator.MailChimp.add()
-POST          /mailchimp/connect                                           controllers.cm.facilitator.MailChimp.connect()
-POST          /mailchimp/create                                            controllers.cm.facilitator.MailChimp.create()
-POST          /mailchimp/disconnect                                        controllers.cm.facilitator.MailChimp.disconnect()
-POST          /mailchimp/deactivate                                        controllers.cm.facilitator.MailChimp.deactivate()
-GET           /mailchimp/lists                                             controllers.cm.facilitator.MailChimp.lists()
-POST          /mailchimp/update                                            controllers.cm.facilitator.MailChimp.update()
 
 GET           /member/:id/experiment                                       controllers.hm.Experiments.add(id: Long)
 POST          /member/:id/experiment                                       controllers.hm.Experiments.create(id: Long)
@@ -167,18 +60,6 @@ GET           /member/:id/experiments                                      contr
 POST          /member/:id/experiment/:experimentId                         controllers.hm.Experiments.update(id: Long, experimentId: Long)
 
 GET           /experiment/:id/picture                                      controllers.hm.Experiments.picture(id: Long, size: String ?= "")
-
-POST          /facilitator/:id/country                                     controllers.cm.Facilitators.addCountry(id: Long)
-POST          /facilitator/:id/language                                    controllers.cm.Facilitators.addLanguage(id: Long)
-GET           /facilitator/:id/brand/:brandId/badges                       controllers.cm.Facilitators.badges(id: Long, brandId: Long)
-POST          /facilitator/:id/brand/:brandId/badges                       controllers.cm.Facilitators.updateBadges(id: Long, brandId: Long)
-GET           /facilitator/:id/country/:country/delete                     controllers.cm.Facilitators.deleteCountry(id: Long, country: String)
-GET           /facilitator/:id/language/:lang/delete                       controllers.cm.Facilitators.deleteLanguage(id: Long, lang: String)
-GET           /facilitator/:id/brand/:brandId                              controllers.cm.Facilitators.details(id: Long, brandId: Long)
-
-GET           /license/:id/edit                                            controllers.Licenses.edit(id: Long)
-POST          /license/:id                                                 controllers.Licenses.update(id: Long)
-POST          /license/:id/brand/:brandId/delete                           controllers.Licenses.delete(brandId: Long, id: Long)
 
 POST          /login-reminder                                              controllers.security.LoginReminder.handle()
 GET           /login-reminder                                              controllers.security.LoginReminder.page()
@@ -241,8 +122,6 @@ POST          /person/:id/activation                                         con
 POST          /person/:id/delete                                             controllers.core.People.delete(id: Long)
 POST          /person/:id/cancel                                             controllers.core.People.cancel(id: Long)
 GET           /person/:id/tabs                                               controllers.core.People.renderTabs(id: Long, tab: String)
-GET           /person/:id/mailchimp                                          controllers.cm.facilitator.MailChimp.settings(id: Long)
-GET           /person/:id/slack                                              controllers.cm.facilitator.Slack.settings(id: Long)
 
 POST          /person/:id/photo/upload                                       controllers.core.ProfilePhotos.upload(id: Long)
 GET           /person/photo/:photoId                                         controllers.core.ProfilePhotos.photo(photoId: String)
@@ -291,28 +170,17 @@ POST          /person/:personId/signature                                    con
 GET           /person/:signatureId/signature                                 controllers.Signatures.signature(signatureId: String)
 POST          /person/:personId/signature/delete                             controllers.Signatures.delete(personId: Long)
 
-GET           /brand/:brandId/statistics                                     controllers.cm.Statistics.index(brandId: Long)
-GET           /brand/:brandId/statistics/type/facilitators/                  controllers.cm.Statistics.byFacilitators(brandId: Long)
-GET           /brand/:brandId/statistics/type/events/                        controllers.cm.Statistics.byEvents(brandId: Long)
-GET           /brand/:brandId/statistics/type/countries/                     controllers.cm.Statistics.byCountries(brandId: Long)
-GET           /brand/:brandId/statistics/type/participants/                  controllers.cm.Statistics.byParticipants(brandId: Long)
-
-GET           /slack/activate                                                controllers.cm.facilitator.Slack.activate()
-GET           /slack/channels                                                controllers.cm.facilitator.Slack.channels()
-POST          /slack/connect                                                 controllers.cm.facilitator.Slack.connect()
-POST          /slack/create                                                  controllers.cm.facilitator.Slack.create()
-POST          /slack/disconnect                                              controllers.cm.facilitator.Slack.disconnect()
-POST          /slack/deactivate                                              controllers.cm.facilitator.Slack.deactivate()
-POST          /slack/update                                                  controllers.cm.facilitator.Slack.update()
-
-GET           /template/:id                                                  controllers.CertificateTemplates.template(id: Long, single: Boolean)
-GET           /template/:brandId/:id/delete                                  controllers.CertificateTemplates.delete(brandId: Long, id: Long)
+#GET           /slack/activate                                                controllers.cm.facilitator.Slack.activate()
+#GET           /slack/channels                                                controllers.cm.facilitator.Slack.channels()
+#POST          /slack/connect                                                 controllers.cm.facilitator.Slack.connect()
+#POST          /slack/create                                                  controllers.cm.facilitator.Slack.create()
+#POST          /slack/disconnect                                              controllers.cm.facilitator.Slack.disconnect()
+#POST          /slack/deactivate                                              controllers.cm.facilitator.Slack.deactivate()
+#POST          /slack/update                                                  controllers.cm.facilitator.Slack.update()
 
 POST          /utilities/markdown                                            controllers.Utilities.markdown()
 GET           /utilities/url/:url                                            controllers.Utilities.validate(url)
 GET           /utilities/vat/:number                                         controllers.Utilities.validateVAT(number)
-
-GET           /usage                                                         controllers.admin.Usage.index
 
 GET           /user/account                                                  controllers.core.UserAccounts.account
 POST          /user/disconnect/:profileId                                    controllers.core.UserAccounts.disconnect(profileId: String)

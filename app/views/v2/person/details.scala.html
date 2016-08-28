@@ -5,7 +5,6 @@
     organisations: List[Organisation],
     otherOrganisations: List[Organisation],
     conf: controllers.core.PeopleDetailConfig,
-    badges: List[(Badge, String)],
     member: Option[Member])(implicit request: Request[Any],
         flash: Flash,
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
@@ -115,7 +114,7 @@
             This person is <strong>deactivated</strong></div>
         }
         <div class="tab-pane active" id="personal-details">
-          @views.html.v2.person.tabs.details(person, organisations, otherOrganisations, badges)
+          @views.html.v2.person.tabs.details(person, organisations, otherOrganisations)
         </div>
         <div class="tab-pane" id="contributions"></div>
         @if(conf.facilitator) {

@@ -1,7 +1,0 @@
-@import models.cm.event.EventRequest
-@(request: EventRequest)
-<div class="row-details">
-    @request.comment.map { comment =>
-        <strong>Message: </strong> @comment
-    }
-</div>

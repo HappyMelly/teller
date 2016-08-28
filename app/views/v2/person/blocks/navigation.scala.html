@@ -23,44 +23,6 @@
         </a>
     </div>
 
-    @if(conf.facilitator) {
-        <div class="b-sidemenu__group">
-            <div class="b-sidemenu__head">
-                Facilitation
-            </div>
-            <a  data-href="@controllers.core.routes.People.renderTabs(person.id.get, "facilitation")"
-                href="#facilitation"
-                class="b-sidemenu__link"
-                data-menuside>
-                Settings
-            </a>
-            <a  data-href="@controllers.core.routes.People.renderTabs(person.id.get, "experience")"
-                href="#experience"
-                class="b-sidemenu__link"
-                data-menuside>
-                Experience
-            </a>
-        </div>
-        <div class="b-sidemenu__group">
-            <div class="b-sidemenu__head">
-                Integration
-            </div>
-            <a data-href="@controllers.cm.facilitator.routes.MailChimp.settings(person.id.get)"
-                href="#mailchimp"
-                class="b-sidemenu__link"
-                data-menuside>
-                MailChimp
-            </a>
-            @if(env.isDev) {
-                <a data-href="@controllers.cm.facilitator.routes.Slack.settings(person.id.get)"
-                    href="#slack"
-                    class="b-sidemenu__link"
-                    data-menuside>
-                    Slack
-                </a>
-            }
-        </div>
-    }
     @if(conf.member) {
         <div class="b-sidemenu__group">
             <div class="b-sidemenu__head">

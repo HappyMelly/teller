@@ -1,14 +1,11 @@
-@import models.cm.brand.Badge
 @(person: Person,
     organisations: List[Organisation],
-    otherOrganisations: List[Organisation],
-    badges: List[(Badge, String)])(implicit request: Request[Any],
+    otherOrganisations: List[Organisation])(implicit request: Request[Any],
         handler: be.objectify.deadbolt.scala.DeadboltHandler,
         token: play.filters.csrf.CSRF.Token,
         messages: Messages)
 
 @import templates.Formatters._
-@import controllers.cm.brand.Badges
 
 <div class="block">
   <div class="block">
@@ -59,26 +56,6 @@
   </dl>
 </div>
 
-@if(badges.nonEmpty) {
-    <div class="block">
-        <h4>Badges</h4>
-        <div class="b-badges-list">
-            @for((badge, brandName) <- badges) {
-                <div class="b-badge">
-                    <div class="b-badge__img" style="background-image: url(@Badges.pictureUrl(badge, "icon"));"></div>
-                    <div class="b-badge__con">
-                        <h5 class="b-badge__title">
-                        @badge.name
-                        </h5>
-                        <p class="b-badge__company">
-                        @brandName
-                        </p>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-}
 
 @person.bio.map { text =>
   <div class="block">

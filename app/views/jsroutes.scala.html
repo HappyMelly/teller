@@ -1,66 +1,6 @@
 @()(implicit request: RequestHeader)
 
 @helper.javascriptRouter("jsRoutes")(
-    controllers.cm.brand.routes.javascript.API.activate,
-    controllers.cm.brand.routes.javascript.API.deactivate,
-    controllers.cm.brand.routes.javascript.API.update,
-    controllers.cm.brand.routes.javascript.Credits.activate,
-    controllers.cm.brand.routes.javascript.Credits.deactivate,
-
-    controllers.cm.event.routes.javascript.Attendees.details,
-    controllers.cm.event.routes.javascript.Attendees.delete,
-    controllers.cm.event.routes.javascript.Attendees.list,
-    controllers.cm.event.routes.javascript.Attendees.listByEvent,
-
-    controllers.cm.facilitator.routes.javascript.MailChimp.activate,
-    controllers.cm.facilitator.routes.javascript.MailChimp.add,
-    controllers.cm.facilitator.routes.javascript.MailChimp.connect,
-    controllers.cm.facilitator.routes.javascript.MailChimp.create,
-    controllers.cm.facilitator.routes.javascript.MailChimp.deactivate,
-    controllers.cm.facilitator.routes.javascript.MailChimp.disconnect,
-    controllers.cm.facilitator.routes.javascript.MailChimp.lists,
-    controllers.cm.facilitator.routes.javascript.MailChimp.settings,
-    controllers.cm.facilitator.routes.javascript.MailChimp.update,
-
-    controllers.cm.facilitator.routes.javascript.Slack.activate,
-    controllers.cm.facilitator.routes.javascript.Slack.channels,
-    controllers.cm.facilitator.routes.javascript.Slack.connect,
-    controllers.cm.facilitator.routes.javascript.Slack.create,
-    controllers.cm.facilitator.routes.javascript.Slack.deactivate,
-    controllers.cm.facilitator.routes.javascript.Slack.disconnect,
-    controllers.cm.facilitator.routes.javascript.Slack.settings,
-    controllers.cm.facilitator.routes.javascript.Slack.update,
-
-    controllers.cm.routes.javascript.Certificates.create,
-    controllers.cm.routes.javascript.Certificates.certificate,
-
-    controllers.cm.routes.javascript.Evaluations.approve,
-    controllers.cm.routes.javascript.Evaluations.delete,
-    controllers.cm.routes.javascript.Evaluations.reject,
-    controllers.cm.routes.javascript.Evaluations.sendConfirmationRequest,
-
-    controllers.cm.routes.javascript.EventRequests.details,
-
-    controllers.cm.routes.javascript.Events.cancel,
-    controllers.cm.routes.javascript.Events.confirm,
-    controllers.cm.routes.javascript.Events.index,
-    controllers.cm.routes.javascript.Events.reason,
-    controllers.cm.routes.javascript.Events.detailsButtons,
-
-    controllers.cm.routes.javascript.Facilitators.badges,
-    controllers.cm.routes.javascript.Facilitators.updateBadges,
-    controllers.cm.routes.javascript.Facilitators.details,
-    controllers.cm.routes.javascript.Facilitators.list,
-    controllers.cm.routes.javascript.Facilitators.search,
-
-    controllers.cm.routes.javascript.Materials.remove,
-    controllers.cm.routes.javascript.Materials.create,
-
-    controllers.cm.routes.javascript.Statistics.byFacilitators,
-    controllers.cm.routes.javascript.Statistics.byEvents,
-    controllers.cm.routes.javascript.Statistics.byCountries,
-    controllers.cm.routes.javascript.Statistics.byParticipants,
-
     controllers.core.routes.javascript.Coupons.get,
     controllers.core.routes.javascript.Notifications.list,
     controllers.core.routes.javascript.Notifications.read,
@@ -94,11 +34,7 @@
     routes.javascript.BrandTestimonials.remove,
     routes.javascript.BrandTestimonials.create,
     routes.javascript.BrandTestimonials.update,
-    routes.javascript.Endorsements.createFromSelected,
-    routes.javascript.Endorsements.updatePositions,
-    routes.javascript.Endorsements.createFromEvaluation,
     routes.javascript.Endorsements.remove,
-    routes.javascript.EventTypes.update,
     routes.javascript.Registration.step1,
     routes.javascript.Utilities.markdown,
     routes.javascript.Utilities.validate,
