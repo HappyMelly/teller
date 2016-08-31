@@ -24,7 +24,9 @@ class SlackServant @Inject()(repos: IRepositories) extends Actor {
           repos.person.find(personId) map {
             case Some(person) =>
               val client = SlackApiClient(token)
-              client.inviteUser(person.email, Seq(), person.firstName)
+              val (hmSupportersId, hmGetToKnowYouId, hmCoffeeId) = ("C04QY3M75", "C052YRSCX", "C0CBWL2RK")
+              val channels = Seq(hmSupportersId, hmGetToKnowYouId, hmCoffeeId)
+              client.inviteUser(person.email, channels, person.firstName)
             case None => Nil
           }
         case None => Nil
