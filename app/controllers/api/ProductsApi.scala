@@ -71,7 +71,8 @@ class ProductsApi @Inject() (val services: Repositories,
       products <- services.product.findAll
       withBrands <- services.product.collection.brands(products)
     } yield withBrands) flatMap { products =>
-      jsonOk(Json.toJson(products))
+      val activeOnly = products.filter(_.product.active)
+      jsonOk(Json.toJson(activeOnly))
     }
   }
 }
