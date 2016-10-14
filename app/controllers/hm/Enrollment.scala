@@ -118,18 +118,19 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
     val url: String = controllers.core.routes.People.details(person.id.get).url
     slack.send(personSlackMsg(person, member, url))
     if (!member.funder)
-      sendWelcomeEmail(person, member.profileUrl, person.firstName)
+      sendWelcomeEmail(person, member, person.firstName)
   }
 
   private def notifyAboutOrg(org: Organisation, member: Member, person: Person) = {
     val url: String = controllers.core.routes.Organisations.details(org.identifier).url
     slack.send(newMemberMsg(member, org.name, url))
     if (!member.funder)
-      sendWelcomeEmail(person, member.profileUrl, org.name)
+      sendWelcomeEmail(person, member, org.name)
   }
 
-  private def sendWelcomeEmail(person: Person, url: String, name: String) = {
-    val body = mail.html.welcome(Utilities.fullUrl(url), url, name).toString()
+  private def sendWelcomeEmail(person: Person, member: Member, name: String) = {
+    val profileUrl = Utilities.fullUrl(Members.profileUrl(member))
+    val body = mail.html.welcome(profileUrl, member.profileUrl, name).toString()
     email.sendSystem(Seq(person), "Welcome to Happy Melly network", body)
   }
 
