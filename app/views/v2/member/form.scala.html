@@ -27,6 +27,7 @@
                 @v2.html.formBlock("") {
                     @v2.html.number(form("fee"), false, "Fee", '_step -> "any")
                     @v2.html.date(form("since"), false, "Member since")
+                    @v2.html.date(form("until"), false, "Member until")
                     @if(edit) {
                         <input type="hidden" name="object" value="0"/>
                     } else {

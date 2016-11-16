@@ -238,7 +238,7 @@ class PersonRepository(app: Application, repos: Repositories) extends HasDatabas
   def findNonMembers: Future[List[Person]] = {
     val actions = for {
       members <- TableQuery[Members].filter(_.person).map(_.objectId).result
-      people <- people.filter(_.id inSet members).sortBy(_.firstName).result
+      people <- people.filterNot(_.id inSet members).sortBy(_.firstName).result
     } yield people
     db.run(actions).map(_.toList)
   }

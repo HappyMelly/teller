@@ -29,17 +29,15 @@ import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers._
-import models.JodaMoney._
 import models.UserRole.Role._
 import models.repository.Repositories
 import models.{ActiveUser, Member, UserAccount}
-import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDate}
+import play.api.Play.current
 import play.api.cache.Cache
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import play.api.Play.current
 import play.api.mvc._
 import services.TellerRuntimeEnvironment
 import services.integrations.Email
@@ -69,16 +67,16 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
         (i: Int) ⇒ if (i == 0) false else true,
         (b: Boolean) ⇒ if (b) 1 else 0),
       "funder" -> ignored(true),
-      "fee.amount" -> bigDecimal,
+      "fee" -> bigDecimal,
       "newFee" -> ignored(None.asInstanceOf[Option[BigDecimal]]),
-      "renewal" -> boolean,
+      "renewal" -> ignored(true),
       "since" -> jodaLocalDate.verifying(
         "error.membership.tooEarly",
         d ⇒ d.isAfter(MEMBERSHIP_EARLIEST_DATE) || d.isEqual(MEMBERSHIP_EARLIEST_DATE)).
         verifying(
           "error.membership.tooLate",
           _.isBefore(LocalDate.now().dayOfMonth().withMaximumValue().plusDays(2))),
-      "until" -> ignored(LocalDate.now()), // we do not care about this value as on update it will rewritten
+      "until" -> jodaLocalDate,
       "reason" -> ignored(None.asInstanceOf[Option[String]]),
       "created" -> ignored(DateTime.now()),
       "createdBy" -> ignored(modifierId),
@@ -145,7 +143,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
           data ⇒ {
             val updated = data.copy(id = existing.id).
               copy(person = existing.person, objectId = existing.objectId).
-              copy(until = existing.until, reason = existing.reason)
+              copy(reason = existing.reason)
             repos.member.update(updated) flatMap { _ =>
               val url: String = profileUrl(updated)
               updatedMemberMsg(existing, updated, url) map { msg ⇒ slack.send(msg) }
@@ -223,7 +221,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
         hasErrors ⇒ personUpdateError(user, hasErrors),
         id ⇒ {
           val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-          cached map { m ⇒
+          cached map { member ⇒
             (for {
               p <- repos.person.findComplete(id)
               m <- repos.person.member(id)
@@ -231,10 +229,10 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
               case (None, _) =>
                 val formWithError = personForm.withGlobalError(Messages("error.person.notExist"))
                 personUpdateError(user, formWithError)
-              case (_, None) =>
+              case (_, Some(_)) =>
                 val formWithError = personForm.withGlobalError(Messages("error.person.member"))
                 personUpdateError(user, formWithError)
-              case (Some(person), Some(member)) =>
+              case (Some(person), None) =>
                 repos.member.insert(member.copy(objectId = person.id.get, person = true)) flatMap { m =>
                   repos.userAccount.findByPerson(person.identifier) map {
                     case None =>
@@ -273,7 +271,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
       hasErrors ⇒ orgUpdateError(user, hasErrors),
       id ⇒ {
         val cached = Cache.getAs[Member](Members.cacheId(user.person.id.get))
-        cached map { m ⇒
+        cached map { member ⇒
           (for {
             o <- repos.org.find(id)
             m <- repos.org.member(id)
@@ -285,7 +283,7 @@ class Members @Inject() (override implicit val env: TellerRuntimeEnvironment,
               val formWithError = orgForm.withGlobalError(Messages("error.organisation.member"))
               orgUpdateError(user, formWithError)
             case (Some(org), None) =>
-              repos.member.insert(m.copy(objectId = org.id.get, person = false)) flatMap { member =>
+              repos.member.insert(member.copy(objectId = org.id.get, person = false)) flatMap { member =>
                 Cache.remove(Members.cacheId(user.person.id.get))
                 val log = activity(member, user.person, Some(org)).made.insert(repos)
                 val profileUrl: String = core.routes.Organisations.details(org.id.get).url
