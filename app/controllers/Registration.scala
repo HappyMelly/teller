@@ -28,7 +28,7 @@ import javax.inject.Named
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
-import controllers.hm.Enrollment
+import controllers.hm.{Enrollment, PaymentData}
 import models.UserRole.Role._
 import models._
 import models.core.payment._
@@ -269,7 +269,8 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
       else
         None
       val fee = Payment.countryBasedFees(userData.feeCountry)
-      ok(views.html.v2.registration.payment(paymentForm, person, publicKey, fee, org))
+      val plans = Payment.countryBasedPlans(userData.feeCountry)
+      ok(views.html.v2.registration.payment(paymentForm, person, publicKey, fee, plans, org))
     }
   }
 
@@ -286,10 +287,15 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
             try {
               payMembership(person, org, data)
               activateRecords(person, org)
+              val fee = paidFee(data, userData.country, isNewEra)
+              val plan = if (isNewEra)
+                Some(Payment.stripePlanId(userData.country, data.yearly))
+              else
+                None
               val futureMember = org map { x ⇒
-                x.becomeMember(funder = false, data.fee, person.id.get, repos)
+                x.becomeMember(funder = false, fee, plan, data.yearly, person.id.get, repos)
               } getOrElse {
-                person.becomeMember(funder = false, data.fee, repos)
+                person.becomeMember(funder = false, fee, plan, data.yearly, repos)
               }
               futureMember flatMap { member =>
                 createUserAccount(user.id, user.providerId, person, member)
@@ -472,7 +478,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     paymentForm.bindFromRequest.fold(
       hasError ⇒ Left(badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error")))),
       data ⇒ {
-        if (data.fee < Payment.countryBasedFees(country)._1) {
+        if (!isNewEra && data.fee < Payment.countryBasedFees(country)._1) {
           Left(badRequest(Json.obj("message" -> Messages("error.payment.minimum_fee"))))
         } else {
           data.coupon match {

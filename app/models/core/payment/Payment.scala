@@ -34,7 +34,7 @@ case class Payment(key: String) {
 
   /**
    * Subscribes new member either a person or an organisation
- *
+   *
    * @param person Person making a payment (also may want to be a member)
    * @param org Organisation which wants to be a member
    * @param token Card token
@@ -55,6 +55,38 @@ case class Payment(key: String) {
   }
 
   /**
+    * Subscribes new member either a person or an organisation
+    *
+    * @param person Person making a payment (also may want to be a member)
+    * @param org Organisation which wants to be a member
+    * @param token Card token
+    * @param plan Plan identifier to subscribe to
+    * @param coupon Coupon with discount
+    * @return Returns remote customer identifier and credit card info
+    */
+  def subscribe(person: Person,
+                org: Option[Organisation],
+                token: String,
+                plan: String,
+                coupon: Option[String]): (String, CreditCard) = {
+    val gateway = new GatewayWrapper(key)
+    val customerName = org map { _.name } getOrElse { person.fullName }
+    val customerId = org map { _.id.get } getOrElse { person.id.get }
+    gateway.customer(customerName, customerId, person.email, plan, token, coupon)
+  }
+
+  /**
+    * Changes subscription for existing customer
+    * @param customerId Customer identifier
+    * @param planId New plan identifier
+    * @return
+    */
+  def updateSubscription(customerId: String, planId: String) = {
+    val gateway = new GatewayWrapper(key)
+    gateway.changeSubscription(customerId, planId)
+  }
+
+  /**
     * Deletes old cards and add a new one to the given customer
     * @param customerId Customer identifier
     * @param cardToken New card token
@@ -70,7 +102,7 @@ case class Payment(key: String) {
 object Payment {
   private val DUTCH_VAT = 21.0f
   val TAX_PERCENT_AMOUNT = DUTCH_VAT
-  val DESC = "One Year Membership"
+  val DESC = "Happy Melly Membership"
 
   /**
    * Returns Token, Generous and Big hearted fees for supporters based on country.
@@ -89,4 +121,29 @@ object Payment {
       }
     } getOrElse (5, 10, 20)
   }
+
+  /**
+    * Returns new fees (monthly and yearly) which are active starting April 1st, 2017
+    * @param code Country code
+    */
+  def countryBasedPlans(code: String): (Float, Float) = Countries.gdp.get(code) map {
+      case 1 => (9.9f, 99f)
+      case 2 => (7.9f, 79f)
+      case 3 => (5.9f, 59f)
+      case 4 => (3.9f, 39f)
+      case _ => (1.9f, 19f)
+    } getOrElse (1.9f, 19f)
+
+  /**
+    * Returns Stripe plan identifier based on country code and yearly flag
+    * @param code Country code
+    * @param yearly True if yearly subscription is selected
+    */
+  def stripePlanId(code: String, yearly: Boolean): String = Countries.gdp.get(code) map {
+    case 1 => if (yearly) "yearly_10" else "monthly_10"
+    case 2 => if (yearly) "yearly_25" else "monthly_25"
+    case 3 => if (yearly) "yearly_50" else "monthly_50"
+    case 4 => if (yearly) "yearly_100" else "monthly_100"
+    case _ => if (yearly) "yearly_others" else "monthly_others"
+  } getOrElse { if (yearly) "yearly_others" else "monthly_others" }
 }

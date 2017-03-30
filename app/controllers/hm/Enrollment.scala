@@ -39,7 +39,11 @@ import services.integrations.Integrations
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class PaymentData(token: String, fee: Int, coupon: Option[String] = None, orgId: Option[Long] = None) {}
+case class PaymentData(token: String,
+                       fee: Int,
+                       yearly: Boolean,
+                       coupon: Option[String] = None,
+                       orgId: Option[Long] = None) {}
 
 /**
  * Defines an interface for enrollment classes
@@ -52,6 +56,7 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
     "fee" -> number,
+    "yearly" -> boolean,
     "coupon" -> optional(nonEmptyText),
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
 
@@ -109,10 +114,36 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
   protected def payMembership(person: Person, org: Option[Organisation], data: PaymentData): (String, CreditCard) = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
-    val (customerId, card) = payment.subscribe(person, org, data.token, data.fee, data.coupon)
+    val (customerId, card) = if (isNewEra) {
+      val countryCode = org match {
+        case None => person.address.countryCode
+        case Some(organisation) => organisation.countryCode
+      }
+      val planId = Payment.stripePlanId(countryCode, data.yearly)
+      payment.subscribe(person, org, data.token, planId, data.coupon)
+    } else {
+      payment.subscribe(person, org, data.token, data.fee, data.coupon)
+    }
     addCustomerRecord(customerId, card, person, org)
     (customerId, card)
   }
+
+  /**
+    * Returns fees paid by member
+    * @param data Payment data
+    * @param country Country
+    * @param isNewEra True if new subscription fees should be applied
+    */
+  protected def paidFee(data: PaymentData, country: String, isNewEra: Boolean): BigDecimal = if (isNewEra) {
+    val fees = Payment.countryBasedPlans(country)
+    if (data.yearly)
+      BigDecimal(fees._2.toDouble)
+    else
+      BigDecimal(fees._1.toDouble)
+  } else {
+    data.fee
+  }
+
 
   private def notifyAboutPerson(person: Person, member: Member) = {
     val url: String = controllers.core.routes.People.details(person.id.get).url

@@ -167,8 +167,9 @@ case class Person(
    * @param fee Amount of membership fee this person paid
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: BigDecimal, services: Repositories): Future[Member] = {
-    val m = services.member.insert(membership(funder, fee))
+  def becomeMember(funder: Boolean, fee: BigDecimal, plan: Option[String], yearly: Boolean,
+                   services: Repositories): Future[Member] = {
+    val m = services.member.insert(membership(funder, fee, plan, yearly))
     services.profileStrength.find(id.get, false).filter(_.isDefined) foreach { x ⇒
       services.profileStrength.update(ProfileStrength.forMember(x.get))
     }
@@ -181,16 +182,20 @@ case class Person(
    * @param funder If true member is a funder
    * @param fee An amount of membership fee
    */
-  protected def membership(funder: Boolean, fee: BigDecimal): Member =
+  protected def membership(funder: Boolean, fee: BigDecimal, plan: Option[String], yearly: Boolean): Member = {
+    val today = LocalDate.now()
+
     new Member(None, id.get, person = true,
       funder = funder, fee = fee, newFee = None,
       renewal = true,
-      since = LocalDate.now(),
-      until = LocalDate.now().plusYears(1),
+      since = today,
+      until = today.plusYears(1),
       reason = None,
-      created = DateTime.now(), id.get,
-      DateTime.now(), id.get)
+      plan = plan, yearly = yearly,
+      created = DateTime.now(),
+      id.get, DateTime.now(), id.get)
 
+  }
 }
 
 case class PersonSummary(id: Long, firstName: String, lastName: String, active: Boolean, countryCode: String)

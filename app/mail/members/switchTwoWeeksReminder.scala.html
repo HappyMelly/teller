@@ -1,4 +1,4 @@
-@(member: Member, members: Int, profileUrl: String)
+@(member: Member, members: Long, profileUrl: String)
 
 @import views.ViewHelpersV2._
 
@@ -14,11 +14,16 @@
         Without your awesomeness we wouldn’t be able to spread the word on global worker happiness as widely as we can.
     }
     @mail.hm.html.paragraph {
-        To renew your Happy Melly membership all you have to do is… absolutely nothing!
+        Please note that we’ve changed our membership fees compared to when you signed up.
+        The membership of every supporter is set to automatic renewal the first time they sign-up.
+        If you accept the new pricing and want to renew your membership you don’t have to do anything.
+        It will automatically renew.
     }
     @mail.hm.html.paragraph {
-        Your membership will automatically renew on @date(member.since). You’ll receive one more reminder email from us
-        a couple of days before the date and then a confirmation receipt once your payment method on file has been charged.
+        Your membership will remain set to automatically renew on a yearly basis. You’ll receive a confirmation receipt
+        once your payment method on file has been charged (please make sure your payment method on file is valid
+        at your date of renewal).
+
     }
     @mail.hm.html.paragraph {
         In the meantime, why not share a smile? Tell a few friends about the Happy Melly mission. Below are a few links

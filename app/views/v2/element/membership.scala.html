@@ -1,6 +1,7 @@
 @(card: models.core.payment.CreditCard,
     customerId: Long,
     member: Member,
+    country: String,
     fee: (Int, Int, Int),
     apiKey: String,
     editor: Boolean = true)
@@ -13,37 +14,60 @@
 
 
 <div class="b-contrib block">
-    <h4 class="b-contrib__title">Contribution</h4>
+    <h4 class="b-contrib__title">Subscription</h4>
     <table class="b-contrib__table table">
-        <tr>
-            <td>
-                <b>Contribution level</b>
-            </td>
-            <td>
-                <div class="b-contrib__price">
-                    <span>&#8364;@member.fee.toInt</span>
-                </div>
-            </td>
-            @if(editor) {
-                <td class="h-aright">
-                    <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">Change level</a>
-                </td>
-            }
-        </tr>
-        @member.newFee.map { amount =>
-            <tr class="text-muted">
-                <td>
-                    <b>Contribution level</b>
-                </td>
-                <td>
-                    <div class="b-contrib__price">
-                        <span>&#8364;@amount.toInt</span>
-                    </div>
+        @if(member.expired) {
+            <tr>
+                <td colspan="2">
+                    <b>Subscription expired</b>
                 </td>
                 <td class="h-aright">
-                    from @date(member.until)
+                @if(editor) {
+                    <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">
+                        Renew</a>
+                }
                 </td>
             </tr>
+        } else {
+            @if(member.plan.isEmpty) {
+                <tr>
+                    <td>
+                        <b>Contribution level</b>
+                    </td>
+                    <td>
+                        <div class="b-contrib__price">
+                            <span>&#8364;@member.fee.toInt</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        Expires @member.until. New yearly subscription fee will be &euro;@Payment.countryBasedPlans(country)._2.
+                        @if(editor) {
+                            <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">
+                                Update subscription</a>
+                        }
+
+                    </td>
+                </tr>
+            } else {
+                <tr>
+                    <td>
+                        <b>@if(member.yearly) { Yearly } else { Monthly } fee</b>
+                    </td>
+                    <td>
+                        <div class="b-contrib__price">
+                            <span>&#8364;@member.fee.formatted("%.2f")</span>
+                        </div>
+                    </td>
+                    <td class="h-aright">
+                    @if(editor) {
+                        <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">
+                            Update subscription</a>
+                    }
+                    </td>
+                </tr>
+            }
         }
         <tr>
             <td>
@@ -69,27 +93,57 @@
 <div id="dlg-change-level" class="modal fade b-modal dlg-contrib" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
 @v2.html.modal("contribution-level", "") {
     <h2 class="dlg-contrib__title">
-        Change contribution level
+        Update subscription
     </h2>
     <div class="dlg-contrib__text">
-        You can change your contribution level, however it should be equal to or great than the minimum level.
-        (The minimum level depends on your country.)<br>
-        If you decrease your contribution level, we will not refund any money but instead upon renewal,
-            we will credit your account for the difference.<br>
-        Changing your contribution level will not impact your current membership expiration date.
+        You can choose between monthly and yearly payments. All changes to the subscription will apply immediately.
+        If you switch from yearly to monthly payments, all differences are calculated automatically and you don't pay more
+        that you expect to.
     </div>
 
     <form class="b-payment__form js-fee-form"
-        action="@controllers.core.routes.Customers.changeContributionLevel(customerId)"
+        action="@controllers.core.routes.Customers.updateSubscription(customerId)"
         method="POST" id="payment-form" autocomplete="on" >
 
-        @views.html.v2.element.fee(member.fee.toInt, fee)
+        <div class="b-feestrip">
+            <div class="b-feestrip__col">
+                <h4 class="b-feestrip__title">Choose your fee</h4>
+                <label class="b-radio">
+                    <input type="radio" class="b-radio__input" name="yearly" value="false"
+                    data-payment-plan
+                    data-amount="@Payment.countryBasedPlans(country)._1"
+                    data-tax="@Payment.TAX_PERCENT_AMOUNT" @if(!member.yearly) { checked } >
+                    <i class="b-radio__icon"></i>
+                    <span class="b-radio__text">
+                        €@Payment.countryBasedPlans(country)._1 per month
+                    </span>
+                </label>
+                <label class="b-radio">
+                    <input type="radio" class="b-radio__input" name="yearly" value="true"
+                    data-payment-plan
+                    data-amount="@Payment.countryBasedPlans(country)._2"
+                    data-tax="@Payment.TAX_PERCENT_AMOUNT" @if(member.yearly) { checked }>
+                    <i class="b-radio__icon"></i>
+                    <span class="b-radio__text">
+                        €@Payment.countryBasedPlans(country)._2 per year
+                    </span>
+                </label>
+
+            </div>
+            <div class="b-feestrip__col">
+                <p>
+                For this country a monthly payment is <b>&#8364;@Payment.countryBasedPlans(country)._1</b> and
+                an yearly payment is <b>&#8364;@Payment.countryBasedPlans(country)._2</b>.
+                </p>
+                <p><a href="#" class="link-mblue" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
+            </div>
+        </div>
         <div class="b-card__buttons">
-            Contribution level &euro;<span data-fee-amount></span>
+            Subscription fee &euro;<span data-fee-amount></span>
             plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span data-fee-tax>0.00</span>
 
             <div>
-                <button type="submit" class="btn btn-primary b-card__submit">Change level</button>
+                <button type="submit" class="btn btn-primary b-card__submit">Update</button>
             </div>
         </div>
     </form>

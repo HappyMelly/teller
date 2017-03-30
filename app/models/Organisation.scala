@@ -65,11 +65,13 @@ case class Organisation(
    * @param userId Id of the user executing the action
    * @return Returns member object
    */
-  def becomeMember(funder: Boolean, fee: BigDecimal, userId: Long, services: Repositories): Future[Member] = {
+  def becomeMember(funder: Boolean, fee: BigDecimal, plan: Option[String], yearly: Boolean,
+                   userId: Long, services: Repositories): Future[Member] = {
+    val today = LocalDate.now()
+
     val m = new Member(None, id.get, person = false, funder = funder, fee = fee, newFee = None,
-      renewal = true, since = LocalDate.now(),
-      until = LocalDate.now().plusYears(1),
-      reason = None, created = DateTime.now(), userId, DateTime.now(), userId)
+      renewal = true, since = today, until = today.plusYears(1), reason = None, plan = plan, yearly = yearly,
+      created = DateTime.now(), userId, DateTime.now(), userId)
     services.member.insert(m)
   }
 

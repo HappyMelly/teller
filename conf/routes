@@ -43,7 +43,7 @@ GET           /coupon/:code/delete                                           con
 GET           /coupon/:code                                                  controllers.core.Coupons.get(code: String)
 
 POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
-POST          /customer/:id/contribution                                     controllers.core.Customers.changeContributionLevel(id: Long)
+POST          /customer/:id/subscription                                     controllers.core.Customers.updateSubscription(id: Long)
 
 GET           /reset/:token                                                controllers.PasswordReset.resetPassword(token: String)
 POST          /reset/:token                                                controllers.PasswordReset.handleResetPassword(token: String)

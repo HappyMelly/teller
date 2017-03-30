@@ -15,7 +15,7 @@
 
 @views.html.v2.element.badge(member)
 @dynamic(handler, Role.OrgMember.toString, org.identifier.toString) {
-    @views.html.v2.element.membership(card, customerId, member, fee, apiKey)
+    @views.html.v2.element.membership(card, customerId, member, org.countryCode, fee, apiKey)
 }
 
 
@@ -47,25 +47,24 @@
         Your membership will be automatically renewed at the end of a renewal
         period. The date of the next renewal is <b>@member.until</b>.
       </p>
-      @dynamic(handler, Role.OrgMember.toString, org.identifier.toString) {
-        <p>
-          You can <a href="#" data-toggle="modal" data-target=".cancelModal">stop automatic renewal</a> any time. In this case your membership
-          will be valid till <b>@member.until</b>.
-        </p>
-        <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
+      @if(member.activeRenewal) {
+        @dynamic(handler, Role.OrgMember.toString, org.identifier.toString) {
+          <p>
+            <a href="#" data-toggle="modal" data-target=".cancelModal">Stop automatic renewal</a>.
+          </p>
+          <div class="modal fade cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModal" aria-hidden="true">
           @v2.html.postDialog("cancelDialog",
             "Stop automatic renewal",
             CSRF(controllers.core.routes.Organisations.cancel(org.id.getOrElse(0))),
             "Stop") {
-            <p>If you stop automatic renewal you won't be able to start it again.</p>
             <p>Your membership will be valid till <b>@member.until</b></p>
           }
-        </div>
+          </div>
+        }
       }
     } else {
       <div class="alert alert-warning">
         <p>Automatic renewal is stopped.</p>
-        <p>It's not possible to turn automatic renewals on right now. We're working on it ;).</p>
       </div>
       <p>Your membership ends <b>@member.until</b>.</p>
     }

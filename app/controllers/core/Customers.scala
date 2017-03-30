@@ -28,10 +28,11 @@ import javax.inject.Inject
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
-import models.{Member, Person}
+import models.{Member, Person, isNewEra}
 import models.UserRole.Role._
 import models.core.payment._
 import models.repository.Repositories
+import org.joda.time.LocalDate
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -53,17 +54,17 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
 
   val apiSecretKey = Play.configuration.getString("stripe.secret_key").get
 
-  def changeContributionLevel(customerId: Long) = RestrictedAction(Viewer) { implicit request => implicit handler =>
+  def updateSubscription(customerId: Long) = RestrictedAction(Viewer) { implicit request =>implicit handler =>
     implicit user =>
       repos.core.customer.find(customerId) flatMap {
         case None => jsonNotFound("Customer not found")
         case Some(customer) =>
           isAllowed(user.person, customer) flatMap { allowed =>
             if (allowed) {
-              val form = Form(single("fee" -> bigDecimal))
+              val form = Form(single("yearly" -> boolean))
               form.bindFromRequest().fold(
-                error => jsonBadRequest("Amount parameter is empty or doesn't exist"),
-                amount => updateContributionLevel(customer, amount)
+                error => jsonBadRequest("Subscription is not chosen"),
+                yearly => changeSubscription(user.person, customer, yearly)
               )
             } else {
               jsonForbidden("You are not allowed to update card details")
@@ -121,23 +122,33 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
-  protected def updateContributionLevel(customer: Customer, amount: BigDecimal): Future[Result] = {
+  protected def changeSubscription(person: Person, customer: Customer, yearly: Boolean): Future[Result] = {
     repos.member.findByObject(customer.objectId, customer.objectType == CustomerType.Person) flatMap {
       case None => badRequest("Member not found")
       case Some(member) =>
-        if (isSameAmount(member, amount)) {
-          jsonSuccess("Your contribution level was changed")
+        if (member.yearly == yearly && member.plan.nonEmpty) {
+          jsonSuccess("Your subscription was changed")
         } else {
-          if (member.newFee.nonEmpty) {
-            repos.member.update(member.copy(newFee = Some(amount))) flatMap { _ =>
-              jsonSuccess("Your contribution level was changed")
-            }
-          } else {
             val gateway = new GatewayWrapper(apiSecretKey)
             try {
-              gateway.cancel(customer.remoteId)
-              repos.member.update(member.copy(newFee = Some(amount))) flatMap { _ =>
-                jsonSuccess("Your contribution level was changed")
+              val key = Play.configuration.getString("stripe.secret_key").get
+              val payment = new Payment(key)
+              val (_, org) = member.memberObj
+              val countryCode = org match {
+                case None => person.address.countryCode
+                case Some(organisation) => organisation.countryCode
+              }
+              val planId = Payment.stripePlanId(countryCode, yearly)
+              payment.updateSubscription(customer.remoteId, planId)
+
+              val until = LocalDate.now().plusYears(1)
+              val fee = if (yearly)
+                Payment.countryBasedPlans(countryCode)._2
+              else
+                Payment.countryBasedPlans(countryCode)._1
+
+              repos.member.update(member.copy(yearly = yearly, until = until, plan = Some(planId), fee = fee.toDouble)) flatMap { _ =>
+                jsonSuccess("Your subscription was changed")
               }
             } catch {
               case e: PaymentException ⇒
@@ -146,20 +157,8 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
                 e.log.foreach(Logger.error(_))
                 jsonBadRequest(Messages(e.getMessage))
             }
-          }
         }
     }
   }
 
-  /**
-    * Returns true if a new amount equals to the latest set fee
-    * @param member Member
-    * @param amount New amount
-    */
-  protected def isSameAmount(member: Member, amount: BigDecimal): Boolean = {
-    member.newFee match {
-      case Some(fee) => fee == amount
-      case None => member.fee == amount
-    }
-  }
 }

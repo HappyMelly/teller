@@ -1,6 +1,5 @@
 @import views.Countries
 
-
   @v2.html.modal("", "Happy Melly Contributions") {
     <div class="dlg-hmfees__content">
       <p>According to <a class="link-mblue" href="http://happymelly.com/constitution"
@@ -12,48 +11,88 @@
           <a href="#table-supporters" class="dlg-hmfees__link link-mblue state_active">Supporters</a> /
           <a href="#table-funders" class="dlg-hmfees__link link-mblue">Funders</a>
         </h4>
-        <table class="table" id="table-supporters">
-          <thead>
-            <tr>
-              <th>Countries</th>
-              <th>Token, €</th>
-              <th>Generous, €</th>
-              <th>Big hearted, €</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Category A: <i class="text-muted">Qatar, Luxembourg,  Macau…</i></td>
-              <td>25</td>
-              <td>50</td>
-              <td>100</td>
-            </tr>
-            <tr>
-              <td>Category B: <i class="text-muted">United States, Saudi Arabia, Netherlands…</i></td>
-              <td>20</td>
-              <td>40</td>
-              <td>80</td>
-            </tr>
-            <tr>
-              <td>Category C: <i class="text-muted"> Japan,  Greenland,  New Caledonia…</i></td>
-              <td>15</td>
-              <td>30</td>
-              <td>60</td>
-            </tr>
-            <tr>
-              <td>Category D: <i class="text-muted"> Belarus,  Mauritius,  Saint Martin…</i></td>
-              <td>10</td>
-              <td>20</td>
-              <td>40</td>
-            </tr>
-            <tr>
-              <td>All other: <i class="text-muted"> Uzbekistan,  Tonga…</i></td>
-              <td>5</td>
-              <td>10</td>
-              <td>20</td>
-            </tr>
-          </tbody>
-        </table>
+        @if(isNewEra) {
+          <table class="table" id="table-supporters">
+            <thead>
+              <tr>
+                <th>Countries</th>
+                <th>Monthly, €</th>
+                <th>Yearly, €</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Category A: <i class="text-muted">Qatar, Luxembourg,  Macau…</i></td>
+                <td>9.9</td>
+                <td>99</td>
+              </tr>
+              <tr>
+                <td>Category B: <i class="text-muted">United States, Saudi Arabia, Netherlands…</i></td>
+                <td>7.9</td>
+                <td>79</td>
+              </tr>
+              <tr>
+                <td>Category C: <i class="text-muted"> Japan,  Greenland,  New Caledonia…</i></td>
+                <td>5.9</td>
+                <td>59</td>
+              </tr>
+              <tr>
+                <td>Category D: <i class="text-muted"> Belarus,  Mauritius,  Saint Martin…</i></td>
+                <td>3.9</td>
+                <td>39</td>
+              </tr>
+              <tr>
+                <td>All other: <i class="text-muted"> Uzbekistan,  Tonga…</i></td>
+                <td>1.9</td>
+                <td>19</td>
+              </tr>
+            </tbody>
+          </table>
+
+        } else {
+          <table class="table" id="table-supporters">
+            <thead>
+              <tr>
+                <th>Countries</th>
+                <th>Token, €</th>
+                <th>Generous, €</th>
+                <th>Big hearted, €</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Category A: <i class="text-muted">Qatar, Luxembourg,  Macau…</i></td>
+                <td>25</td>
+                <td>50</td>
+                <td>100</td>
+              </tr>
+              <tr>
+                <td>Category B: <i class="text-muted">United States, Saudi Arabia, Netherlands…</i></td>
+                <td>20</td>
+                <td>40</td>
+                <td>80</td>
+              </tr>
+              <tr>
+                <td>Category C: <i class="text-muted"> Japan,  Greenland,  New Caledonia…</i></td>
+                <td>15</td>
+                <td>30</td>
+                <td>60</td>
+              </tr>
+              <tr>
+                <td>Category D: <i class="text-muted"> Belarus,  Mauritius,  Saint Martin…</i></td>
+                <td>10</td>
+                <td>20</td>
+                <td>40</td>
+              </tr>
+              <tr>
+                <td>All other: <i class="text-muted"> Uzbekistan,  Tonga…</i></td>
+                <td>5</td>
+                <td>10</td>
+                <td>20</td>
+              </tr>
+            </tbody>
+          </table>
+        }
         <table class="table h-hidden" id="table-funders">
           <thead>
             <tr>

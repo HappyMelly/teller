@@ -26,21 +26,32 @@ package models
 import models.core.payment.Customer
 import org.joda.time.{DateTime, LocalDate}
 
-case class Member(
-    id: Option[Long],
-    objectId: Long,
-    person: Boolean,
-    funder: Boolean,
-    fee: BigDecimal,
-    newFee: Option[BigDecimal] = None,
-    renewal: Boolean = true,
-    since: LocalDate,
-    until: LocalDate,
-    reason: Option[String] = None,
-    created: DateTime,
-    createdBy: Long,
-    updated: DateTime,
-    updatedBy: Long) extends ActivityRecorder {
+case class Member(id: Option[Long],
+                  objectId: Long,
+                  person: Boolean,
+                  funder: Boolean,
+                  fee: BigDecimal,
+                  newFee: Option[BigDecimal] = None,
+                  renewal: Boolean = true,
+                  since: LocalDate,
+                  until: LocalDate,
+                  reason: Option[String] = None,
+                  plan: Option[String] = None,
+                  yearly: Boolean = false,
+                  created: DateTime,
+                  createdBy: Long,
+                  updated: DateTime,
+                  updatedBy: Long) extends ActivityRecorder {
+
+  val activeRenewal: Boolean = {
+    val today = LocalDate.now()
+    val oneMonthBefore = until.minusMonths(1)
+    val isAfter = today.isEqual(oneMonthBefore) || today.isAfter(oneMonthBefore)
+    val isBefore = today.isBefore(until) || today.isEqual(until)
+    isAfter && isBefore
+  }
+
+  val expired: Boolean = until.isBefore(LocalDate.now)
 
   private var _memberObj: (Option[Person], Option[Organisation]) = (None, None)
 

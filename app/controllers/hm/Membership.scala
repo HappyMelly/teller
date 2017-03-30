@@ -145,9 +145,15 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def processOrganisationMember(data: PaymentData, user: ActiveUser, org: Organisation): Future[Boolean] = {
     validatePaymentData(data, user.person, user.member, Some(org))
 
+    val fee = paidFee(data, org.countryCode, isNewEra)
+    val plan = if (isNewEra)
+      Some(Payment.stripePlanId(org.countryCode, data.yearly))
+    else
+      None
+
     payMembership(user.person, Some(org), data)
     (for {
-      m <- org.becomeMember(funder = false, data.fee, user.person.identifier, repos)
+      m <- org.becomeMember(funder = false, fee, plan, data.yearly, user.person.identifier, repos)
     } yield m) map { member =>
       notify(user.person, Some(org), member)
       subscribe(user.person, member)
@@ -168,10 +174,16 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     val person = user.person
     validatePaymentData(data, person, user.member, None)
 
+    val fee = paidFee(data, person.address.countryCode, isNewEra)
+    val plan = if (isNewEra)
+      Some(Payment.stripePlanId(person.address.countryCode, data.yearly))
+    else
+      None
+
     payMembership(person, None, data)
     (for {
       p <- repos.socialProfile.find(person.identifier, ProfileType.Person)
-      m <- person.becomeMember(funder = false, data.fee, repos)
+      m <- person.becomeMember(funder = false, fee, plan, data.yearly, repos)
     } yield (p, m)) map { case (profile, member) =>
       env.updateCurrentUser(user.copy(member = Some(member)))
       person.profile_=(profile)

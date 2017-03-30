@@ -45,21 +45,25 @@ private[models] trait MemberTable {
     def since = column[LocalDate]("SINCE")
     def until = column[LocalDate]("END")
     def reason = column[Option[String]]("REASON")
+    def plan = column[Option[String]]("PLAN")
+    def yearly = column[Boolean]("YEARLY")
     def created = column[DateTime]("CREATED")
     def createdBy = column[Long]("CREATED_BY")
     def updated = column[DateTime]("UPDATED")
     def updatedBy = column[Long]("UPDATED_BY")
 
     type MembersFields = (Option[Long], Long, Boolean, Boolean, BigDecimal, Option[BigDecimal], Boolean,
-      LocalDate, LocalDate, Option[String], DateTime, Long, DateTime, Long)
+      LocalDate, LocalDate, Option[String],
+      Option[String], Boolean,
+      DateTime, Long, DateTime, Long)
 
     def * = (id.?, objectId, person, funder, fee, newFee, renewal,
-      since, until, reason, created, createdBy, updated, updatedBy) <>(
+      since, until, reason, plan, yearly, created, createdBy, updated, updatedBy) <>(
       (m: MembersFields) ⇒
-        Member(m._1, m._2, m._3, m._4, m._5, m._6, m._7, m._8, m._9, m._10, m._11, m._12, m._13, m._14),
+        Member(m._1, m._2, m._3, m._4, m._5, m._6, m._7, m._8, m._9, m._10, m._11, m._12, m._13, m._14, m._15, m._16),
       (m: Member) ⇒
         Some(m.id, m.objectId, m.person, m.funder, m.fee, m.newFee, m.renewal, m.since,
-          m.until, m.reason, m.created, m.createdBy, m.updated, m.updatedBy))
+          m.until, m.reason, m.plan, m.yearly, m.created, m.createdBy, m.updated, m.updatedBy))
   }
 
 }

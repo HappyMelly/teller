@@ -29,6 +29,7 @@ import controllers.Utilities
 import controllers.hm.Members
 import models.Member
 import models.repository.Repositories
+import models.isNewEra
 import org.joda.time.{DateTime, Duration, LocalDate}
 import play.api.Logger
 import services.integrations.{EmailComponent, Integrations}
@@ -47,7 +48,12 @@ class MembershipReminder @Inject()(val email: EmailComponent, val repos: Reposit
     Logger.info(s"Start sending one month expiration reminders to ${validMembers.length} members")
     validMembers.foreach { member =>
       val subject = "Your Happy Melly Membership"
-      val body = mail.members.html.oneMonthReminder(member, totalNumber, Members.profileUrl(member)).toString()
+      val profileUrl = Utilities.fullUrl(Members.profileUrl(member))
+      val body = if (isNewEra && member.plan.isEmpty) {
+        mail.members.html.switchOneMonthReminder(member, totalNumber, profileUrl).toString()
+      } else {
+        mail.members.html.oneMonthReminder(member, totalNumber, profileUrl).toString()
+      }
 
       val recipient = if (member.person)
         Future.successful(member.memberObj._1.get)
@@ -67,9 +73,11 @@ class MembershipReminder @Inject()(val email: EmailComponent, val repos: Reposit
       val subject = "Your Happy Melly Membership"
       val membershipDuration = new Duration(member.since.toDateTimeAtCurrentTime, DateTime.now())
       val membershipInDays = membershipDuration.getStandardDays
-      val body = mail.members.html.twoWeeksReminder(member,
-        membershipInDays,
-        Utilities.fullUrl(Members.profileUrl(member))).toString()
+      val profileUrl = Utilities.fullUrl(Members.profileUrl(member))
+      val body = if (isNewEra && member.plan.isEmpty)
+        mail.members.html.switchTwoWeeksReminder(member, members.length, profileUrl).toString()
+      else
+        mail.members.html.twoWeeksReminder(member, membershipInDays, profileUrl).toString()
 
       val recipient = if (member.person)
         Future.successful(member.memberObj._1.get)
@@ -83,5 +91,5 @@ class MembershipReminder @Inject()(val email: EmailComponent, val repos: Reposit
   }
 
   protected def renewedSupporters(members: List[Member]): List[Member] =
-    members.filter(_.active).filter(_.renewal).filter(_.funder == false)
+    members.filter(_.active).filter(_.renewal).filter(_.funder == false).filter(_.yearly)
 }

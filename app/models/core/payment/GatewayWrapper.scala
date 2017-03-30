@@ -181,6 +181,22 @@ class GatewayWrapper(apiKey: String) {
   }
 
   /**
+    * Creates new subscription for the given customer
+    * @param customerId Customer identifier
+    * @param newPlan Plan identifier
+    */
+  def changeSubscription(customerId: String, newPlan: String) = stripeCall {
+    val customer = com.stripe.model.Customer.retrieve(customerId)
+    val subscriptions = customer.getSubscriptions.getData
+    if (subscriptions.isEmpty) {
+      customer.createSubscription(Map("plan" -> newPlan, "tax_percent" -> Payment.TAX_PERCENT_AMOUNT.toString))
+    } else {
+      val subscription = subscriptions.head
+      subscription.update(Map("plan" -> newPlan, "prorate" -> true.toString))
+    }
+  }
+
+  /**
     * Deletes old cards and add a new one to the given customer
     *
     * @param customerId Customer identifier

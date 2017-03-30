@@ -12,14 +12,14 @@ export default class Widget {
         this.locals = this._getDom();
 
         this._assignEvents();
-        this._updateAmount(this.locals.$inputFee);
+        this._updateAmount(this.locals.$plan.filter(':checked'));
     }
 
     _getDom() {
         const $root = this.$root;
 
         return {
-            $inputFee: $root.find('.b-feestrip__input').first(),
+            $plan: $root.find('[data-payment-plan]'),
             $taxPlace: $root.find('[data-fee-tax]'),
             $amountPlace: $root.find('[data-fee-amount]'),
             $payPlace: $root.find('[data-fee-pay]')
@@ -30,7 +30,7 @@ export default class Widget {
         const self = this;
 
         self.$root
-            .on('change paste keyup', '.b-feestrip__input', function (e) {
+            .on('change', '[data-payment-plan]', function (e) {
                 let $this = $(this);
 
                 self._removeError($this);
@@ -43,11 +43,9 @@ export default class Widget {
         const self = this;
         e.preventDefault();
 
-        if (!this.isValidForm()) return;
+        let yearly = this.locals.$plan.filter(':checked').val();
 
-        let feeAmount = this.locals.$inputFee.val();
-
-        this._sendFeeData(feeAmount)
+        this._sendFeeData(yearly)
             .done(function (data) {
                 if (data.hasOwnProperty("message")) {
                     success(data.message);
@@ -78,7 +76,7 @@ export default class Widget {
      */
     _updateAmount($el) {
         let locals = this.locals,
-            amount = $el.val() < 1 ? 0.00 : parseInt($el.val()),
+            amount = parseFloat($el.data('amount')),
             taxPercent = parseFloat($el.data('tax')),
             tax, amountWithTax;
 
@@ -86,38 +84,22 @@ export default class Widget {
         amountWithTax = amount + tax;
 
         locals.$amountPlace.text(amount);
-        locals.$taxPlace.text(tax);
-        locals.$payPlace.text(amountWithTax);
+        locals.$taxPlace.text(tax.toFixed(2));
+        locals.$payPlace.text(amountWithTax.toFixed(2));
     }
 
-    /**
-     * Check, is Form valid?
-     * @returns {Boolean}
-     */
-    isValidForm() {
-        let valid = true,
-            $inputFee = this.locals.$inputFee,
-            isValidAmount = ($inputFee.val().length > 0) && (!isNaN($inputFee.val()));
-
-        if (!isValidAmount) {
-            valid = false;
-            this._setError($inputFee);
-        }
-
-        return valid;
-    }
 
     //transport
     /**
-     * @param {Number} feeAmount
+     * @param {Boolean} yearly
      * @returns {$.Deffered} - promise
      * @private
      */
-    _sendFeeData(feeAmount) {
+    _sendFeeData(yearly) {
         return $.ajax({
             type: "POST",
             url: this.$root.attr("action"),
-            data: {fee: feeAmount},
+            data: {yearly: yearly},
             dataType: "json"
         })
     }
