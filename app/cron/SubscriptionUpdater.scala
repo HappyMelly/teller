@@ -50,16 +50,15 @@ class SubscriptionUpdater @Inject() (val repos: Repositories) {
           case None => Logger.error(msg(s"Member ${member.identifier} doesn't have customer record"))
           case Some(customer) =>
             val countryCode = member.countryCode
-            val planId = Payment.stripePlanId(countryCode, yearly = true)
+            val planId = Payment.stripePlanId(countryCode, yearly = member.yearly)
             val key = Play.configuration.getString("stripe.secret_key").get
 
             try {
               val payment = new Payment(key)
               payment.updateSubscription(customer.remoteId, planId)
-              val until = LocalDate.now().plusYears(1)
               val fee = Payment.countryBasedPlans(countryCode)._2
 
-              val updated = member.copy(fee = fee.toDouble, plan = Some(planId), yearly = true, until = until)
+              val updated = member.copy(fee = fee.toDouble, plan = Some(planId))
               repos.member.update(updated)
             } catch {
               case e: RuntimeException => Logger.error(e.getMessage)

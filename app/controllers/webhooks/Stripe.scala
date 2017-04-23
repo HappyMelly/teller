@@ -25,11 +25,12 @@ package controllers.webhooks
 
 import javax.inject.Inject
 
-import controllers.{Utilities, AsyncController}
 import controllers.hm.Members
+import controllers.{AsyncController, Utilities}
 import models.core.payment.{Charge, Customer, CustomerType, Payment}
 import models.repository.Repositories
-import models.{Organisation, Person, Member, Recipient}
+import models.{Member, Organisation, Person, Recipient}
+import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.json._
@@ -178,8 +179,14 @@ class Stripe @Inject() (val repos: Repositories,
         val charge = Charge(None, chargeId, customerId, Payment.DESC, amount, Payment.TAX_PERCENT_AMOUNT)
         repos.core.charge.insert(charge)
       }
+      //prevent prolongation for monthly payments
+      val now = LocalDate.now()
+      val (prolonged, until) = if (member.until.isAfter(now))
+        (false, member.until)
+      else
+        (true, member.until.plusYears(1))
       if (validForProlongation(charges))
-        repos.member.update(member.copy(until = member.until.plusYears(1))).map(_ => true)
+        repos.member.update(member.copy(until = until)).map(_ => prolonged)
       else
         Future.successful(false)
     }

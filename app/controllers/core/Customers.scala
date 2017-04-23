@@ -129,7 +129,6 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
         if (member.yearly == yearly && member.plan.nonEmpty) {
           jsonSuccess("Your subscription was changed")
         } else {
-            val gateway = new GatewayWrapper(apiSecretKey)
             try {
               val key = Play.configuration.getString("stripe.secret_key").get
               val payment = new Payment(key)
@@ -141,13 +140,12 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
               val planId = Payment.stripePlanId(countryCode, yearly)
               payment.updateSubscription(customer.remoteId, planId)
 
-              val until = LocalDate.now().plusYears(1)
               val fee = if (yearly)
                 Payment.countryBasedPlans(countryCode)._2
               else
                 Payment.countryBasedPlans(countryCode)._1
 
-              repos.member.update(member.copy(yearly = yearly, until = until, plan = Some(planId), fee = fee.toDouble)) flatMap { _ =>
+              repos.member.update(member.copy(yearly = yearly, plan = Some(planId), fee = fee.toDouble)) flatMap { _ =>
                 jsonSuccess("Your subscription was changed")
               }
             } catch {
