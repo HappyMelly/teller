@@ -40,10 +40,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class SubscriptionUpdater @Inject() (val repos: Repositories) {
 
   def update() = {
-    Logger.info(msg("Start updating subscriptions"))
+    val today = LocalDate.now()
+    Logger.info(msg(s"Start updating subscriptions for $today"))
     repos.member.findAll map { members =>
       val membersOfInterest = members.filter(_.renewal).filterNot(_.funder).
-        filter(_.plan.isEmpty).filter(x => validSubscriptionPeriod(x.until))
+        filter(_.plan.isEmpty).filter(x => x.until.isEqual(today))
       membersOfInterest.foreach { member =>
         val typ = if (member.person) CustomerType.Person else CustomerType.Organisation
         repos.core.customer.find(member.objectId, typ) map {
@@ -71,16 +72,5 @@ class SubscriptionUpdater @Inject() (val repos: Repositories) {
   }
 
   protected def msg(str: String): String = s"SubscriptionUpdater: $str"
-
-  /**
-    * Returns true if the period between now and membership end date is 0 days
-    *
-    * @param end Membership end date
-    */
-  protected def validSubscriptionPeriod(end: LocalDate): Boolean = {
-    val now = LocalDate.now()
-    val diff = new Duration(end.toDate.getTime, now.toDate.getTime)
-    diff.getStandardDays == 0
-  }
 
 }
