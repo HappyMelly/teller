@@ -26,11 +26,11 @@ package cron
 
 import javax.inject.Inject
 
-import models.core.payment.{CustomerType, GatewayWrapper, Payment}
+import models.core.payment.{CustomerType, Payment}
 import models.repository.Repositories
-import org.joda.time.{Duration, LocalDate}
-import play.api.{Logger, Play}
+import org.joda.time.{DateTime, LocalDate}
 import play.api.Play.current
+import play.api.{Logger, Play}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -41,7 +41,7 @@ class SubscriptionUpdater @Inject() (val repos: Repositories) {
 
   def update() = {
     val today = LocalDate.now()
-    Logger.info(msg(s"Start updating subscriptions for $today"))
+    Logger.info(msg(s"Start updating subscriptions for $today (time = ${DateTime.now()}"))
     repos.member.findAll map { members =>
       val membersOfInterest = members.filter(_.renewal).filterNot(_.funder).
         filter(_.plan.isEmpty).filter(x => x.until.isEqual(today))
