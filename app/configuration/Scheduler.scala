@@ -91,7 +91,7 @@ class Scheduler @Inject() (val env: TellerRuntimeEnvironment,
   private def scheduler[A](f: => A) = {
     val now = LocalDateTime.now()
     val targetDate = LocalDate.now.plusDays(1)
-    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 0))
+    val targetTime = targetDate.toLocalDateTime(new LocalTime(0, 15))
     val waitPeriod = Seconds.secondsBetween(now, targetTime).getSeconds * 1000
     val initialDelay = Duration.create(waitPeriod, TimeUnit.MILLISECONDS)
     val interval = Duration.create(24, TimeUnit.HOURS)
