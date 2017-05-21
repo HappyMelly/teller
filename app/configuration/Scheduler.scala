@@ -70,6 +70,7 @@ class Scheduler @Inject() (val env: TellerRuntimeEnvironment,
 
     val membership = new MembershipReminder(email, repos)
     membership.sendOneMonthExpirationReminder()
+    membership.sendTwoWeeksExpirationReminder()
     val subscription = new SubscriptionUpdater(repos)
     subscription.update()
     runCleaners()
