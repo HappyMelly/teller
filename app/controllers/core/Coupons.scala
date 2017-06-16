@@ -102,7 +102,7 @@ class Coupons @Inject() (override implicit val env: TellerRuntimeEnvironment,
     }
   }
 
-  def get(code: String) = RestrictedAction(Role.Unregistered) { implicit request => implicit handler => implicit user =>
+  def get(code: String) = RestrictedAction(List(Role.Unregistered, Role.Viewer)) { implicit request => implicit handler => implicit user =>
     repos.core.coupon.find(code) flatMap {
       case None => jsonBadRequest("Invalid coupon")
       case Some(coupon) =>

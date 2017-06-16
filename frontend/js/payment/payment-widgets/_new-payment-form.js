@@ -146,7 +146,7 @@ export default class Widget {
         if (this.coupon.data.hasOwnProperty("discount")) {
             return this.coupon.data.discount;
         } else {
-            return 0;
+            return 0;;
         }
     }
 
@@ -201,6 +201,7 @@ export default class Widget {
                 .done(function (data) {
                     if (data.hasOwnProperty("redirect")) {
                         window.location = data.redirect;
+                        window.location.reload(true);
                     } else {
                         var msg = "Internal error #2001. Your card has been charged. ";
                         msg += "Do not make payment again. Please proceed to your profile directly.";

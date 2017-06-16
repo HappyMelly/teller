@@ -1,0 +1,40 @@
+@(members: Seq[TrialMemberData], apiKey: String, coupon: String, price: Float)(implicit request: Request[Any],
+        flash: Flash,
+        messages: Messages)
+
+@import models.core.payment.Payment
+
+<script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("js/package/trial-payment-page.js")" type="text/javascript"></script>
+
+<div class="b-payment">
+    <div class="b-trial-payment__text">
+        After you make a payment, <i>@members.map(x => x.firstName + " " + x.lastName).mkString(", ")</i> will get a
+        trial 3-month membership at Happy Melly, the Global Professional Happiness Association. We charge your bank
+        card just once and it won't be attached to any member's account.
+    </div>
+    <div class="b-trial-payment__text">
+        We will send all new members an automatic welcome email.
+    </div>
+
+    <form class="b-payment__form js-payment-form" action="@controllers.routes.TrialMembership.charge()"
+        method="POST" id="payment-form" autocomplete="on"  data-apikey="@apiKey">
+
+        <span class="b-payment__errors"></span>
+        <input type="hidden" name="fee" value="0"/>
+        <input type="hidden" name="coupon" value="@coupon"/>
+        @views.html.v2.element.card()
+
+        <div class="b-card__buttons">
+            Trial membership fee for all members &euro;<span data-payment-amount>@price</span>
+            plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span data-payment-tax>@(price * Payment.TAX_PERCENT_AMOUNT.toInt / 100)</span>
+
+            <div>
+                <button type="submit" class="btn btn-primary b-card__submit" data-payment-submit>Pay &euro;<span data-payment-price>0.00</span></button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+

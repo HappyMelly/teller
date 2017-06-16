@@ -1,0 +1,26 @@
+@import models.core.TrialCoupon
+@(coupon: TrialCoupon)(implicit request: Request[Any], flash: Flash)
+
+@v2.layout.unauthorized("Congratulations") {
+    <div class="b-authmenu">
+        <span class="b-authmenu__i">Add new members</span>
+        <span class="b-authmenu__i">Payment</span>
+        <span class="b-authmenu__i">Thank you!</span>
+        <span class="b-authmenu__back"><a class="link-blue" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
+    </div>
+    <div class="b-unauth__content b-authcongrat">
+        <h3 class="b-unauth__title">Thank you!</h3>
+
+        <div class="b-authcongrat__con">
+            <img class="b-authcongrat__img" src="@routes.Assets.at("images/HM-character.png")" height="395" />
+
+
+            <div class="b-authcongrat__text">
+                <p>@coupon.owner, thank you for giving the folks a chance to enjoy Happy Melly, the Global Professional Happiness Association of awesome people and
+                    organizations helping others to be happy at work. YOU ROCK!</p>
+                <p>You should get a receipt for the payment to your email @coupon.email from Stripe, our payment provider.
+                If not, please reach us to get one.</p>
+            </div>
+        </div>
+    </div>
+}

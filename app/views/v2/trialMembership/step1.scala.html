@@ -1,0 +1,86 @@
+@(form: Form[(String, Seq[TrialMemberData])])(implicit request: Request[Any],
+   flash: Flash,
+   messages: Messages)
+
+@import helper.CSRF
+@import views.Countries
+@import views.ViewHelpersV2._
+
+@v2.layout.unauthorized("Welcome") {
+    <script type="text/javascript" src="@routes.Assets.at("js/package/add-members-page.js")"></script>
+
+    <div class="b-authmenu">
+        <span class="b-authmenu__i">Add new members</span>
+        <span class="b-authmenu__i state_inactive">Payment</span>
+        <span class="b-authmenu__i state_inactive">Thank you!</span>
+        <span class="b-authmenu__back"><a class="link-blue" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
+    </div>
+    <div class="b-unauth__content js-new-members-form">
+        <h3 class="b-unauth__title">Provide coupon and new members info</h3>
+        <div class="col-md-11 col-md-offset-1">
+        @v2.html.form(action = CSRF(controllers.routes.TrialMembership.payment())) {
+            <div class="form-group narrow b-inputcheck">
+                <label for="coupon" class="control-label col-md-3">Coupon code</label>
+                <div class="col-md-6">
+                    <input id="coupon" name="coupon" class="form-control b-coupon__input"
+                        value="@form("coupon").value" type="text"
+                        data-coupon>
+                </div>
+                <div class="b-coupon__msg field-type">
+                @v2.html.inputCheck()
+                </div>
+            </div>
+
+            <div class="b-members" data-members>
+                <div class="b-members-header">
+                    <span class="b-members-title">Members</span>
+                    <a href="#" class="b-members-add-member" data-add-member>Add one more</a>
+                </div>
+                @if(form.data.isEmpty) {
+                    <div class="b-member" data-member>
+                        <div class="b-member-remove"><a href="#" data-remove-member>Remove</a></div>
+                        @v2.html.text(form("members[1].first_name"), false, "First name", 'data_control → "")(narrow, messages)
+                        @v2.html.text(form("members[1].last_name"), false, "Last name", 'data_control → "")(narrow, messages)
+                        @v2.html.email(form("members[1].email"), false, "Email", 'data_control → "")(narrow, messages)
+                        @v2.html.select(form("members[1].country"), false, "Country",
+                            ("", "Choose a country") :: Countries.all, 'data_control → "")(narrow, messages)
+                    </div>
+                } else {
+                    @defining(Seq.range(0, form.data.size / 4)) { indexes =>
+                      @for(index ← indexes) {
+                          <div class="b-member" data-member>
+                              <div class="b-member-remove"><a href="#" data-remove-member>Remove</a></div>
+                              @v2.html.text(form("members[" + (index + 1) + "].first_name"), false, "First name", 'data_control → "")(narrow, messages)
+                              @v2.html.text(form("members[" + (index + 1) + "].last_name"), false, "Last name", 'data_control → "")(narrow, messages)
+                              @v2.html.email(form("members[" + (index + 1) + "].email"), false, "Email", 'data_control → "")(narrow, messages)
+                              @v2.html.select(form("members[" + (index + 1) + "].country"), false, "Country",
+                                  ("", "Choose a country") :: Countries.all, 'data_control → "")(narrow, messages)
+                          </div>
+                      }
+                    }
+                }
+            </div>
+            @if(form.hasErrors) {
+                <div class="form-group">
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-6">
+                        <div class="b-unauth__errors text-center">
+                        @for((error, index) <- form.errors.zipWithIndex) {
+                            @{index + 1}. @play.api.i18n.Messages(error.message)<br/>
+                        }
+                        </div>
+                    </div>
+                </div>
+            }
+            <div class="form-group">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-6">
+                    <button class="btn btn-primary btn-block" data-continue-btn disabled type="submit">Continue</button>
+                </div>
+            </div>
+        }
+        </div>
+    </div>
+
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/trial/trial-membership.css")">
+}

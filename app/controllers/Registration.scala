@@ -28,7 +28,7 @@ import javax.inject.Named
 import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions, DeadboltHandler}
-import controllers.hm.{Enrollment, PaymentData}
+import controllers.hm.Enrollment
 import models.UserRole.Role._
 import models._
 import models.core.payment._
@@ -89,7 +89,6 @@ case class OrgData(name: String, country: String)
 case class AuthenticationInfo(email: String, password: String)
 
 /**
- * -v
  * Contains actions for a registration process
  */
 class Registration @javax.inject.Inject() (override implicit val env: TellerRuntimeEnvironment,
@@ -287,11 +286,9 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
             try {
               payMembership(person, org, data)
               activateRecords(person, org)
-              val fee = paidFee(data, userData.country, isNewEra)
-              val plan = if (isNewEra)
-                Some(Payment.stripePlanId(userData.country, data.yearly))
-              else
-                None
+              val fee = paidFee(data, userData.country)
+              val plan = Some(Payment.stripePlanId(userData.country, data.yearly))
+
               val futureMember = org map { x ⇒
                 x.becomeMember(funder = false, fee, plan, data.yearly, person.id.get, repos)
               } getOrElse {
@@ -478,22 +475,18 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
     paymentForm.bindFromRequest.fold(
       hasError ⇒ Left(badRequest(Json.obj("message" -> Messages("error.payment.unexpected_error")))),
       data ⇒ {
-        if (!isNewEra && data.fee < Payment.countryBasedFees(country)._1) {
-          Left(badRequest(Json.obj("message" -> Messages("error.payment.minimum_fee"))))
-        } else {
-          data.coupon match {
-            case None => Right(data)
-            case Some(couponCode) =>
-              val couponCheck = repos.core.coupon.find(couponCode) map {
-                case None => Left(badRequest(Json.obj("message" -> "Invalid coupon")))
-                case Some(coupon) =>
-                  if (coupon.valid)
-                    Right(data)
-                  else
-                    Left(badRequest(Json.obj("message" -> "Invalid coupon")))
-              }
-              Await.result(couponCheck, 5.seconds)
-          }
+        data.coupon match {
+          case None => Right(data)
+          case Some(couponCode) =>
+            val couponCheck = repos.core.coupon.find(couponCode) map {
+              case None => Left(badRequest(Json.obj("message" -> "Invalid coupon")))
+              case Some(coupon) =>
+                if (coupon.valid)
+                  Right(data)
+                else
+                  Left(badRequest(Json.obj("message" -> "Invalid coupon")))
+            }
+            Await.result(couponCheck, 5.seconds)
         }
       })
   }

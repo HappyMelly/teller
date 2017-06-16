@@ -1,0 +1,33 @@
+@(members: Seq[TrialMemberData], apiKey: String, coupon: String, price: Float)(implicit request: Request[Any],
+        flash: Flash,
+        messages: Messages)
+
+@v2.layout.unauthorized("Add Organisation Data") {
+
+    <div class="b-authmenu">
+        <span class="b-authmenu__i">Add new members</span>
+        <span class="b-authmenu__i">Payment</span>
+        <span class="b-authmenu__i state_inactive">Thank you!</span>
+        <span class="b-authmenu__back"><a class="link-blue" href="@controllers.core.routes.LoginPage.logout()">Back to login</a></span>
+    </div>
+    <div class="b-unauth__content">
+        <h3 class="b-unauth__title">Make Payment</h3>
+
+        @views.html.v2.trialMembership.trialPayment(members, apiKey, coupon, price)
+        <div class="b-payinfo">
+            <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")" alt="" class="b-payinfo__img">
+            <div class="b-payinfo__text">
+                <p class="text-muted">Happy Melly does not store your card details. All payments are securily
+                    processed by <a class="link-mblue" href="http://stripe.com" target="_blank">Stripe, Inc.</a>
+                </p>
+                <p class="text-muted">
+                    The information transfer is secured and verified by SSL 128 bit certificate
+                    issued by RapidSSL. Web site fully satisfies the security standards of
+                    Visa and Mastercard (PCI compliancy).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/trial/trial-membership.css")">
+}

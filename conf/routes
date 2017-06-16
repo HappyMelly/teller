@@ -44,6 +44,7 @@ GET           /coupon/:code                                                  con
 
 POST          /customer/:id/card                                             controllers.core.Customers.updateCard(id: Long)
 POST          /customer/:id/subscription                                     controllers.core.Customers.updateSubscription(id: Long)
+POST          /customer                                                      controllers.core.Customers.becomeCustomer()
 
 GET           /reset/:token                                                controllers.PasswordReset.resetPassword(token: String)
 POST          /reset/:token                                                controllers.PasswordReset.handleResetPassword(token: String)
@@ -155,13 +156,16 @@ POST          /person/:personId/signature                                    con
 GET           /person/:signatureId/signature                                 controllers.Signatures.signature(signatureId: String)
 POST          /person/:personId/signature/delete                             controllers.Signatures.delete(personId: Long)
 
-#GET           /slack/activate                                                controllers.cm.facilitator.Slack.activate()
-#GET           /slack/channels                                                controllers.cm.facilitator.Slack.channels()
-#POST          /slack/connect                                                 controllers.cm.facilitator.Slack.connect()
-#POST          /slack/create                                                  controllers.cm.facilitator.Slack.create()
-#POST          /slack/disconnect                                              controllers.cm.facilitator.Slack.disconnect()
-#POST          /slack/deactivate                                              controllers.cm.facilitator.Slack.deactivate()
-#POST          /slack/update                                                  controllers.cm.facilitator.Slack.update()
+GET           /trial-coupon/new                                              controllers.core.TrialCoupons.add()
+POST          /trial-coupon/new                                              controllers.core.TrialCoupons.create()
+GET           /trial-coupons                                                 controllers.core.TrialCoupons.index()
+GET           /trial-coupon/:code/delete                                     controllers.core.TrialCoupons.delete(code: String)
+GET           /trial-coupon/:code                                            controllers.core.TrialCoupons.get(code: String)
+
+GET           /trial-membership                                              controllers.TrialMembership.step1()
+GET           /trial-membership/payment                                      controllers.TrialMembership.payment()
+POST          /trial-membership/payment                                      controllers.TrialMembership.charge()
+GET           /trial-membership/congrats/:code                               controllers.TrialMembership.congratulations(code: String)
 
 POST          /utilities/markdown                                            controllers.Utilities.markdown()
 GET           /utilities/url/:url                                            controllers.Utilities.validate(url)

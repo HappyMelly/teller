@@ -17,6 +17,7 @@ export default class InputChecking {
 
     _reset() {
         this.data = {};
+        this.failed = false;
         this.locals.$successText.text("");
         App.events.pub('hmt.inputcheck.complete');
     }
@@ -59,6 +60,7 @@ export default class InputChecking {
                 self.data = json.data;
                 self._completeChecking(successText);
                 App.events.pub('hmt.inputcheck.complete');
+                App.events.pub('hmt.inputcheck.success');
             })
             .fail(function(response){
                 const error = $.parseJSON(response.responseText).message;

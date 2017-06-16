@@ -50,7 +50,7 @@ trait MemberNotifications {
    * @param updated Updated social profile
    */
   protected def connectMeMessage(existing: SocialProfile,
-                                          updated: SocialProfile): Option[String] = {
+                                  updated: SocialProfile): Option[String] = {
     val messages = List(
       fieldMessage("twitter", existing.twitterHandle, updated.twitterHandle),
       fieldMessage("facebook", existing.facebookUrl, updated.facebookUrl),

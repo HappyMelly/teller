@@ -1,0 +1,23 @@
+@(recipient: String, sponsor: String,
+        mailToken: String)(implicit request: RequestHeader,
+        env: securesocial.core.RuntimeEnvironment)
+
+@mail.hm.html.tmpl(s"Password reset for 3-month gift membership") {
+    <h2>Dear @recipient,</h2>
+    <p>You’ve just received a three-month membership to the Happy Melly Professional Happiness Association from @sponsor!</p>
+    <p>To start using your membership, you’ll need to reset your password in our membership management system. To do it, click the button below:</p>
+    @mail.html.button("Create new password", env.routes.resetPasswordUrl(mailToken))
+    <p>That's all!</p>
+    <p>If you want to become a full members after the trial period, you only have to enter their card info and select a yearly or monthly payments. You can do that:</p>
+    <ul>
+        <li><a href="https://teller.happymelly.com/login">Log into the system </a> and open your profile</li>
+        <li>Go to the 'Membership' section</li>
+        <li>Click on the ‘Prolong membership’ link</li>
+        <li>Fill in your payment card details</li>
+        <li>Save</li>
+    </ul>
+    <p>You will still will have the same profile</p>
+    <p>Hope to see you very soon in our community!</p>
+    <p>Kind regards, <br>
+        The Happy Melly Team</p>
+} { }

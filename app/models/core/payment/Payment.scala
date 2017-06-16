@@ -1,6 +1,6 @@
 /*
  * Happy Melly Teller
- * Copyright (C) 2013 - 2015, Happy Melly http://www.happymelly.com
+ * Copyright (C) 2013 - 2017, Happy Melly http://www.happymelly.com
  *
  * This file is part of the Happy Melly Teller.
  *
@@ -31,6 +31,22 @@ import views.Countries
  * Contains methods for working with credit cards
  */
 case class Payment(key: String) {
+
+  /**
+    * Process Stripe payment of the given amount
+    * @param token Stripe bank card token
+    * @param amount Amount
+    * @param email Payer email
+    * @param desc Payment description
+    */
+  def pay(token: String, amount: Float, email: String, desc: String, withTax: Boolean = true): Unit = {
+    val gateway = new GatewayWrapper(key)
+    val amountWithTax = if (withTax)
+      amount * (Payment.TAX_PERCENT_AMOUNT + 100) / 100
+    else
+      amount
+    gateway.charge(amountWithTax, email, desc, token)
+  }
 
   /**
    * Subscribes new member either a person or an organisation

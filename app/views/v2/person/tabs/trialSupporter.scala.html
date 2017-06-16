@@ -1,0 +1,45 @@
+@import be.objectify.deadbolt.scala.views.html._
+@import be.objectify.deadbolt.core.utils.TemplateUtils._
+@import models.UserRole.Role
+@import templates.Formatters._
+
+@(user: ActiveUser,
+    person: Person,
+    member: Member,
+    form: Form[hm.PaymentData],
+    apiKey: String)(implicit request: Request[Any],
+    handler: be.objectify.deadbolt.scala.DeadboltHandler)
+
+
+<div id="reasonDialog" class="modal fade b-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    @v2.html.dialog("updateReason",
+      "The reason I joined the network...",
+      action = None,
+      actionId = Some("saveReason")) {
+      <textarea class="form-control" rows="15" id="reason" markdownpreview >@member.reason.getOrElse("")</textarea>
+      <span class="help-block font-sm">
+        @views.html.v2.element.markdownHelp(horizontal = true)
+      </span>
+    }
+</div>
+
+<div class="block">
+    <h4>The reason I joined the network...
+      @dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
+        <a href="#" data-toggle="modal" data-target="#reasonDialog"
+          class="font-sm pull-right">Edit</a>
+      }
+    </h4>
+    <div id="reasonToJoin">
+      @member.reason.map { text => @text.markdown }
+    </div>
+</div>
+
+@views.html.v2.element.badge(member)
+@dynamic(handler, Role.ProfileEditor.toString, person.identifier.toString) {
+    @views.html.v2.element.trialMembership(form, member, person.address.countryCode, apiKey, person.identifier == user.person.identifier)
+}
+
+@restrict(handler, List(as(Role.Admin.toString))) {
+    @views.html.v2.element.administration(member)
+}

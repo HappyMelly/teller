@@ -35,4 +35,5 @@ class Repositories(app: Application) {
   lazy val charge: ChargeRepository = new ChargeRepository(app)
   lazy val coupon: CouponRepository= new CouponRepository(app)
   lazy val customer: CustomerRepository = new CustomerRepository(app)
+  lazy val trialCoupon: TrialCouponRepository = new TrialCouponRepository(app)
 }

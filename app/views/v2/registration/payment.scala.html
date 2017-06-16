@@ -22,11 +22,8 @@
     <div class="b-unauth__content">
         <h3 class="b-unauth__title">Make Payment</h3>
 
-        @if(isNewEra) {
-            @views.html.v2.element.newPayment(form, person, apiKey, plans, org)
-        } else {
-            @views.html.v2.element.payment(form, person, apiKey, fee, org)
-        }
+        @views.html.v2.element.newPayment(form, person, apiKey, plans, org)
+
         <div class="b-payinfo">
             <img src="@routes.Assets.at("images/RapidSSL_SEAL-90x50.gif")" alt="" class="b-payinfo__img">
             <div class="b-payinfo__text">

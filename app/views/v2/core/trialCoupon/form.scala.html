@@ -1,0 +1,42 @@
+@import models.core.TrialCoupon
+@(user: ActiveUser,
+    form: Form[TrialCoupon])(implicit flash: Flash,
+        request: Request[Any],
+        handler: be.objectify.deadbolt.scala.DeadboltHandler,
+        token: play.filters.csrf.CSRF.Token,
+        messages: Messages)
+
+@import helper.CSRF
+@import views.ViewHelpersV2._
+
+@v2.main("Trial Coupon", "admin", user, withMelly = true) {
+  <div class="b-form">
+    <div class="container">
+        <h1 class="b-form__title">Add Trial Coupon</h1>
+    </div>
+    @v2.html.form(CSRF(controllers.core.routes.TrialCoupons.create())) {
+      @v2.html.formBlock("") {
+        @v2.html.text(form("code"), true, "Code")
+        @v2.html.text(form("owner"), true, "Owner")
+        @v2.html.email(form("email"), true, "Owner's email")
+      }
+      @if(form.hasErrors) {
+        @v2.html.formBlock("") {
+          <div class="b-form__errors">
+            @for(error <- form.errors) {
+              @Messages(error.message)<br/>
+            }
+          </div>
+        }
+      }
+      @v2.html.formBlock("") {
+        <div class="b-form__buttons">
+          <button class="btn btn-primary b-form__btn-submit" type="submit">
+            Save
+          </button>
+          <a class="b-form__btn-cancel link-blue" href="javascript:history.back()">Cancel</a>
+        </div>
+      }
+    }
+  </div>
+}

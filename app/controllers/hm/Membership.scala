@@ -145,11 +145,8 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def processOrganisationMember(data: PaymentData, user: ActiveUser, org: Organisation): Future[Boolean] = {
     validatePaymentData(data, user.person, user.member, Some(org))
 
-    val fee = paidFee(data, org.countryCode, isNewEra)
-    val plan = if (isNewEra)
-      Some(Payment.stripePlanId(org.countryCode, data.yearly))
-    else
-      None
+    val fee = paidFee(data, org.countryCode)
+    val plan = Some(Payment.stripePlanId(org.countryCode, data.yearly))
 
     payMembership(user.person, Some(org), data)
     (for {
@@ -174,11 +171,8 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
     val person = user.person
     validatePaymentData(data, person, user.member, None)
 
-    val fee = paidFee(data, person.address.countryCode, isNewEra)
-    val plan = if (isNewEra)
-      Some(Payment.stripePlanId(person.address.countryCode, data.yearly))
-    else
-      None
+    val fee = paidFee(data, person.address.countryCode)
+    val plan = Some(Payment.stripePlanId(person.address.countryCode, data.yearly))
 
     payMembership(person, None, data)
     (for {
@@ -227,9 +221,6 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       if (organisation.isEmpty) {
         throw new Membership.ValidationException("error.organisation.notExist")
       }
-      if (data.fee < Payment.countryBasedFees(organisation.get.countryCode)._1) {
-        throw new Membership.ValidationException("error.payment.minimum_fee")
-      }
       if (member.nonEmpty) {
         throw new Membership.ValidationException("error.organisation.member")
       }
@@ -238,9 +229,6 @@ class Membership @Inject() (override implicit val env: TellerRuntimeEnvironment,
       }
     }
     if (organisation.isEmpty) {
-      if (data.fee < Payment.countryBasedFees(person.address.countryCode)._1) {
-        throw new Membership.ValidationException("error.payment.minimum_fee")
-      }
       if (member.nonEmpty) {
         throw new Membership.ValidationException("error.person.member")
       }

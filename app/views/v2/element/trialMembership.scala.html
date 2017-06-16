@@ -1,0 +1,98 @@
+@(form: Form[hm.PaymentData], member: Member, country: String, apiKey: String, editor: Boolean = true)
+
+@import views.ViewHelpersV2._
+@import models.core.payment.Payment
+
+<script src="@routes.Assets.at("javascripts/jquery.payment.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("js/package/new-payment-page.js")" type="text/javascript"></script>
+
+<div class="b-contrib block">
+    <h4 class="b-contrib__title">Subscription</h4>
+    Your 3-month gift membership @if(member.expired) {expired} else {ends} on @member.until
+    <div>
+        @if(editor) {
+            <a href="#" class="link-mblue" data-toggle="modal" data-target="#dlg-change-level">
+                Prolong membership</a>
+        }
+    </div>
+</div>
+
+<div id="dlg-change-level" class="modal fade b-modal dlg-contrib" tabindex="-1" role="dialog" aria-labelledby="requestLabel" aria-hidden="true">
+@v2.html.modal("contribution-level", "") {
+    <h2 class="dlg-contrib__title">
+        Prolong membership
+    </h2>
+    <div class="dlg-contrib__text">
+        You can choose between monthly and yearly payments.
+    </div>
+
+    <form class="b-payment__form js-payment-form"
+        action="@controllers.core.routes.Customers.becomeCustomer()"
+        method="POST" id="payment-form" autocomplete="on" data-apikey="@apiKey">
+        <div>
+            <div class="b-feestrip">
+                <div class="b-feestrip__col">
+                    <h4 class="b-feestrip__title">Choose your fee</h4>
+                    <div class="input-group">
+                        <div>
+                        @defining(form("yearly").value.contains("false")) { monthly =>
+                            <label class="b-radio">
+                                <input type="radio" class="b-radio__input" name="yearly" value="false"
+                                    data-payment-plan
+                                    data-amount="@Payment.countryBasedPlans(country)._1"
+                                    data-tax="@Payment.TAX_PERCENT_AMOUNT" @if(monthly) { checked } >
+                                    <i class="b-radio__icon"></i>
+                                    <span class="b-radio__text">
+                                        €@Payment.countryBasedPlans(country)._1 per month
+                                    </span>
+                            </label>
+                            <label class="b-radio">
+                                <input type="radio" class="b-radio__input" name="yearly" value="true"
+                                    data-payment-plan
+                                    data-amount="@Payment.countryBasedPlans(country)._2"
+                                    data-tax="@Payment.TAX_PERCENT_AMOUNT" @if(!monthly) { checked }>
+                                    <i class="b-radio__icon"></i>
+                                    <span class="b-radio__text">
+                                        €@Payment.countryBasedPlans(country)._2 per year
+                                    </span>
+                            </label>
+                        }
+                        </div>
+                    </div>
+                    <div class="b-coupon__title">Coupon code</div>
+                    <div class="form-group b-inputcheck">
+                        <div class="b-coupon__field">
+                            <input class="form-control b-coupon__input"
+                            name="@form("coupon").name" id="@form("coupon").id"
+                            type="text" data-payment-coupon value="@form("coupon").value">
+                        </div>
+                        <div class="b-coupon__msg field-type">
+                        @v2.html.inputCheck()
+                        </div>
+                    </div>
+                </div>
+                <div class="b-feestrip__col">
+                    <p>
+                    For this country a monthly payment is <b>&#8364;@Payment.countryBasedPlans(country)._1</b> and
+                    an yearly payment is <b>&#8364;@Payment.countryBasedPlans(country)._2</b>.
+                    </p>
+                    <p><a href="#" class="link-mblue" data-toggle="modal" data-target="#hmfees">Learn about Happy Melly membership contributions</a></p>
+                </div>
+            </div>
+        </div>
+        @views.html.v2.element.card()
+        <div class="b-card__buttons">
+            Subscription fee &euro;<span data-payment-amount></span>
+            plus @(Payment.TAX_PERCENT_AMOUNT.toInt)% tax &euro; <span data-payment-tax>0.00</span>
+
+            <div>
+                <button type="submit" class="btn btn-primary b-card__submit" data-payment-submit>Prolong for &euro;<span data-payment-price>0.00</span></button>
+            </div>
+        </div>
+    </form>
+}
+</div>
+
+<div class="modal fade dlg-hmfees" id="hmfees" tabindex="-1" role="dialog" aria-labelledby="feeModal" aria-hidden="true">
+    @views.html.v2.element.fees()
+</div>

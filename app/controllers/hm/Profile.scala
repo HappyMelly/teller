@@ -23,20 +23,22 @@
  */
 package controllers.hm
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
 import controllers.Security
-import models.{Organisation, Person, ActiveUser, Member}
-import models.core.payment.{Payment, CustomerType}
-import models.repository.Repositories
 import models.UserRole.Role._
-import play.api.mvc.{Result, Request}
+import models.core.payment.{CustomerType, Payment}
+import models.repository.Repositories
+import models.{ActiveUser, Member, Organisation, Person}
 import play.api.Play
 import play.api.Play.current
 import play.api.i18n.MessagesApi
+import play.api.mvc.{Request, Result}
 import services.TellerRuntimeEnvironment
+import services.integrations.Email
 
 import scala.concurrent.Future
 
@@ -46,8 +48,11 @@ import scala.concurrent.Future
 class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
                          override val messagesApi: MessagesApi,
                          val repos: Repositories,
+                         val email: Email,
+                         @Named("slack-servant") val slackServant: ActorRef,
                          deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
+  with Enrollment {
 
   val apiPublicKey = Play.configuration.getString("stripe.public_key").get
 
@@ -108,14 +113,18 @@ class Profile @Inject() (override implicit val env: TellerRuntimeEnvironment,
   protected def renderSupporterTab(user: ActiveUser, person: Person, member: Member)(
       implicit request: Request[Any], handler: be.objectify.deadbolt.scala.DeadboltHandler): Future[Result] =
 
-    (for {
-      customer <- repos.core.customer.find(person.identifier, CustomerType.Person) if customer.nonEmpty
-      charges <- repos.core.charge.findByCustomer(customer.get.id.get)
-      cards <- repos.core.card.findByCustomer(customer.get.id.get)
-    } yield (customer.get.id.get, charges, cards)) flatMap { case (customerId, charges, cards) =>
-      val card = cards.filter(_.active).head
-      val fee = Payment.countryBasedFees(person.address.countryCode)
-      ok(views.html.v2.person.tabs.supporter(user, person, member, charges, card, customerId, fee, apiPublicKey))
+    repos.core.customer.find(person.identifier, CustomerType.Person) flatMap {
+      case None ⇒
+        ok(views.html.v2.person.tabs.trialSupporter(user, person, member, paymentForm, apiPublicKey))
+      case Some(customer) ⇒
+        (for {
+          charges <- repos.core.charge.findByCustomer(customer.id.get)
+          cards <- repos.core.card.findByCustomer(customer.id.get)
+        } yield (customer.id.get, charges, cards)) flatMap { case (customerId, charges, cards) =>
+          val card = cards.filter(_.active).head
+          val fee = Payment.countryBasedFees(person.address.countryCode)
+          ok(views.html.v2.person.tabs.supporter(user, person, member, charges, card, customerId, fee, apiPublicKey))
+        }
     }
 
 }

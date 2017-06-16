@@ -38,9 +38,9 @@ import play.api.data.Forms._
 import services.integrations.Integrations
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 case class PaymentData(token: String,
-                       fee: Int,
                        yearly: Boolean,
                        coupon: Option[String] = None,
                        orgId: Option[Long] = None) {}
@@ -55,7 +55,6 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
 
   def paymentForm = Form(mapping(
     "token" -> nonEmptyText,
-    "fee" -> number,
     "yearly" -> boolean,
     "coupon" -> optional(nonEmptyText),
     "orgId" -> optional(longNumber))(PaymentData.apply)(PaymentData.unapply))
@@ -88,18 +87,27 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
     slackServant ! InviteMember(person.identifier)
   }
 
-  protected def addCustomerRecord(customerId: String, card: CreditCard, person: Person, org: Option[Organisation]) = {
+  /**
+    * Inserts new customer record for the given person/organisation
+    * @param customerId Stripe Customer identifier
+    * @param card Card
+    * @param person Person
+    * @param org Organisation
+    */
+  protected def addCustomerRecord(customerId: String,
+                                  card: CreditCard,
+                                  person: Person,
+                                  org: Option[Organisation]): Future[CreditCard] = {
     val recordInfo = DateStamp(DateTime.now(), person.fullName, DateTime.now(), person.fullName)
     val customer = org map { x =>
       Customer(None, customerId, x.identifier, CustomerType.Organisation, recordInfo)
     } getOrElse {
       Customer(None, customerId, person.identifier, CustomerType.Person, recordInfo)
     }
-    (for {
+    for {
       c <- repos.core.customer.insert(customer)
       cd <- repos.core.card.insert(card.copy(customerId = c.id.get))
-    } yield (c, cd)) map { case (_, creditCard) =>
-    }
+    } yield cd
   }
 
   /**
@@ -111,37 +119,34 @@ trait Enrollment extends AsyncController with Integrations with MemberNotificati
    * @param data Payment data
    * @return Returns customer identifier in the payment system and credit card info
    */
-  protected def payMembership(person: Person, org: Option[Organisation], data: PaymentData): (String, CreditCard) = {
+  protected def payMembership(person: Person,
+                              org: Option[Organisation],
+                              data: PaymentData): Future[(String, CreditCard)] = {
     val key = Play.configuration.getString("stripe.secret_key").get
     val payment = new Payment(key)
-    val (customerId, card) = if (isNewEra) {
-      val countryCode = org match {
-        case None => person.address.countryCode
-        case Some(organisation) => organisation.countryCode
-      }
-      val planId = Payment.stripePlanId(countryCode, data.yearly)
-      payment.subscribe(person, org, data.token, planId, data.coupon)
-    } else {
-      payment.subscribe(person, org, data.token, data.fee, data.coupon)
+    val countryCode = org match {
+      case None => person.address.countryCode
+      case Some(organisation) => organisation.countryCode
     }
-    addCustomerRecord(customerId, card, person, org)
-    (customerId, card)
+    val planId = Payment.stripePlanId(countryCode, data.yearly)
+    val (customerId, card) = payment.subscribe(person, org, data.token, planId, data.coupon)
+
+    addCustomerRecord(customerId, card, person, org) map { card ⇒
+      (customerId, card)
+    }
   }
 
   /**
     * Returns fees paid by member
     * @param data Payment data
     * @param country Country
-    * @param isNewEra True if new subscription fees should be applied
     */
-  protected def paidFee(data: PaymentData, country: String, isNewEra: Boolean): BigDecimal = if (isNewEra) {
+  protected def paidFee(data: PaymentData, country: String): BigDecimal = {
     val fees = Payment.countryBasedPlans(country)
     if (data.yearly)
       BigDecimal(fees._2.toDouble)
     else
       BigDecimal(fees._1.toDouble)
-  } else {
-    data.fee
   }
 
 

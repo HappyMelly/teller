@@ -74,12 +74,12 @@ class GatewayWrapper(apiKey: String) {
   }
 
   /**
-   * Charges user's card using Stripe
+    * Charges user's card using Stripe
     *
     * @param sum Amount to be charged
-   * @param payer User object
-   * @param token Stripe token for a single session
-   * @return Returns Stripe JSON response
+    * @param payer User object
+    * @param token Stripe token for a single session
+    * @return Returns Stripe JSON response
    */
   def charge(sum: Int, payer: Person, token: Option[String]) = stripeCall {
     val params = Map("amount" -> Int.box(sum * 100),
@@ -87,6 +87,23 @@ class GatewayWrapper(apiKey: String) {
       "card" -> token.getOrElse(""),
       "description" -> Payment.DESC,
       "receipt_email" -> payer.email)
+    com.stripe.model.Charge.create(params)
+  }
+
+  /**
+    * Charges user's card using Stripe
+    *
+    * @param sum Amount to be charged
+    * @param email Payer's email
+    * @param token Stripe token for a single session
+    * @return Returns Stripe JSON response
+    */
+  def charge(sum: Float, email: String, desc: String, token: String) = stripeCall {
+    val params = Map("amount" -> Int.box((sum * 100).toInt),
+      "currency" -> "eur",
+      "card" -> token,
+      "description" -> desc,
+      "receipt_email" -> email)
     com.stripe.model.Charge.create(params)
   }
 

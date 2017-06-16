@@ -23,12 +23,14 @@
  */
 package controllers.core
 
-import javax.inject.Inject
+import javax.inject.{Inject, Named}
 
+import akka.actor.ActorRef
 import be.objectify.deadbolt.scala.cache.HandlerCache
 import be.objectify.deadbolt.scala.{ActionBuilders, DeadboltActions}
-import controllers.Security
-import models.{Member, Person, isNewEra}
+import controllers.hm.Enrollment
+import controllers.{Security, Utilities}
+import models.Person
 import models.UserRole.Role._
 import models.core.payment._
 import models.repository.Repositories
@@ -37,9 +39,11 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{Messages, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.{Logger, Play}
 import services.TellerRuntimeEnvironment
+import services.integrations.Email
 
 import scala.concurrent.Future
 
@@ -49,10 +53,40 @@ import scala.concurrent.Future
 class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
                            override val messagesApi: MessagesApi,
                            val repos: Repositories,
+                           val email: Email,
+                           @Named("slack-servant") val slackServant: ActorRef,
                            deadbolt: DeadboltActions, handlers: HandlerCache, actionBuilder: ActionBuilders)
-  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env) {
+  extends Security(deadbolt, handlers, actionBuilder, repos)(messagesApi, env)
+    with Enrollment {
 
   val apiSecretKey = Play.configuration.getString("stripe.secret_key").get
+
+  /**
+    * Makes an active user a customer with a subscription
+    */
+  def becomeCustomer() = RestrictedAction(Viewer) { implicit request ⇒ implicit handler ⇒ implicit user ⇒
+    val form = paymentForm.bindFromRequest()
+    form.fold(
+      errors ⇒ jsonFormError(Utilities.errorsToJson(errors)),
+      data ⇒ {
+        val query = for {
+          _ ← payMembership(user.person, None, data)
+          m ← repos.member.findByObject(user.person.identifier, person = true) if m.nonEmpty
+        } yield m.get
+        query flatMap { member ⇒
+          val until = if (data.yearly)
+            LocalDate.now().plusYears(1)
+          else
+            LocalDate.now().plusMonths(1)
+          val planId = Payment.stripePlanId(user.person.address.countryCode, data.yearly)
+
+          repos.member.update(member.copy(until = until, plan = Some(planId)))
+          val url = controllers.core.routes.People.details(user.person.identifier).withFragment("membership").path()
+          ok(Json.obj("redirect" -> url))
+        }
+      }
+    )
+  }
 
   def updateSubscription(customerId: Long) = RestrictedAction(Viewer) { implicit request =>implicit handler =>
     implicit user =>
@@ -158,5 +192,15 @@ class Customers @Inject() (override implicit val env: TellerRuntimeEnvironment,
         }
     }
   }
+}
+
+object Customers {
+  case class BecomeCustomerForm(token: String, yearly: Boolean, coupon: Option[String])
+
+  val becomeCustomerMapping = Form(mapping(
+    "token" → nonEmptyText,
+    "yearly" → boolean,
+    "coupon" → optional(nonEmptyText)
+  )(BecomeCustomerForm.apply)(BecomeCustomerForm.unapply))
 
 }
