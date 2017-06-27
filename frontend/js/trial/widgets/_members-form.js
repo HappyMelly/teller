@@ -60,7 +60,11 @@ export default class Widget {
         const self = this;
         self.$root
             .on('click', '[data-add-member]', self._addMember.bind(self))
-            .on('click', '[data-remove-member]', self._removeMember.bind(self));
+            .on('click', '[data-remove-member]', self._removeMember.bind(self))
+            .on('change paste keyup', '[data-coupon]', function (e) {
+                let $this = $(this);
+                $this.val($this.val().toUpperCase())
+            });
 
         App.events
             .sub('hmt.inputcheck.success', ()=> {
