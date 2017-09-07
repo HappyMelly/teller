@@ -5,7 +5,7 @@
 @mail.hm.html.tmpl("Your Happy Melly Membership") {
     @mail.hm.html.title(s"Dear ${member.name},")
     @mail.hm.html.paragraph {
-        We’ve noticed that your Happy Melly membership is coming up for renewal on @date(member.since).
+        We’ve noticed that your Happy Melly membership is coming up for renewal on @date(member.until).
         It’s been a fantastic year, we’re thrilled that you took part in the adventure and we sincerely hope
         you’ll want to stay around for another year!
     }
@@ -20,10 +20,12 @@
         It will automatically renew.
     }
     @mail.hm.html.paragraph {
+        The new pricing can be found on the website: <a href="https://www.happymelly.com/join-us/">https://www.happymelly.com/join-us/</a>
+    }
+    @mail.hm.html.paragraph {
         Your membership will remain set to automatically renew on a yearly basis. You’ll receive a confirmation receipt
         once your payment method on file has been charged (please make sure your payment method on file is valid
         at your date of renewal).
-
     }
     @mail.hm.html.paragraph {
         In the meantime, why not share a smile? Tell a few friends about the Happy Melly mission. Below are a few links
