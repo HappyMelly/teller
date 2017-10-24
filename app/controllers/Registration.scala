@@ -185,7 +185,7 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    * Renders welcome page for new users
    */
   def welcome = Action.async { implicit request ⇒
-    ok(views.html.v2.registration.welcome())
+    redirect("https://www.happymelly.com/registration-welcome/")
   }
 
   /**
@@ -193,13 +193,8 @@ class Registration @javax.inject.Inject() (override implicit val env: TellerRunt
    *
    * @param org Defines if a new Supporter is an organization or a person
    */
-  def step1(org: Boolean = false) = Action { implicit request ⇒
-    val cookie = Cookie(REGISTRATION_COOKIE, "org")
-    val discardingCookie = DiscardingCookie(REGISTRATION_COOKIE)
-    if (org)
-      Ok(views.html.v2.registration.step1(passwordForm)).withCookies(cookie)
-    else
-      Ok(views.html.v2.registration.step1(passwordForm)).discardingCookies(discardingCookie)
+  def step1(org: Boolean = false) = Action.async { implicit request ⇒
+    redirect("https://www.happymelly.com/registration-welcome/")
   }
 
   /**
