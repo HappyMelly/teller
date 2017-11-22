@@ -10,55 +10,8 @@
         <h3 class="b-unauth__title">Login to Happy Melly Teller</h3>
         @v2.element.flash()(request.flash)
         <div class="b-authreg__content">
-            <div class="b-authreg__col">
-                <a class="btn b-social-twitter" href="@env.routes.authenticationUrl("twitter")">
-                    <i class="fa fa-twitter"></i>  Login with Twitter
-                </a>
-                <a class="btn b-social-facebook" href="@env.routes.authenticationUrl("facebook")">
-                    <i class="fa fa-facebook-square"></i>  Login with Facebook
-                </a>
-                <a class="btn b-social-linkedin" href="@env.routes.authenticationUrl("linkedin")">
-                    <i class="fa fa-linkedin"></i>  Login with LinkedIn
-                </a>
-                <a class="btn b-social-google" href="@env.routes.authenticationUrl("google")">
-                    <i class="fa fa-google-plus"></i>  Login with Google
-                </a>
-            </div>
-            <div class="b-authreg__middle">
-                <img src="@routes.Assets.at("images/login-or.png")" height="228px"/>
-            </div>
-            <div class="b-authreg__col">
-                @errorMsg.map { msg =>
-                    <div class="b-authreg__errors">
-                        @Messages(msg)
-                    </div>
-                }
-                <form class="b-login js-login-form" action="@env.routes.authenticationUrl(UsernamePasswordProvider.UsernamePassword)" method="post">
-                    <div class="form-group">
-                        <input class="form-control" id="email" type="text" name="username" placeholder="Email" data-login-email />
-                    </div>
-                    <div class="form-group b-login__remind ">
-                        <input class="form-control" id="password" type="password" name="password" placeholder="Password" data-login-password />
-                        <div class="b-login__remfade">
-                            Check your inbox
-                        </div>
-                        <div class="b-login__remtext">
-                            <a class="b-login__remlink link-blue" href="@routes.PasswordReset.handleStartResetPassword()" id="passwordReset" data-login-reset>
-                                <span class="text-reset">Remind me</span>
-                            </a>
-                            <a class="b-login__enter link-blue" href="javascript: void(0)" data-login-enter>
-                                <span class="text-reset">Enter</span>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <button class="btn btn-primary b-authreg__submit" type="submit" data-login-submit>Login</button>
-                    </div>
-                </form>
-                <div class="b-authreg__join-now">
-                    Not a member? <a class="link-blue" href="@routes.Registration.welcome()">Join now!</a>
-                </div>
-            </div>
+            We moved! <br/>
+                Follow <a href="https://www.happymelly.com/login/">this link</a> to log in.
         </div>
     </div>
 
